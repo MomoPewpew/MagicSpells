@@ -599,6 +599,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	
 	protected String soundOnCooldown;
 	protected String soundMissingReagents;
+	protected String soundCantCast;
 	
 	protected String strCost;
 	
@@ -928,6 +929,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		if (this.soundOnCooldown != null && this.soundOnCooldown.isEmpty()) this.soundOnCooldown = null;
 		this.soundMissingReagents = config.getString(section + '.' + spellName + ".sound-missing-reagents", MagicSpells.plugin.soundFailMissingReagents);
 		if (this.soundMissingReagents != null && this.soundMissingReagents.isEmpty()) this.soundMissingReagents = null;
+		this.soundCantCast = config.getString(section + '.' + spellName + ".sound-cant-cast", MagicSpells.plugin.soundFailCantCast);
+		if (this.soundCantCast != null && this.soundCantCast.isEmpty()) this.soundCantCast = null;
 		
 		// Strings
 		this.strCost = config.getString(section + '.' + spellName + ".str-cost", null);
@@ -1307,6 +1310,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				if (this.soundMissingReagents != null) MagicSpells.getVolatileCodeHandler().playSound(player, this.soundMissingReagents, 1F, 1F);
 			} else if (state == SpellCastState.CANT_CAST) {
 				MagicSpells.sendMessage(strCantCast, player, spellCast.getSpellArgs());
+				if (this.soundCantCast != null) MagicSpells.getVolatileCodeHandler().playSound(player, this.soundCantCast, 1F, 1F);
 			} else if (state == SpellCastState.NO_MAGIC_ZONE) {
 				MagicSpells.plugin.noMagicZones.sendNoMagicMessage(player, this);
 			} else if (state == SpellCastState.WRONG_WORLD) {

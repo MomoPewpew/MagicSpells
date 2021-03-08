@@ -143,6 +143,7 @@ public class MagicSpells extends JavaPlugin {
 	
 	String soundFailOnCooldown;
 	String soundFailMissingReagents;
+	String soundFailCantCast;
 	
 	// Strings
 	String strCastUsage;
@@ -348,6 +349,7 @@ public class MagicSpells extends JavaPlugin {
 
 		soundFailOnCooldown = config.getString("general.sound-on-cooldown", null);
 		soundFailMissingReagents = config.getString("general.sound-missing-reagents", null);
+		soundFailCantCast = config.getString("general.sound-cant-cast", null);
 		
 		strCastUsage = config.getString("general.str-cast-usage", "Usage: /cast <spell>. Use /cast list to see a list of spells.");
 		strUnknownSpell = config.getString("general.str-unknown-spell", "You do not know a spell with that name.");

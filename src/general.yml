@@ -43,6 +43,9 @@ use-exp-bar-as-cast-time-bar: true
 cooldowns-persist-through-reload: true
 allow-anticheat-integrations: false
 ignore-grant-perms-fake-value: true
+sound-on-cooldown: ""
+sound-missing-reagents: ""
+sound-cant-cast: ""
 
 entity-names:
     zombie: an ugly zombie

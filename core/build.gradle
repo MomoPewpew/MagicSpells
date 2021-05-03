@@ -6,13 +6,24 @@ repositories {
     flatDir {
       dirs(rootDir.path + "/lib")
     }
+	mavenCentral()
+    maven { url "https://repo.dmulloy2.net/nexus/repository/public/" }
+    maven { url "https://repo.md-5.net/content/repositories/releases/" }
+    maven { url "https://papermc.io/repo/repository/maven-public/" }
+    maven { url "https://repo.aikar.co/content/groups/aikar/" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+    maven { url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/" }
+}
+
+jar.enabled = false
+build.dependsOn shadowJar
+
+configurations {
+    compile.extendsFrom shadow
 }
 
 dependencies {
-    shadow group: "org.apache.commons", name: "commons-math3", version: "3.6.1"
-    shadow "com.elmakers.mine.bukkit:EffectLib:9.0"
-    shadow "com.github.Xezard:XGlow:c886344de3"
-    shadow "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    shadow group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
 
     //implementation "org.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT"
     implementation ":spigot-1.12"
@@ -52,13 +63,11 @@ dependencies {
 }
 
 shadowJar {
+    classifier = null
+    configurations = [project.configurations.shadow]
+	
     setArchivesBaseName("MagicSpells")
     relocate("org.apache.commons.math3", "com.nisovin.magicspells.shaded.org.apache.commons")
-    relocate("de.slikey.effectlib", "com.nisovin.magicspells.shaded.effectlib")
-    relocate("ru.xezard.glow", "com.nisovin.magicspells.shaded.xglow")
-    relocate("kotlin", "com.nisovin.magicspells.shaded.kotlin")
-    relocate("co.aikar.commands", "com.nisovin.magicspells.shaded.acf")
-    relocate("co.aikar.locales", "com.nisovin.magicspells.shaded.locales")
     archiveClassifier.set("")
 }
 

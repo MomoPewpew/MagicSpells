@@ -17,17 +17,17 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 
 	private Vector relativeOffset;
 	private Vector absoluteOffset;
-	
+
 	Subspell spell;
-	
+
 	public OffsetLocationSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 		relativeOffset = getConfigVector("relative-offset", "0,0,0");
 		absoluteOffset = getConfigVector("absolute-offset", "0,0,0");
-		
+
 		spell = new Subspell(getConfigString("spell", ""));
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -50,7 +50,7 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 				baseTargetLocation = getTargetedBlock(player, power).getLocation();
 			}
 			if (baseTargetLocation == null) return noTarget(player);
-			
+
 			Location loc = Util.applyOffsets(baseTargetLocation, relativeOffset, absoluteOffset);
 			if (loc != null) {
 				spell.castAtLocation(player, loc, power);
@@ -64,12 +64,13 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 
 	@Override
 	public boolean castAtLocation(Player caster, Location target, float power) {
-		return spell.castAtLocation(caster, Util.applyOffsets(target, relativeOffset, absoluteOffset), power);
+		Location location = target.clone();
+		return spell.castAtLocation(caster, Util.applyOffsets(location, relativeOffset, absoluteOffset), power);
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(null, target, power);
 	}
-	
+
 }

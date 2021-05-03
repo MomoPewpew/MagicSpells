@@ -21,3 +21,8 @@ Lib/GriefPrevention.jar
 Build/
 .gradle/
 core/build/
+factions/build/
+memory/build/
+shop/build/
+teams/build/
+towny/build/

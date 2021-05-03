@@ -1,0 +1,85 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.4.30"
+}
+
+repositories {
+    flatDir {
+      dirs(rootDir.path + "/lib")
+    }
+}
+
+dependencies {
+    shadow group: "org.apache.commons", name: "commons-math3", version: "3.6.1"
+    shadow "com.elmakers.mine.bukkit:EffectLib:9.0"
+    shadow "com.github.Xezard:XGlow:c886344de3"
+    shadow "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    //implementation "org.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT"
+    implementation ":spigot-1.12"
+	implementation ":bukkit-1.9.4-R0.1-SNAPSHOT"
+	implementation ":bukkit-1.8.7-R0.1-SNAPSHOT"
+	implementation ":craftbukkit-1.10.2"
+	implementation ":EffectLib-4.0"
+	implementation ":Factions"
+	implementation ":GriefPrevention"
+	implementation ":LibsDisguises-9.0.9"
+	implementation ":MassiveCore"
+	implementation ":NoCheatPlus"
+	implementation ":PlaceholderAPI"
+	implementation ":PowerNBT"
+	implementation ":ProtocolLib"
+	implementation ":Residence"
+	implementation ":spigot-1.8.7"
+	implementation ":spigot-1.8-R0.1-SNAPSHOT"
+	implementation ":spigot-1.9.4"
+	implementation ":spigot-1.9"
+	implementation ":spigot-1.10.2"
+	implementation ":spigot-1.11.2"
+	implementation ":spigot-1.11"
+	implementation ":spigot-api-1.9-SNAPSHOT"
+	implementation ":Towny"
+	implementation ":Vault"
+	implementation ":WorldEdit"
+	implementation ":WorldGuard"
+
+    implementation "com.github.libraryaddict:LibsDisguises:master-SNAPSHOT"
+    implementation "com.github.Updated-NoCheatPlus:NoCheatPlus:master-SNAPSHOT"
+    implementation "com.github.MilkBowl:VaultAPI:master-SNAPSHOT"
+    implementation "com.github.EngineHub:WorldEdit:9a5ef70858"
+    implementation "com.github.EngineHub:WorldGuard:528ba32a93"
+    implementation "com.github.PlaceholderAPI:PlaceholderAPI:c2ab9f5b85"
+    implementation "com.github.TechFortress:GriefPrevention:master-SNAPSHOT"
+}
+
+shadowJar {
+    setArchivesBaseName("MagicSpells")
+    relocate("org.apache.commons.math3", "com.nisovin.magicspells.shaded.org.apache.commons")
+    relocate("de.slikey.effectlib", "com.nisovin.magicspells.shaded.effectlib")
+    relocate("ru.xezard.glow", "com.nisovin.magicspells.shaded.xglow")
+    relocate("kotlin", "com.nisovin.magicspells.shaded.kotlin")
+    relocate("co.aikar.commands", "com.nisovin.magicspells.shaded.acf")
+    relocate("co.aikar.locales", "com.nisovin.magicspells.shaded.locales")
+    archiveClassifier.set("")
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+        javaParameters = true
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = "com.nisovin.magicspells"
+            from components.java
+        }
+    }
+}

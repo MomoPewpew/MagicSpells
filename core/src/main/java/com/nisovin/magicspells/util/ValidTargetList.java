@@ -18,9 +18,9 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 
 public class ValidTargetList {
-	
+
 	public enum TargetingElement {
-		
+
 		TARGET_SELF,
 		TARGET_PLAYERS,
 		TARGET_INVISIBLES,
@@ -28,9 +28,9 @@ public class ValidTargetList {
 		TARGET_MONSTERS,
 		TARGET_ANIMALS,
 		TARGET_NONLIVING_ENTITIES
-		
+
 	}
-	
+
 	boolean targetSelf = false;
 	boolean targetPlayers = false;
 	boolean targetInvisibles = false;
@@ -39,14 +39,14 @@ public class ValidTargetList {
 	boolean targetAnimals = false;
 	boolean targetNonLivingEntities = false; // This will be kept as false for now during restructuring
 	Set<EntityType> types = new HashSet<>();
-	
+
 	public ValidTargetList(Spell spell, String list) {
 		if (list != null) {
 			String[] ss = list.replace(" ", "").split(",");
 			init(spell, Arrays.asList(ss));
 		}
 	}
-	
+
 	public void enforce(TargetingElement element, boolean value) {
 		switch (element) {
 		case TARGET_SELF:
@@ -72,23 +72,23 @@ public class ValidTargetList {
 			break;
 		}
 	}
-	
+
 	public void enforce(TargetingElement[] elements, boolean value) {
 		for (TargetingElement e : elements) {
 			enforce(e, value);
 		}
 	}
-	
+
 	public ValidTargetList(Spell spell, List<String> list) {
 		if (list != null) {
 			init(spell, list);
 		}
 	}
-	
+
 	void init(Spell spell, List<String> list) {
 		for (String s : list) {
 			s = s.trim();
-			
+
 			switch (s.toLowerCase()) {
 				case "self":
 				case "caster":
@@ -124,20 +124,20 @@ public class ValidTargetList {
 			}
 		}
 	}
-	
+
 	public ValidTargetList(boolean targetPlayers, boolean targetNonPlayers) {
 		this.targetPlayers = targetPlayers;
 		this.targetNonPlayers = targetNonPlayers;
 	}
-	
+
 	public boolean canTarget(Player caster, Entity target) {
 		return canTarget(caster, target, targetPlayers);
 	}
-	
+
 	public boolean canTarget(Player caster, Entity target, boolean targetPlayers) {
 		if (!(target instanceof LivingEntity) && !this.targetNonLivingEntities) return false;
 		boolean targetIsPlayer = target instanceof Player;
-		if (targetIsPlayer && ((Player)target).getGameMode() == GameMode.CREATIVE) return false;
+		//if (targetIsPlayer && ((Player)target).getGameMode() == GameMode.CREATIVE) return false;
 		if (this.targetSelf && target.equals(caster)) return true;
 		if (!this.targetSelf && target.equals(caster)) return false;
 		if (!this.targetInvisibles && targetIsPlayer && !caster.canSee((Player)target)) return false;
@@ -148,11 +148,11 @@ public class ValidTargetList {
 		if (this.types.contains(target.getType())) return true;
 		return false;
 	}
-	
+
 	public boolean canTarget(Entity target) {
 		if (!(target instanceof LivingEntity) && !this.targetNonLivingEntities) return false;
 		boolean targetIsPlayer = target instanceof Player;
-		if (targetIsPlayer && ((Player)target).getGameMode() == GameMode.CREATIVE) return false;
+		//if (targetIsPlayer && ((Player)target).getGameMode() == GameMode.CREATIVE) return false;
 		if (this.targetPlayers && targetIsPlayer) return true;
 		if (this.targetNonPlayers && !targetIsPlayer) return true;
 		if (this.targetMonsters && target instanceof Monster) return true;
@@ -160,11 +160,11 @@ public class ValidTargetList {
 		if (this.types.contains(target.getType())) return true;
 		return false;
 	}
-	
+
 	public List<LivingEntity> filterTargetListCastingAsLivingEntities(Player caster, List<Entity> targets) {
 		return filterTargetListCastingAsLivingEntities(caster, targets, this.targetPlayers);
 	}
-	
+
 	public List<LivingEntity> filterTargetListCastingAsLivingEntities(Player caster, List<Entity> targets, boolean targetPlayers) {
 		List<LivingEntity> realTargets = new ArrayList<>();
 		for (Entity e : targets) {
@@ -174,7 +174,7 @@ public class ValidTargetList {
 		}
 		return realTargets;
 	}
-	
+
 	public boolean canTargetPlayers() {
 		return this.targetPlayers;
 	}
@@ -206,7 +206,7 @@ public class ValidTargetList {
 	public boolean canTargetNonLivingEntities() {
 		return this.targetNonLivingEntities;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "ValidTargetList:["
@@ -220,5 +220,5 @@ public class ValidTargetList {
 			+ ",targetNonLivingEntities=" + this.targetNonLivingEntities
 			+ ']';
 	}
-	
+
 }

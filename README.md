@@ -10,3 +10,7 @@ The SneakyRP branch was made for minecraft roleplay on the SneakyRP server. Chan
 - Added globalstring variables that function like playerstrings but are persistent across characters.
 - Added a sound-on-fail configuration that plays sound effects when you don't have a permission
 - Added permissions for magicspells.advanced.modifyvariable, magicitem, debug, forcecast, reload, resetcd and castat
+- OffsetLocationSpells will not clone the location data before offsetting it. This prevents the location drift on pulsers and targetedmultispells
+
+###Building the project
+The build.bat file in the git should compile the project for you. At this time it is not completely flawless though, and you will have to go in and add the plugin.yml manually.

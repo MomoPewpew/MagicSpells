@@ -965,9 +965,11 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static void sendDebugMessage(String message) {
-		for(Player p : Bukkit.getOnlinePlayers()) {
-			if (p.isOp()) {
-				MagicSpells.plugin.sendMessage(p, message);
+		if (plugin.debug) {
+			for(Player p : Bukkit.getOnlinePlayers()) {
+				if (p.isOp()) {
+					MagicSpells.plugin.sendMessage(p, message);
+				}
 			}
 		}
 	}
@@ -1203,13 +1205,7 @@ public class MagicSpells extends JavaPlugin {
 	
 	public static void error(String message) {
 		log(Level.WARNING, message);
-		if (plugin.debug) {
-			for(Player p : Bukkit.getOnlinePlayers()) {
-				if (p.isOp()) {
-					sendMessage(p, "&4MagicSpells error: &c" + message);
-				}
-			}
-		}
+		sendDebugMessage("&4MagicSpells error: &c" + message);
 	}
 	
 	/**

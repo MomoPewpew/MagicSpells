@@ -481,7 +481,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	private MagicConfig config;
 
-	private boolean debug;
+	protected int debugLevel;
+
 	protected String internalName;
 
 	protected String name;
@@ -642,7 +643,12 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	protected void loadConfigData(MagicConfig config, String spellName, String section) {
-		this.debug = config.getBoolean(section + '.' + spellName + ".debug", false);
+		boolean debugParam = config.getBoolean(section + '.' + spellName + ".debug", false);
+		this.debugLevel = config.getInt(section + '.' + spellName + ".debug-level", debugParam ? 3 : 0);
+		if (this.debugLevel >= MagicSpells.getDebugLevel()) {
+			this.debugLevel = MagicSpells.getDebugLevel();
+		}
+
 		this.profilingKey = "Spell:" + this.getClass().getName().replace("com.nisovin.magicspells.spells.", "") + '-' + spellName;
 		this.name = config.getString(section + '.' + spellName + ".name", spellName);
 		List<String> temp = config.getStringList(section + '.' + spellName + ".aliases", null);
@@ -2153,6 +2159,9 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			}
 		}
 	}
+	public int getDebugLevel() {
+		return this.debugLevel;
+	}
 
 	public String getInternalName() {
 		return this.internalName;
@@ -2273,7 +2282,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	protected void debug(int level, String message) {
-		if (this.debug) MagicSpells.debug(level, message);
+		if (level <= this.debugLevel) MagicSpells.debug(level, message);
 	}
 
 	/**

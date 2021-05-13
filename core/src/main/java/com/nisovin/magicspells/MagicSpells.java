@@ -609,8 +609,9 @@ public class MagicSpells extends JavaPlugin {
 		log("...done");
 		
 		// Initialize logger
-		if (config.getBoolean("general.enable-logging", false)) {
-			magicLogger = new MagicLogger(this);
+		boolean enableLogging = config.getBoolean("general.enable-logging", false);
+		if (enableLogging || debug) {
+			magicLogger = new MagicLogger(this, debug, enableLogging);
 		}
 		
 		// Register commands
@@ -790,6 +791,10 @@ public class MagicSpells extends JavaPlugin {
 		return spellbook;
 	}
 	
+	public static int getDebugLevel() {
+		return plugin.debugLevel;
+	}
+
 	public static ChatColor getTextColor() {
 		return plugin.textColor;
 	}
@@ -954,6 +959,16 @@ public class MagicSpells extends JavaPlugin {
 			for (String msg : msgs) {
 				if (!msg.isEmpty()) {
 					player.sendMessage(plugin.textColor + msg);
+				}
+			}
+		}
+	}
+
+	public static void sendDebugMessage(String message) {
+		if (plugin.debug) {
+			for(Player p : Bukkit.getOnlinePlayers()) {
+				if (p.isOp()) {
+					MagicSpells.plugin.sendMessage(p, message);
 				}
 			}
 		}
@@ -1190,6 +1205,7 @@ public class MagicSpells extends JavaPlugin {
 	
 	public static void error(String message) {
 		log(Level.WARNING, message);
+		sendDebugMessage("&4MagicSpells error: &c" + message);
 	}
 	
 	/**

@@ -26,15 +26,25 @@ public class MagicLogger implements Listener {
 
 	DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	FileWriter writer;
+	boolean debug;
+	boolean enableLogging;
 	
-	public MagicLogger(MagicSpells plugin) {
-		File file = new File(plugin.getDataFolder(), "log-" + System.currentTimeMillis() + ".txt");
-		try {
-			writer = new FileWriter(file, true);
-			MagicSpells.registerEvents(this);
-		} catch (IOException e) {
-			MagicSpells.handleException(e);
+	public MagicLogger(MagicSpells plugin, boolean debug, boolean enableLogging) {
+		this.debug = debug;
+		this.enableLogging = enableLogging;
+
+		if (enableLogging) {
+			File file = new File(plugin.getDataFolder(), "log-" + System.currentTimeMillis() + ".txt");
+			try {
+				writer = new FileWriter(file, true);
+			} catch (IOException e) {
+				MagicSpells.handleException(e);
+			}
+		} else {
+			writer = null;
 		}
+
+		MagicSpells.registerEvents(this);
 	}
 	
 	public void disable() {
@@ -51,66 +61,120 @@ public class MagicLogger implements Listener {
 	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onSpellLearn(SpellLearnEvent event) {
-		log("LEARN" + 
-				"; spell=" + event.getSpell().getInternalName() + 
-				"; player=" + event.getLearner().getName() + 
-				"; loc=" + formatLoc(event.getLearner().getLocation()) +
-				"; source=" + event.getSource().name() +
-				"; teacher=" + getTeacherName(event.getTeacher()) +
-				"; canceled=" + event.isCancelled());
+		Spell spell = event.getSpell();
+		String msg = "&eLEARN" + 
+			"&7; spell=&a" + spell.getInternalName();
+		String params = "&7; player=&f" + event.getLearner().getName() + 
+			"&7; loc=&f" + formatLoc(event.getLearner().getLocation()) +
+			"&7; source=&f" + event.getSource().name() +
+			"&7; teacher=&f" + getTeacherName(event.getTeacher()) +
+			"&7; canceled=&f" + event.isCancelled();
+		if (enableLogging) log((msg + params).replaceAll("&([0-9a-f])", ""));
+		if (debug) {
+			if (spell.getDebugLevel() >= 3) {
+				MagicSpells.sendDebugMessage(msg + params);
+			} else if (spell.getDebugLevel() >= 2) {
+				MagicSpells.sendDebugMessage(msg);
+			}
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onSpellForget(SpellForgetEvent event) {
-		log("FORGET" + 
-				"; spell=" + event.getSpell().getInternalName() + 
-				"; player=" + event.getForgetter().getName() + 
-				"; loc=" + formatLoc(event.getForgetter().getLocation()) +
-				"; canceled=" + event.isCancelled());
+		Spell spell = event.getSpell();
+		String msg = "&eFORGET" + 
+			"&7; spell=&a" + spell.getInternalName();
+		String params = "&7; player=&f" + event.getForgetter().getName() + 
+			"&7; loc=&f" + formatLoc(event.getForgetter().getLocation()) +
+			"&7; canceled=&f" + event.isCancelled();
+		if (enableLogging) log((msg + params).replaceAll("&([0-9a-f])", ""));
+		if (debug) {
+			if (spell.getDebugLevel() >= 3) {
+				MagicSpells.sendDebugMessage(msg + params);
+			} else if (spell.getDebugLevel() >= 2) {
+				MagicSpells.sendDebugMessage(msg);
+			}
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onSpellCast(SpellCastEvent event) {
-		log("BEGIN CAST" + 
-				"; spell=" + event.getSpell().getInternalName() + 
-				"; caster=" + event.getCaster().getName() + 
-				"; loc=" + formatLoc(event.getCaster().getLocation()) +
-				"; state=" + event.getSpellCastState().name() +
-				"; power=" + event.getPower() +
-				"; canceled=" + event.isCancelled());
+		Spell spell = event.getSpell();
+		String msg = "&eBEGIN CAST" + 
+			"&7; spell=&a" + spell.getInternalName();
+		String params = "&7; caster=&f" + event.getCaster().getName() + 
+			"&7; loc=&f" + formatLoc(event.getCaster().getLocation()) +
+			"&7; state=&f" + event.getSpellCastState().name() +
+			"&7; power=&f" + event.getPower() +
+			"&7; canceled=&f" + event.isCancelled();
+		if (enableLogging) log((msg + params).replaceAll("&([0-9a-f])", ""));
+		if (debug) {
+			if (spell.getDebugLevel() >= 3) {
+				MagicSpells.sendDebugMessage(msg + params);
+			} else if (spell.getDebugLevel() >= 1) {
+				MagicSpells.sendDebugMessage(msg);
+			}
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onSpellTarget(SpellTargetEvent event) {
+		Spell spell = event.getSpell();
 		Player caster = event.getCaster();
-		log("  TARGET ENTITY" + 
-				"; spell=" + event.getSpell().getInternalName() + 
-				"; caster=" + (caster != null ? caster.getName() : "null") + 
-				"; casterloc=" + (caster != null ? formatLoc(caster.getLocation()) : "null") +
-				": target=" + getTargetName(event.getTarget()) + 
-				"; targetloc=" + formatLoc(event.getTarget().getLocation()) +
-				"; canceled=" + event.isCancelled());
+		String msg = "&eTARGET ENTITY" + 
+			"&7; spell=&a" + spell.getInternalName();
+		String params = "&7; caster=&f" + (caster != null ? caster.getName() : "null") + 
+			"&7; casterloc=&f" + (caster != null ? formatLoc(caster.getLocation()) : "null") +
+			"&7; target=&f" + getTargetName(event.getTarget()) + 
+			"&7; targetloc=&f" + formatLoc(event.getTarget().getLocation()) +
+			"&7; canceled=&f" + event.isCancelled();
+		if (enableLogging) log("  " + (msg + params).replaceAll("&([0-9a-f])", ""));
+		if (debug) {
+			if (spell.getDebugLevel() >= 3) {
+				MagicSpells.sendDebugMessage(msg + params);
+			} else if (spell.getDebugLevel() >= 2) {
+				MagicSpells.sendDebugMessage(msg);
+			}
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onSpellTargetLocation(SpellTargetLocationEvent event) {
-		log("  TARGET LOCATION" + 
-				"; spell=" + event.getSpell().getInternalName() + 
-				"; caster=" + event.getCaster().getName() + 
-				"; casterloc=" + formatLoc(event.getCaster().getLocation()) +
-				"; targetloc=" + formatLoc(event.getTargetLocation()) +
-				"; canceled=" + event.isCancelled());
+		Spell spell = event.getSpell();
+		String msg = "&eTARGET LOCATION" + 
+			"&7; spell=&a" + spell.getInternalName();
+		String params = "&7; caster=&f" + event.getCaster().getName() + 
+			"&7; casterloc=&f" + formatLoc(event.getCaster().getLocation()) +
+			"&7; targetloc=&f" + formatLoc(event.getTargetLocation()) +
+			"&7; canceled=&f" + event.isCancelled();
+		if (enableLogging) log("  " + (msg + params).replaceAll("&([0-9a-f])", ""));
+		if (debug) {
+			if (spell.getDebugLevel() >= 3) {
+				MagicSpells.sendDebugMessage(msg + params);
+			} else if (spell.getDebugLevel() >= 2) {
+				MagicSpells.sendDebugMessage(msg);
+			}
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onSpellCasted(SpellCastedEvent event) {
-		log("  END CAST" + 
-				"; spell=" + event.getSpell().getInternalName() + 
-				"; caster=" + event.getCaster().getName() + 
-				"; loc=" + formatLoc(event.getCaster().getLocation()) +
-				"; state=" + event.getSpellCastState().name() +
-				"; power=" + event.getPower() +
-				"; result=" + event.getPostCastAction().name());
+		Spell spell = event.getSpell();
+		String msg = "&eEND CAST" + 
+			"&7; spell=&a" + spell.getInternalName();
+		String params = "&7; caster=&f" + event.getCaster().getName() + 
+			"&7; loc=&f" + formatLoc(event.getCaster().getLocation()) +
+			"&7; state=&f" + event.getSpellCastState().name() +
+			"&7; power=&f" + event.getPower() +
+			"&7; result=&f" + event.getPostCastAction().name();
+		if (enableLogging) log((msg + params).replaceAll("&([0-9a-f])", ""));
+		if (debug) {
+			if (spell.getDebugLevel() >= 3) {
+				MagicSpells.sendDebugMessage(msg + params);
+			} else if (spell.getDebugLevel() >= 1) {
+				MagicSpells.sendDebugMessage(msg);
+			}
+		}
 	}
 	
 	private String formatLoc(Location location) {

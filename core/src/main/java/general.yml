@@ -1,5 +1,6 @@
 debug: false
 debug-level: 3
+enable-logging: false
 enable-error-logging: true
 enable-stat-collection: true
 enable-volatile-features: true

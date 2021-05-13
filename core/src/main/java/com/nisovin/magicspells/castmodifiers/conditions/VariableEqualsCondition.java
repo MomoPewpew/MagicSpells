@@ -31,7 +31,7 @@ public class VariableEqualsCondition extends Condition {
 
 	@Override
 	public boolean check(Player player) {
-		return MagicSpells.getVariableManager().getValue(variable, player) == value;
+		return Math.abs(MagicSpells.getVariableManager().getValue(variable, player) - value) <= .00001;
 	}
 
 	@Override

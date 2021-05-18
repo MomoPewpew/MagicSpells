@@ -10,21 +10,21 @@ import com.nisovin.magicspells.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.conditions.*;
 
 public abstract class Condition {
-	
+
 	public abstract boolean setVar(String var);
 
 	public abstract boolean check(Player player);
-	
+
 	public abstract boolean check(Player player, LivingEntity target);
-	
+
 	public abstract boolean check(Player player, Location location);
-	
+
 	private static HashMap<String, Class<? extends Condition>> conditions = new HashMap<>();
-	
+
 	public static void addCondition(String name, Class<? extends Condition> condition) {
 		conditions.put(name.toLowerCase(), condition);
 	}
-	
+
 	static Condition getConditionByName(String name) {
 		Class<? extends Condition> clazz = conditions.get(name.toLowerCase());
 		if (clazz == null) {
@@ -41,7 +41,7 @@ public abstract class Condition {
 			return null;
 		}
 	}
-	
+
 	static {
 		conditions.put("disguised", DisguisedCondition.class);
 		conditions.put("day", DayCondition.class);
@@ -79,6 +79,7 @@ public abstract class Condition {
 		conditions.put("hasitem", HasItemCondition.class);
 		conditions.put("hasitemlessthan", HasItemLessThanCondition.class);
 		conditions.put("hasitemmorethan", HasItemMoreThanCondition.class);
+		conditions.put("hasitemgreaterthan", HasItemMoreThanCondition.class);
 		conditions.put("openslotslessthan", OpenSlotsLessThanCondition.class);
 		conditions.put("openslotsmorethan", OpenSlotsMoreThanCondition.class);
 		conditions.put("onteam", OnTeamCondition.class);
@@ -87,6 +88,7 @@ public abstract class Condition {
 		conditions.put("healthbelow", HealthBelowCondition.class);
 		conditions.put("absorptionlessthan", AbsorptionLessThanCondition.class);
 		conditions.put("absorptionmorethan", AbsorptionMoreThanCondition.class);
+		conditions.put("absorptiongreaterthan", AbsorptionMoreThanCondition.class);
 		conditions.put("manaabove", ManaAboveCondition.class);
 		conditions.put("manabelow", ManaBelowCondition.class);
 		conditions.put("foodabove", FoodAboveCondition.class);
@@ -110,13 +112,18 @@ public abstract class Condition {
 		conditions.put("chance", ChanceCondition.class);
 		conditions.put("entitytype", EntityTypeCondition.class);
 		conditions.put("distancemorethan", DistanceMoreThanCondition.class);
+		conditions.put("distancegreaterthan", DistanceMoreThanCondition.class);
 		conditions.put("distancelessthan", DistanceLessThanCondition.class);
 		conditions.put("name", NameCondition.class);
 		conditions.put("namepattern", NamePatternCondition.class);
 		conditions.put("uptime", UpTimeCondition.class);
 		conditions.put("variablemorethan", VariableMoreThanCondition.class);
+		conditions.put("variablegreaterthan", VariableMoreThanCondition.class);
 		conditions.put("variablelessthan", VariableLessThanCondition.class);
 		conditions.put("variableequals", VariableEqualsCondition.class);
+		conditions.put("variablegt", VariableMoreThanCondition.class);
+		conditions.put("variablelt", VariableLessThanCondition.class);
+		conditions.put("variableeq", VariableLessThanCondition.class);
 		conditions.put("variablecompare", VariableCompareCondition.class);
 		conditions.put("variablematches", VariableMatchesCondition.class);
 		conditions.put("variablestringequals", VariableStringEqualsCondition.class);
@@ -143,6 +150,7 @@ public abstract class Condition {
 		conditions.put("saturationabove", SaturationAboveCondition.class);
 		conditions.put("saturationbelow", SaturationBelowCondition.class);
 		conditions.put("moneymorethan", MoneyMoreThanCondition.class);
+		conditions.put("moneygreaterthan", MoneyMoreThanCondition.class);
 		conditions.put("moneylessthan", MoneyLessThanCondition.class);
 		conditions.put("collection", MultiCondition.class);
 		conditions.put("age", AgeCondition.class);
@@ -169,6 +177,13 @@ public abstract class Condition {
 		conditions.put("raining", RainingCondition.class);
 		conditions.put("onleash", OnLeashCondition.class);
 		conditions.put("griefpreventionisowner", GriefPreventionIsOwnerCondition.class);
+		conditions.put("nbtequals", NBTEquals.class);
+		conditions.put("nbtlessthan", NBTLessThan.class);
+		conditions.put("nbtgreaterthan", NBTGreaterThan.class);
+		conditions.put("nbtmorethan", NBTGreaterThan.class);
+		conditions.put("nbteq", NBTEquals.class);
+		conditions.put("nbtlt", NBTLessThan.class);
+		conditions.put("nbtgt", NBTGreaterThan.class);
 	}
-	
+
 }

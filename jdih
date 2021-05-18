@@ -1,0 +1,355 @@
+warning: LF will be replaced by CRLF in core/src/main/java/plugin.yml.
+The file will have its original line endings in your working directory
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mindex 321b690a..5dce71d3 100644[m
+[1m--- a/.gitignore[m
+[1m+++ b/.gitignore[m
+[36m@@ -22,3 +22,4 @@[m [mmemory/build/[m
+ shop/build/[m
+ teams/build/[m
+ towny/build/[m
+[32m+[m[32mbuild.bat[m
+\ No newline at end of file[m
+[1mdiff --git a/build.bat b/build.bat[m
+[1mindex 7bf7bc8a..3c129aab 100644[m
+[1m--- a/build.bat[m
+[1m+++ b/build.bat[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-set JAVA_HOME=E:\Program Files\Java\jdk8u265-b01[m
+[31m-set PATH=E:\Program Files\Java\jdk8u265-b01\bin;%PATH%[m
+[32m+[m[32mset JAVA_HOME=C:\Program Files\Java\jdk1.8.0_291[m
+[32m+[m[32mset PATH=C:\Program Files\Java\jdk1.8.0_291\bin;%PATH%[m
+ gradlew shadowJar[m
+ pause[m
+\ No newline at end of file[m
+[1mdiff --git a/core/src/main/java/com/nisovin/magicspells/MagicLogger.java b/core/src/main/java/com/nisovin/magicspells/MagicLogger.java[m
+[1mindex 8853240b..1f387fc9 100644[m
+[1m--- a/core/src/main/java/com/nisovin/magicspells/MagicLogger.java[m
+[1m+++ b/core/src/main/java/com/nisovin/magicspells/MagicLogger.java[m
+[36m@@ -7,6 +7,7 @@[m [mimport java.text.DateFormat;[m
+ import java.text.SimpleDateFormat;[m
+ import java.util.Date;[m
+ [m
+[32m+[m[32mimport org.bukkit.Bukkit;[m
+ import org.bukkit.Location;[m
+ import org.bukkit.block.Block;[m
+ import org.bukkit.entity.LivingEntity;[m
+[36m@@ -26,15 +27,25 @@[m [mpublic class MagicLogger implements Listener {[m
+ [m
+ 	DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");[m
+ 	FileWriter writer;[m
+[32m+[m	[32mboolean debug;[m
+[32m+[m	[32mboolean enableLogging;[m
+ 	[m
+[31m-	public MagicLogger(MagicSpells plugin) {[m
+[31m-		File file = new File(plugin.getDataFolder(), "log-" + System.currentTimeMillis() + ".txt");[m
+[31m-		try {[m
+[31m-			writer = new FileWriter(file, true);[m
+[31m-			MagicSpells.registerEvents(this);[m
+[31m-		} catch (IOException e) {[m
+[31m-			MagicSpells.handleException(e);[m
+[32m+[m	[32mpublic MagicLogger(MagicSpells plugin, boolean debug, boolean enableLogging) {[m
+[32m+[m		[32mthis.debug = debug;[m
+[32m+[m		[32mthis.enableLogging = enableLogging;[m
+[32m+[m
+[32m+[m		[32mif (enableLogging) {[m
+[32m+[m			[32mFile file = new File(plugin.getDataFolder(), "log-" + System.currentTimeMillis() + ".txt");[m
+[32m+[m			[32mtry {[m
+[32m+[m				[32mwriter = new FileWriter(file, true);[m
+[32m+[m			[32m} catch (IOException e) {[m
+[32m+[m				[32mMagicSpells.handleException(e);[m
+[32m+[m			[32m}[m
+[32m+[m		[32m} else {[m
+[32m+[m			[32mwriter = null;[m
+ 		}[m
+[32m+[m
+[32m+[m		[32mMagicSpells.registerEvents(this);[m
+ 	}[m
+ 	[m
+ 	public void disable() {[m
+[36m@@ -51,66 +62,120 @@[m [mpublic class MagicLogger implements Listener {[m
+ 	[m
+ 	@EventHandler(priority = EventPriority.MONITOR)[m
+ 	public void onSpellLearn(SpellLearnEvent event) {[m
+[31m-		log("LEARN" + [m
+[31m-				"; spell=" + event.getSpell().getInternalName() + [m
+[31m-				"; player=" + event.getLearner().getName() + [m
+[31m-				"; loc=" + formatLoc(event.getLearner().getLocation()) +[m
+[31m-				"; source=" + event.getSource().name() +[m
+[31m-				"; teacher=" + getTeacherName(event.getTeacher()) +[m
+[31m-				"; canceled=" + event.isCancelled());[m
+[32m+[m		[32mSpell spell = event.getSpell();[m
+[32m+[m		[32mString msg = "&eLEARN" +[m[41m [m
+[32m+[m			[32m"&7; spell=&a" + spell.getInternalName();[m
+[32m+[m		[32mString params = "&7; player=&f" + event.getLearner().getName() +[m[41m [m
+[32m+[m			[32m"&7; loc=&f" + formatLoc(event.getLearner().getLocation()) +[m
+[32m+[m			[32m"&7; source=&f" + event.getSource().name() +[m
+[32m+[m			[32m"&7; teacher=&f" + getTeacherName(event.getTeacher()) +[m
+[32m+[m			[32m"&7; canceled=&f" + event.isCancelled();[m
+[32m+[m		[32mif (enableLogging) log((msg + params).replaceAll("&([0-9a-f])", ""));[m
+[32m+[m		[32mif (debug) {[m
+[32m+[m			[32mif (spell.getDebugLevel() >= 3) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg + params);[m
+[32m+[m			[32m} else if (spell.getDebugLevel() >= 2) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg);[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m
+ 	}[m
+ 	[m
+ 	@EventHandler(priority = EventPriority.MONITOR)[m
+ 	public void onSpellForget(SpellForgetEvent event) {[m
+[31m-		log("FORGET" + [m
+[31m-				"; spell=" + event.getSpell().getInternalName() + [m
+[31m-				"; player=" + event.getForgetter().getName() + [m
+[31m-				"; loc=" + formatLoc(event.getForgetter().getLocation()) +[m
+[31m-				"; canceled=" + event.isCancelled());[m
+[32m+[m		[32mSpell spell = event.getSpell();[m
+[32m+[m		[32mString msg = "&eFORGET" +[m[41m [m
+[32m+[m			[32m"&7; spell=&a" + spell.getInternalName();[m
+[32m+[m		[32mString params = "&7; player=&f" + event.getForgetter().getName() +[m[41m [m
+[32m+[m			[32m"&7; loc=&f" + formatLoc(event.getForgetter().getLocation()) +[m
+[32m+[m			[32m"&7; canceled=&f" + event.isCancelled();[m
+[32m+[m		[32mif (enableLogging) log((msg + params).replaceAll("&([0-9a-f])", ""));[m
+[32m+[m		[32mif (debug) {[m
+[32m+[m			[32mif (spell.getDebugLevel() >= 3) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg + params);[m
+[32m+[m			[32m} else if (spell.getDebugLevel() >= 2) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg);[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m
+ 	}[m
+ 	[m
+ 	@EventHandler(priority = EventPriority.MONITOR)[m
+ 	public void onSpellCast(SpellCastEvent event) {[m
+[31m-		log("BEGIN CAST" + [m
+[31m-				"; spell=" + event.getSpell().getInternalName() + [m
+[31m-				"; caster=" + event.getCaster().getName() + [m
+[31m-				"; loc=" + formatLoc(event.getCaster().getLocation()) +[m
+[31m-				"; state=" + event.getSpellCastState().name() +[m
+[31m-				"; power=" + event.getPower() +[m
+[31m-				"; canceled=" + event.isCancelled());[m
+[32m+[m		[32mSpell spell = event.getSpell();[m
+[32m+[m		[32mString msg = "&eBEGIN CAST" +[m[41m [m
+[32m+[m			[32m"&7; spell=&a" + spell.getInternalName();[m
+[32m+[m		[32mString params = "&7; caster=&f" + event.getCaster().getName() +[m[41m [m
+[32m+[m			[32m"&7; loc=&f" + formatLoc(event.getCaster().getLocation()) +[m
+[32m+[m			[32m"&7; state=&f" + event.getSpellCastState().name() +[m
+[32m+[m			[32m"&7; power=&f" + event.getPower() +[m
+[32m+[m			[32m"&7; canceled=&f" + event.isCancelled();[m
+[32m+[m		[32mif (enableLogging) log((msg + params).replaceAll("&([0-9a-f])", ""));[m
+[32m+[m		[32mif (debug) {[m
+[32m+[m			[32mif (spell.getDebugLevel() >= 3) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg + params);[m
+[32m+[m			[32m} else if (spell.getDebugLevel() >= 1) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg);[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m
+ 	}[m
+ 	[m
+ 	@EventHandler(priority = EventPriority.MONITOR)[m
+ 	public void onSpellTarget(SpellTargetEvent event) {[m
+[32m+[m		[32mSpell spell = event.getSpell();[m
+ 		Player caster = event.getCaster();[m
+[31m-		log("  TARGET ENTITY" + [m
+[31m-				"; spell=" + event.getSpell().getInternalName() + [m
+[31m-				"; caster=" + (caster != null ? caster.getName() : "null") + [m
+[31m-				"; casterloc=" + (caster != null ? formatLoc(caster.getLocation()) : "null") +[m
+[31m-				": target=" + getTargetName(event.getTarget()) + [m
+[31m-				"; targetloc=" + formatLoc(event.getTarget().getLocation()) +[m
+[31m-				"; canceled=" + event.isCancelled());[m
+[32m+[m		[32mString msg = "&eTARGET ENTITY" +[m[41m [m
+[32m+[m			[32m"&7; spell=&a" + spell.getInternalName();[m
+[32m+[m		[32mString params = "&7; caster=&f" + (caster != null ? caster.getName() : "null") +[m[41m [m
+[32m+[m			[32m"&7; casterloc=&f" + (caster != null ? formatLoc(caster.getLocation()) : "null") +[m
+[32m+[m			[32m"&7; target=&f" + getTargetName(event.getTarget()) +[m[41m [m
+[32m+[m			[32m"&7; targetloc=&f" + formatLoc(event.getTarget().getLocation()) +[m
+[32m+[m			[32m"&7; canceled=&f" + event.isCancelled();[m
+[32m+[m		[32mif (enableLogging) log("  " + (msg + params).replaceAll("&([0-9a-f])", ""));[m
+[32m+[m		[32mif (debug) {[m
+[32m+[m			[32mif (spell.getDebugLevel() >= 3) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg + params);[m
+[32m+[m			[32m} else if (spell.getDebugLevel() >= 2) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg);[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m
+ 	}[m
+ 	[m
+ 	@EventHandler(priority = EventPriority.MONITOR)[m
+ 	public void onSpellTargetLocation(SpellTargetLocationEvent event) {[m
+[31m-		log("  TARGET LOCATION" + [m
+[31m-				"; spell=" + event.getSpell().getInternalName() + [m
+[31m-				"; caster=" + event.getCaster().getName() + [m
+[31m-				"; casterloc=" + formatLoc(event.getCaster().getLocation()) +[m
+[31m-				"; targetloc=" + formatLoc(event.getTargetLocation()) +[m
+[31m-				"; canceled=" + event.isCancelled());[m
+[32m+[m		[32mSpell spell = event.getSpell();[m
+[32m+[m		[32mString msg = "&eTARGET LOCATION" +[m[41m [m
+[32m+[m			[32m"&7; spell=&a" + spell.getInternalName();[m
+[32m+[m		[32mString params = "&7; caster=&f" + event.getCaster().getName() +[m[41m [m
+[32m+[m			[32m"&7; casterloc=&f" + formatLoc(event.getCaster().getLocation()) +[m
+[32m+[m			[32m"&7; targetloc=&f" + formatLoc(event.getTargetLocation()) +[m
+[32m+[m			[32m"&7; canceled=&f" + event.isCancelled();[m
+[32m+[m		[32mif (enableLogging) log("  " + (msg + params).replaceAll("&([0-9a-f])", ""));[m
+[32m+[m		[32mif (debug) {[m
+[32m+[m			[32mif (spell.getDebugLevel() >= 3) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg + params);[m
+[32m+[m			[32m} else if (spell.getDebugLevel() >= 2) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg);[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m
+ 	}[m
+ 	[m
+ 	@EventHandler(priority = EventPriority.MONITOR)[m
+ 	public void onSpellCasted(SpellCastedEvent event) {[m
+[31m-		log("  END CAST" + [m
+[31m-				"; spell=" + event.getSpell().getInternalName() + [m
+[31m-				"; caster=" + event.getCaster().getName() + [m
+[31m-				"; loc=" + formatLoc(event.getCaster().getLocation()) +[m
+[31m-				"; state=" + event.getSpellCastState().name() +[m
+[31m-				"; power=" + event.getPower() +[m
+[31m-				"; result=" + event.getPostCastAction().name());[m
+[32m+[m		[32mSpell spell = event.getSpell();[m
+[32m+[m		[32mString msg = "&eEND CAST" +[m[41m [m
+[32m+[m			[32m"&7; spell=&a" + spell.getInternalName();[m
+[32m+[m		[32mString params = "&7; caster=&f" + event.getCaster().getName() +[m[41m [m
+[32m+[m			[32m"&7; loc=&f" + formatLoc(event.getCaster().getLocation()) +[m
+[32m+[m			[32m"&7; state=&f" + event.getSpellCastState().name() +[m
+[32m+[m			[32m"&7; power=&f" + event.getPower() +[m
+[32m+[m			[32m"&7; result=&f" + event.getPostCastAction().name();[m
+[32m+[m		[32mif (enableLogging) log("  " + (msg + params).replaceAll("&([0-9a-f])", ""));[m
+[32m+[m		[32mif (debug) {[m
+[32m+[m			[32mif (spell.getDebugLevel() >= 3) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg + params);[m
+[32m+[m			[32m} else if (spell.getDebugLevel() >= 1) {[m
+[32m+[m				[32mMagicSpells.sendDebugMessage(msg);[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m
+ 	}[m
+ 	[m
+ 	private String formatLoc(Location location) {[m
+[1mdiff --git a/core/src/main/java/com/nisovin/magicspells/MagicSpells.java b/core/src/main/java/com/nisovin/magicspells/MagicSpells.java[m
+[1mindex 1750e82f..2ba748ac 100644[m
+[1m--- a/core/src/main/java/com/nisovin/magicspells/MagicSpells.java[m
+[1m+++ b/core/src/main/java/com/nisovin/magicspells/MagicSpells.java[m
+[36m@@ -609,8 +609,9 @@[m [mpublic class MagicSpells extends JavaPlugin {[m
+ 		log("...done");[m
+ 		[m
+ 		// Initialize logger[m
+[31m-		if (config.getBoolean("general.enable-logging", false)) {[m
+[31m-			magicLogger = new MagicLogger(this);[m
+[32m+[m		[32mboolean enableLogging = config.getBoolean("general.enable-logging", false);[m
+[32m+[m		[32mif (enableLogging || debug) {[m
+[32m+[m			[32mmagicLogger = new MagicLogger(this, debug, enableLogging);[m
+ 		}[m
+ 		[m
+ 		// Register commands[m
+[36m@@ -790,6 +791,10 @@[m [mpublic class MagicSpells extends JavaPlugin {[m
+ 		return spellbook;[m
+ 	}[m
+ 	[m
+[32m+[m	[32mpublic static int getDebugLevel() {[m
+[32m+[m		[32mreturn plugin.debugLevel;[m
+[32m+[m	[32m}[m
+[32m+[m
+ 	public static ChatColor getTextColor() {[m
+ 		return plugin.textColor;[m
+ 	}[m
+[36m@@ -958,6 +963,14 @@[m [mpublic class MagicSpells extends JavaPlugin {[m
+ 			}[m
+ 		}[m
+ 	}[m
+[32m+[m
+[32m+[m	[32mpublic static void sendDebugMessage(String message) {[m
+[32m+[m		[32mfor(Player p : Bukkit.getOnlinePlayers()) {[m
+[32m+[m			[32mif (p.isOp()) {[m
+[32m+[m				[32mMagicSpells.plugin.sendMessage(p, message);[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m
+[32m+[m	[32m}[m
+ 	[m
+ 	private static Pattern chatVarMatchPattern = Pattern.compile("%var:[A-Za-z0-9_]+(:[0-9]+)?%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);		[m
+ 	public static String doSubjectVariableReplacements(Player player, String string) {[m
+[36m@@ -1190,6 +1203,13 @@[m [mpublic class MagicSpells extends JavaPlugin {[m
+ 	[m
+ 	public static void error(String message) {[m
+ 		log(Level.WARNING, message);[m
+[32m+[m		[32mif (plugin.debug) {[m
+[32m+[m			[32mfor(Player p : Bukkit.getOnlinePlayers()) {[m
+[32m+[m				[32mif (p.isOp()) {[m
+[32m+[m					[32msendMessage(p, "&4MagicSpells error: &c" + message);[m
+[32m+[m				[32m}[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m
+ 	}[m
+ 	[m
+ 	/**[m
+[1mdiff --git a/core/src/main/java/com/nisovin/magicspells/Spell.java b/core/src/main/java/com/nisovin/magicspells/Spell.java[m
+[1mindex dbb91c7a..07fd1217 100644[m
+[1m--- a/core/src/main/java/com/nisovin/magicspells/Spell.java[m
+[1m+++ b/core/src/main/java/com/nisovin/magicspells/Spell.java[m
+[36m@@ -481,7 +481,8 @@[m [mpublic abstract class Spell implements Comparable<Spell>, Listener {[m
+ [m
+ 	private MagicConfig config;[m
+ [m
+[31m-	private boolean debug;[m
+[32m+[m	[32mprotected int debugLevel;[m
+[32m+[m
+ 	protected String internalName;[m
+ [m
+ 	protected String name;[m
+[36m@@ -642,7 +643,12 @@[m [mpublic abstract class Spell implements Comparable<Spell>, Listener {[m
+ 	}[m
+ [m
+ 	protected void loadConfigData(MagicConfig config, String spellName, String section) {[m
+[31m-		this.debug = config.getBoolean(section + '.' + spellName + ".debug", false);[m
+[32m+[m		[32mboolean debugParam = config.getBoolean(section + '.' + spellName + ".debug", false);[m
+[32m+[m		[32mthis.debugLevel = config.getInt(section + '.' + spellName + ".debug-level", debugParam ? 3 : 0);[m
+[32m+[m		[32mif (this.debugLevel >= MagicSpells.getDebugLevel()) {[m
+[32m+[m			[32mthis.debugLevel = MagicSpells.getDebugLevel();[m
+[32m+[m		[32m}[m
+[32m+[m
+ 		this.profilingKey = "Spell:" + this.getClass().getName().replace("com.nisovin.magicspells.spells.", "") + '-' + spellName;[m
+ 		this.name = config.getString(section + '.' + spellName + ".name", spellName);[m
+ 		List<String> temp = config.getStringList(section + '.' + spellName + ".aliases", null);[m
+[36m@@ -2153,6 +2159,9 @@[m [mpublic abstract class Spell implements Comparable<Spell>, Listener {[m
+ 			}[m
+ 		}[m
+ 	}[m
+[32m+[m	[32mpublic int getDebugLevel() {[m
+[32m+[m		[32mreturn this.debugLevel;[m
+[32m+[m	[32m}[m
+ [m
+ 	public String getInternalName() {[m
+ 		return this.internalName;[m
+[36m@@ -2273,7 +2282,7 @@[m [mpublic abstract class Spell implements Comparable<Spell>, Listener {[m
+ 	}[m
+ [m
+ 	protected void debug(int level, String message) {[m
+[31m-		if (this.debug) MagicSpells.debug(level, message);[m
+[32m+[m		[32mif (level <= this.debugLevel) MagicSpells.debug(level, message);[m
+ 	}[m
+ [m
+ 	/**[m
+[1mdiff --git a/core/src/main/java/general.yml b/core/src/main/java/general.yml[m
+[1mindex bc309a76..0fdaf70a 100644[m
+[1m--- a/core/src/main/java/general.yml[m
+[1m+++ b/core/src/main/java/general.yml[m
+[36m@@ -1,5 +1,6 @@[m
+ debug: false[m
+ debug-level: 3[m
+[32m+[m[32menable-logging: false[m
+ enable-error-logging: true[m
+ enable-stat-collection: true[m
+ enable-volatile-features: true[m
+[1mdiff --git a/core/src/main/java/plugin.yml b/core/src/main/java/plugin.yml[m
+[1mindex cec443b3..69e491c5 100644[m
+[1m--- a/core/src/main/java/plugin.yml[m
+[1m+++ b/core/src/main/java/plugin.yml[m
+[36m@@ -1,6 +1,6 @@[m
+ name: MagicSpells[m
+ main: com.nisovin.magicspells.MagicSpells[m
+[31m-version: $project.ext.magicspellsData.stringVersionCore[m
+[32m+[m[32mversion: 3.6-dev-1906230222[m
+ authors: [nisovin, TheComputerGeek2,Chronoken][m
+ softdepend: [GriefPrevention,Vault,ProtocolLib,WorldGuard,Residence,PowerNBT,LibsDisguises,NoCheatPlus,PlaceholderAPI][m
+ depend: [EffectLib][m

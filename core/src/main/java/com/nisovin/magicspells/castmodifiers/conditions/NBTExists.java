@@ -41,7 +41,7 @@ public class NBTExists extends Condition {
 
 		EntityLiving el = ((CraftLivingEntity)target).getHandle();
 
-    	el.b(compound);
+		el.b(compound);
 
 		boolean succ = true;
 		for (int i = 0; i < key.length - 1; i++) {

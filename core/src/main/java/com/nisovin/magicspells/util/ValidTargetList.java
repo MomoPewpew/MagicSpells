@@ -27,7 +27,8 @@ public class ValidTargetList {
 		TARGET_NONPLAYERS,
 		TARGET_MONSTERS,
 		TARGET_ANIMALS,
-		TARGET_NONLIVING_ENTITIES
+		TARGET_NONLIVING_ENTITIES,
+		TARGET_SPECTATORS
 
 	}
 
@@ -38,6 +39,7 @@ public class ValidTargetList {
 	boolean targetMonsters = false;
 	boolean targetAnimals = false;
 	boolean targetNonLivingEntities = false; // This will be kept as false for now during restructuring
+	boolean targetSpectators = false;
 	Set<EntityType> types = new HashSet<>();
 
 	public ValidTargetList(Spell spell, String list) {
@@ -69,6 +71,9 @@ public class ValidTargetList {
 			break;
 		case TARGET_PLAYERS:
 			this.targetPlayers = value;
+			break;
+		case TARGET_SPECTATORS:
+			this.targetSpectators = value;
 			break;
 		}
 	}
@@ -114,6 +119,10 @@ public class ValidTargetList {
 				case "animals":
 					this.targetAnimals = true;
 					break;
+				case "spectator":
+				case "spectators":
+					this.targetSpectators = true;
+					break;
 				default:
 					EntityType type = Util.getEntityType(s);
 					if (type != null) {
@@ -138,6 +147,7 @@ public class ValidTargetList {
 		if (!(target instanceof LivingEntity) && !this.targetNonLivingEntities) return false;
 		boolean targetIsPlayer = target instanceof Player;
 		//if (targetIsPlayer && ((Player)target).getGameMode() == GameMode.CREATIVE) return false;
+		if (!this.targetSpectators && targetIsPlayer && ((Player)target).getGameMode() == GameMode.SPECTATOR) return false;
 		if (this.targetSelf && target.equals(caster)) return true;
 		if (!this.targetSelf && target.equals(caster)) return false;
 		if (!this.targetInvisibles && targetIsPlayer && !caster.canSee((Player)target)) return false;
@@ -153,6 +163,7 @@ public class ValidTargetList {
 		if (!(target instanceof LivingEntity) && !this.targetNonLivingEntities) return false;
 		boolean targetIsPlayer = target instanceof Player;
 		//if (targetIsPlayer && ((Player)target).getGameMode() == GameMode.CREATIVE) return false;
+		if (!this.targetSpectators && targetIsPlayer && ((Player)target).getGameMode() == GameMode.SPECTATOR) return false;
 		if (this.targetPlayers && targetIsPlayer) return true;
 		if (this.targetNonPlayers && !targetIsPlayer) return true;
 		if (this.targetMonsters && target instanceof Monster) return true;
@@ -207,6 +218,10 @@ public class ValidTargetList {
 		return this.targetNonLivingEntities;
 	}
 
+	public boolean canTargetSpectators() {
+		return this.targetSpectators;
+	}
+
 	@Override
 	public String toString() {
 		return "ValidTargetList:["
@@ -218,6 +233,7 @@ public class ValidTargetList {
 			+ ",targetAnimals=" + this.targetAnimals
 			+ ",types=" + this.types
 			+ ",targetNonLivingEntities=" + this.targetNonLivingEntities
+			+ ",targetSpectators=" + this.targetSpectators
 			+ ']';
 	}
 

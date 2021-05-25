@@ -1843,6 +1843,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 						target = null;
 						continue;
 					}*/
+					if (!this.validTargetList.canTargetSpectators() && target instanceof Player && ((Player)target).getGameMode() == GameMode.SPECTATOR) {
+						target = null;
+						continue;
+					}
 
 					// Check for anti-magic-zone
 					if (target != null && MagicSpells.getNoMagicZoneManager() != null && MagicSpells.getNoMagicZoneManager().willFizzle(target.getLocation(), this)) {

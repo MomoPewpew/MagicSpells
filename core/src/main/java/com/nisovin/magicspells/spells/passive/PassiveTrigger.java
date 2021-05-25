@@ -10,9 +10,9 @@ import org.bukkit.event.EventPriority;
 import com.nisovin.magicspells.MagicSpells;
 
 public class PassiveTrigger {
-	
+
 	private static Map<String, PassiveTrigger> map = new HashMap<>();
-	
+
 	private static Map<EventPriority, String> triggerPrioritySuffix;
 	static {
 		triggerPrioritySuffix = new HashMap<>();
@@ -23,7 +23,7 @@ public class PassiveTrigger {
 		triggerPrioritySuffix.put(EventPriority.HIGHEST, "_highestpriority");
 		triggerPrioritySuffix.put(EventPriority.MONITOR, "_monitorpriority");
 	}
-	
+
 	public static Set<PassiveTrigger> TAKE_DAMAGE = addTriggers("takedamage", TakeDamageListener.class);
 	public static Set<PassiveTrigger> GIVE_DAMAGE = addTriggers("givedamage", GiveDamageListener.class);
 	public static Set<PassiveTrigger> FATAL_DAMAGE = addTriggers("fataldamage", FatalDamageListener.class);
@@ -63,19 +63,20 @@ public class PassiveTrigger {
 	public static Set<PassiveTrigger> TELEPORT = addTriggers("teleport", TeleportListener.class);
 	public static Set<PassiveTrigger> BUFF = addTriggers("buff", BuffListener.class);
 	public static Set<PassiveTrigger> TICKS = addTriggers("ticks", TicksListener.class);
-	
+	public static Set<PassiveTrigger> GAMEMODE = addTriggers("gamemode", GameModeChangeListener.class);
+
 	// can't do priorities here
 	public static PassiveTrigger RESOURCE_PACK = addTrigger("resourcepack", ResourcePackListener.class);
-	
+
 	public static Set<PassiveTrigger> ENTER_BED = addTriggers("enterbed", EnterBedListener.class);
 	public static Set<PassiveTrigger> LEAVE_BED = addTriggers("leavebed", LeaveBedListener.class);
 	public static Set<PassiveTrigger> SHEAR_SHEEP = addTriggers("shearsheep", SheepShearListener.class);
 	public static Set<PassiveTrigger> SWAP_HAND_ITEMS = addTriggers("swaphanditem", OffhandSwapListener.class);
-	
+
 	public static Set<PassiveTrigger> START_GLIDE = addTriggers("startglide", GlideListener.class);
 	public static Set<PassiveTrigger> STOP_GLIDE = addTriggers("stopglide", GlideListener.class);
-	
-	
+
+
 	public static Set<PassiveTrigger> addTriggers(String baseName, Class<? extends PassiveListener> listener) {
 		Set<PassiveTrigger> ret = new HashSet<>();
 		for (Map.Entry<EventPriority, String> entry: triggerPrioritySuffix.entrySet()) {
@@ -83,36 +84,36 @@ public class PassiveTrigger {
 		}
 		return ret;
 	}
-	
+
 	public static PassiveTrigger addTrigger(String name, Class<? extends PassiveListener> listener) {
 		return addTrigger(name, listener, EventPriority.NORMAL);
 	}
-	
+
 	public static PassiveTrigger addTrigger(String name, Class<? extends PassiveListener> listener, EventPriority overridePriority) {
 		PassiveTrigger trigger = new PassiveTrigger(name, listener, overridePriority);
 		map.put(trigger.getName(), trigger);
 		return trigger;
 	}
-	
+
 	public static PassiveTrigger getByName(String name) {
 		return map.get(name);
 	}
-	
+
 	String name;
 	Class<? extends PassiveListener> listenerClass;
 	PassiveListener listener;
 	EventPriority customPriority;
-	
+
 	PassiveTrigger(String name, Class<? extends PassiveListener> listener, EventPriority overridePriority) {
 		this.name = name;
 		this.listenerClass = listener;
 		this.customPriority = overridePriority;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
-	
+
 	public PassiveListener getListener() {
 		if (listener == null) {
 			try {
@@ -125,5 +126,5 @@ public class PassiveTrigger {
 		}
 		return listener;
 	}
-	
+
 }

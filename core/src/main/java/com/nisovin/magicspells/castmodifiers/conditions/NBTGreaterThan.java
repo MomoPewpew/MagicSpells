@@ -30,7 +30,11 @@ public class NBTGreaterThan extends Condition {
 	public boolean setVar(String var) {
 		try {
 			String[] data = var.split(":");
-			key = data[0].split("-");
+			key = data[0].split(".");
+			if(key.length == 0) {
+				String[] t = {data[0]};
+				key = t;
+			}
 			val = Double.parseDouble(data[1]);
 			return true;
 		} catch (NumberFormatException e) {

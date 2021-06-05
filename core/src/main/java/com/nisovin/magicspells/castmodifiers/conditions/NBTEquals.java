@@ -30,7 +30,11 @@ public class NBTEquals extends Condition {
 	public boolean setVar(String var) {
 		try {
 			String[] data = var.split(":");
-			key = data[0].split("-");
+			key = data[0].split(".");
+			if(key.length == 0) {
+				String[] t = {data[0]};
+				key = t;
+			}
 			val = Double.parseDouble(data[1]);
 			return true;
 		} catch (NumberFormatException e) {
@@ -67,7 +71,7 @@ public class NBTEquals extends Condition {
 		if(succ) {
 			if(compound.hasKey(key[key.length - 1])) {
 				double test = compound.getDouble(key[key.length - 1]);
-				return test == val;
+				return Math.abs(test - val) < .00001;
 			}
 		}
 		// MagicSpells.sendDebugMessage(key + " : " + false);

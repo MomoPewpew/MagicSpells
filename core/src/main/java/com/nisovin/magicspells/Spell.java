@@ -759,7 +759,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		this.interruptOnMove = config.getBoolean(section + '.' + spellName + ".interrupt-on-move", true);
 		this.interruptOnTeleport = config.getBoolean(section + '.' + spellName + ".interrupt-on-teleport", true);
 		this.interruptOnDamage = config.getBoolean(section + '.' + spellName + ".interrupt-on-damage", false);
-		this.interruptOnCast = config.getBoolean(section + '.' + spellName + ".interrupt-on-cast", true);
+		this.interruptOnCast = config.getBoolean(section + '.' + spellName + ".interrupt-on-cast", false);
 		this.spellNameOnInterrupt = config.getString(section + '.' + spellName + ".spell-on-interrupt", null);
 
 		// Targeting

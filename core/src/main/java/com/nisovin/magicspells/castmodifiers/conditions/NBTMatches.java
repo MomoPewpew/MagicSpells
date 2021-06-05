@@ -30,7 +30,11 @@ public class NBTMatches extends Condition {
 	public boolean setVar(String var) {
 		try {
 			String[] data = var.split(":");
-			key = data[0].split("-");
+			key = data[0].split(".");
+			if(key.length == 0) {
+				String[] t = {data[0]};
+				key = t;
+			}
 			val = data[1];
 			return true;
 		} catch (NumberFormatException e) {

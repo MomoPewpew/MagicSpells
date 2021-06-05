@@ -27,7 +27,11 @@ public class NBTDebug extends Condition {
 
 	@Override
 	public boolean setVar(String var) {
-		key = var.split("-");
+		key = var.split(".");
+		if(key.length == 0) {
+			String[] t = {var};
+			key = t;
+		}
 		return true;
 	}
 

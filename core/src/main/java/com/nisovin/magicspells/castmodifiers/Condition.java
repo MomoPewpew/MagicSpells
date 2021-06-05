@@ -187,5 +187,7 @@ public abstract class Condition {
 		conditions.put("nbtexists", NBTExists.class);
 		conditions.put("nbtdebug", NBTDebug.class);
 		conditions.put("nbtmatches", NBTMatches.class);
+		conditions.put("nbtexpr", NBTExpr.class);
+		conditions.put("nbtexpression", NBTExpr.class);
 	}
 }

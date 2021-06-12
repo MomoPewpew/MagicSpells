@@ -14,23 +14,23 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
-import com.nisovin.magicspells.spells.instant.MarkSpell;
+import com.nisovin.magicspells.spells.targeted.PulserSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.MagicLocation;
 
-public class RemoveMarksSpell extends TargetedSpell implements TargetedLocationSpell {
+public class RemovePulsersSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	float radius;
 	boolean pointBlank;
 	String markSpellName;
-	MarkSpell markSpell;
+	PulserSpell pulserSpell;
 	boolean mustBeOwner;
 
-	public RemoveMarksSpell(MagicConfig config, String spellName) {
+	public RemovePulsersSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 		radius = getConfigFloat("radius", 10F);
 		pointBlank = getConfigBoolean("point-blank", false);
-		markSpellName = getConfigString("mark-spell", "mark");
+		markSpellName = getConfigString("pulser-spell", "mark");
 		mustBeOwner = getConfigBoolean("must-be-owner", false);
 	}
 
@@ -38,8 +38,8 @@ public class RemoveMarksSpell extends TargetedSpell implements TargetedLocationS
 	public void initialize() {
 		super.initialize();
 		Spell spell = MagicSpells.getSpellByInternalName(markSpellName);
-		if (spell instanceof MarkSpell) {
-			markSpell = (MarkSpell)spell;
+		if (spell instanceof PulserSpell) {
+			pulserSpell = (PulserSpell)spell;
 		} else {
 			MagicSpells.error("Failed to get mark spell for '" + internalName + "' spell");
 		}
@@ -56,43 +56,43 @@ public class RemoveMarksSpell extends TargetedSpell implements TargetedLocationS
 				if (b != null && b.getType() != Material.AIR) loc = b.getLocation();
 			}
 			if (loc == null) return noTarget(player);
-			removeMarks(player, loc, power);
+			removePulsers(player, loc, power);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	void removeMarks(Player caster, Location loc, float power) {
+	void removePulsers(Player caster, Location loc, float power) {
 		float rad = radius * power;
 		float radSq = rad * rad;
-		HashMap<String, MagicLocation> marks = markSpell.getMarks();
-		Iterator<String> iter = marks.keySet().iterator();
+		HashMap<Block, PulserSpell.Pulser> pulsers = pulserSpell.getPulsers();
+		Iterator<Block> iter = pulsers.keySet().iterator();
 		World locWorld = loc.getWorld();
 		String locWorldName = locWorld.getName();
-		boolean isMod = false;
 		while (iter.hasNext()) {
-			String playerKey = iter.next();
-			if (mustBeOwner && !MarkSpell.getPlayerKey(caster).equals(playerKey)) continue;
-			MagicLocation l = marks.get(playerKey);
-			if (!l.getWorld().equals(locWorldName)) continue;
-			if (l.getLocation().distanceSquared(loc) < radSq) {
-				isMod = true;
+			Block block = iter.next();
+			PulserSpell.Pulser pulser = pulsers.get(block);
+			if (mustBeOwner && !pulser.caster.equals(caster)) continue;
+			Location l = pulser.location;
+			if (!l.getWorld().getName().equals(locWorldName)) continue;
+			if (l.distanceSquared(loc) < radSq) {
+				pulser.stop();
+				block.setType(Material.AIR);
 				iter.remove();
 			}
 		}
-		if (isMod) markSpell.saveMarks();
 		if (caster != null) playSpellEffects(EffectPosition.CASTER, caster);
 		playSpellEffects(EffectPosition.TARGET, loc);
 	}
 
 	@Override
 	public boolean castAtLocation(Player caster, Location target, float power) {
-		removeMarks(caster, target, power);
+		removePulsers(caster, target, power);
 		return true;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power) {
-		removeMarks(null, target, power);
+		removePulsers(null, target, power);
 		return true;
 	}
 }

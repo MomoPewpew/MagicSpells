@@ -22,31 +22,31 @@ import com.nisovin.magicspells.util.expression.Expression;
  * Represents a graphical effect that can be used with the 'effects' option of a spell.<p>
  */
 public abstract class SpellEffect {
-	
+
 	// for normal/line
 	@ConfigData(field="height-offset", dataType="double", defaultValue="0")
 	double heightOffset = 0;
-	
+
 	Expression heightOffsetExpression = null;
-	
+
 	@ConfigData(field="forward-offset", dataType="double", defaultValue="0")
 	double forwardOffset = 0;
-	
+
 	Expression forwardOffsetExpression = null;
 
 	@ConfigData(field="z-offset", dataType="double", defaultValue="0")
 	double zOffset = 0;
-	
+
 	@ConfigData(field="chance", dataType="double", defaultValue="-1")
 	double chance = -1;
-	
+
 	@ConfigData(field="delay", dataType="int", defaultValue="0")
 	int delay = 0;
-	
+
 	// for line
 	@ConfigData(field="distance-between", dataType="double", defaultValue="1")
 	double distanceBetween = 1;
-	
+
 	// for buff
 	@ConfigData(field="effect-interval", dataType="int", defaultValue="20")
 	int effectInterval = TimeUtil.TICKS_PER_SECOND;
@@ -54,16 +54,16 @@ public abstract class SpellEffect {
 	// for orbit
 	@ConfigData(field="orbit-radius", dataType="double", defaultValue="1")
 	float orbitRadius = 1;
-	
+
 	@ConfigData(field="orbit-y-offset", dataType="double", defaultValue="0")
 	float orbitYOffset = 0;
-	
+
 	@ConfigData(field="orbit-seconds-per-revolution", dataType="double", defaultValue="3")
 	float secondsPerRevolution = 3;
-	
+
 	@ConfigData(field="orbit-counter-clockwise", dataType="boolean", defaultValue="false")
 	boolean counterClockwise = false;
-	
+
 	@ConfigData(field="orbit-tick-interval", dataType="int", defaultValue="2")
 	int tickInterval = 2;
 
@@ -85,15 +85,15 @@ public abstract class SpellEffect {
 	float ticksPerSecond;
 	float distancePerTick;
 	int ticksPerRevolution;
-	
+
 	ModifierSet modifiers = null;
-	
+
 	Random random = new Random();
-	
+
 	int taskId = -1;
-	
+
 	public abstract void loadFromString(String string);
-	
+
 	public final void loadFromConfiguration(ConfigurationSection config) {
 		heightOffset = config.getDouble("height-offset", heightOffset);
 		String heightOffsetExpressionString = config.getString("height-offset-expression", null);
@@ -102,7 +102,7 @@ public abstract class SpellEffect {
 		} else {
 			heightOffsetExpression = new Expression(heightOffsetExpressionString);
 		}
-		
+
 		forwardOffset = config.getDouble("forward-offset", forwardOffset);
 		String forwardOffsetExpressionString = config.getString("forward-offset-expression", null);
 		if (forwardOffsetExpressionString == null) {
@@ -112,11 +112,11 @@ public abstract class SpellEffect {
 		}
 
 		zOffset = config.getDouble("z-offset", zOffset);
-		
+
 		chance = config.getDouble("chance", chance) / 100;
-		
+
 		delay = config.getInt("delay", delay);
-		
+
 		distanceBetween = config.getDouble("distance-between", distanceBetween);
 		effectInterval = config.getInt("effect-interval", effectInterval);
 
@@ -133,15 +133,15 @@ public abstract class SpellEffect {
 		distancePerTick = 6.28F / (ticksPerSecond * secondsPerRevolution);
 		ticksPerRevolution = Math.round(ticksPerSecond * secondsPerRevolution);
 		orbitYOffset = (float)config.getDouble("orbit-y-offset", orbitYOffset);
-		
+
 		List<String> list = config.getStringList("modifiers");
 		if (list != null) modifiers = new ModifierSet(list);
-		
+
 		loadFromConfig(config);
 	}
-	
+
 	protected abstract void loadFromConfig(ConfigurationSection config);
-	
+
 	/**
 	 * Plays an effect on the specified entity.
 	 * @param entity the entity to play the effect on
@@ -153,11 +153,11 @@ public abstract class SpellEffect {
 		MagicSpells.scheduleDelayedTask(() -> playEffectEntity(entity), delay);
 		return null;
 	}
-	
+
 	protected Runnable playEffectEntity(Entity entity) {
 		return playEffectLocationReal(entity == null ? null : entity.getLocation());
 	}
-	
+
 	/**
 	 * Plays an effect at the specified location.
 	 * @param location location to play the effect at
@@ -169,7 +169,7 @@ public abstract class SpellEffect {
 		MagicSpells.scheduleDelayedTask(() -> playEffectLocationReal(location), delay);
 		return null;
 	}
-	
+
 	private Runnable playEffectLocationReal(Location location) {
 		if (location == null) return playEffectLocation(null);
 		Location loc = location.clone();
@@ -182,12 +182,12 @@ public abstract class SpellEffect {
 		if (forwardOffset != 0) loc.add(loc.getDirection().setY(0).normalize().multiply(forwardOffset));
 		return playEffectLocation(loc);
 	}
-	
+
 	protected Runnable playEffectLocation(Location location) {
 		//expect to be overridden
 		return null;
 	}
-	
+
 	/**
 	 * Plays an effect between two locations (such as a smoke trail type effect).
 	 * @param location1 the starting location
@@ -204,22 +204,22 @@ public abstract class SpellEffect {
 		Vector v = loc2.toVector().subtract(loc1.toVector()).normalize().multiply(distanceBetween);
 		Location l = loc1.clone();
 		if (heightOffset != 0) l.setY(l.getY() + heightOffset);
-		
+
 		for (int i = 0; i < c; i++) {
 			l.add(v);
 			playEffect(l);
 		}
 		return null;
 	}
-	
+
 	public void playEffectWhileActiveOnEntity(final Entity entity, final SpellEffectActiveChecker checker) {
 		new EffectTracker(entity, checker);
 	}
-	
+
 	public OrbitTracker playEffectWhileActiveOrbit(final Entity entity, final SpellEffectActiveChecker checker) {
 		return new OrbitTracker(entity, checker);
 	}
-	
+
 	@FunctionalInterface
 	public interface SpellEffectActiveChecker {
 		boolean isActive(Entity entity);
@@ -244,10 +244,10 @@ public abstract class SpellEffect {
 				stop();
 				return;
 			}
-			
+
 			// check modifiers
 			if (entity instanceof Player && !modifiers.check((Player) entity)) return;
-			
+
 			playEffect(entity);
 
 		}
@@ -260,7 +260,7 @@ public abstract class SpellEffect {
 	}
 
 	class OrbitTracker implements Runnable {
-		
+
 		Entity entity;
 		SpellEffectActiveChecker checker;
 		Vector currentPosition;
@@ -269,9 +269,9 @@ public abstract class SpellEffect {
 		int repeatingVertTaskId;
 		float orbRadius;
 		float orbHeight;
-		
+
 		int counter = 0;
-		
+
 		public OrbitTracker(Entity entity, SpellEffectActiveChecker checker) {
 			this.entity = entity;
 			this.checker = checker;
@@ -287,7 +287,7 @@ public abstract class SpellEffect {
 				this.repeatingVertTaskId = MagicSpells.scheduleRepeatingTask(() -> this.orbHeight += vertExpandRadius, vertExpandDelay, vertExpandDelay);
 			}
 		}
-		
+
 		@Override
 		public void run() {
 			// check for valid and alive caster and target
@@ -295,24 +295,24 @@ public abstract class SpellEffect {
 				stop();
 				return;
 			}
-			
+
 			// check if duration is up
 			if (counter++ % ticksPerRevolution == 0 && !checker.isActive(entity)) {
 				stop();
 				return;
 			}
-			
+
 			// move projectile and calculate new vector
 			Location loc = getLocation();
-			
+
 			// check modifiers
 			if (entity instanceof Player && !modifiers.check((Player) entity)) return;
-			
+
 			// show effect
 			playEffect(loc);
-			
+
 		}
-		
+
 		private Location getLocation() {
 			Vector perp;
 			if (counterClockwise) {
@@ -323,7 +323,7 @@ public abstract class SpellEffect {
 			currentPosition.add(perp.multiply(distancePerTick)).normalize();
 			return entity.getLocation().add(0, orbHeight, 0).add(currentPosition.clone().multiply(orbRadius));
 		}
-		
+
 		public void stop() {
 			MagicSpells.cancelTask(orbitTrackerTaskId);
 			MagicSpells.cancelTask(repeatingHorizTaskId);
@@ -331,11 +331,11 @@ public abstract class SpellEffect {
 			entity = null;
 			currentPosition = null;
 		}
-		
+
 	}
-	
+
 	private static HashMap<String, Class<? extends SpellEffect>> effects = new HashMap<>();
-	
+
 	/**
 	 * Gets the GraphicalEffect by the provided name.
 	 * @param name the name of the effect
@@ -351,11 +351,11 @@ public abstract class SpellEffect {
 			return null;
 		}
 	}
-	
+
 	public void playTrackingLinePatterns(Location origin, Location target, Entity originEntity, Entity targetEntity) {
 		// no op, effects should override this with their own behavior
 	}
-	
+
 	/**
 	 * Adds an effect with the provided name to the list of available effects.
 	 * This will replace an existing effect if the same name is used.
@@ -365,7 +365,7 @@ public abstract class SpellEffect {
 	public static void addEffect(String name, Class<? extends SpellEffect> effect) {
 		effects.put(name.toLowerCase(), effect);
 	}
-	
+
 	static {
 		effects.put("actionbartext", ActionBarTextEffect.class);
 		effects.put("angry", AngryEffect.class);
@@ -401,5 +401,5 @@ public abstract class SpellEffect {
 		effects.put("effectlibline", EffectLibLineEffect.class);
 		effects.put("effectlibentity", EffectLibEntityEffect.class);
 	}
-	
+
 }

@@ -17,10 +17,10 @@ import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.util.MagicConfig;
 
 public final class MultiSpell extends InstantSpell {
-	
+
 	private static final Pattern RANGED_DELAY_PATTERN = Pattern.compile("DELAY [0-9]+ [0-9]+");
 	private static final Pattern BASIC_DELAY_PATTERN = Pattern.compile("DELAY [0-9]+");
-	
+
 	private boolean castWithItem;
 	private boolean castByCommand;
 	private boolean checkIndividualCooldowns;
@@ -209,7 +209,7 @@ public final class MultiSpell extends InstantSpell {
 	}
 
 	private class Action {
-		
+
 		private Subspell spell;
 		private int delay; // Also gonna serve as minimum delay
 		private boolean isRangedDelay = false;
@@ -224,7 +224,7 @@ public final class MultiSpell extends InstantSpell {
 			this.delay = delay;
 			this.spell = null;
 		}
-		
+
 		public Action(int minDelay, int maxDelay) {
 			this.delay = minDelay;
 			this.maxDelay = maxDelay;
@@ -247,15 +247,15 @@ public final class MultiSpell extends InstantSpell {
 		private int getRandomDelay() {
 			return random.nextInt(maxDelay - delay) + delay;
 		}
-		
+
 		public int getDelay() {
 			return isRangedDelay ? getRandomDelay() : delay;
 		}
-		
+
 	}
 
 	private class DelayedSpell implements Runnable {
-		
+
 		private Subspell spell;
 		private String playerName;
 		private float power;
@@ -273,11 +273,11 @@ public final class MultiSpell extends InstantSpell {
 				this.spell.cast(player, this.power);
 			}
 		}
-		
+
 	}
 
 	class ActionChance {
-		
+
 		private MultiSpell.Action action;
 		private double chance;
 
@@ -293,7 +293,7 @@ public final class MultiSpell extends InstantSpell {
 		public double getChance() {
 			return this.chance;
 		}
-		
+
 	}
-	
+
 }

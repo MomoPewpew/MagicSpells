@@ -71,6 +71,11 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		ticker = new PulserTicker();
 	}
 
+
+	public HashMap<Block, Pulser> getPulsers() {
+		return this.pulsers;
+	}
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -96,20 +101,25 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		}
 	}
 
+	public boolean doesPlayerExceedsCap(Player player) {
+		if (capPerPlayer > 0 && player != null) {
+			int count = 0;
+			for (Pulser pulser : pulsers.values()) {
+				if (!pulser.caster.equals(player)) continue;
+
+				count++;
+				if (count >= capPerPlayer) return true;
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public PostCastAction castSpell(Player player, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
-			if (capPerPlayer > 0) {
-				int count = 0;
-				for (Pulser pulser : pulsers.values()) {
-					if (!pulser.caster.equals(player)) continue;
-					
-					count++;
-					if (count >= capPerPlayer) {
-						sendMessage(strAtCap, player, args);
-						return PostCastAction.ALREADY_HANDLED;
-					}
-				}
+			if (doesPlayerExceedsCap(player)) {
+				sendMessage(strAtCap, player, args);
+				return PostCastAction.ALREADY_HANDLED;
 			}
 			List<Block> lastTwo = getLastTwoTargetedBlocks(player, power);
 			Block target = null;
@@ -146,6 +156,10 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 	@Override
 	public boolean castAtLocation(Player caster, Location target, float power) {
+		if (doesPlayerExceedsCap(caster)) {
+			sendMessage(strAtCap, caster, null);
+			return false;
+		}
 		Block block = target.getBlock();
 		if (yOffset > 0) {
 			block = block.getRelative(BlockFace.UP, yOffset);
@@ -234,7 +248,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		pulsers.clear();
 		ticker.stop();
 	}
-	
+
 	public class Pulser {
 
 		Player caster;
@@ -242,7 +256,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		Location location;
 		float power;
 		int pulseCount;
-		
+
 		public Pulser(Player caster, Block block, float power) {
 			this.caster = caster;
 			this.block = block;
@@ -266,7 +280,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			stop();
 			return true;
 		}
-		
+
 		private boolean activate() {
 			boolean activated = false;
 			for (TargetedLocationSpell spell : spells) {
@@ -301,7 +315,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		}
 
 	}
-	
+
 	public class PulserTicker implements Runnable {
 
 		private int taskId = -1;
@@ -327,7 +341,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			}
 			if (pulsers.isEmpty()) stop();
 		}
-		
+
 	}
 
 }

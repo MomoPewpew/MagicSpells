@@ -13,22 +13,22 @@ public class CastAtMarkSpell extends InstantSpell {
 
 	private MarkSpell markSpell;
 	private String markSpellName;
-	
+
 	private String spellNameToCast;
 	private Subspell spellToCast;
-	
+
 	private boolean initialized = false;
-	
+
 	private String strNoMark;
-	
+
 	public CastAtMarkSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		markSpellName = getConfigString("mark-spell", null);
 		spellNameToCast = getConfigString("spell", null);
 		strNoMark = getConfigString("str-no-mark", "You do not have a mark specified");
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -46,20 +46,20 @@ public class CastAtMarkSpell extends InstantSpell {
 			MagicSpells.error(getLoggingSpellPrefix() + " Mark spell specified is not a mark spell");
 			return;
 		}
-		
+
 		markSpell = (MarkSpell)s;
-		
+
 		Subspell toCast = new Subspell(spellNameToCast);
 		if (!toCast.process()) {
 			MagicSpells.error(getLoggingSpellPrefix() + " Could not build subspell from " + spellNameToCast);
 			return;
 		}
-		
+
 		if (!toCast.isTargetedLocationSpell()) {
 			MagicSpells.error(getLoggingSpellPrefix() + ' ' + toCast.getSpell().getInternalName() + " is not a targeted location spell");
 			return;
 		}
-		
+
 		spellToCast = toCast;
 		initialized = true;
 	}
@@ -79,7 +79,7 @@ public class CastAtMarkSpell extends InstantSpell {
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	@Override
 	public void turnOff() {
 		super.turnOff();

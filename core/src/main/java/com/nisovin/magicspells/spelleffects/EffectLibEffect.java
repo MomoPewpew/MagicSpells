@@ -12,7 +12,7 @@ public class EffectLibEffect extends SpellEffect {
 	ConfigurationSection effectLibSection;
 	EffectManager manager = MagicSpells.plugin.effectManager;
 	String className;
-	
+
 	@Override
 	public void loadFromString(String string) {
 		//TODO make a string loading schema
@@ -29,5 +29,5 @@ public class EffectLibEffect extends SpellEffect {
 		manager.start(className, effectLibSection, location);
 		return null;
 	}
-	
+
 }

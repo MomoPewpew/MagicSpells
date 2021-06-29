@@ -3,6 +3,7 @@ package com.nisovin.magicspells.castmodifiers;
 import com.nisovin.magicspells.util.RegexUtil;
 import org.bukkit.entity.Player;
 
+import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.DebugHandler;
 import com.nisovin.magicspells.events.MagicSpellsGenericPlayerEvent;
 import com.nisovin.magicspells.events.ManaChangeEvent;
@@ -45,11 +46,11 @@ public class Modifier implements IModifier {
 		if (m.condition == null) return null;
 
 		// Get type and vars
-		m.type = getTypeByName(data[1]);
+		m.type = ModifierType.getModifierTypeByName(data[1]);
 		if (m.type == null && data.length > 2) {
 			boolean varok = m.condition.setVar(data[1]);
 			if (!varok) return null;
-			m.type = getTypeByName(data[2]);
+			m.type = ModifierType.getModifierTypeByName(data[2]);
 			if (data.length > 3) m.modifierVar = data[3];
 		} else if (data.length > 2) {
 			m.modifierVar = data[2];
@@ -156,10 +157,6 @@ public class Modifier implements IModifier {
 		if (!check && type == ModifierType.REQUIRED) return false;
 		if (check && type == ModifierType.DENIED) return false;
 		return true;
-	}
-
-	private static ModifierType getTypeByName(String name) {
-		return ModifierType.getModifierTypeByName(name);
 	}
 
 }

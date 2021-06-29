@@ -22,6 +22,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.Spell;
+import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -59,9 +60,8 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
     private ItemStack mainHand;
 
     private List<String> spellNames;
-    List<TargetedLocationSpell> spells;
-    private String spellNameOnBreak;
-    TargetedLocationSpell spellOnBreak;
+    List<Subspell> spells;
+    Subspell spellOnBreak;
 
     public TotemSpell(MagicConfig config, String spellName) {
         super(config, spellName);
@@ -89,7 +89,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
         maxDistanceSquared *= maxDistanceSquared;
         onlyCountOnSuccess = getConfigBoolean("only-count-on-success", false);
         spellNames = getConfigStringList("spells", null);
-        spellNameOnBreak = getConfigString("spell-on-break", null);
+        if (configKeyExists("spell-on-break")) spellOnBreak = new Subspell(getConfigString("spell-on-break", ""));
         visibility = getConfigBoolean("visible", true);
         targetable = getConfigBoolean("targetable", true);
         totemName = getConfigString("totem-name", null);
@@ -106,19 +106,17 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
         spells = new ArrayList<>();
         if (spellNames != null && !spellNames.isEmpty()) {
             for (String spellName : spellNames) {
-                Spell spell = MagicSpells.getSpellByInternalName(spellName);
-                if (spell instanceof TargetedLocationSpell) {
-                    spells.add((TargetedLocationSpell) spell);
-                }
+				Subspell spell = new Subspell(spellName);
+				if (spell.process() && spell.isTargetedLocationSpell()) {
+					spells.add(spell);
+				} else {
+					MagicSpells.error("Totem spell '" + internalName + "' has an invalid spell '" + spellName + "' in list \'spells\'");
+				}
             }
         }
-        if (spellNameOnBreak != null) {
-            Spell spell = MagicSpells.getSpellByInternalName(spellNameOnBreak);
-            if (spell instanceof TargetedLocationSpell) {
-                spellOnBreak = (TargetedLocationSpell)spell;
-            } else {
-                MagicSpells.error("Totem spell '" + internalName + "' has an invalid spell-on-break spell defined");
-            }
+        if (spellOnBreak != null && (!spellOnBreak.process() || !spellOnBreak.isTargetedLocationSpell())) {
+			spellOnBreak = null;
+            MagicSpells.error("Totem spell '" + internalName + "' has an invalid spell-on-break spell defined");
         }
         if (spells.isEmpty()) {
             MagicSpells.error("Totem spell '" + internalName + "' has no spells defined!");
@@ -293,12 +291,8 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 
         private boolean activate() {
             boolean activated = false;
-            for (TargetedLocationSpell spell : spells) {
-                if (caster != null) {
-                    activated = spell.castAtLocation(caster, totemLocation, power) || activated;
-                } else {
-                    activated = spell.castAtLocation(totemLocation, power) || activated;
-                }
+            for (Subspell spell : spells) {
+                activated = spell.castAtLocation(caster, totemLocation, power) || activated;
             }
             playSpellEffects(EffectPosition.SPECIAL, totemLocation);
             if (totalPulses > 0 && (activated || !onlyCountOnSuccess)) {
@@ -315,13 +309,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
             if (!totemLocation.getChunk().isLoaded()) totemLocation.getChunk().load();
             armorStand.remove();
             playSpellEffects(EffectPosition.DISABLED, totemLocation);
-            if (spellOnBreak != null) {
-                if (caster == null) {
-                    spellOnBreak.castAtLocation(totemLocation, power);
-                } else if (caster.isValid()) {
-                    spellOnBreak.castAtLocation(caster, totemLocation, power);
-                }
-            }
+            if (spellOnBreak != null) spellOnBreak.castAtLocation(caster, totemLocation, power);
         }
 
     }

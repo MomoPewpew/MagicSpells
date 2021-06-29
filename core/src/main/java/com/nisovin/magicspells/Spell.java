@@ -574,11 +574,12 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected String rechargeSound;
 
 	private List<String> modifierStrings;
-
 	private List<String> targetModifierStrings;
+	private List<String> locationModifierStrings;
 
 	protected ModifierSet modifiers;
 	protected ModifierSet targetModifiers;
+	protected ModifierSet locationModifiers;
 
 	protected List<String> prerequisites;
 
@@ -854,6 +855,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		// Modifiers
 		this.modifierStrings = config.getStringList(section + '.' + spellName + ".modifiers", null);
 		this.targetModifierStrings = config.getStringList(section + '.' + spellName + ".target-modifiers", null);
+		this.locationModifierStrings = config.getStringList(section + '.' + spellName + ".target-modifiers", null);
 
 		// Hierarchy options
 		this.prerequisites = config.getStringList(section + '.' + spellName + ".prerequisites", null);
@@ -1049,6 +1051,11 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			debug(2, "Adding target modifiers to " + this.internalName + " spell");
 			this.targetModifiers = new ModifierSet(this.targetModifierStrings);
 			this.targetModifierStrings = null;
+		}
+		if (this.locationModifierStrings != null && !this.locationModifierStrings.isEmpty()) {
+			debug(2, "Adding location modifiers to " + this.internalName + " spell");
+			this.locationModifiers = new ModifierSet(this.locationModifierStrings);
+			this.locationModifierStrings = null;
 		}
 
 		// Process shared cooldowns
@@ -2243,6 +2250,9 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	public ModifierSet getTargetModifiers() {
 		return this.targetModifiers;
+	}
+	public ModifierSet getLocationModifiers() {
+		return this.locationModifiers;
 	}
 
 	public String getStrModifierFailed() {

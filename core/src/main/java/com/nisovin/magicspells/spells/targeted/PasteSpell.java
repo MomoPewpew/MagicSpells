@@ -23,6 +23,8 @@ import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.schematic.SchematicFormat;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -33,35 +35,35 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	boolean pasteEntities;
 	boolean pasteAtCaster;
 	boolean playBlockBreakEffect;
-	
+
 	int tickInterval;
 	int blocksPerTick;
-	
+
 	// This will only work with instant paste for now
 	boolean undo;
 	int undoDelayTicks;
-	
+
 	public PasteSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		File folder = new File(MagicSpells.plugin.getDataFolder(), "schematics");
 		if (!folder.exists()) folder.mkdir();
 		String schematic = getConfigString("schematic", "none");
 		file = new File(folder, schematic);
 		if (!file.exists()) MagicSpells.error("PasteSpell " + spellName + " has non-existant schematic: " + schematic);
-		
+
 		yOffset = getConfigInt("y-offset", 0);
 		maxBlocks = getConfigInt("max-blocks", 10000);
 		pasteAir = getConfigBoolean("paste-air", false);
 		pasteEntities = getConfigBoolean("paste-entities", true);
 		pasteAtCaster = getConfigBoolean("paste-at-caster", false);
-		
+
 		undo = getConfigBoolean("undo", false);
 		undoDelayTicks = getConfigInt("undo-delay-ticks", TimeUtil.TICKS_PER_SECOND * 10);
 		if (undoDelayTicks < 0) undoDelayTicks = 0;
-		
+
 		playBlockBreakEffect = getConfigBoolean("play-block-break-effect", true);
-		
+
 		float blocksPerSecond = getConfigFloat("blocks-per-second", 0F);
 		if (blocksPerSecond == 0) {
 			tickInterval = 0;
@@ -82,7 +84,14 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (target == null) return noTarget(player);
 			Location loc = target.getLocation();
 			loc.add(0, yOffset, 0);
-			boolean ok = castAtLocation(loc, power);
+
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, loc, power);
+			EventUtil.call(event);
+			if (event.isCancelled()) return noTarget(player);
+			loc = event.getTargetLocation();
+			power = event.getPower();
+
+			boolean ok = castAtLocation(player, loc, power);
 			if (!ok) return noTarget(player);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
@@ -110,7 +119,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(null, target, power);
 	}
-	
+
 	private boolean pasteInstant(Location target) {
 		try {
 			CuboidClipboard cuboid = SchematicFormat.MCEDIT.load(file);
@@ -125,7 +134,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			return false;
 		}
 	}
-	
+
 	private boolean pasteOverTime(Location target) {
 		try {
 			Builder builder = new Builder(target);
@@ -136,18 +145,18 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			return false;
 		}
 	}
-	
+
 	class Builder {
 
 		Block center;
 		List<BlockState> blocks = new ArrayList<>();
-		
+
 		int current = 0;
 		int taskId;
-		
+
 		public Builder(Location target) throws Exception {
 			this.center = target.getBlock();
-			
+
 			CuboidClipboard clipboard = SchematicFormat.MCEDIT.load(file);
 			Vector size = clipboard.getSize();
 			Vector offset = clipboard.getOffset();
@@ -155,7 +164,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			List<BlockState> air = new ArrayList<>();
 			List<BlockState> solids = new ArrayList<>();
 			List<BlockState> nonsolids = new ArrayList<>();
-			
+
 			for (int y = 0; y < size.getBlockY(); y++) {
 				for (int x = 0; x < size.getBlockX(); x++) {
 					for (int z = 0; z < size.getBlockZ(); z++) {
@@ -178,12 +187,12 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					}
 				}
 			}
-			
+
 			blocks.addAll(air);
 			blocks.addAll(solids);
 			blocks.addAll(nonsolids);
 		}
-		
+
 		public void build() {
 			taskId = MagicSpells.scheduleRepeatingTask(new Runnable() {
 				@Override
@@ -207,12 +216,12 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				}
 			}, 1, tickInterval);
 		}
-		
+
 		private void setBlockStateFromWorldEditBlock(BlockState state, BaseBlock block) {
 			state.setTypeId(block.getId());
 			state.setRawData((byte)block.getData());
 		}
-		
+
 	}
 
 }

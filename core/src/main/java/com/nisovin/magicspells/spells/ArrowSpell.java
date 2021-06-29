@@ -31,6 +31,9 @@ import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.HandHandler;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellReagents;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetEvent;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 /**
  * ArrowSpell<br>
@@ -130,46 +133,46 @@ import com.nisovin.magicspells.util.SpellReagents;
 public class ArrowSpell extends Spell {
 
 	private static ArrowSpellHandler handler;
-	
+
 	String bowName;
-	
+
 	String spellNameOnHitEntity;
-	
+
 	String spellNameOnHitGround;
-	
+
 	Subspell spellOnHitEntity;
 	Subspell spellOnHitGround;
-	
+
 	boolean useBowForce;
-	
+
 	private static final String METADATA_KEY = "MSArrowSpell";
-	
+
 	public ArrowSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		this.bowName = ChatColor.translateAlternateColorCodes('&', getConfigString("bow-name", null));
 		this.spellNameOnHitEntity = getConfigString("spell-on-hit-entity", null);
 		this.spellNameOnHitGround = getConfigString("spell-on-hit-ground", null);
 		this.useBowForce = getConfigBoolean("use-bow-force", true);
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
-		
+
 		if (this.spellNameOnHitEntity != null && !this.spellNameOnHitEntity.isEmpty()) {
 			Subspell spell = new Subspell(this.spellNameOnHitEntity);
-			if (spell.process() && spell.isTargetedEntitySpell()) this.spellOnHitEntity = spell;
+			if (spell.process() && spell.canTargetEntity()) this.spellOnHitEntity = spell;
 		}
 		if (this.spellNameOnHitGround != null && !this.spellNameOnHitGround.isEmpty()) {
 			Subspell spell = new Subspell(this.spellNameOnHitGround);
 			if (spell.process() && spell.isTargetedLocationSpell()) this.spellOnHitGround = spell;
 		}
-		
+
 		if (handler == null) handler = new ArrowSpellHandler();
 		handler.registerSpell(this);
 	}
-	
+
 	@Override
 	public void turnOff() {
 		super.turnOff();
@@ -192,19 +195,19 @@ public class ArrowSpell extends Spell {
 	public boolean canCastByCommand() {
 		return false;
 	}
-	
+
 	class ArrowSpellHandler implements Listener {
-		
+
 		Map<String, ArrowSpell> spells = new HashMap<>();
-		
+
 		public ArrowSpellHandler() {
 			registerEvents(this);
 		}
-		
+
 		public void registerSpell(ArrowSpell spell) {
 			this.spells.put(spell.bowName, spell);
 		}
-		
+
 		@EventHandler
 		public void onArrowLaunch(EntityShootBowEvent event) {
 			if (event.getEntity().getType() != EntityType.PLAYER) return;
@@ -297,27 +300,27 @@ public class ArrowSpell extends Spell {
 			arrow.remove();
 			arrow.removeMetadata(METADATA_KEY, MagicSpells.plugin);
 		}
-		
+
 		public void turnOff() {
 			unregisterEvents(this);
 			this.spells.clear();
 		}
-		
+
 	}
-	
+
 	class ArrowSpellData {
-		
+
 		ArrowSpell spell;
 		boolean casted = false;
 		float power = 1.0F;
 		SpellReagents arrowSpellDataReagents;
-		
+
 		public ArrowSpellData(ArrowSpell spell, float power, SpellReagents reagents) {
 			this.spell = spell;
 			this.power = power;
 			this.arrowSpellDataReagents = reagents;
 		}
-		
+
 	}
 
 }

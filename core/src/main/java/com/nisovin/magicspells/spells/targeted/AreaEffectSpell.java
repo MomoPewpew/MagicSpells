@@ -37,13 +37,10 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 	private List<String> spellNames;
 	private boolean spellSourceInCenter;
 	private List<Subspell> spells;
-	
-	private ModifierSet locationTargetModifiers;
-	private ModifierSet entityTargetModifiers;
-	
+
 	public AreaEffectSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		radius = getConfigDouble("horizontal-radius", 10);
 		verticalRadius = getConfigDouble("vertical-radius", 5);
 		pointBlank = getConfigBoolean("point-blank", true);
@@ -52,19 +49,14 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		maxTargets = getConfigInt("max-targets", 0);
 		spellSourceInCenter = getConfigBoolean("spell-source-in-center", false);
 		spellNames = getConfigStringList("spells", null);
-		
-		List<String> list = getConfigStringList("location-target-modifiers", null);
-		if (list != null) locationTargetModifiers = new ModifierSet(list);
-		list = getConfigStringList("entity-target-modifiers", null);
-		if (list != null) entityTargetModifiers = new ModifierSet(list);
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
-		
+
 		spells = new ArrayList<>();
-		
+
 		if (spellNames != null && !spellNames.isEmpty()) {
 			for (String spellName : spellNames) {
 				Subspell spell = new Subspell(spellName);
@@ -81,7 +73,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			spellNames.clear();
 			spellNames = null;
 		}
-		
+
 		if (spells.isEmpty()) {
 			MagicSpells.error("AreaEffect spell '" + name + "' has no spells!");
 		}
@@ -107,9 +99,6 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (loc != null) {
 				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, loc, power);
 				EventUtil.call(event);
-				if (locationTargetModifiers != null) {
-					locationTargetModifiers.apply(event);
-				}
 				if (event.isCancelled()) {
 					loc = null;
 				} else {
@@ -118,22 +107,22 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 				}
 			}
 			if (loc == null) return noTarget(player);
-			
+
 			// Cast spells on nearby entities
 			boolean done = doAoe(player, loc, power);
-			
+
 			// Check if no targets
 			if (!done && failIfNoTargets) return noTarget(player);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	private boolean doAoe(Player player, Location location, float basePower) {
 		int count = 0;
-		
+
 		Vector facing = player != null ? player.getLocation().getDirection() : location.getDirection();
 		Vector vLoc = player != null ? player.getLocation().toVector() : location.toVector();
-		
+
 		BoundingBox box = new BoundingBox(location, radius, verticalRadius);
 		List<Entity> entities = new ArrayList<>(location.getWorld().getEntitiesByClasses(LivingEntity.class));
 		Collections.shuffle(entities);
@@ -146,36 +135,24 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 				LivingEntity target = (LivingEntity)e;
 				float power = basePower;
 				if (!target.isDead() && ((player == null && validTargetList.canTarget(target)) || validTargetList.canTarget(player, target))) {
-					if (player != null) {
-						SpellTargetEvent event = new SpellTargetEvent(this, player, target, power);
-						EventUtil.call(event);
-						if (entityTargetModifiers != null) {
-							entityTargetModifiers.apply(event);
-						}
-						if (event.isCancelled()) continue;
-						target = event.getTarget();
-						power = event.getPower();
-					} else if (entityTargetModifiers != null) {
-						SpellTargetEvent event = new SpellTargetEvent(this, player, target, power);
-						entityTargetModifiers.apply(event);
-						if (event.isCancelled()) continue;
-					}
+					SpellTargetEvent event = new SpellTargetEvent(this, player, target, power);
+					EventUtil.call(event);
+					if (event.isCancelled()) continue;
+					target = event.getTarget();
+					power = event.getPower();
+
 					for (Subspell spell : spells) {
 						if (player != null) {
 							if (spellSourceInCenter && spell.isTargetedEntityFromLocationSpell()) {
 								spell.castAtEntityFromLocation(player, location, target, power);
-							} else if (spell.isTargetedEntitySpell()) {
+							} else if (spell.canTargetEntity()) {
 								spell.castAtEntity(player, target, power);
-							} else if (spell.isTargetedLocationSpell()) {
-								spell.castAtLocation(player, target.getLocation(), power);
 							}
 						} else {
 							if (spell.isTargetedEntityFromLocationSpell()) {
 								spell.castAtEntityFromLocation(null, location, target, power);
-							} else if (spell.isTargetedEntitySpell()) {
+							} else if (spell.canTargetEntity()) {
 								spell.castAtEntity(null, target, power);
-							} else if (spell.isTargetedLocationSpell()) {
-								spell.castAtLocation(null, target.getLocation(), power);
 							}
 						}
 					}
@@ -195,7 +172,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (player != null) playSpellEffects(EffectPosition.CASTER, player);
 			playSpellEffects(EffectPosition.SPECIAL, location);
 		}
-		
+
 		return count > 0;
 	}
 
@@ -208,5 +185,5 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 	public boolean castAtLocation(Location target, float power) {
 		return doAoe(null, target, power);
 	}
-	
+
 }

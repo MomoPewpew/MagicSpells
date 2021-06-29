@@ -26,10 +26,10 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 	int resetTime;
 	float maxDuration;
 	float maxDistance;
-	
+
 	// TODO: fix leak
 	Map<String, CastData> casting = new HashMap<>();
-	
+
 	public HoldRightSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 		spell = new Subspell(getConfigString("spell", ""));
@@ -39,7 +39,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 		maxDuration = getConfigFloat("max-duration", 0F);
 		maxDistance = getConfigFloat("max-distance", 0F);
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -68,7 +68,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 					data = new CastData(block.getLocation().add(0.5, 0.5, 0.5), power);
 				} else {
 					return noTarget(player);
-				}				
+				}
 			} else {
 				data = new CastData(power);
 			}
@@ -79,7 +79,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	@Override
 	public boolean castAtLocation(Player caster, Location target, float power) {
 		if (!targetLocation) return false;
@@ -117,29 +117,29 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 	public boolean castAtEntity(LivingEntity target, float power) {
 		return false;
 	}
-	
+
 	class CastData {
-		
+
 		long start = System.currentTimeMillis();
 		long lastCast = 0;
 		LivingEntity targetEntity = null;
 		Location targetLocation = null;
 		float power = 1f;
-		
+
 		public CastData(LivingEntity target, float power) {
 			targetEntity = target;
 			this.power = power;
 		}
-		
+
 		public CastData(Location target, float power) {
 			targetLocation = target;
 			this.power = power;
 		}
-		
+
 		public CastData(float power) {
 			this.power = power;
 		}
-		
+
 		boolean isValid(Player player) {
 			if (lastCast < System.currentTimeMillis() - resetTime) return false;
 			if (maxDuration > 0 && System.currentTimeMillis() - start > maxDuration * TimeUtil.MILLISECONDS_PER_SECOND) return false;
@@ -152,7 +152,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 			}
 			return true;
 		}
-		
+
 		void cast(Player caster) {
 			lastCast = System.currentTimeMillis();
 			if (targetEntity != null) {
@@ -163,7 +163,6 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 				spell.cast(caster, power);
 			}
 		}
-		
 	}
 
 }

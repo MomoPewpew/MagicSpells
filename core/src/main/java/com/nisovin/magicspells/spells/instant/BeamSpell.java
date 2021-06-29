@@ -178,7 +178,7 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell {
 					EventUtil.call(event);
 					if (event.isCancelled()) continue;
 
-					if (spell != null && spell.isTargetedEntitySpell()) spell.castAtEntity(this.caster, event.getTarget(), event.getPower());
+					if (spell != null && spell.canTargetEntity()) spell.castAtEntity(this.caster, event.getTarget(), event.getPower());
 					playSpellEffects(EffectPosition.TARGET, event.getTarget());
 					this.immune.add(e);
 					if (stopOnHitEntity) break mainLoop;

@@ -15,6 +15,8 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellAnimation;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -22,16 +24,16 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 	int fuse;
 	int interval;
 	Subspell spell;
-	
+
 	public BombSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		bomb = MagicSpells.getItemNameResolver().resolveBlock(getConfigString("block", "stone"));
 		fuse = getConfigInt("fuse", 100);
 		interval = getConfigInt("interval", 20);
 		spell = new Subspell(getConfigString("spell", ""));
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -48,12 +50,18 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (blocks.size() != 2) return noTarget(player);
 			if (!blocks.get(1).getType().isSolid()) return noTarget(player);
 			Block target = blocks.get(0);
-			boolean ok = bomb(player, target.getLocation(), power);
+
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, target.getLocation(), power);
+			EventUtil.call(event);
+			if (event.isCancelled()) return noTarget(player);
+			power = event.getPower();
+
+			boolean ok = bomb(player, event.getTargetLocation(), power);
 			if (!ok) return noTarget(player);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	private boolean bomb(final Player player, final Location loc, final float power) {
 		final Block block = loc.getBlock();
 		if (block.getType() == Material.AIR || block.getType() == Material.LONG_GRASS || block.getType() == Material.SNOW) {
@@ -64,7 +72,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 				playSpellEffects(EffectPosition.TARGET, loc);
 			}
 			new SpellAnimation(interval, interval, true) {
-				
+
 				int time = 0;
 				Location l = block.getLocation().add(0.5, 0.5, 0.5);
 				@Override
@@ -76,14 +84,14 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 							block.setType(Material.AIR);
 							playSpellEffects(EffectPosition.DELAYED, l);
 							spell.castAtLocation(player, l, power);
-						}						
+						}
 					} else if (!bomb.equals(block)) {
 						stop();
 					} else {
 						playSpellEffects(EffectPosition.SPECIAL, l);
 					}
 				}
-				
+
 			};
 			return true;
 		}

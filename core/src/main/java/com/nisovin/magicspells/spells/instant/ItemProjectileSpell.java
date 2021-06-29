@@ -28,23 +28,23 @@ public class ItemProjectileSpell extends InstantSpell {
 	ItemStack item;
 	Subspell spellOnHitEntity;
 	Subspell spellOnHitGround;
-	
+
 	public ItemProjectileSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		this.speed = getConfigFloat("speed", 1);
 		this.vertSpeedUsed = configKeyExists("vert-speed");
 		this.vertSpeed = getConfigFloat("vert-speed", 0);
 		this.hitRadius = getConfigFloat("hit-radius", 1);
 		this.yOffset = getConfigFloat("y-offset", 0);
 		this.projectileHasGravity = getConfigBoolean("gravity", true);
-		
+
 		if (configKeyExists("spell-on-hit-entity")) this.spellOnHitEntity = new Subspell(getConfigString("spell-on-hit-entity", ""));
 		if (configKeyExists("spell-on-hit-ground")) this.spellOnHitGround = new Subspell(getConfigString("spell-on-hit-ground", ""));
-		
+
 		this.item = Util.getItemStackFromString(getConfigString("item", "iron_sword"));
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -65,9 +65,9 @@ public class ItemProjectileSpell extends InstantSpell {
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	class ItemProjectile implements Runnable {
-		
+
 		Player caster;
 		float power;
 		Item entity;
@@ -75,7 +75,7 @@ public class ItemProjectileSpell extends InstantSpell {
 		Vector vel;
 		int taskId;
 		int groundCount = 0;
-		
+
 		public ItemProjectile(Player caster, float power) {
 			this.caster = caster;
 			this.power = power;
@@ -93,10 +93,10 @@ public class ItemProjectileSpell extends InstantSpell {
 			this.entity.teleport(location);
 			this.entity.setPickupDelay(1000000);
 			this.entity.setVelocity(this.vel);
-			
+
 			this.taskId = MagicSpells.scheduleRepeatingTask(this, 3, 3);
 		}
-		
+
 		@Override
 		public void run() {
 			for (Entity e : this.entity.getNearbyEntities(hitRadius, hitRadius + 0.5, hitRadius)) {
@@ -120,12 +120,12 @@ public class ItemProjectileSpell extends InstantSpell {
 				stop();
 			}
 		}
-		
+
 		void stop() {
 			this.entity.remove();
 			MagicSpells.cancelTask(this.taskId);
 		}
-		
+
 	}
 
 }

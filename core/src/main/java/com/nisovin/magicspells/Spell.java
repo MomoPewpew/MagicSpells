@@ -855,7 +855,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		// Modifiers
 		this.modifierStrings = config.getStringList(section + '.' + spellName + ".modifiers", null);
 		this.targetModifierStrings = config.getStringList(section + '.' + spellName + ".target-modifiers", null);
-		this.locationModifierStrings = config.getStringList(section + '.' + spellName + ".target-modifiers", null);
+		this.locationModifierStrings = config.getStringList(section + '.' + spellName + ".location-modifiers", null);
 
 		// Hierarchy options
 		this.prerequisites = config.getStringList(section + '.' + spellName + ".prerequisites", null);

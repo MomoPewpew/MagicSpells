@@ -124,16 +124,6 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 				}
 			}
 			//handle target modifiers
-			if (entTarget != null) {
-				SpellTargetEvent event = new SpellTargetEvent(this, player, entTarget, power);
-				EventUtil.call(event);
-				if (event.isCancelled()) {
-					entTarget = null;
-				} else {
-					entTarget = event.getTarget();
-					power = event.getPower();
-				}
-			}
 			if (locTarget != null) {
 				locTarget.setY(locTarget.getY() + this.yOffset);
 				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, locTarget, power);

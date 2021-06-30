@@ -35,6 +35,8 @@ import com.nisovin.magicspells.util.SpellType;
 import com.nisovin.magicspells.util.SpellTypes;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 @SpellType(types={SpellTypes.TARGETED_ENTITY_SPELL, SpellTypes.TARGETED_LOCATION_SPELL})
 public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, TargetedLocationSpell {
@@ -152,6 +154,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				Block block = getTargetedBlock(player, power);
 				if (block == null || block.getType() == Material.AIR) return noTarget(player);
 				locTarget = block.getLocation();
+
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, locTarget, power);
+				EventUtil.call(event);
+				if (event.isCancelled()) return noTarget(player);
+				locTarget = event.getTargetLocation();
+				power = event.getPower();
 			}
 
 			open(player, opener, entityTarget, locTarget, power, args);

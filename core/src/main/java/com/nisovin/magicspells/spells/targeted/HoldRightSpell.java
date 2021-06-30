@@ -17,6 +17,8 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.TargetInfo;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell, TargetedLocationSpell {
 
@@ -65,7 +67,13 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 			} else if (targetLocation) {
 				Block block = getTargetedBlock(player, power);
 				if (block != null && block.getType() != Material.AIR) {
-					data = new CastData(block.getLocation().add(0.5, 0.5, 0.5), power);
+
+					SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, block.getLocation().add(0.5, 0.5, 0.5), power);
+					EventUtil.call(event);
+					if (event.isCancelled()) return noTarget(player);
+					power = event.getPower();
+
+					data = new CastData(event.getTargetLocation(), power);
 				} else {
 					return noTarget(player);
 				}

@@ -8,15 +8,18 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.ConfigData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.MagicLocation;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
-public class LocationSpell extends InstantSpell {
+
+public class LocationSpell extends TargetedSpell  {
 
 	@ConfigData(field="location", dataType="String", defaultValue="world,0,0,0")
 	MagicLocation location;
-	
+
 	@ConfigData(field="spell", dataType="String", defaultValue="")
 	Subspell spell;
-	
+
 	public LocationSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -37,7 +40,7 @@ public class LocationSpell extends InstantSpell {
 		}
 		this.spell = new Subspell(getConfigString("spell", ""));
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -53,12 +56,16 @@ public class LocationSpell extends InstantSpell {
 	public PostCastAction castSpell(Player player, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			Location loc = this.location.getLocation();
-			if (loc != null) {
-				this.spell.castAtLocation(player, loc, power);
-				playSpellEffects(player, loc);
-			} else {
-				return PostCastAction.ALREADY_HANDLED;
-			}
+			if (loc == null) return noTarget(player);
+
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, loc, power);
+			EventUtil.call(event);
+			if (event.isCancelled()) return noTarget(player);
+			loc = event.getTargetLocation();
+			power = event.getPower();
+
+			this.spell.castAtLocation(player, loc, power);
+			playSpellEffects(player, loc);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}

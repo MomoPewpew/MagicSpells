@@ -20,15 +20,15 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.Util;
 
 public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
-	
+
 	private double radius;
 	private List<EntityType> entities;
-	
+
 	public PurgeSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		this.radius = getConfigDouble("range", 15);
-		
+
 		List<String> list = getConfigStringList("entities", null);
 		if (list != null && !list.isEmpty()) {
 			this.entities = new ArrayList<>();
@@ -57,6 +57,11 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 				if (entity instanceof Player) continue;
 				if (this.entities != null && !this.entities.contains(entity.getType())) continue;
 				if (!this.validTargetList.canTarget(player, entity)) continue;
+
+				SpellTargetEvent event = new SpellTargetEvent(this, player, (LivingEntity)entity, power);
+				EventUtil.call(event);
+				if (event.isCancelled()) continue;
+
 				((LivingEntity)entity).setHealth(0);
 				killed = true;
 				playSpellEffects(EffectPosition.TARGET, entity);
@@ -83,9 +88,11 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 				} else {
 					if (!this.validTargetList.canTarget(e)) continue;
 				}
+
 				SpellTargetEvent event = new SpellTargetEvent(this, caster, (LivingEntity)e, power);
 				EventUtil.call(event);
 				if (event.isCancelled()) continue;
+
 				success = true;
 				((LivingEntity)e).setHealth(0);
 				playSpellEffects(EffectPosition.TARGET, e.getLocation());
@@ -101,6 +108,6 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(null, target, power);
-	}	
-	
+	}
+
 }

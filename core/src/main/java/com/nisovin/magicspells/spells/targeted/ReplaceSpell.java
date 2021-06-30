@@ -14,6 +14,8 @@ import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -24,15 +26,15 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	boolean pointBlank;
 	boolean replaceRandom;
 	boolean powerAffectsRadius;
-	
+
 	List<MagicMaterial> replace;
 	List<MagicMaterial> replaceWith;
 
 	Random random = new Random();
-	
+
 	public ReplaceSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-				
+
 		yOffset = getConfigInt("y-offset", 0);
 		radiusUp = getConfigInt("radius-up", 1);
 		radiusDown = getConfigInt("radius-down", 1);
@@ -40,10 +42,10 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		pointBlank = getConfigBoolean("point-blank", false);
 		replaceRandom = getConfigBoolean("replace-random", true);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
-		
+
 		replace = new ArrayList<>();
 		replaceWith = new ArrayList<>();
-		
+
 		List<String> list = getConfigStringList("replace-blocks", null);
 		if (list != null) {
 			for (String s : list) {
@@ -66,12 +68,12 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 				}
 			}
 		}
-		
+
 		if (!replaceRandom && replace.size() != replaceWith.size()) {
 			replaceRandom = true;
 			MagicSpells.error("ReplaceSpell " + spellName + " replace-random false, but replace-blocks and replace-with have different sizes!");
 		}
-		
+
 		if (replace.isEmpty()) MagicSpells.error("ReplaceSpell " + spellName + " has empty replace-blocks list!");
 		if (replaceWith.isEmpty()) MagicSpells.error("ReplaceSpell " + spellName + " has empty replace-with list!");
 	}
@@ -81,7 +83,13 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		if (state == SpellCastState.NORMAL) {
 			Block target = pointBlank ? player.getLocation().getBlock() : getTargetedBlock(player, power);
 			if (target == null) return noTarget(player);
-			castAtLocation(player, target.getLocation(), power);
+
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, target.getLocation(), power);
+			EventUtil.call(event);
+			if (event.isCancelled()) return noTarget(player);
+			power = event.getPower();
+
+			castAtLocation(player, event.getTargetLocation(), power);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
@@ -108,7 +116,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 							break;
 						}
 					}
-				}			
+				}
 			}
 		}
 		if (caster != null) {

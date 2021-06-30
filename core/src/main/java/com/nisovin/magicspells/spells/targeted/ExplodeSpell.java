@@ -21,9 +21,11 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell {
-	
+
 	private int explosionSize;
 	private int backfireChance;
 	private boolean simulateTnt;
@@ -33,13 +35,13 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 	private float damageMultiplier;
 	private boolean addFire;
 	private boolean ignoreCanceled;
-	
+
 	private long currentTick = 0;
 	private float currentPower = 0;
-	
+
 	public ExplodeSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		explosionSize = getConfigInt("explosion-size", 4);
 		backfireChance = getConfigInt("backfire-chance", 0);
 		simulateTnt = getConfigBoolean("simulate-tnt", true);
@@ -50,7 +52,7 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		addFire = getConfigBoolean("add-fire", false);
 		ignoreCanceled = getConfigBoolean("ignore-canceled", false);
 	}
-	
+
 	@Override
 	public PostCastAction castSpell(Player player, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
@@ -75,12 +77,18 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 				// Fail: no target
 				return noTarget(player);
 			}
-			boolean exploded = explode(player, target.getLocation(), power);
+
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, target.getLocation(), power);
+			EventUtil.call(event);
+			if (event.isCancelled()) return noTarget(player);
+			power = event.getPower();
+
+			boolean exploded = explode(player, event.getTargetLocation(), power);
 			if (!exploded && !ignoreCanceled) return noTarget(player);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	private boolean explode(Player player, Location target, float power) {
 		// Check plugins
 		if (simulateTnt) {
@@ -125,15 +133,15 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 			event.setDamage(Math.round(event.getDamage() * damageMultiplier * currentPower));
 		}
 	}
-	
+
 	@EventHandler
 	public void onExplode(EntityExplodeEvent event) {
 		if (event.isCancelled() || !preventBlockDamage) return;
-		
+
 		if (currentTick == Bukkit.getWorlds().get(0).getFullTime()) {
 			event.blockList().clear();
 			event.setYield(0);
 		}
 	}
-	
+
 }

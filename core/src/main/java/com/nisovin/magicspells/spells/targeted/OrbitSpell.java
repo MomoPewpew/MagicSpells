@@ -151,7 +151,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell {
 		} else if (!entitySpell.process()) {
 			MagicSpells.error("Orbit Spell '" + internalName + "' has an invalid spell-on-hit-entity defined");
 			entitySpell = null;
-		} else if (!entitySpell.isTargetedEntitySpell() && !entitySpell.isTargetedEntityFromLocationSpell()) {
+		} else if (!entitySpell.canTargetEntity() && !entitySpell.isTargetedEntityFromLocationSpell()) {
 			MagicSpells.error("Orbit Spell '" + internalName + "' spell-on-hit-entity must be a targeted entity spell");
 			entitySpell = null;
 		}

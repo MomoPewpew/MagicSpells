@@ -27,10 +27,10 @@ public class ItemBombSpell extends InstantSpell implements TargetedLocationSpell
 	int delay;
 	Subspell spell;
 	boolean itemHasGravity;
-	
+
 	public ItemBombSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		this.velocity = getConfigFloat("velocity", 1);
 		this.verticalAdjustment = getConfigFloat("vertical-adjustment", 0.5F);
 		this.rotationOffset = getConfigInt("rotation-offset", 0);
@@ -41,11 +41,11 @@ public class ItemBombSpell extends InstantSpell implements TargetedLocationSpell
 		this.delay = getConfigInt("delay", 100);
 		this.itemHasGravity = getConfigBoolean("gravity", true);
 		this.spell = new Subspell(getConfigString("spell", ""));
-		
+
 		if (this.item == null) MagicSpells.error("Invalid item on ItemBombSpell " + this.internalName);
 		if (this.itemName != null) this.itemName = ChatColor.translateAlternateColorCodes('&', this.itemName);
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -62,7 +62,7 @@ public class ItemBombSpell extends InstantSpell implements TargetedLocationSpell
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	private void spawnItem(final Player player, Location l, final float power) {
 		Vector v = getVector(l, power);
 		final Item i = l.getWorld().dropItem(l, this.item);
@@ -82,14 +82,14 @@ public class ItemBombSpell extends InstantSpell implements TargetedLocationSpell
 				spell.castAtLocation(player, l, power);
 			}
 		}, this.delay);
-		
+
 		if (player != null) {
 			playSpellEffects(EffectPosition.CASTER, player);
 		} else {
 			playSpellEffects(EffectPosition.CASTER, l);
 		}
 	}
-	
+
 	private Vector getVector(Location loc, float power) {
 		Vector v = loc.getDirection();
 		if (this.verticalAdjustment != 0) v.setY(v.getY() + this.verticalAdjustment);

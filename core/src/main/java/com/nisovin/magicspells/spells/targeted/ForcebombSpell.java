@@ -27,10 +27,10 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 	private int maxYForce;
 	private boolean addVelocityInstead;
 	private boolean callTargetEvents;
-	
+
 	public ForcebombSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		radiusSquared = getConfigDouble("radius", 3);
 		radiusSquared *= radiusSquared;
 		yOffset = getConfigFloat("y-offset", 0F);
@@ -75,7 +75,7 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 		knockback(null, target, power);
 		return true;
 	}
-	
+
 	public void knockback(Player player, Location location, float basePower) {
 		location = location.clone().add(0D, yOffset, 0D);
 	    Vector t = location.toVector();

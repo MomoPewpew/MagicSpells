@@ -12,8 +12,11 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetEvent;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
-public class OffsetLocationSpell extends TargetedSpell implements TargetedLocationSpell{
+public class OffsetLocationSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private Vector relativeOffset;
 	private Vector absoluteOffset;
@@ -31,11 +34,9 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 	@Override
 	public void initialize() {
 		super.initialize();
-		if (spell != null) {
-			boolean ok = spell.process();
-			if (!ok || !spell.isTargetedLocationSpell()) {
-				MagicSpells.error("Invalid spell on OffsetLocationSpell '" + name + '\'');
-			}
+		if (spell != null && (!spell.process() || !spell.isTargetedLocationSpell())) {
+			spell = null;
+			MagicSpells.error("Invalid spell on OffsetLocationSpell '" + name + '\'');
 		}
 	}
 
@@ -53,7 +54,13 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 
 			Location loc = Util.applyOffsets(baseTargetLocation, relativeOffset, absoluteOffset);
 			if (loc != null) {
-				spell.castAtLocation(player, loc, power);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, loc, power);
+				EventUtil.call(event);
+				if (event.isCancelled()) return noTarget(player);
+				loc = event.getTargetLocation();
+				power = event.getPower();
+
+				if (spell != null) spell.castAtLocation(player, loc, power);
 				playSpellEffects(player, loc);
 			} else {
 				return PostCastAction.ALREADY_HANDLED;
@@ -65,7 +72,11 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 	@Override
 	public boolean castAtLocation(Player caster, Location target, float power) {
 		Location location = target.clone();
-		return spell.castAtLocation(caster, Util.applyOffsets(location, relativeOffset, absoluteOffset), power);
+		if (spell != null){
+			return spell.castAtLocation(caster, Util.applyOffsets(location, relativeOffset, absoluteOffset), power);
+		} else {
+			return false;
+		}
 	}
 
 	@Override

@@ -45,7 +45,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 	private boolean checkPlugins;
 	boolean playBreakEffect;
 	private String strFailed;
-	
+
 	//Pattern Configuration
 	private boolean usePattern;
 	private List<String> patterns;
@@ -303,7 +303,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 
 		if (resetDelay > 0 && !falling) {
 			Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, new Runnable() {
-				
+
 				@Override
 				public void run() {
 					if (materials.contains(block.getType())) {
@@ -313,12 +313,12 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 						if (playBreakEffect) block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType());
 					}
 				}
-				
+
 			}, resetDelay);
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean castAtLocation(Player caster, Location target, float power) {
 		Block block = target.getBlock();

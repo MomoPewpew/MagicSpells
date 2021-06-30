@@ -23,9 +23,9 @@ import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.ValidTargetList;
 
 public class ExternalCommandSpell extends TargetedSpell implements TargetedEntitySpell {
-	
+
 	static MessageBlocker messageBlocker;
-	
+
 	private boolean castWithItem;
 	private boolean castByCommand;
 	private List<String> commandToExecute;
@@ -43,13 +43,13 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 	String strBlockedOutput;
 	boolean doVariableReplacement;
 	boolean useTargetVariablesInstead;
-	
+
 	ConversationFactory convoFac;
 	private Prompt convoPrompt;
 
 	public ExternalCommandSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		this.castWithItem = getConfigBoolean("can-cast-with-item", true);
 		this.castByCommand = getConfigBoolean("can-cast-by-command", true);
 		this.commandToExecute = getConfigStringList("command-to-execute", null);
@@ -67,25 +67,25 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		this.strBlockedOutput = getConfigString("str-blocked-output", "");
 		this.doVariableReplacement = getConfigBoolean("do-variable-replacement", false);
 		this.useTargetVariablesInstead = getConfigBoolean("use-target-variables-instead", false);
-		
+
 		if (this.requirePlayerTarget) this.validTargetList = new ValidTargetList(true, false);
-		
+
 		if (this.blockChatOutput) {
 			if (Bukkit.getPluginManager().isPluginEnabled("ProtocolLib")) {
 				if (messageBlocker == null) messageBlocker = new MessageBlocker();
 			} else {
 				this.convoPrompt = new StringPrompt() {
-					
+
 					@Override
 					public String getPromptText(ConversationContext context) {
 						return strBlockedOutput;
 					}
-					
+
 					@Override
 					public Prompt acceptInput(ConversationContext context, String input) {
 						return Prompt.END_OF_CONVERSATION;
 					}
-					
+
 				};
 				this.convoFac = new ConversationFactory(MagicSpells.plugin)
 					.withModality(true)
@@ -112,7 +112,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	private void process(CommandSender sender, Player target, String[] args) {
 		// Get actual sender
 		CommandSender actualSender;
@@ -124,7 +124,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 			actualSender = sender;
 		}
 		if (actualSender == null) return;
-		
+
 		// Grant permissions and op
 		boolean opped = false;
 		if (actualSender instanceof Player) {
@@ -139,7 +139,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 				actualSender.setOp(true);
 			}
 		}
-		
+
 		// Perform commands
 		try {
 			if (this.commandToExecute != null && !this.commandToExecute.isEmpty()) {
@@ -153,7 +153,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 						convo.begin();
 					}
 				}
-				
+
 				int delay = 0;
 				Player varOwner;
 				if (!this.useTargetVariablesInstead) {
@@ -195,10 +195,10 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 			// Catch all exceptions to make sure we don't leave someone opped
 			e.printStackTrace();
 		}
-		
+
 		// Deop
 		if (opped) actualSender.setOp(false);
-		
+
 		// Effects
 		if (sender instanceof Player) {
 			if (target != null) {
@@ -232,7 +232,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		}
 		return false;
 	}
-	
+
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {
 		if (!this.requirePlayerTarget) {
@@ -241,7 +241,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		}
 		return false;
 	}
-	
+
 	@EventHandler
 	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
 		if (event.getPlayer().isOp()) return;
@@ -251,7 +251,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		for (String comm : this.commandToBlock) {
 			comm = comm.trim();
 			if (comm.isEmpty()) continue;
-			
+
 			if (msg.startsWith("/" + this.commandToBlock)) {
 				event.setCancelled(true);
 				sendMessage(this.strCantUseCommand, event.getPlayer(), MagicSpells.NULL_ARGS);
@@ -259,7 +259,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 			}
 		}
 	}
-	
+
 	public boolean requiresPlayerTarget() {
 		return this.requirePlayerTarget;
 	}
@@ -273,24 +273,24 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 	public boolean canCastWithItem() {
 		return this.castWithItem;
 	}
-	
+
 	@Override
 	public void turnOff() {
 		if (messageBlocker == null) return;
 		messageBlocker.turnOff();
 		messageBlocker = null;
 	}
-	
+
 	private class DelayedCommand implements Runnable {
 
 		private CommandSender sender;
 		private Player target;
-		
+
 		public DelayedCommand(CommandSender sender, Player target) {
 			this.sender = sender;
 			this.target = target;
 		}
-		
+
 		@Override
 		public void run() {
 			// Get actual sender
@@ -303,7 +303,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 				actualSender = this.sender;
 			}
 			if (actualSender == null) return;
-			
+
 			// Grant permissions
 			boolean opped = false;
 			if (actualSender instanceof Player) {
@@ -318,7 +318,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 					actualSender.setOp(true);
 				}
 			}
-			
+
 			// Run commands
 			try {
 				Conversation convo = null;
@@ -346,10 +346,10 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 				// Catch exceptions to make sure we don't leave someone opped
 				e.printStackTrace();
 			}
-			
+
 			// Deop
 			if (opped) actualSender.setOp(false);
-			
+
 			// Graphical effect
 			if (this.sender != null) {
 				if (this.sender instanceof Player) {
@@ -359,7 +359,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 				}
 			}
 		}
-		
+
 	}
 
 }

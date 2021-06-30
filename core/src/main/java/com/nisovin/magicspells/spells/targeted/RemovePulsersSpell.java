@@ -17,6 +17,8 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.targeted.PulserSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.MagicLocation;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 public class RemovePulsersSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -56,6 +58,13 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 				if (b != null && b.getType() != Material.AIR) loc = b.getLocation();
 			}
 			if (loc == null) return noTarget(player);
+
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, loc, power);
+			EventUtil.call(event);
+			if (event.isCancelled()) return noTarget(player);
+			loc = event.getTargetLocation();
+			power = event.getPower();
+
 			removePulsers(player, loc, power);
 		}
 		return PostCastAction.HANDLE_NORMALLY;

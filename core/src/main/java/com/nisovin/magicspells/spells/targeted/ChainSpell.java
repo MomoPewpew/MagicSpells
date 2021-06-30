@@ -29,10 +29,10 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	int interval;
 	boolean targetPlayers;
 	boolean targetNonPlayers;
-	
+
 	public ChainSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		spellNameToCast = getConfigString("spell", "heal");
 		bounces = getConfigInt("bounces", 3);
 		bounceRange = getConfigDouble("bounce-range", 8);
@@ -40,11 +40,11 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		targetPlayers = getConfigBoolean("target-players", true);
 		targetNonPlayers = getConfigBoolean("target-non-players", false);
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
-		
+
 		Subspell spell = new Subspell(spellNameToCast);
 		if (spell.process()) {
 			spellToCast = spell;
@@ -65,13 +65,13 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	private void chain(Player player, Location start, LivingEntity target, float power) {
 		List<LivingEntity> targets = new ArrayList<>();
 		List<Float> targetPowers = new ArrayList<>();
 		targets.add(target);
 		targetPowers.add(power);
-		
+
 		// Get targets
 		LivingEntity current = target;
 		int attempts = 0;
@@ -80,13 +80,13 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			for (Entity e : entities) {
 				if (!(e instanceof LivingEntity)) continue;
 				if (targets.contains(e)) continue;
-				
+
 				if (e instanceof Player) {
 					if (!targetPlayers) continue;
 				} else if (!targetNonPlayers) {
 					continue;
 				}
-				
+
 				if (checker != null && !checker.isValidTarget((LivingEntity)e)) continue;
 				float thisPower = power;
 				if (player != null) {
@@ -95,14 +95,14 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 					if (event.isCancelled()) continue;
 					thisPower = event.getPower();
 				}
-				
+
 				targets.add((LivingEntity)e);
 				targetPowers.add(thisPower);
 				current = (LivingEntity)e;
 				break;
 			}
 		}
-		
+
 		// Cast spell at targets
 		if (player != null) {
 			playSpellEffects(EffectPosition.CASTER, player);
@@ -129,11 +129,10 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			new ChainBouncer(player, start, targets, power);
 		}
 	}
-	
+
 	boolean castSpellAt(Player caster, Location from, LivingEntity target, float power) {
 		if (spellToCast.isTargetedEntityFromLocationSpell() && from != null) return spellToCast.castAtEntityFromLocation(caster, from, target, power);
-		if (spellToCast.isTargetedEntitySpell()) return spellToCast.castAtEntity(caster, target, power);
-		if (spellToCast.isTargetedLocationSpell()) return spellToCast.castAtLocation(caster, target.getLocation(), power);
+		if (spellToCast.canTargetEntity()) return spellToCast.castAtEntity(caster, target, power);
 		return true;
 	}
 
@@ -160,16 +159,16 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		chain(null, from, target, power);
 		return true;
 	}
-	
+
 	class ChainBouncer implements Runnable {
-		
+
 		Player caster;
 		Location start;
 		List<LivingEntity> targets;
 		float power;
 		int current = 0;
 		int taskId;
-		
+
 		public ChainBouncer(Player caster, Location start, List<LivingEntity> targets, float power) {
 			this.caster = caster;
 			this.start = start;
@@ -177,7 +176,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			this.power = power;
 			taskId = MagicSpells.scheduleRepeatingTask(this, 0, interval);
 		}
-		
+
 		@Override
 		public void run() {
 			Location from;
@@ -196,7 +195,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			current++;
 			if (current >= targets.size()) MagicSpells.cancelTask(taskId);
 		}
-		
+
 	}
-	
+
 }

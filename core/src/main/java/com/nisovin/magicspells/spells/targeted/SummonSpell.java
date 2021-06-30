@@ -23,6 +23,9 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.PlayerNameUtils;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
+
 
 public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, TargetedEntityFromLocationSpell {
 
@@ -34,13 +37,13 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 	private String strSummonPending;
 	private String strSummonAccepted;
 	private String strSummonExpired;
-	
+
 	private HashMap<Player,Location> pendingSummons;
 	private HashMap<Player,Long> pendingTimes;
-	
+
 	public SummonSpell(MagicConfig config, String spellName) {
-		super(config, spellName);		
-		
+		super(config, spellName);
+
 		requireExactName = getConfigBoolean("require-exact-name", false);
 		requireAcceptance = getConfigBoolean("require-acceptance", true);
 		maxAcceptDelay = getConfigInt("max-accept-delay", 90);
@@ -54,7 +57,7 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 			pendingSummons = new HashMap<>();
 			pendingTimes = new HashMap<>();
 		}
-		
+
 	}
 
 	@Override
@@ -72,22 +75,28 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 					Sign sign = (Sign)block.getState();
 					targetName = sign.getLine(0);
 					landLoc = block.getLocation().add(.5, .25, .5);
+
+					SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, landLoc, power);
+					EventUtil.call(event);
+					if (event.isCancelled()) return noTarget(player);
+					landLoc = event.getTargetLocation();
+					power = event.getPower();
 				}
 			}
-			
+
 			// Check usage
 			if (targetName.isEmpty()) {
 				// Fail -- show usage
 				sendMessage(strUsage, player, args);
 				return PostCastAction.ALREADY_HANDLED;
 			}
-			
+
 			// Check location
 			if (landLoc == null || !BlockUtils.isSafeToStand(landLoc.clone())) {
 				sendMessage(strUsage, player, args);
 				return PostCastAction.ALREADY_HANDLED;
 			}
-			
+
 			// Get player
 			Player target = null;
 			if (requireExactName) {
@@ -103,7 +112,7 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 				// Fail -- no player target
 				return noTarget(player);
 			}
-			
+
 			// Teleport player
 			if (requireAcceptance) {
 				pendingSummons.put(target, landLoc);
@@ -113,20 +122,20 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 				target.teleport(landLoc);
 				sendMessage(formatMessage(strSummonAccepted, "%a", player.getDisplayName()), target, args);
 			}
-			
+
 			sendMessages(player, target);
 			return PostCastAction.NO_MESSAGES;
-			
+
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	@EventHandler(priority=EventPriority.LOW)
 	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
 		if (!requireAcceptance) return;
 		if (!event.getMessage().equalsIgnoreCase('/' + acceptCommand)) return;
 		if (!pendingSummons.containsKey(event.getPlayer())) return;
-		
+
 		Player player = event.getPlayer();
 		if (maxAcceptDelay > 0 && pendingTimes.get(player) + maxAcceptDelay * TimeUtil.MILLISECONDS_PER_SECOND < System.currentTimeMillis()) {
 			// Waited too long
@@ -140,7 +149,7 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 		pendingTimes.remove(player);
 		event.setCancelled(true);
 	}
-	
+
 	@Override
 	public List<String> tabComplete(CommandSender sender, String partial) {
 		if (partial.contains(" ")) return null;

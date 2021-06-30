@@ -19,13 +19,13 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	private LivingEntity target;
 	private float power;
 	private boolean cancelled = false;
-	
+
 	public SpellTargetEvent(Spell spell, Player caster, LivingEntity target, float power) {
 		super(spell, caster);
 		this.target = target;
 		this.power = power;
 	}
-	
+
 	/**
 	 * Gets the living entity that is being targeted by the spell.
 	 * @return the targeted living entity
@@ -33,7 +33,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	public LivingEntity getTarget() {
 		return this.target;
 	}
-	
+
 	/**
 	 * Sets the spell's target to the provided living entity.
 	 * @param target the new target
@@ -41,7 +41,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	public void setTarget(LivingEntity target) {
 		this.target = target;
 	}
-	
+
 	/**
 	 * Gets the current power level of the spell. Spells start at a power level of 1.0.
 	 * @return the power level
@@ -49,7 +49,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	public float getPower() {
 		return this.power;
 	}
-	
+
 	/**
 	 * Sets the power level for the spell being cast.
 	 * @param power the power level
@@ -57,7 +57,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	public void setPower(float power) {
 		this.power = power;
 	}
-	
+
 	/**
 	 * Increases the power lever for the spell being cast by the given multiplier.
 	 * @param power the power level multiplier
@@ -73,7 +73,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 
 	@Override
 	public void setCancelled(boolean cancelled) {
-		this.cancelled = cancelled;		
+		this.cancelled = cancelled;
 	}
 
     @Override
@@ -84,5 +84,5 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
     public static HandlerList getHandlerList() {
         return handlers;
     }
-	
+
 }

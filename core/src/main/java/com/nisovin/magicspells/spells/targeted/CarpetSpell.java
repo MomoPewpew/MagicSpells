@@ -20,6 +20,8 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -27,17 +29,17 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 	MagicMaterial block;
 	int duration;
 	boolean circle;
-	
+
 	int touchCheckInterval;
 	boolean removeOnTouch;
 	Subspell spellOnTouch;
-	
+
 	Map<Block, Player> blockMap;
 	TouchChecker checker;
-	
+
 	public CarpetSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		radius = getConfigInt("radius", 1);
 		block = MagicSpells.getItemNameResolver().resolveBlock(getConfigString("block", "carpet:0"));
 		duration = getConfigInt("duration", 0);
@@ -50,7 +52,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 			checker = new TouchChecker();
 		}
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -58,7 +60,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 			MagicSpells.error("Invalid spell-on-touch for " + internalName);
 		}
 	}
-	
+
 	@Override
 	public void turnOff() {
 		if (blockMap != null) blockMap.clear();
@@ -76,11 +78,18 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 				if (b != null && b.getType() != Material.AIR) loc = b.getLocation();
 			}
 			if (loc == null) return noTarget(player);
+
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, loc, power);
+			EventUtil.call(event);
+			if (event.isCancelled()) return noTarget(player);
+			loc = event.getTargetLocation();
+			power = event.getPower();
+
 			layCarpet(player, loc, power);
 		}
 		return PostCastAction.ALREADY_HANDLED;
 	}
-	
+
 	void layCarpet(Player player, Location loc, float power) {
 		if (!loc.getBlock().getType().isOccluding()) {
 			int c = 0;
@@ -120,7 +129,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 		}
 		if (duration > 0 && !blocks.isEmpty()) {
 			MagicSpells.scheduleDelayedTask(new Runnable() {
-				
+
 				@Override
 				public void run() {
 					for (Block b : blocks) {
@@ -129,7 +138,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 						if (blockMap != null) blockMap.remove(b);
 					}
 				}
-				
+
 			}, duration);
 		}
 		if (player != null) playSpellEffects(EffectPosition.CASTER, player);
@@ -150,15 +159,15 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 		layCarpet(null, target, power);
 		return true;
 	}
-	
+
 	class TouchChecker implements Runnable {
-		
+
 		int taskId;
-		
+
 		public TouchChecker() {
 			taskId = MagicSpells.scheduleRepeatingTask(this, touchCheckInterval, touchCheckInterval);
 		}
-		
+
 		@Override
 		public void run() {
 			if (blockMap.isEmpty()) return;
@@ -168,7 +177,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 				if (caster == null) continue;
 				if (!block.equals(b)) continue;
 				if (player == caster) continue;
-				
+
 				SpellTargetEvent event = new SpellTargetEvent(spellOnTouch.getSpell(), caster, player, 1F);
 				EventUtil.call(event);
 				if (!event.isCancelled()) {
@@ -180,11 +189,11 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 				}
 			}
 		}
-		
+
 		public void stop() {
 			MagicSpells.cancelTask(taskId);
 		}
-		
+
 	}
 
 }

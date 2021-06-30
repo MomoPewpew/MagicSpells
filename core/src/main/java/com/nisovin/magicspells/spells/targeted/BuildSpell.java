@@ -22,7 +22,7 @@ import com.nisovin.magicspells.util.HandHandler;
 import com.nisovin.magicspells.util.MagicConfig;
 
 public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
-	
+
 	private int slot;
 	private boolean consumeBlock;
 	private Material[] allowedTypes;
@@ -30,10 +30,10 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 	private boolean playBreakEffect;
 	private String strInvalidBlock;
 	private String strCantBuild;
-	
+
 	public BuildSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		slot = getConfigInt("slot", 0);
 		consumeBlock = getConfigBoolean("consume-block", true);
 		String[] allowed = getConfigString("allowed-types", "1,2,3,4,5,12,13,17,20,22,24,35,41,42,43,44,45,47,48,49,50,53,57,65,67,80,85,87,88,89,91,92").split(",");
@@ -48,7 +48,7 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 		strInvalidBlock = getConfigString("str-invalid-block", "You can't build that block.");
 		strCantBuild = getConfigString("str-cant-build", "You can't build there.");
 	}
-	
+
 	@Override
 	public PostCastAction castSpell(Player player, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
@@ -58,7 +58,7 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 				// Fail
 				return noTarget(player, strInvalidBlock);
 			}
-			
+
 			// Get target
 			List<Block> lastBlocks = null;
 			try {
@@ -109,16 +109,16 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean castAtLocation(Player caster, Location target, float power) {
 		// Get mat
 		ItemStack item = caster.getInventory().getItem(slot);
 		if (item == null || !isAllowed(item.getType())) return false;
-		
+
 		// Get blocks
 		Block block = target.getBlock();
-		
+
 		// Build
 		return build(caster, block, block, item);
 	}
@@ -127,7 +127,7 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 	public boolean castAtLocation(Location target, float power) {
 		return false;
 	}
-	
+
 	private boolean isAllowed(Material mat) {
 		if (!mat.isBlock()) return false;
 		for (int i = 0; i < allowedTypes.length; i++) {
@@ -135,5 +135,5 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 		return false;
 	}
-	
+
 }

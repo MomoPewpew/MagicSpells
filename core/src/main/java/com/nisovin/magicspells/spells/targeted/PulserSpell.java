@@ -22,13 +22,17 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.Spell;
-import com.nisovin.magicspells.events.SpellTargetLocationEvent;
+import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.materials.MagicMaterial;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetEvent;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
+
 
 public class PulserSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -41,9 +45,8 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 	private boolean unbreakable;
 	boolean onlyCountOnSuccess;
 	private List<String> spellNames;
-	List<TargetedLocationSpell> spells;
-	private String spellNameOnBreak;
-	TargetedLocationSpell spellOnBreak;
+	List<Subspell> spells;
+	Subspell spellOnBreak;
 
 	private String strAtCap;
 
@@ -63,7 +66,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		unbreakable = getConfigBoolean("unbreakable", false);
 		onlyCountOnSuccess = getConfigBoolean("only-count-on-success", false);
 		spellNames = getConfigStringList("spells", null);
-		spellNameOnBreak = getConfigString("spell-on-break", null);
+		if (configKeyExists("spell-on-break")) spellOnBreak = new Subspell(getConfigString("spell-on-break", ""));
 
 		strAtCap = getConfigString("str-at-cap", "You have too many effects at once.");
 
@@ -82,19 +85,17 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		spells = new ArrayList<>();
 		if (spellNames != null && !spellNames.isEmpty()) {
 			for (String spellName : spellNames) {
-				Spell spell = MagicSpells.getSpellByInternalName(spellName);
-				if (spell instanceof TargetedLocationSpell) {
-					spells.add((TargetedLocationSpell) spell);
+				Subspell spell = new Subspell(spellName);
+				if (spell.process() && spell.isTargetedLocationSpell()) {
+					spells.add(spell);
+				} else {
+					MagicSpells.error("Pulser spell '" + internalName + "' has an invalid spell '" + spellName + "' in list 'spells'");
 				}
 			}
 		}
-		if (spellNameOnBreak != null) {
-			Spell spell = MagicSpells.getSpellByInternalName(spellNameOnBreak);
-			if (spell instanceof TargetedLocationSpell) {
-				spellOnBreak = (TargetedLocationSpell)spell;
-			} else {
-				MagicSpells.error("Pulser spell '" + internalName + "' has an invalid spell-on-break spell defined");
-			}
+		if (spellOnBreak != null && (!spellOnBreak.process() || !spellOnBreak.isTargetedLocationSpell())) {
+			spellOnBreak = null;
+			MagicSpells.error("Pulser spell '" + internalName + "' has an invalid spell-on-break spell defined");
 		}
 		if (spells.isEmpty()) {
 			MagicSpells.error("Pulser spell '" + internalName + "' has no spells defined!");
@@ -283,12 +284,8 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 		private boolean activate() {
 			boolean activated = false;
-			for (TargetedLocationSpell spell : spells) {
-				if (caster != null) {
-					activated = spell.castAtLocation(caster, location, power) || activated;
-				} else {
-					activated = spell.castAtLocation(location, power) || activated;
-				}
+			for (Subspell spell : spells) {
+				activated = spell.castAtLocation(caster, location, power) || activated;
 			}
 			playSpellEffects(EffectPosition.DELAYED, location);
 			if (totalPulses > 0 && (activated || !onlyCountOnSuccess)) {
@@ -306,11 +303,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			block.setType(Material.AIR);
 			playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, block.getLocation());
 			if (spellOnBreak != null) {
-				if (caster == null) {
-					spellOnBreak.castAtLocation(location, power);
-				} else if (caster.isValid()) {
-					spellOnBreak.castAtLocation(caster, location, power);
-				}
+				spellOnBreak.castAtLocation(caster, location, power);
 			}
 		}
 

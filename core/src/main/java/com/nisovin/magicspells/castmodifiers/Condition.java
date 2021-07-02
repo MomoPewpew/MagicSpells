@@ -134,6 +134,7 @@ public abstract class Condition {
 		conditions.put("testforblock", TestForBlockCondition.class);
 		conditions.put("richerthan", RicherThanCondition.class);
 		conditions.put("lookingatblock", LookingAtBlockCondition.class);
+		conditions.put("lookingatblockdebug", LookingAtBlockDebugCondition.class);
 		conditions.put("oncooldown", OnCooldownCondition.class);
 		conditions.put("hasmark", HasMarkCondition.class);
 		conditions.put("playercountabove", PlayerCountAboveCondition.class);
@@ -188,6 +189,5 @@ public abstract class Condition {
 		conditions.put("nbtdebug", NBTDebug.class);
 		conditions.put("nbtmatches", NBTMatches.class);
 		conditions.put("nbtexpr", NBTExpr.class);
-		conditions.put("nbtexpression", NBTExpr.class);
 	}
 }

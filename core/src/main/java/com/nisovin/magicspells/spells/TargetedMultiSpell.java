@@ -20,49 +20,52 @@ import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.util.ConfigData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.TargetInfo;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetEvent;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 public final class TargetedMultiSpell extends TargetedSpell implements TargetedEntitySpell, TargetedLocationSpell {
 
 	private static final Pattern DELAY_PATTERN = Pattern.compile("DELAY [0-9]+");
-	
+
 	@ConfigData(field="check-individual-cooldowns", dataType="boolean", defaultValue="false")
 	private boolean checkIndividualCooldowns;
-	
+
 	@ConfigData(field="require-entity-target", dataType="boolean", defaultValue="false")
 	private boolean requireEntityTarget;
-	
+
 	@ConfigData(field="point-blank", dataType="boolean", defaultValue="false")
 	private boolean pointBlank;
-	
+
 	@ConfigData(field="y-offset", dataType="int", defaultValue="0")
 	private int yOffset;
-	
+
 	@ConfigData(field="cast-random-spell-instead", dataType="boolean", defaultValue="false")
 	private boolean castRandomSpellInstead;
-	
+
 	@ConfigData(field="stop-on-fail", dataType="boolean", defaultValue="true")
 	boolean stopOnFail;
-	
+
 	@ConfigData(field="spells", dataType="String[]", defaultValue="null")
 	private List<String> spellList;
-	
+
 	private ArrayList<Action> actions;
 	private Random random = new Random();
-	
+
 	public TargetedMultiSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		this.checkIndividualCooldowns = getConfigBoolean("check-individual-cooldowns", false);
 		this.requireEntityTarget = getConfigBoolean("require-entity-target", false);
 		this.pointBlank = getConfigBoolean("point-blank", false);
 		this.yOffset = getConfigInt("y-offset", 0);
 		this.castRandomSpellInstead = getConfigBoolean("cast-random-spell-instead", false);
 		this.stopOnFail = getConfigBoolean("stop-on-fail", true);
-		
+
 		this.actions = new ArrayList<>();
 		this.spellList = getConfigStringList("spells", null);
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -98,7 +101,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 					return PostCastAction.ALREADY_HANDLED;
 				}
 			}
-			
+
 			// Get target
 			Location locTarget = null;
 			LivingEntity entTarget = null;
@@ -120,13 +123,24 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 					b = null;
 				}
 			}
+			//handle target modifiers
+			if (locTarget != null) {
+				locTarget.setY(locTarget.getY() + this.yOffset);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, locTarget, power);
+				EventUtil.call(event);
+				if (event.isCancelled()) {
+					locTarget = null;
+				} else {
+					locTarget = event.getTargetLocation();
+					power = event.getPower();
+				}
+			}
 			if (locTarget == null && entTarget == null) return noTarget(player);
-			if (locTarget != null) locTarget.setY(locTarget.getY() + this.yOffset);
-			
+
 			boolean somethingWasDone = runSpells(player, entTarget, locTarget, power);
-			
+
 			if (!somethingWasDone) return noTarget(player);
-			
+
 			if (entTarget != null) {
 				sendMessages(player, entTarget);
 				return PostCastAction.NO_MESSAGES;
@@ -139,10 +153,10 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 	public boolean castAtLocation(Player caster, Location target, float power) {
 		return runSpells(caster, null, target, power);
 	}
-	
+
 	@Override
 	public boolean castAtLocation(Location location, float power) {
-		return runSpells(null, null, location, power);
+		return castAtLocation(null, location, power);
 	}
 
 	@Override
@@ -152,9 +166,9 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
-		return runSpells(null, target, null, power);
+		return castAtEntity(null, target, power);
 	}
-	
+
 	boolean runSpells(Player player, LivingEntity entTarget, Location locTarget, float power) {
 		boolean somethingWasDone = false;
 		if (!this.castRandomSpellInstead) {
@@ -208,67 +222,63 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 		}
 		return somethingWasDone;
 	}
-	
+
 	boolean castTargetedSpell(Subspell spell, Player caster, LivingEntity entTarget, Location locTarget, float power) {
 		boolean success = false;
-		if (spell.isTargetedEntitySpell() && entTarget != null) {
+		if (spell.canTargetEntity() && entTarget != null) {
 			success = spell.castAtEntity(caster, entTarget, power);
-		} else if (spell.isTargetedLocationSpell()) {
-			if (entTarget != null) {
-				success = spell.castAtLocation(caster, entTarget.getLocation(), power);
-			} else if (locTarget != null) {
-				success = spell.castAtLocation(caster, locTarget, power);
-			}
+		} else if (spell.isTargetedLocationSpell() && locTarget != null) {
+			success = spell.castAtLocation(caster, locTarget, power);
 		} else {
 			success = spell.cast(caster, power) == PostCastAction.HANDLE_NORMALLY;
 		}
 		return success;
 	}
-	
+
 	private class Action {
-		
+
 		private Subspell spell;
 		private int delay;
-		
+
 		public Action(Subspell spell) {
 			this.spell = spell;
 			this.delay = 0;
 		}
-		
+
 		public Action(int delay) {
 			this.delay = delay;
 			this.spell = null;
 		}
-		
+
 		public boolean isSpell() {
 			return this.spell != null;
 		}
-		
+
 		public Subspell getSpell() {
 			return this.spell;
 		}
-		
+
 		public boolean isDelay() {
 			return this.delay > 0;
 		}
-		
+
 		public int getDelay() {
 			return this.delay;
 		}
-		
+
 	}
-	
+
 	private class DelayedSpell implements Runnable {
-		
+
 		private Subspell spell;
 		private Player player;
 		private LivingEntity entTarget;
 		private Location locTarget;
 		private float power;
-		
+
 		private List<DelayedSpell> delayedSpells;
 		private boolean cancelled;
-		
+
 		public DelayedSpell(Subspell spell, Player player, LivingEntity entTarget, Location locTarget, float power, List<DelayedSpell> delayedSpells) {
 			this.spell = spell;
 			this.player = player;
@@ -278,12 +288,12 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 			this.delayedSpells = delayedSpells;
 			this.cancelled = false;
 		}
-		
+
 		public void cancel() {
 			this.cancelled = true;
 			this.delayedSpells = null;
 		}
-		
+
 		public void cancelAll() {
 			for (DelayedSpell ds : this.delayedSpells) {
 				if (ds == this) continue;
@@ -292,7 +302,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 			this.delayedSpells.clear();
 			cancel();
 		}
-		
+
 		@Override
 		public void run() {
 			if (!this.cancelled) {
@@ -306,7 +316,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 			}
 			this.delayedSpells = null;
 		}
-		
+
 	}
-	
+
 }

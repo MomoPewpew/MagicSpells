@@ -38,17 +38,17 @@ public class InBlockCondition extends Condition {
 		mat = MagicSpells.getItemNameResolver().resolveBlock(var);
 		return mat != null;
 	}
-	
+
 	@Override
 	public boolean check(Player player) {
 		return check(player, player);
 	}
-	
+
 	@Override
 	public boolean check(Player player, LivingEntity target) {
 		Block block = target.getLocation().getBlock();
 		if (mat != null) return mat.equals(block);
-		
+
 		if (types.contains(block.getType())) {
 			for (MagicMaterial m : mats) {
 				if (m.equals(block)) return true;
@@ -56,7 +56,7 @@ public class InBlockCondition extends Condition {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public boolean check(Player player, Location location) {
 		return false;

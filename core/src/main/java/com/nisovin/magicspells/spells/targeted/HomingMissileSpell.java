@@ -311,10 +311,8 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 					// Should we bounce the missile back?
 					if (!preImpact.getRedirected()) {
 						// Apparently didn't get redirected, carry out the plans
-						if (spell.isTargetedEntitySpell()) {
+						if (spell.canTargetEntity()) {
 							spell.castAtEntity(caster, target, power);
-						} else if (spell.isTargetedLocationSpell()) {
-							spell.castAtLocation(caster, target.getLocation(), power);
 						}
 						playSpellEffects(EffectPosition.TARGET, target);
 						stop();

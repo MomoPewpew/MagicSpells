@@ -24,6 +24,8 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.Util_1_9;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 public class ParticleCloudSpell extends TargetedSpell implements TargetedLocationSpell, TargetedEntitySpell {
 
@@ -40,7 +42,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 	private boolean useGravity = false;
 	private boolean canTargetEntities = true;
 	private boolean canTargetLocation = true;
-	
+
 	public ParticleCloudSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 		color = getConfigInt("color", color);
@@ -57,17 +59,17 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		canTargetLocation = getConfigBoolean("can-target-location", canTargetLocation);
 		particle = Util_1_9.getParticleFromName(particleName);
 		if (particle == null) MagicSpells.error("could not determine particle from '" + particleName + '\'');
-		
+
 		List<String> potionEffectStrings = getConfigStringList("potion-effects", null);
 		if (potionEffectStrings == null) potionEffectStrings = new ArrayList<>();
-		
+
 		this.potionEffects = new HashSet<>();
-		
+
 		for (String effect: potionEffectStrings) {
 			this.potionEffects.add(getPotionEffectFromString(effect));
 		}
 	}
-	
+
 	private static PotionEffect getPotionEffectFromString(String s) {
 		//type durationTicks amplifier ambient particles? hexColor
 		String[] splits = s.split(" ");
@@ -83,19 +85,25 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 	@Override
 	public PostCastAction castSpell(Player player, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
-			Location locToSpawn = null;
+			Location loc = null;
 			if (canTargetEntities) {
 				TargetInfo<LivingEntity> targetEntityInfo = getTargetedEntity(player, power);
-				if (targetEntityInfo.getTarget() != null) locToSpawn = targetEntityInfo.getTarget().getLocation();
+				if (targetEntityInfo.getTarget() != null) loc = targetEntityInfo.getTarget().getLocation();
 			}
-			if (canTargetLocation && locToSpawn == null) {
+			if (canTargetLocation && loc == null) {
 				Block targetBlock = getTargetedBlock(player, power);
-				if (targetBlock != null) locToSpawn = targetBlock.getLocation();
+				if (targetBlock != null) loc = targetBlock.getLocation();
 			}
-			
-			if (locToSpawn == null) return noTarget(player);
-			
-			AreaEffectCloud cloud = spawnCloud(locToSpawn);
+
+			if (loc == null) return noTarget(player);
+
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, loc, power);
+			EventUtil.call(event);
+			if (event.isCancelled()) return noTarget(player);
+			loc = event.getTargetLocation();
+			power = event.getPower();
+
+			AreaEffectCloud cloud = spawnCloud(loc);
 			cloud.setSource(player);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
@@ -113,7 +121,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 	public boolean castAtLocation(Location target, float power) {
 		return castAtLocation(null, target, power);
 	}
-	
+
 	private AreaEffectCloud spawnCloud(Location loc) {
 		AreaEffectCloud cloud = loc.getWorld().spawn(loc, AreaEffectCloud.class);
 		cloud.setColor(Color.fromRGB(color));

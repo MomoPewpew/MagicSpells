@@ -14,7 +14,7 @@ public class TestForBlockCondition extends Condition {
 
 	MagicLocation location;
 	MagicMaterial blockType;
-	
+
 	@Override
 	public boolean setVar(String var) {
 		try {

@@ -14,7 +14,7 @@ public class LookingAtBlockCondition extends Condition {
 
 	MagicMaterial blockType;
 	int dist = 4;
-	
+
 	@Override
 	public boolean setVar(String var) {
 		try {
@@ -45,5 +45,5 @@ public class LookingAtBlockCondition extends Condition {
 	public boolean check(Player player, Location location) {
 		return check(player);
 	}
-	
+
 }

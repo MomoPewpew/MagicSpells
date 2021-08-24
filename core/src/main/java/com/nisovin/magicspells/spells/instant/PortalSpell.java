@@ -20,6 +20,7 @@ import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.BoundingBox;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellReagents;
+import com.nisovin.magicspells.util.compat.EventUtil;
 
 public class PortalSpell extends InstantSpell {
 
@@ -260,8 +261,9 @@ public class PortalSpell extends InstantSpell {
 			}
 
 			SpellTargetEvent event = new SpellTargetEvent(this.spell, this.caster, player, 1);
-			Bukkit.getPluginManager().callEvent(event);
+			EventUtil.call(event);
 			if (payer != null) removeReagents(payer, PortalSpell.this.teleportCost);
+			if (event.isCancelled()) return false;
 			return true;
 		}
 

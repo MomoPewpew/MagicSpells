@@ -43,7 +43,7 @@ public class OnBlockCondition extends Condition {
 	public boolean check(Player player) {
 		return check(player, player);
 	}
-	
+
 	@Override
 	public boolean check(Player player, LivingEntity target) {
 		Block block = target.getLocation().subtract(0, 1, 0).getBlock();
@@ -55,7 +55,7 @@ public class OnBlockCondition extends Condition {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public boolean check(Player player, Location location) {
 		return false;

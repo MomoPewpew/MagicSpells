@@ -24,19 +24,19 @@ import com.nisovin.magicspells.DebugHandler;
 import com.nisovin.magicspells.MagicSpells;
 
 public class MagicItemNameResolver implements ItemNameResolver {
-	
+
 	private static final Pattern DIGITS = Pattern.compile("[0-9]+");
 	private static final Pattern BLOCK_BYTE_DATA_PATTERN = Pattern.compile("^[0-9]+$");
-	
+
 	Map<String, Material> materialMap = new HashMap<>();
 	Map<String, MaterialData> materialDataMap = new HashMap<>();
 	Random rand = new Random();
-	
+
 	public MagicItemNameResolver() {
 		for (Material mat : Material.values()) {
 			this.materialMap.put(mat.name().toLowerCase(), mat);
 		}
-		
+
 		File file = new File(MagicSpells.getInstance().getDataFolder(), "itemnames.yml");
 		if (!file.exists()) {
 			MagicSpells.getInstance().saveResource("itemnames.yml", false);
@@ -52,7 +52,7 @@ public class MagicItemNameResolver implements ItemNameResolver {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		Map<String, Material> toAdd = new HashMap<>();
 		for (String s : this.materialMap.keySet()) {
 			if (s.contains("_")) {
@@ -61,7 +61,7 @@ public class MagicItemNameResolver implements ItemNameResolver {
 		}
 		this.materialMap.putAll(toAdd);
 	}
-	
+
 	@Override
 	public ItemTypeAndData resolve(String string) {
 		if (string == null || string.isEmpty()) return null;
@@ -91,18 +91,18 @@ public class MagicItemNameResolver implements ItemNameResolver {
 		}
 		return item;
 	}
-	
+
 	@Override
 	public MagicMaterial resolveItem(String string) {
 		if (string == null || string.isEmpty()) return null;
-		
+
 		// first check for predefined material datas
 		MaterialData matData = this.materialDataMap.get(string.toLowerCase());
 		if (matData != null) {
 			if (matData.getItemType().isBlock()) return new MagicBlockMaterial(matData);
 			return new MagicItemMaterial(matData);
 		}
-		
+
 		// split type and data
 		String stype;
 		String sdata;
@@ -118,10 +118,10 @@ public class MagicItemNameResolver implements ItemNameResolver {
 			stype = string.toLowerCase();
 			sdata = "";
 		}
-		
+
 		Material type = this.materialMap.get(stype);
 		if (type == null) return resolveUnknown(stype, sdata);
-		
+
 		if (type.isBlock()) {
 			return new MagicBlockMaterial(resolveBlockData(type, sdata));
 		} else {
@@ -137,13 +137,13 @@ public class MagicItemNameResolver implements ItemNameResolver {
 			return new MagicItemMaterial(type, durability);
 		}
 	}
-	
+
 	@Override
 	public MagicMaterial resolveBlock(String string) {
 		if (string == null || string.isEmpty()) return null;
-		
+
 		if (string.contains("|")) return resolveRandomBlock(string);
-		
+
 		String stype;
 		String sdata;
 		if (string.contains(":")) {
@@ -154,12 +154,12 @@ public class MagicItemNameResolver implements ItemNameResolver {
 			stype = string.toLowerCase();
 			sdata = "";
 		}
-		
+
 		Material type = this.materialMap.get(stype);
 		if (type == null) {
 			return resolveUnknown(stype, sdata);
 		}
-		
+
 		if (type.isBlock()) {
 			if (sdata.equals("*")) {
 				return new MagicBlockAnyDataMaterial(new MaterialData(type));
@@ -170,7 +170,7 @@ public class MagicItemNameResolver implements ItemNameResolver {
 			return null;
 		}
 	}
-	
+
 	private MagicMaterial resolveRandomBlock(String string) {
 		List<MagicMaterial> materials = new ArrayList<>();
 		String[] strings = string.split("\\|");
@@ -181,7 +181,7 @@ public class MagicItemNameResolver implements ItemNameResolver {
 		}
 		return new MagicBlockRandomMaterial(materials.toArray(new MagicMaterial[materials.size()]));
 	}
-	
+
 	private MaterialData resolveBlockData(Material type, String sdata) {
 		if (type == Material.LOG || type == Material.SAPLING || type == Material.WOOD) {
 			return getTree(sdata);
@@ -195,7 +195,7 @@ public class MagicItemNameResolver implements ItemNameResolver {
 			return new MaterialData(type);
 		}
 	}
-	
+
 	private MaterialData resolveItemData(Material type, String sdata) {
 		if (type == Material.INK_SACK) {
 			return getDye(sdata);
@@ -203,7 +203,7 @@ public class MagicItemNameResolver implements ItemNameResolver {
 			return null;
 		}
 	}
-	
+
 	private MagicMaterial resolveUnknown(String stype, String sdata) {
 		try {
 			int type = Integer.parseInt(stype);
@@ -218,17 +218,17 @@ public class MagicItemNameResolver implements ItemNameResolver {
 			return null;
 		}
 	}
-	
+
 	private Dye getDye(String data) {
 		Dye dye = new Dye();
 		dye.setColor(getDyeColor(data));
 		return dye;
 	}
-	
+
 	private Wool getWool(String data) {
 		return new Wool(getDyeColor(data));
 	}
-	
+
 	private DyeColor getDyeColor(String data) {
 		if (data != null && data.equalsIgnoreCase("random")) {
 			return DyeColor.values()[rand.nextInt(DyeColor.values().length)];
@@ -246,7 +246,7 @@ public class MagicItemNameResolver implements ItemNameResolver {
 			return color;
 		}
 	}
-	
+
 	/*
 	 * Data format
 	 * species direction
@@ -282,11 +282,11 @@ public class MagicItemNameResolver implements ItemNameResolver {
 		}
 		return new Tree(species, dir);
 	}
-	
+
 	private Leaves getLeaves(String data) {
 		return new Leaves(getTreeSpecies(data));
 	}
-	
+
 	// Data can be
 	// birch, jungle, redwood, random
 	private TreeSpecies getTreeSpecies(String data) {

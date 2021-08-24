@@ -25,6 +25,8 @@ import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.events.SpellTargetEvent;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
 // TODO make this a targeted spell
 
@@ -43,13 +45,13 @@ public class FirenovaSpell extends InstantSpell implements TargetedLocationSpell
 	boolean burnTallGrass;
 	private boolean checkPlugins;
 	int expandRate = 1;
-	
+
 	HashSet<Player> fireImmunity;
 	Subspell subSpell = null;
-	
+
 	// Using the names to be version safe
 	private Set<String> activeDamageCauses = null;
-	
+
 	private static final Map<String, Set<String>> materialsToImmunities = new HashMap<>();
 	static {
 		materialsToImmunities.put("FIRE", Sets.newHashSet("FIRE", "FIRE_TICK"));
@@ -58,25 +60,25 @@ public class FirenovaSpell extends InstantSpell implements TargetedLocationSpell
 		materialsToImmunities.put("MAGMA", Sets.newHashSet("HOT_FLOOR"));
 		materialsToImmunities.put("CACTUS", Sets.newHashSet("CONTACT"));
 	}
-	
+
 	public FirenovaSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		range = getConfigInt("range", 3);
 		tickSpeed = getConfigInt("tick-speed", 5);
 		burnTallGrass = getConfigBoolean("burn-tall-grass", true);
 		checkPlugins = getConfigBoolean("check-plugins", true);
-		
+
 		mat = MagicSpells.getItemNameResolver().resolveBlock(getConfigString("block-type", "51:15"));
-		
+
 		expandRate = getConfigInt("expanding-radius-change", expandRate);
 		if (expandRate < 1) expandRate = 1;
-		
+
 		if (materialsToImmunities.containsKey(mat.getMaterial().name())) {
 			activeDamageCauses = materialsToImmunities.get(mat.getMaterial().name());
 			fireImmunity = new HashSet<>();
 		}
-		
+
 		subSpell = new Subspell(getConfigString("spell", ""));
 		if (!subSpell.process()) subSpell = null;
 		if (subSpell != null) {
@@ -113,7 +115,7 @@ public class FirenovaSpell extends InstantSpell implements TargetedLocationSpell
 		if (this.activeDamageCauses == null) return;
 		if (!this.activeDamageCauses.contains(event.getCause().name())) return;
 		Player player = (Player)event.getEntity();
-		
+
 		if (this.fireImmunity.contains(player)) {
 			// Caster is taking damage, cancel it
 			event.setCancelled(true);
@@ -135,26 +137,26 @@ public class FirenovaSpell extends InstantSpell implements TargetedLocationSpell
 			}
 		}
 	}
-	
+
 	private class FirenovaAnimation implements Runnable {
-		
+
 		Player player;
 		int i = 0;
 		Block center;
 		HashSet<Block> fireBlocks = new HashSet<>();
 		int taskId;
-		
+
 		public FirenovaAnimation(Player caster) {
 			this.player = caster;
 			this.center = caster.getLocation().getBlock();
 			this.taskId = MagicSpells.scheduleRepeatingTask(this, 0, tickSpeed);
 		}
-		
+
 		public FirenovaAnimation(Location location) {
 			this.center = location.getBlock();
 			this.taskId = MagicSpells.scheduleRepeatingTask(this, 0, tickSpeed);
 		}
-		
+
 		@Override
 		public void run() {
 			// Remove old fire blocks
@@ -163,7 +165,7 @@ public class FirenovaSpell extends InstantSpell implements TargetedLocationSpell
 				block.setType(Material.AIR);
 			}
 			this.fireBlocks.clear();
-			
+
 			this.i += expandRate;
 			if (i <= range) {
 				// Set next ring on fire
@@ -200,7 +202,7 @@ public class FirenovaSpell extends InstantSpell implements TargetedLocationSpell
 				}
 			}
 		}
-		
+
 	}
 
 }

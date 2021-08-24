@@ -53,7 +53,7 @@ dependencies {
 	implementation ":WorldEdit"
 	implementation ":WorldGuard"
 
-    implementation "com.github.libraryaddict:LibsDisguises:master-SNAPSHOT"
+    implementation "com.github.libraryaddict:LibsDisguises:v10.0.25"
     implementation "com.github.Updated-NoCheatPlus:NoCheatPlus:master-SNAPSHOT"
     implementation "com.github.MilkBowl:VaultAPI:master-SNAPSHOT"
     implementation "com.github.EngineHub:WorldEdit:9a5ef70858"

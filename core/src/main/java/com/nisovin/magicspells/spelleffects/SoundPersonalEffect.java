@@ -1,10 +1,12 @@
 package com.nisovin.magicspells.spelleffects;
 
 import com.nisovin.magicspells.util.Util;
+
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.SoundCategory;
 
 import com.nisovin.magicspells.MagicSpells;
 
@@ -58,13 +60,15 @@ import com.nisovin.magicspells.MagicSpells;
  * </table>
  */
 public class SoundPersonalEffect extends SpellEffect {
-	
+
 	String sound = "random.pop";
-	
+
 	float volume = 1.0F;
-	
+
 	float pitch = 1.0F;
 	boolean broadcast = false;
+
+	private SoundCategory category;
 
 	@Override
 	public void loadFromString(String string) {
@@ -87,6 +91,13 @@ public class SoundPersonalEffect extends SpellEffect {
 		volume = (float)config.getDouble("volume", volume);
 		pitch = (float)config.getDouble("pitch", pitch);
 		broadcast = config.getBoolean("broadcast", broadcast);
+
+		try {
+			category = SoundCategory.valueOf(config.getString("category", "players").toUpperCase());
+		}
+		catch (IllegalArgumentException ignored) {
+			category = SoundCategory.PLAYERS;
+		}
 	}
 
 	@Override
@@ -99,9 +110,10 @@ public class SoundPersonalEffect extends SpellEffect {
 		}
 		return null;
 	}
-	
+
 	private void send(Player player) {
-		MagicSpells.getVolatileCodeHandler().playSound(player, sound, volume, pitch);
+		//MagicSpells.getVolatileCodeHandler().playSound(player, sound, volume, pitch);
+		player.playSound(player.getLocation(), sound, category, volume, pitch);
 	}
-	
+
 }

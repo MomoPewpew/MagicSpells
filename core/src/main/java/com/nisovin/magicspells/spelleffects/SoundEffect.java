@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.TreeSet;
 
 import org.bukkit.Location;
+import org.bukkit.SoundCategory;
+import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -59,11 +61,12 @@ import com.nisovin.magicspells.MagicSpells;
  * </table>
  */
 public class SoundEffect extends SpellEffect {
-	
+
 	String sound = "random.pop";
-	
+
 	float volume = 1.0F;
-	
+	private SoundCategory category;
+
 	float pitch = 1.0F;
 
 	@Override
@@ -86,15 +89,25 @@ public class SoundEffect extends SpellEffect {
 		sound = config.getString("sound", sound);
 		volume = (float)config.getDouble("volume", volume);
 		pitch = (float)config.getDouble("pitch", pitch);
+
+		try {
+			category = SoundCategory.valueOf(config.getString("category", "players").toUpperCase());
+		}
+		catch (IllegalArgumentException ignored) {
+			category = SoundCategory.PLAYERS;
+		}
 	}
-	
+
 	@Override
 	public Runnable playEffectLocation(Location location) {
-		MagicSpells.getVolatileCodeHandler().playSound(location, sound, volume, pitch);
+		//MagicSpells.getVolatileCodeHandler().playSound(location, sound, volume, pitch);
 		//SoundUtils.makeSound(location, sound, volume, pitch);
+		World world = location.getWorld();
+		if (world == null) return null;
+		world.playSound(location, sound, category, volume, pitch);
 		return null;
 	}
-	
+
 	public static void main(String[] args) {
 		Collection<String> sounds = new TreeSet<>();
 		File file = new File("C:\\Users\\Justin.Baker\\AppData\\Roaming\\.minecraft\\assets\\sound");
@@ -103,10 +116,10 @@ public class SoundEffect extends SpellEffect {
 			System.out.println("   * " + sound);
 		}
 	}
-	
+
 	static void parseFolder(File folder, String path, Collection<String> sounds) {
 		File[] files = folder.listFiles();
-		for (File file : files) {			
+		for (File file : files) {
 			if (file.isDirectory()) {
 				parseFolder(file, path + file.getName() + '.', sounds);
 			} else if (file.getName().endsWith(".ogg")) {
@@ -117,5 +130,5 @@ public class SoundEffect extends SpellEffect {
 			}
 		}
 	}
-	
+
 }

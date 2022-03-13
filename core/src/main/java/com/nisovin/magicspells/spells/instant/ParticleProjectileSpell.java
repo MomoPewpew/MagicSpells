@@ -3,11 +3,14 @@ package com.nisovin.magicspells.spells.instant;
 import java.util.Map;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.ArrayList;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.util.Vector;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -67,6 +70,9 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 	int maxEntitiesHit;
 	float hitRadius;
 	float verticalHitRadius;
+
+	private Set<Material> groundMaterials;
+	private Set<Material> disallowedGroundMaterials;
 
 	int maxDuration;
 	int maxDistanceSquared;
@@ -163,6 +169,32 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		this.verticalHitRadius = getConfigFloat("vertical-hit-radius", this.hitRadius);
 		this.renderDistance = getConfigInt("render-distance", 32);
 
+		this.groundMaterials = new HashSet<>();
+		List<String> groundMaterialNames = getConfigStringList("ground-materials", null);
+		if (groundMaterialNames != null) {
+			for (String str : groundMaterialNames) {
+				Material material = Util.getMaterial(str);
+				if (material == null) continue;
+				if (!material.isBlock()) continue;
+				groundMaterials.add(material);
+			}
+		} else {
+			for (Material material : Material.values()) {
+				if (BlockUtils.isPathable(material)) continue;
+				groundMaterials.add(material);
+			}
+		}
+		this.disallowedGroundMaterials = new HashSet<>();
+		List<String> disallowedGroundMaterialNames = getConfigStringList("disallowed-ground-materials", null);
+		if (disallowedGroundMaterialNames != null) {
+			for (String str : disallowedGroundMaterialNames) {
+				Material material = Util.getMaterial(str);
+				if (material == null) continue;
+				if (!material.isBlock()) continue;
+				disallowedGroundMaterials.add(material);
+			}
+		}
+
 		this.hugSurface = getConfigBoolean("hug-surface", false);
 		if (this.hugSurface) this.heightFromSurface = getConfigFloat("height-from-surface", 0.6F);
 
@@ -251,7 +283,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 	@Override
 	public PostCastAction castSpell(Player player, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
-			new ProjectileTracker(player, player.getLocation(), power);
+			new ProjectileTracker(player, player.getLocation(), power, this.groundMaterials, this.disallowedGroundMaterials);
 			playSpellEffects(EffectPosition.CASTER, player);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
@@ -276,10 +308,12 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		List<LivingEntity> maxHitLimit;
 		Map<LivingEntity, Long> immune;
 		ValidTargetChecker entitySpellChecker;
+		Set<Material> groundMaterials;
+		Set<Material> disallowedGroundMaterials;
 
 		int counter = 0;
 
-		public ProjectileTracker(Player caster, Location from, float power) {
+		public ProjectileTracker(Player caster, Location from, float power, Set<Material> groundMaterials, Set<Material> disallowedGroundMaterials) {
 			this.caster = caster;
 			this.power = power;
 			this.startTime = System.currentTimeMillis();
@@ -316,6 +350,9 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 			this.hitBox = new BoundingBox(this.currentLocation, hitRadius, verticalHitRadius);
 			// Rotate effectlib effects
 			this.currentLocation.setDirection(currentVelocity);
+
+			this.groundMaterials = groundMaterials;
+			this.disallowedGroundMaterials = disallowedGroundMaterials;
 		}
 
 		@Override
@@ -397,7 +434,9 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 
 			// The projectile can now cast spell-on-hit-ground without having to stop
 			if (!BlockUtils.isPathable(this.currentLocation.getBlock())) {
-				if (hitGround && groundSpell != null && groundSpell.isTargetedLocationSpell()) {
+				if (hitGround && groundSpell != null && groundSpell.isTargetedLocationSpell() &&
+						(this.groundMaterials.isEmpty() || this.groundMaterials.contains(this.currentLocation.getBlock().getType())) &&
+						(this.disallowedGroundMaterials.isEmpty() || !this.disallowedGroundMaterials.contains(this.currentLocation.getBlock().getType()))) {
 					Util.setLocationFacingFromVector(this.previousLocation, this.currentVelocity);
 					groundSpell.castAtLocation(this.caster, this.previousLocation, this.power);
 					playSpellEffects(EffectPosition.TARGET, this.currentLocation);
@@ -481,14 +520,14 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 	public boolean castAtLocation(Player caster, Location target, float power) {
 		Location loc = target.clone();
 		loc.setDirection(caster.getLocation().getDirection());
-		new ProjectileTracker(caster, target, power);
+		new ProjectileTracker(caster, target, power, this.groundMaterials, this.disallowedGroundMaterials);
 		playSpellEffects(EffectPosition.CASTER, caster);
 		return true;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power) {
-		new ProjectileTracker(null, target, power);
+		new ProjectileTracker(null, target, power, this.groundMaterials, this.disallowedGroundMaterials);
 		playSpellEffects(EffectPosition.CASTER, target);
 		return true;
 	}

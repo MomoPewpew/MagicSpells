@@ -55,23 +55,23 @@ import com.nisovin.magicspells.util.itemreader.WrittenBookHandler;
 public class Util {
 
 	public static Map<String, ItemStack> predefinedItems = new HashMap<>();
-	
+
 	private static Random random = new Random();
 	public static int getRandomInt(int bound) {
 		return random.nextInt(bound);
 	}
-	
+
 	/**
 	 * Format is<br />
-	 * 
+	 *
 	 * <code>itemID#color;enchant-level+enchant-level+enchant-level...|name|lore|lore...</code><p />
-	 * 
+	 *
 	 * OR<p>
-	 * 
+	 *
 	 * <code>predefined item key</code><br />
-	 * 
+	 *
 	 * @param string The string to resolve to an item
-	 * 
+	 *
 	 * @return the item stack represented by the string
 	 */
 	public static ItemStack getItemStackFromString(String string) {
@@ -116,7 +116,7 @@ public class Util {
 					}
 				}
 			}
-			if (s.contains("#")) { 
+			if (s.contains("#")) {
 				String[] temp = s.split("#");
 				s = temp[0];
 				if (RegexUtil.matches(RegexUtil.BASIC_HEX_PATTERN, temp[1])) {
@@ -153,7 +153,7 @@ public class Util {
 			return null;
 		}
 	}
-	
+
 	// TODO add a blockstate handler
 	// TODO add a spawneggmeta handler
 	// TODO finish this
@@ -241,21 +241,21 @@ public class Util {
 		try {
 			// It MUST have a type option
 			if (!config.contains("type")) return null;
-			
+
 			// See if this is managed by an alternative reader
 			ItemStack item = AlternativeReaderManager.deserialize(config);
 			if (item != null) return item;
-			
+
 			// Basic item
 			MagicMaterial material = MagicSpells.getItemNameResolver().resolveItem(config.getString("type"));
 			if (material == null) return null;
 			item = material.toItemStack();
 			ItemMeta meta = item.getItemMeta();
-			
+
 			// Name and lore
 			meta = NameHandler.process(config, meta);
 			meta = LoreHandler.process(config, meta);
-			
+
 			// Enchants
 			boolean emptyEnchants = false;
 			if (config.contains("enchants") && config.isList("enchants")) {
@@ -282,17 +282,17 @@ public class Util {
 				}
 				if (enchants.isEmpty()) emptyEnchants = true;
 			}
-			
+
 			// Armor color
 			meta = LeatherArmorHandler.process(config, meta);
-			
+
 			// Potioneffects
 			// Potioncolor
 			meta = PotionHandler.process(config, meta);
-			
+
 			// Skull owner
 			meta = SkullHandler.process(config, meta);
-			
+
 			// Flower pot
 			/*if (config.contains("flower") && item.getType() == Material.FLOWER_POT && meta instanceof BlockStateMeta) {
 				MagicMaterial flower = MagicSpells.getItemNameResolver().resolveBlock(config.getString("flower"));
@@ -304,34 +304,34 @@ public class Util {
 				state.setData(data);
 				((BlockStateMeta)meta).setBlockState(state);
 			}*/
-			
+
 			// Repair cost
 			meta = RepairableHandler.process(config, meta);
-			
+
 			// Written book
 			meta = WrittenBookHandler.process(config, meta);
-			
+
 			// Banner
 			meta = BannerHandler.process(config, meta);
-			
+
 			// Set meta
 			item.setItemMeta(meta);
-			
+
 			// Hide tooltip
 			if (config.getBoolean("hide-tooltip", MagicSpells.hidePredefinedItemTooltips())) {
 				item = MagicSpells.getVolatileCodeHandler().hideTooltipCrap(item);
 			}
-			
+
 			// Unbreakable
 			if (config.getBoolean("unbreakable", false)) {
 				item = MagicSpells.getVolatileCodeHandler().setUnbreakable(item);
 			}
-			
+
 			// Empty enchant
 			if (emptyEnchants) {
 				item = MagicSpells.getVolatileCodeHandler().addFakeEnchantment(item);
 			}
-			
+
 			// Attributes
 			if (config.contains("attributes")) {
 				Set<String> attrs = config.getConfigurationSection("attributes").getKeys(false);
@@ -375,21 +375,21 @@ public class Util {
 				}
 				item = MagicSpells.getVolatileCodeHandler().addAttributes(item, attrNames, attrTypes, attrAmounts, attrOperations, slots);
 			}
-			
+
 			return item;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
-	
+
 	// Just checks to see if the passed string could be lore data
 	public static boolean isLoreData(String line) {
 		if (line == null) return false;
 		line = ChatColor.stripColor(line);
 		return line.startsWith("MS$:");
 	}
-	
+
 	public static void setLoreData(ItemStack item, String data) {
 		ItemMeta meta = item.getItemMeta();
 		List<String> lore;
@@ -409,7 +409,7 @@ public class Util {
 		meta.setLore(lore);
 		item.setItemMeta(meta);
 	}
-	
+
 	public static String getLoreData(ItemStack item) {
 		ItemMeta meta = item.getItemMeta();
 		if (meta != null && meta.hasLore()) {
@@ -423,7 +423,7 @@ public class Util {
 		}
 		return null;
 	}
-	
+
 	public static void removeLoreData(ItemStack item) {
 		ItemMeta meta = item.getItemMeta();
 		List<String> lore;
@@ -474,45 +474,45 @@ public class Util {
 		entityTypeMap.put("endermen", EntityType.ENDERMAN);
 		entityTypeMap.put("wolves", EntityType.WOLF);
 	}
-	
+
 	public static EntityType getEntityType(String type) {
 		if (type.equalsIgnoreCase("player")) return EntityType.PLAYER;
 		return entityTypeMap.get(type.toLowerCase());
 	}
-	
+
 	public static PotionEffectType getPotionEffectType(String type) {
 		return MagicValues.PotionEffect.getPotionEffectType(type.trim());
 	}
-	
+
 	public static Enchantment getEnchantmentType(String type) {
 		return MagicValues.Enchantments.getEnchantmentType(type);
 	}
-	
+
 	public static void sendFakeBlockChange(Player player, Block block, MagicMaterial mat) {
 		player.sendBlockChange(block.getLocation(), mat.getMaterial(), mat.getMaterialData().getData());
 	}
-	
+
 	public static void restoreFakeBlockChange(Player player, Block block) {
 		player.sendBlockChange(block.getLocation(), block.getType(), block.getData());
 	}
-	
+
 	public static void setFacing(Player player, Vector vector) {
 		Location loc = player.getLocation();
 		setLocationFacingFromVector(loc, vector);
 		player.teleport(loc);
 	}
-	
+
 	public static void setLocationFacingFromVector(Location location, Vector vector) {
 		double yaw = getYawOfVector(vector);
 		double pitch = FastMath.toDegrees(-FastMath.asin(vector.getY()));
 		location.setYaw((float)yaw);
 		location.setPitch((float)pitch);
 	}
-	
+
 	public static double getYawOfVector(Vector vector) {
 		return FastMath.toDegrees(FastMath.atan2(-vector.getX(), vector.getZ()));
 	}
-	
+
 	public static boolean arrayContains(int[] array, int value) {
 		for (int i : array) {
 			if (i == value) return true;
@@ -526,14 +526,14 @@ public class Util {
 		}
 		return false;
 	}
-	
+
 	public static boolean arrayContains(Object[] array, Object value) {
 		for (Object i : array) {
 			if (Objects.equals(i, value)) return true;
 		}
 		return false;
 	}
-	
+
 	public static String arrayJoin(String[] array, char with) {
 		if (array == null || array.length == 0) return "";
 		int len = array.length;
@@ -545,7 +545,7 @@ public class Util {
 		}
 		return sb.toString();
 	}
-	
+
 	public static String listJoin(List<String> list) {
 		if (list == null || list.isEmpty()) return "";
 		int len = list.size();
@@ -557,14 +557,14 @@ public class Util {
 		}
 		return sb.toString();
 	}
-	
+
 	public static String[] splitParams(String string, int max) {
 		String[] words = string.trim().split(" ");
 		if (words.length <= 1) return words;
 		ArrayList<String> list = new ArrayList<>();
 		char quote = ' ';
 		String building = "";
-		
+
 		for (String word : words) {
 			if (word.isEmpty()) continue;
 			if (max > 0 && list.size() == max - 1) {
@@ -597,19 +597,19 @@ public class Util {
 		}
 		return list.toArray(new String[list.size()]);
 	}
-	
+
 	public static String[] splitParams(String string) {
 		return splitParams(string, 0);
 	}
-	
+
 	public static String[] splitParams(String[] split, int max) {
 		return splitParams(arrayJoin(split, ' '), max);
 	}
-	
+
 	public static String[] splitParams(String[] split) {
 		return splitParams(arrayJoin(split, ' '), 0);
 	}
-	
+
 	public static boolean removeFromInventory(Inventory inventory, ItemStack item) {
 		int amt = item.getAmount();
 		ItemStack[] items = inventory.getContents();
@@ -635,7 +635,7 @@ public class Util {
 		}
 		return false;
 	}
-	
+
 	public static boolean addToInventory(Inventory inventory, ItemStack item, boolean stackExisting, boolean ignoreMaxStack) {
 		int amt = item.getAmount();
 		ItemStack[] items = Arrays.copyOf(inventory.getContents(), inventory.getSize());
@@ -676,7 +676,7 @@ public class Util {
 		}
 		return false;
 	}
-	
+
 	public static void rotateVector(Vector v, float degrees) {
 		double rad = FastMath.toRadians(degrees);
 		double sin = FastMath.sin(rad);
@@ -686,15 +686,15 @@ public class Util {
 		v.setX(x);
 		v.setZ(z);
 	}
-	
+
 	public static Location applyRelativeOffset(Location loc, Vector relativeOffset) {
 		return loc.add(rotateVector(relativeOffset, loc));
 	}
-	
+
 	public static Vector rotateVector(Vector v, Location location) {
 		return rotateVector(v, location.getYaw(), location.getPitch());
 	}
-	
+
 	public static Vector rotateVector(Vector v, float yawDegrees, float pitchDegrees) {
 		double yaw = FastMath.toRadians((double)(-1.0F * (yawDegrees + 90.0F)));
 		double pitch = FastMath.toRadians((double)(-pitchDegrees));
@@ -711,23 +711,23 @@ public class Util {
 		x = initialZ * sinYaw + x * cosYaw;
 		return new Vector(x, y, z);
 	}
-	
+
 	public static Location applyAbsoluteOffset(Location loc, Vector offset) {
 		return loc.add(offset);
 	}
-	
+
 	public static Location applyOffsets(Location loc, Vector relativeOffset, Vector absoluteOffset) {
 		return applyAbsoluteOffset(applyRelativeOffset(loc, relativeOffset), absoluteOffset);
 	}
-	
+
 	public static Location faceTarget(Location origin, Location target) {
 		return origin.setDirection(getVectorToTarget(origin, target));
 	}
-	
+
 	public static Vector getVectorToTarget(Location origin, Location target) {
 		return target.toVector().subtract(origin.toVector());
 	}
-	
+
 	public static boolean downloadFile(String url, File file) {
 		try {
 			URL website = new URL(url);
@@ -742,11 +742,11 @@ public class Util {
 			return false;
 		}
 	}
-	
+
 	public static void createFire(Block block, byte d) {
 		block.setTypeIdAndData(Material.FIRE.getId(), d, false);
 	}
-	
+
 	public static ItemStack getEggItemForEntityType(EntityType type) {
 		ItemStack ret = new ItemStack(Material.MONSTER_EGG, 1);
 		ItemMeta meta = ret.getItemMeta();
@@ -756,52 +756,52 @@ public class Util {
 		}
 		return ret;
 	}
-	
+
 	private static Map<String, String> uniqueIds = new HashMap<>();
-	
+
 	public static String getUniqueId(Player player) {
 		String uid = player.getUniqueId().toString().replace("-", "");
 		uniqueIds.put(player.getName(), uid);
 		return uid;
 	}
-	
+
 	public static String getUniqueId(String playerName) {
 		if (uniqueIds.containsKey(playerName)) return uniqueIds.get(playerName);
 		Player player = Bukkit.getPlayerExact(playerName);
 		if (player != null) return getUniqueId(player);
 		return null;
 	}
-	
+
 	public static String flattenLineBreaks(String raw) {
 		return raw.replaceAll("\n", "\\n");
 	}
-	
+
 	public static <T> boolean containsParallel(Collection<T> elements, Predicate<? super T> predicate) {
 		return elements.parallelStream().anyMatch(predicate);
 	}
-	
+
 	public static <T> boolean containsValueParallel(Map<?, T> map, Predicate<? super T> predicate) {
 		return containsParallel(map.values(), predicate);
 	}
-	
+
 	public static <T> void forEachOrdered(Collection<T> collection, Consumer<? super T> consumer) {
 		collection.stream().forEachOrdered(consumer);
 	}
-	
+
 	public static <T> void forEachValueOrdered(Map<?, T> map, Consumer<? super T> consumer) {
 		forEachOrdered(map.values(), consumer);
 	}
-	
+
 	public static void forEachPlayerOnline(Consumer<? super Player> consumer) {
 		forEachOrdered(Bukkit.getOnlinePlayers(), consumer);
 	}
-	
+
 	public static int clampValue(int min, int max, int value) {
 		if (value < min) return min;
 		if (value > max) return max;
 		return value;
 	}
-	
+
 	public static <C extends Collection<Material>> C getMaterialList(List<String> strings, Supplier<C> supplier) {
 		C ret = supplier.get();
 		strings.forEach(string -> {
@@ -809,7 +809,7 @@ public class Util {
 		});
 		return ret;
 	}
-	
+
 	public static <E extends Enum<E>> E enumValueSafe(Class<E> clazz, String name) {
 		try {
 			return Enum.valueOf(clazz, name);
@@ -817,5 +817,12 @@ public class Util {
 			return null;
 		}
 	}
-	
+
+	public static Material getMaterial(String name) {
+		name = name.toUpperCase();
+		Material material = Material.getMaterial(name);
+		if (material == null) material = Material.matchMaterial(name);
+		return material;
+	}
+
 }

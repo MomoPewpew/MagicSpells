@@ -28,6 +28,8 @@ public class ItemProjectileSpell extends InstantSpell {
 	ItemStack item;
 	Subspell spellOnHitEntity;
 	Subspell spellOnHitGround;
+	float pitch;
+	float yaw;
 
 	public ItemProjectileSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -38,6 +40,8 @@ public class ItemProjectileSpell extends InstantSpell {
 		this.hitRadius = getConfigFloat("hit-radius", 1);
 		this.yOffset = getConfigFloat("y-offset", 0);
 		this.projectileHasGravity = getConfigBoolean("gravity", true);
+		this.pitch = (float) Math.toRadians(getConfigInt("pitch", 0));
+		this.yaw = (float) Math.toRadians(getConfigInt("yaw", 0));
 
 		if (configKeyExists("spell-on-hit-entity")) this.spellOnHitEntity = new Subspell(getConfigString("spell-on-hit-entity", ""));
 		if (configKeyExists("spell-on-hit-ground")) this.spellOnHitGround = new Subspell(getConfigString("spell-on-hit-ground", ""));
@@ -86,6 +90,20 @@ public class ItemProjectileSpell extends InstantSpell {
 			} else {
 				this.vel = caster.getLocation().getDirection().multiply(speed);
 			}
+
+			double yawNew = Math.atan2(this.vel.getZ(), this.vel.getX()) + Math.PI + yaw;
+			double pitchNew = Math.atan2(Math.sqrt(Math.pow((this.vel.getZ()), 2) + Math.pow((this.vel.getX()), 2)), (this.vel.getY())) + Math.PI + pitch;
+
+			//Use this pitch and yaw to calculate the plate coordinates of the new distance
+			//Apply pitch
+			double Zpitch = (Math.sin(pitchNew) * this.vel.length());
+			double Ymodified = (Math.cos(pitchNew)) * -this.vel.length();
+			//Apply yaw
+			double Xmodified = (Math.cos(yawNew) * Zpitch);
+			double Zmodified = (Math.sin(yawNew) * Zpitch);
+
+			this.vel = new Vector(Xmodified, Ymodified, Zmodified);
+
 			this.entity = caster.getWorld().dropItem(location, item.clone());
 			MagicSpells.getVolatileCodeHandler().setGravity(this.entity, projectileHasGravity);
 			playSpellEffects(EffectPosition.PROJECTILE, this.entity);

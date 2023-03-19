@@ -310,12 +310,18 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 				if (material.equals(block.getType()) && block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) return activate();
 				stop();
 				return true;
-			} else if (caster.isValid() && material.equals(block.getType()) && block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) {
-				if (maxDistanceSq > 0 && (!LocationUtil.isSameWorld(location, caster) || location.distanceSquared(caster.getLocation()) > maxDistanceSq)) {
-					stop();
-					return true;
+			} else if (caster.isValid()) {
+				if (material.equals(block.getType()) && block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) {
+					if (maxDistanceSq > 0 && (!LocationUtil.isSameWorld(location, caster) || location.distanceSquared(caster.getLocation()) > maxDistanceSq)) {
+						stop();
+						return true;
+					}
+					return activate();
 				}
-				return activate();
+			} else {
+				if (!this.cancelOnDeath) {
+					return false;
+				}
 			}
 			stop();
 			return true;

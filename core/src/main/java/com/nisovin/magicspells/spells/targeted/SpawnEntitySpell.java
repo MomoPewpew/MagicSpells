@@ -88,6 +88,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private boolean addLookAtPlayerAI;
 	private boolean allowSpawnInMidair;
 	private boolean nameplateFormatting;
+	private boolean cancelAttack;
 
 	private Subspell attackSpell;
 	private String attackSpellName;
@@ -164,7 +165,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		retargetRange = getConfigDataDouble("retarget-range", 50);
 
 		location = getConfigString("location", "target");
-		nameplateText = Util.getMiniMessage(getConfigString("nameplate-text", ""));
+		nameplateText = Util.getMiniMessage(getConfigString("nameplate-text", null));
 
 		noAI = getConfigBoolean("no-ai", false);
 		gravity = getConfigBoolean("gravity", true);
@@ -174,6 +175,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		useCasterName = getConfigBoolean("use-caster-name", false);
 		addLookAtPlayerAI = getConfigBoolean("add-look-at-player-ai", false);
 		allowSpawnInMidair = getConfigBoolean("allow-spawn-in-midair", false);
+		cancelAttack = getConfigBoolean("cancel-attack", true);
 
 		attackSpellName = getConfigString("attack-spell", "");
 
@@ -521,13 +523,13 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				} else {
 					attackSpell.cast(caster, power);
 				}
-				event.setCancelled(true);
+				event.setCancelled(SpawnEntitySpell.this.cancelAttack);
 			}
 		}
 
 		@EventHandler
 		private void onTarget(EntityTargetEvent event) {
-			if (event.getEntity() == monster && event.getTarget() == caster) event.setCancelled(true);
+			if (event.getEntity() == monster && !validTargetList.canTarget(caster, event.getTarget())) event.setCancelled(true);
 			else if (event.getTarget() == null) retarget(null);
 			else if (target != null && event.getTarget() != target) event.setTarget(target);
 		}
@@ -548,7 +550,6 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			for (Entity e : monster.getNearbyEntities(retargetRange, retargetRange, retargetRange)) {
 				if (!(e instanceof LivingEntity)) continue;
 				if (!validTargetList.canTarget(caster, e)) continue;
-				if (e == caster) continue;
 				if (e == ignore) continue;
 
 				if (e instanceof Player p) {

@@ -21,15 +21,14 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 import com.nisovin.magicspells.Subspell;
-import com.nisovin.magicspells.util.Util;
-import com.nisovin.magicspells.util.magicitems.MagicItem;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MenuData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.magicitems.MagicItem;
+import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
@@ -177,7 +176,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 				item = new ItemStack(Material.GREEN_WOOL);
 				ItemMeta itemMeta = item.getItemMeta();
 
-				itemMeta.setDisplayName("ง6งt" + defaultName);
+				itemMeta.setDisplayName("ยง6ยงt" + defaultName);
 				item.setItemMeta(itemMeta);
 			} else {
 				item = magicItem.getItemStack();
@@ -220,7 +219,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		int size = (int) Math.ceil(Math.min((players.size()+1), 54) / 9.0) * 9;
 		Inventory inv = Bukkit.createInventory(opener, size, Component.text(internalName));
 
-		for (int i = (page * 50); i < Math.min(players.size(), (page + 1) * 50); i++) {
+		for (int i = (page * 52); i < Math.min(players.size(), (page + 1) * 52); i++) {
 			ItemStack head = new ItemStack(Material.PLAYER_HEAD);
 			ItemMeta itemMeta = head.getItemMeta();
 			SkullMeta skullMeta = (SkullMeta) itemMeta;
@@ -235,14 +234,14 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 				itemMeta.lore(lore);
 			}
 			head.setItemMeta(skullMeta);
-			inv.setItem(i%50, head);
+			inv.setItem(i%52, head);
 		}
 
 		if (page > 0) {
 			inv.setItem(52, previousPageItem);
 		}
 
-		if (players.size() > ((page + 1) * 50)) {
+		if (players.size() > ((page + 1) * 52)) {
 			inv.setItem(53, nextPageItem);
 		}
 
@@ -327,5 +326,9 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 			menuData.remove(player.getUniqueId());
 			playSpellEffects(EffectPosition.DISABLED, player, spellData);
 		}
+	}
+
+	public record MenuData(SpellData spellData, int page) {
+
 	}
 }

@@ -548,7 +548,6 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		private final LivingEntity monster;
 		private final String[] args;
 		private final float power;
-		private final boolean cancelAttack;
 
 		private LivingEntity target;
 
@@ -558,7 +557,6 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			this.target = target;
 			this.power = power;
 			this.args = args;
-			this.cancelAttack = SpawnEntitySpell.this.cancelAttack;
 		}
 
 		@EventHandler(ignoreCancelled = true)
@@ -582,7 +580,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				} else {
 					attackSpell.cast(caster, power);
 				}
-				event.setCancelled(this.cancelAttack);
+				event.setCancelled(SpawnEntitySpell.this.cancelAttack);
 			}
 		}
 

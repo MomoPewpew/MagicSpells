@@ -36,6 +36,7 @@ import net.kyori.adventure.text.Component;
 import org.apache.commons.math4.core.jdkmath.JdkMath;
 
 import com.nisovin.magicspells.Subspell;
+import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
@@ -110,10 +111,13 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private List<PotionEffect> potionEffects;
 	private Set<AttributeManager.AttributeInfo> attributes;
+	private List<String> entityTargetModifiersList;
 
 	private Random random = ThreadLocalRandom.current();
 
 	private final EntityPulserTicker ticker;
+
+	private ModifierSet entityTargetModifiers;
 
 	// DEBUG INFO: level 2, invalid potion effect on internalname spell data
 	public SpawnEntitySpell(MagicConfig config, String spellName) {
@@ -202,6 +206,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		attackSpellName = getConfigString("attack-spell", "");
 		intervalSpellName = getConfigString("interval-spell", "");
 
+		entityTargetModifiersList = getConfigStringList("entity-target-modifiers", null);
+
 		// Attributes
 		// - [AttributeName] [Number] [Operation]
 		List<String> attributeList = getConfigStringList("attributes", null);
@@ -254,6 +260,11 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid interval-spell defined!");
 				intervalSpell = null;
 			}
+		}
+
+		if (entityTargetModifiersList != null) {
+			entityTargetModifiers = new ModifierSet(entityTargetModifiersList, this);
+			entityTargetModifiersList = null;
 		}
 	}
 
@@ -605,11 +616,13 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 			double retargetRange = SpawnEntitySpell.this.retargetRange.get(caster, null, power, args);
 			double r = retargetRange * retargetRange;
+			SpellData spellData = new SpellData(monster, power, args);
 
 			for (Entity e : monster.getNearbyEntities(retargetRange, retargetRange, retargetRange)) {
 				if (!(e instanceof LivingEntity)) continue;
 				if (!validTargetList.canTarget(caster, e)) continue;
 				if (e == ignore) continue;
+				if (entityTargetModifiers != null && !entityTargetModifiers.apply(monster, (LivingEntity) e, spellData).check()) continue;
 
 				if (e instanceof Player p) {
 					GameMode gamemode = p.getGameMode();
@@ -654,6 +667,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 
 			double targetRange = SpawnEntitySpell.this.targetRange.get(caster, null, power, args);
+			SpellData spellData = new SpellData(entity, power, args);
 			List<Entity> list = entity.getNearbyEntities(targetRange, targetRange, targetRange);
 			List<LivingEntity> targetable = new ArrayList<>();
 			LivingEntity target = null;
@@ -661,6 +675,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			for (Entity e : list) {
 				if (!(e instanceof LivingEntity)) continue;
 				if (!validTargetList.canTarget(caster, e)) continue;
+				if (entityTargetModifiers != null && !entityTargetModifiers.apply(entity, (LivingEntity) e, spellData).check()) continue;
+
 				targetable.add((LivingEntity) e);
 
 				if (target == null || e.getLocation().distanceSquared(entity.getLocation()) < nearestEntityDistance) {

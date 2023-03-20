@@ -33,7 +33,7 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
     init {
         try {
             // CHANGE THIS TO SPIGOT MAPPING VERSION OF MOJANG'S - EntityDataAccessor<Integer> DATA_EFFECT_COLOR_ID
-            val entityLivingPotionEffectColorField = net.minecraft.world.entity.LivingEntity::class.java.getDeclaredField("bL")
+            val entityLivingPotionEffectColorField = net.minecraft.world.entity.LivingEntity::class.java.getDeclaredField("bG")
             entityLivingPotionEffectColorField.isAccessible = true
             entityLivingPotionEffectColor = entityLivingPotionEffectColorField.get(null) as EntityDataAccessor<Int>
         } catch (e: Exception) {

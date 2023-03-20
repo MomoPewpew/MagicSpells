@@ -56,6 +56,10 @@ public class MobUtil {
 	public static void setTarget(LivingEntity mob, LivingEntity target, EntityTargetEvent.TargetReason reason) {
 		EntityTargetEvent e = new EntityTargetEvent(mob, target, reason);
         Bukkit.getPluginManager().callEvent(e);
+
+        if (!e.isCancelled()) {
+        	if (mob instanceof Mob m) m.setTarget(target);
+        }
 	}
 
 	public static void setTarget(LivingEntity mob, LivingEntity target) {

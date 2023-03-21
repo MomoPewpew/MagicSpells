@@ -72,6 +72,7 @@ public class PassiveManager {
 
 		addListener("anvil", AnvilListener.class);
 		addListener("blockbreak", BlockBreakListener.class);
+		addListener("blockdamage", BlockDamageListener.class);
 		addListener("blockplace", BlockPlaceListener.class);
 		addListener("buff", BuffListener.class);
 		addListener("craft", CraftListener.class);

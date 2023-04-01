@@ -100,6 +100,7 @@ public class PassiveManager {
 		addListener("jump", JumpListener.class);
 		addListener("kill", KillListener.class);
 		addListener("leavebed", LeaveBedListener.class);
+		addListener("leftclick", LeftClickListener.class);
 		addListener("leftclickblockcoord", LeftClickBlockCoordListener.class);
 		addListener("leftclickblocktype", LeftClickBlockTypeListener.class);
 		addListener("leftclickitem", LeftClickItemListener.class);

@@ -197,7 +197,7 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 		if (spellData.caster() != null) playSpellEffects(spellData.caster(), spellData.target(), spellData);
 		else playSpellEffects(EffectPosition.TARGET, spellData.target(), spellData);
 
-		ItemMenuData newItemMenuData = new ItemMenuData(spellData, category, categoryNames.size(), page);
+		ItemMenuData newItemMenuData = new ItemMenuData(spellData, category, categoryNames.size()%50, page);
 		itemMenuData.put(opener.getUniqueId(), newItemMenuData);
 	}
 

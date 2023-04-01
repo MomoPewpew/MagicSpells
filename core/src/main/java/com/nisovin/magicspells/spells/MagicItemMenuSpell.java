@@ -208,8 +208,8 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 
 	@EventHandler
 	public void onItemClick(InventoryClickEvent event) {
-		Player player = (Player) event.getWhoClicked();
 		if (!Util.getStringFromComponent(event.getView().title()).equals(internalName)) return;
+		Player player = (Player) event.getWhoClicked();
 		event.setCancelled(true);
 		ItemStack item = event.getCurrentItem();
 		if (item == null) return;
@@ -229,7 +229,7 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 			if (event.getRawSlot() == 51) {
 				String upperCategory = "";
 				if (category.contains("-")) {
-					category.substring(0, category.lastIndexOf("-"));
+					upperCategory = category.substring(0, category.lastIndexOf("-"));
 				}
 				newItemMenuData = new ItemMenuData(spellData, upperCategory, 0, 0);
 			} else if (event.getRawSlot() == 52) {

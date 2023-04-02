@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.util.NumberConversions;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.LivingEntity;
@@ -47,6 +48,8 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean powerAffectsRadius;
 	private final boolean checkPlugins;
 	private boolean resolveDurationPerBlock;
+	private boolean circleShape;
+
 
 	public ReplaceSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -67,6 +70,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		replaceRandom = getConfigBoolean("replace-random", true);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
 		resolveDurationPerBlock = getConfigBoolean("resolve-duration-per-block", false);
+		circleShape = getConfigBoolean("circle-shape", false);
 
 		List<String> list = getConfigStringList("replace-blocks", null);
 		if (list != null) {
@@ -213,6 +217,17 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		for (int y = target.getBlockY() - d + yOffset; y <= target.getBlockY() + u + yOffset; y++) {
 			for (int x = target.getBlockX() - h; x <= target.getBlockX() + h; x++) {
 				for (int z = target.getBlockZ() - h; z <= target.getBlockZ() + h; z++) {
+					if (circleShape) {
+						double hDistanceSq = NumberConversions.square(x - target.getBlockX()) + NumberConversions.square(z - target.getBlockZ());
+						if (hDistanceSq > (h * h)) continue;
+						double vDistance = NumberConversions.square(y - (target.getBlockY() + yOffset));
+						if (y > target.getBlockY() + yOffset) {
+							if (vDistance > (u * u)) continue;
+						} else {
+							if (vDistance > (d * d)) continue;
+						}
+					}
+
 					block = target.getWorld().getBlockAt(x, y, z);
 					for (int i = 0; i < replace.size(); i++) {
 						BlockData data = block.getBlockData();

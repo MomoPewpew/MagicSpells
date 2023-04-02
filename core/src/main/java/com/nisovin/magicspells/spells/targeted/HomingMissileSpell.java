@@ -4,6 +4,8 @@ import java.util.Set;
 import java.util.List;
 
 import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ArmorStand;
@@ -45,6 +47,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 	private boolean stopOnHitGround;
 	private boolean stopOnModifierFail;
 	private boolean hitAirAfterDuration;
+	private boolean hugSurface;
 
 	private String hitSpellName;
 	private String airSpellName;
@@ -67,6 +70,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 	private ConfigData<Float> verticalHitRadius;
 	private ConfigData<Float> projectileInertia;
 	private ConfigData<Float> projectileVelocity;
+	private ConfigData<Float> heightFromSurface;
 
 	private ConfigData<Integer> tickInterval;
 	private ConfigData<Integer> airSpellInterval;
@@ -90,6 +94,9 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 		stopOnHitGround = getConfigBoolean("stop-on-hit-ground", false);
 		stopOnModifierFail = getConfigBoolean("stop-on-modifier-fail", true);
 		hitAirAfterDuration = getConfigBoolean("hit-air-after-duration", false);
+
+		hugSurface = getConfigBoolean("hug-surface", false);
+		if (hugSurface) heightFromSurface = getConfigDataFloat("height-from-surface", 0.6F);
 
 		hitSpellName = getConfigString("spell", "");
 		airSpellName = getConfigString("spell-on-hit-air", "");
@@ -241,8 +248,11 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 		private Vector currentVelocity;
 		private BoundingBox hitBox;
 		private float power;
+		private float heightFromSurface;
 		private long startTime;
 		private int taskId;
+		private int currentX;
+		private int currentZ;
 
 		private Vector relativeOffset;
 
@@ -278,6 +288,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 			this.caster = caster;
 			this.target = target;
 			this.power = power;
+			this.heightFromSurface = HomingMissileSpell.this.heightFromSurface.get(caster, target, power, args);
 
 			data = new SpellData(caster, target, power, args);
 
@@ -305,7 +316,14 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 			Vector horizOffset = new Vector(-startDir.getZ(), 0.0, startDir.getX()).normalize();
 			currentLocation.add(horizOffset.multiply(relativeOffset.getZ())).getBlock().getLocation();
 			currentLocation.add(currentLocation.getDirection().multiply(relativeOffset.getX()));
-			currentLocation.setY(currentLocation.getY() + relativeOffset.getY());
+
+			if (hugSurface) {
+				currentLocation.setY(currentLocation.getY() + heightFromSurface);
+				currentVelocity.setY(0).normalize();
+				currentLocation.setPitch(0);
+			} else {
+				currentLocation.setY(currentLocation.getY() + relativeOffset.getY());
+			}
 
 			float hitRadius = HomingMissileSpell.this.hitRadius.get(caster, target, power, args);
 			float verticalHitRadius = HomingMissileSpell.this.verticalHitRadius.get(caster, target, power, args);
@@ -365,7 +383,41 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 			Vector horizOffset = new Vector(-startDir.getZ(), 0.0, startDir.getX()).normalize();
 			targetLoc.add(horizOffset.multiply(targetRelativeOffset.getZ())).getBlock().getLocation();
 			targetLoc.add(targetLoc.getDirection().multiply(targetRelativeOffset.getX()));
-			targetLoc.setY(target.getLocation().getY() + targetRelativeOffset.getY());
+
+			if (hugSurface && (currentLocation.getBlockX() != currentX || currentLocation.getBlockZ() != currentZ)) {
+				Block b = currentLocation.subtract(0, heightFromSurface, 0).getBlock();
+
+				int attempts = 0;
+				boolean ok = false;
+				while (attempts++ < 10) {
+					if (BlockUtils.isPathable(b)) {
+						b = b.getRelative(BlockFace.DOWN);
+						if (BlockUtils.isPathable(b)) currentLocation.add(0, -1, 0);
+						else {
+							ok = true;
+							break;
+						}
+					} else {
+						b = b.getRelative(BlockFace.UP);
+						currentLocation.add(0, 1, 0);
+						if (BlockUtils.isPathable(b)) {
+							ok = true;
+							break;
+						}
+					}
+				}
+				if (!ok) {
+					stop();
+					return;
+				}
+
+				currentLocation.setY((int) currentLocation.getY() + heightFromSurface);
+				currentX = currentLocation.getBlockX();
+				currentZ = currentLocation.getBlockZ();
+			} else {
+				targetLoc.setY(target.getLocation().getY() + targetRelativeOffset.getY());
+			}
+
 
 			// Move projectile and calculate new vector
 			currentLocation.add(currentVelocity);

@@ -5,6 +5,7 @@ import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAtt
 import java.util.*;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -165,23 +166,15 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 	}
 
 	private ItemStack createItem(String path, String defaultName) {
-		ItemStack item = null;
-		if (isConfigSection(path)) {
-			MagicItem magicItem = MagicItems.getMagicItemFromSection(getConfigSection(path));
-			if (magicItem != null) item = magicItem.getItemStack();
-		} else {
-			MagicItem magicItem = MagicItems.getMagicItemFromString(getConfigString(path, ""));
+		MagicItem magicItem = MagicItems.getMagicItemFromString(getConfigString(path, null));
+		if (magicItem != null) return magicItem.getItemStack().clone();
 
-			if (magicItem == null) {
-				item = new ItemStack(Material.GREEN_WOOL);
-				ItemMeta itemMeta = item.getItemMeta();
+		ItemStack item = new ItemStack(Material.GREEN_WOOL);
+		ItemMeta meta = item.getItemMeta();
 
-				itemMeta.setDisplayName("§6§t" + defaultName);
-				item.setItemMeta(itemMeta);
-			} else {
-				item = magicItem.getItemStack();
-			}
-		}
+		meta.displayName(Component.text(defaultName).color(NamedTextColor.GOLD));
+		item.setItemMeta(meta);
+
 		return item;
 	}
 

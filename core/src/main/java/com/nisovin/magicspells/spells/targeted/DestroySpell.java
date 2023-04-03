@@ -191,12 +191,6 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 					if (b.getType() == Material.BEDROCK) continue;
 					if (BlockUtils.isAir(b.getType())) continue;
 
-					if (checkPlugins && caster instanceof Player) {
-						MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster);
-						EventUtil.call(event);
-						if (event.isCancelled()) continue;
-					}
-
 					if (blockTypesToThrow != null) {
 						if (blockTypesToThrow.contains(b.getType())) blocksToThrow.add(b);
 						else if (blockTypesToRemove != null) {
@@ -215,6 +209,12 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		}
 
 		for (Block b : blocksToRemove) {
+			if (checkPlugins && caster instanceof Player) {
+				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster);
+				EventUtil.call(event);
+				if (event.isCancelled()) continue;
+			}
+
 			b.setType(Material.AIR);
 		}
 
@@ -224,6 +224,12 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 		SpellData data = new SpellData(caster, target, power, args);
 		for (Block b : blocksToThrow) {
+			if (preventLandingBlocks && checkPlugins && caster instanceof Player) {
+				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster);
+				EventUtil.call(event);
+				if (event.isCancelled()) continue;
+			}
+
 			Material material = b.getType();
 			Location l = b.getLocation().clone().add(0.5, 0.5, 0.5);
 			FallingBlock fb = b.getWorld().spawnFallingBlock(l, material.createBlockData());

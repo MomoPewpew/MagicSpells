@@ -24,8 +24,8 @@ public class SmokeTrailEffect extends SpellEffect {
 	}
 
 	@Override
-	public Runnable playEffect(Location location1, Location location2, SpellData data) {
-		SmokeStreamEffect effect = new SmokeStreamEffect(location1, location2);
+	public Runnable playEffect(Location startLoc, Location endLoc, SpellData data) {
+		SmokeStreamEffect effect = new SmokeStreamEffect(startLoc, endLoc);
 
 		int interval = this.interval.get(data);
 		if (interval > 0) effect.start(interval);

@@ -134,8 +134,9 @@ public class TeachSpell extends CommandSpell {
 
 		String displayName = Util.getStringFromComponent(players.get(0).displayName());
 
-		sendMessage(spell.getStrOnTeach() == null ? strCastTarget : spell.getStrOnTeach(), players.get(0), args, "%a", getConsoleName(), "%s", spell.getName(), "%t", displayName);
-		sender.sendMessage(formatMessage(strCastSelf, "%a", getConsoleName(), "%s", spell.getName(), "%t", displayName));
+		String consoleName = MagicSpells.getConsoleName();
+		sendMessage(spell.getStrOnTeach() == null ? strCastTarget : spell.getStrOnTeach(), players.get(0), args, "%a", consoleName, "%s", spell.getName(), "%t", displayName);
+		sender.sendMessage(formatMessage(strCastSelf, "%a", consoleName, "%s", spell.getName(), "%t", displayName));
 		return true;
 	}
 	

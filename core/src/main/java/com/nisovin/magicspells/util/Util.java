@@ -160,7 +160,7 @@ public class Util {
 	}
 
 	public static Particle getParticle(String type) {
-		return ParticleUtil.ParticleEffect.getParticle(type);
+		return ParticleUtil.getParticle(type);
 	}
 
 	public static CastMode getCastMode(String type) {
@@ -752,10 +752,6 @@ public class Util {
 
 	public static String doVarReplacementAndColorize(Player player, String string) {
 		return colorize(MagicSpells.doReplacements(string, player));
-	}
-
-	public static String doVarReplacement(Player player, String string) {
-		return MagicSpells.doReplacements(string, player);
 	}
 
 	public static void setInventoryTitle(Player player, String title) {

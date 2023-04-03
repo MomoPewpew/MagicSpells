@@ -1,7 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import java.util.Map;
-import java.util.List;
 import java.util.UUID;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,11 +70,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		preventChatSpellName = getConfigString("spell-on-denied-chat", "");
 		preventCommandSpellName = getConfigString("spell-on-denied-command", "");
 
-		List<String> allowedSpellNames = getConfigStringList("allowed-spells", null);
-		List<String> disallowedSpellNames = getConfigStringList("disallowed-spells", null);
-		List<String> tagList = getConfigStringList("allowed-spell-tags", null);
-		List<String> deniedTagList = getConfigStringList("disallowed-spell-tags", null);
-		filter = new SpellFilter(allowedSpellNames, disallowedSpellNames, tagList, deniedTagList);
+		filter = SpellFilter.fromLegacyConfig(config.getMainConfig(), "spells." + internalName);
 
 		if (preventChat) silenced = new ConcurrentHashMap<>();
 		else silenced = new HashMap<>();

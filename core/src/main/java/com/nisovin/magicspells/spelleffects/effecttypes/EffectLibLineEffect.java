@@ -21,9 +21,9 @@ public class EffectLibLineEffect extends EffectLibEffect {
 	}
 	
 	@Override
-	public Runnable playEffect(Location location1, Location location2, SpellData data) {
+	public Runnable playEffect(Location startLoc, Location endLoc, SpellData data) {
 		if (!initialize()) return null;
-		manager.start(className, getParameters(data), new DynamicLocation(location1), new DynamicLocation(location2), (ConfigurationSection) null, null);
+		manager.start(className, getParameters(data), new DynamicLocation(startLoc), new DynamicLocation(endLoc), (ConfigurationSection) null, null);
 		return null;
 	}
 	

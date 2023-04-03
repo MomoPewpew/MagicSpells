@@ -577,18 +577,36 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 				power = event.getPower();
 			}
 
-			if (entitySpell != null && entitySpell.isTargetedEntitySpell()) {
-				entitySpellChecker = entitySpell.getSpell().getValidTargetChecker();
-				if (entitySpellChecker != null && !entitySpellChecker.isValidTarget(target)) {
-					inRange.remove(i);
-					break;
-				}
+			if (casterSpell != null && target.equals(caster)) {
+				if (casterSpell.isTargetedEntitySpell()) {
+					entitySpellChecker = casterSpell.getSpell().getValidTargetChecker();
+					if (entitySpellChecker != null && !entitySpellChecker.isValidTarget(target)) {
+						inRange.remove(i);
+						break;
+					}
 
-				entitySpell.castAtEntity(caster, target, power);
-				if (spell != null) spell.playEffects(EffectPosition.TARGET, target, data);
-			} else if (entitySpell != null && entitySpell.isTargetedLocationSpell()) {
-				entitySpell.castAtLocation(caster, currentLoc.clone(), power);
-				if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLoc, data);
+					casterSpell.castAtEntity(caster, target, power);
+					if (spell != null) spell.playEffects(EffectPosition.TARGET, target, data);
+				} else if (casterSpell.isTargetedLocationSpell()) {
+					casterSpell.castAtLocation(caster, currentLoc.clone(), power);
+					if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLoc, data);
+				}
+			}
+
+			if (entitySpell != null && !target.equals(caster)) {
+				if (entitySpell.isTargetedEntitySpell()) {
+					entitySpellChecker = entitySpell.getSpell().getValidTargetChecker();
+					if (entitySpellChecker != null && !entitySpellChecker.isValidTarget(target)) {
+						inRange.remove(i);
+						break;
+					}
+
+					entitySpell.castAtEntity(caster, target, power);
+					if (spell != null) spell.playEffects(EffectPosition.TARGET, target, data);
+				} else if (entitySpell.isTargetedLocationSpell()) {
+					entitySpell.castAtLocation(caster, currentLoc.clone(), power);
+					if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLoc, data);
+				}
 			}
 
 			if (entityLocationSpell != null) entityLocationSpell.castAtLocation(caster, currentLoc, power);

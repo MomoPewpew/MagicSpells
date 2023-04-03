@@ -1,5 +1,9 @@
 package com.nisovin.magicspells;
 
+import de.slikey.effectlib.Effect;
+
+import net.kyori.adventure.text.Component;
+
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -55,10 +59,6 @@ import com.nisovin.magicspells.spelleffects.trackers.EffectTracker;
 import com.nisovin.magicspells.spelleffects.util.EffectlibSpellEffect;
 import com.nisovin.magicspells.spelleffects.trackers.AsyncEffectTracker;
 import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
-
-import de.slikey.effectlib.Effect;
-
-import net.kyori.adventure.text.Component;
 
 public abstract class Spell implements Comparable<Spell>, Listener {
 
@@ -808,6 +808,21 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	protected ConfigData<BlockData> getConfigDataBlockData(String key, BlockData def) {
 		return ConfigDataUtil.getBlockData(config.getMainConfig(), "spells." + internalName + '.' + key, def);
+	}
+
+	/**
+	 * @param path Path for the keys to be read from. If the path is set to something like "filter", the keys will
+	 *             be read from spell config section under the "filter" section.
+	 */
+	protected SpellFilter getConfigSpellFilter(String path) {
+		return SpellFilter.fromConfig(config.getMainConfig(), "spells." + internalName + '.' + path);
+	}
+
+	/**
+	 * Gets the config spell filter under the base path of the spell config.
+	 */
+	protected SpellFilter getConfigSpellFilter() {
+		return getConfigSpellFilter("");
 	}
 
 	protected boolean isConfigString(String key) {
@@ -1983,10 +1998,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	public SpellReagents getReagents() {
 		return reagents;
-	}
-
-	public String getConsoleName() {
-		return MagicSpells.getConsoleName();
 	}
 
 	public String getStrWrongCastItem() {

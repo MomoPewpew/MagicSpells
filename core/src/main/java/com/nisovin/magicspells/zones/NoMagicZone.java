@@ -1,7 +1,5 @@
 package com.nisovin.magicspells.zones;
 
-import java.util.List;
-
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.configuration.ConfigurationSection;
@@ -29,12 +27,7 @@ public abstract class NoMagicZone implements Comparable<NoMagicZone> {
 
 		allowAll = config.getBoolean("allow-all", false);
 		disallowAll = config.getBoolean("disallow-all", true);
-
-		List<String> allowedSpells = config.getStringList("allowed-spells");
-		List<String> disallowedSpells = config.getStringList("disallowed-spells");
-		List<String> allowedSpellTags = config.getStringList("allowed-spell-tags");
-		List<String> disallowedSpellTags = config.getStringList("disallowed-spell-tags");
-		spellFilter = new SpellFilter(allowedSpells, disallowedSpells, allowedSpellTags, disallowedSpellTags);
+		spellFilter = SpellFilter.fromLegacyConfig(config, "");
 
 		initialize(config);
 	}

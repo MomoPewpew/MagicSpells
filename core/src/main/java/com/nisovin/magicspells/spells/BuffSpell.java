@@ -129,11 +129,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		spellOnCostName = getConfigString("spell-on-cost", "");
 		spellOnUseIncrementName = getConfigString("spell-on-use-increment", "");
 
-		List<String> spells = getConfigStringList("spells", null);
-		List<String> deniedSpells = getConfigStringList("denied-spells", null);
-		List<String> tagList = getConfigStringList("spell-tags", null);
-		List<String> deniedTagList = getConfigStringList("denied-spell-tags", null);
-		filter = new SpellFilter(spells, deniedSpells, tagList, deniedTagList);
+		filter = getConfigSpellFilter();
 
 		if (cancelOnGiveDamage || cancelOnTakeDamage) registerEvents(new DamageListener());
 		if (cancelOnDeath) registerEvents(new PlayerDeathListener());

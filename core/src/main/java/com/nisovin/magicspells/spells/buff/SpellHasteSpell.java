@@ -1,7 +1,6 @@
 package com.nisovin.magicspells.spells.buff;
 
 import java.util.Map;
-import java.util.List;
 import java.util.UUID;
 import java.util.HashMap;
 
@@ -39,12 +38,7 @@ public class SpellHasteSpell extends BuffSpell {
 
 		entities = new HashMap<>();
 
-		List<String> spells = getConfigStringList("spells", null);
-		List<String> deniedSpells = getConfigStringList("denied-spells", null);
-		List<String> tagList = getConfigStringList("spell-tags", null);
-		List<String> deniedTagList = getConfigStringList("denied-spell-tags", null);
-
-		filter = new SpellFilter(spells, deniedSpells, tagList, deniedTagList);
+		filter = getConfigSpellFilter();
 	}
 
 	@Override

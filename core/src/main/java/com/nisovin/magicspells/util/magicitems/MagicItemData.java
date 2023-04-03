@@ -13,9 +13,7 @@ import com.google.common.collect.Multimap;
 
 import net.kyori.adventure.text.Component;
 
-import org.bukkit.Color;
-import org.bukkit.Material;
-import org.bukkit.FireworkEffect;
+import org.bukkit.*;
 import org.bukkit.potion.PotionData;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.potion.PotionEffect;
@@ -183,6 +181,23 @@ public class MagicItemData {
                         if (strictEnchantLevel ? compare != 0 : compare > 0) return false;
                     }
                 }
+                case NAME -> {
+                    Component nameSelf = (Component) itemAttributes.get(attr);
+                    Component nameOther = (Component) data.itemAttributes.get(attr);
+                    return Util.getLegacyFromComponent(nameSelf).equals(Util.getLegacyFromComponent(nameOther));
+                }
+                case LORE -> {
+                    List<Component> loreSelf = (List<Component>) itemAttributes.get(attr);
+                    List<Component> loreOther = (List<Component>) data.itemAttributes.get(attr);
+                    if (loreSelf.size() != loreOther.size()) return false;
+
+                    for (int i = 0; i < loreSelf.size(); i++) {
+                        String self = Util.getLegacyFromComponent(loreSelf.get(i));
+                        String other = Util.getLegacyFromComponent(loreOther.get(i));
+                        if (!self.equals(other)) return false;
+                    }
+                    return true;
+                }
                 default -> {
                     if (!itemAttributes.get(attr).equals(data.itemAttributes.get(attr))) return false;
                 }
@@ -278,7 +293,7 @@ public class MagicItemData {
 
             output
                 .append("\"name\":\"")
-                .append(TxtUtil.escapeJSON(Util.getLegacyFromComponent((Component) getAttribute(MagicItemAttribute.NAME))))
+                .append(TxtUtil.escapeJSON(Util.getStringFromComponent((Component) getAttribute(MagicItemAttribute.NAME))))
                 .append('"');
 
             previous = true;
@@ -590,7 +605,7 @@ public class MagicItemData {
 
                 output
                     .append('"')
-                    .append(TxtUtil.escapeJSON(Util.getLegacyFromComponent(line)))
+                    .append(TxtUtil.escapeJSON(Util.getStringFromComponent(line)))
                     .append('"');
 
                 previousLore = true;

@@ -22,10 +22,10 @@ public class LoreHandler {
 		List<Component> lore = new ArrayList<>();
 		if (config.isList(CONFIG_NAME)) {
 			for (String line : config.getStringList(CONFIG_NAME)) {
-				lore.add(Util.getLegacyFromString(line));
+				lore.add(Util.getMiniMessage(line));
 			}
 		} else if (config.isString(CONFIG_NAME)) {
-			lore.add(Util.getLegacyFromString(config.getString(CONFIG_NAME)));
+			lore.add(Util.getMiniMessage(config.getString(CONFIG_NAME)));
 		}
 		if (lore.isEmpty()) return;
 		meta.lore(lore);

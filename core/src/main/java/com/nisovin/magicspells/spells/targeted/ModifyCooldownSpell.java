@@ -1,7 +1,5 @@
 package com.nisovin.magicspells.spells.targeted;
 
-import java.util.List;
-
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -33,11 +31,7 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 		powerAffectsSeconds = getConfigBoolean("power-affects-seconds", true);
 		powerAffectsMultiplier = getConfigBoolean("power-affects-multiplier", true);
 
-		List<String> spells = getConfigStringList("spells", null);
-		List<String> deniedSpells = getConfigStringList("denied-spells", null);
-		List<String> tagList = getConfigStringList("spell-tags", null);
-		List<String> deniedTagList = getConfigStringList("denied-spell-tags", null);
-		filter = new SpellFilter(spells, deniedSpells, tagList, deniedTagList);
+		filter = getConfigSpellFilter();
 	}
 
 	@Override

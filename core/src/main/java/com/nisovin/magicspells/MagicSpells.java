@@ -196,11 +196,11 @@ public class MagicSpells extends JavaPlugin {
 	private String strWrongWorld;
 	private String strOnCooldown;
 	private String strSpellChange;
-	private String strConsoleName;
 	private String strUnknownSpell;
 	private String strXpAutoLearned;
 	private String strMissingReagents;
 	private String strSpellChangeEmpty;
+	private String consoleName;
 
 	private String soundFailOnCooldown;
 	private String soundFailMissingReagents;
@@ -340,8 +340,8 @@ public class MagicSpells extends JavaPlugin {
 		strCantCast = config.getString(path + "str-cant-cast", "You can't cast that spell right now.");
 		strCantBind = config.getString(path + "str-cant-bind", "You cannot bind that spell to that item.");
 		strWrongWorld = config.getString(path + "str-wrong-world", "You cannot cast that spell here.");
-		strConsoleName = config.getString(path + "console-name", "Admin");
 		strXpAutoLearned = config.getString(path + "str-xp-auto-learned", "You have learned the %s spell!");
+		consoleName = config.getString(path + "console-name", "Admin");
 
 		allowAnticheatIntegrations = config.getBoolean(path + "allow-anticheat-integrations", false);
 
@@ -1191,10 +1191,6 @@ public class MagicSpells extends JavaPlugin {
 		return plugin.strSpellChange;
 	}
 
-	public static String getConsoleName() {
-		return plugin.strConsoleName;
-	}
-
 	public static String getUnknownSpellMessage() {
 		return plugin.strUnknownSpell;
 	}
@@ -1209,6 +1205,10 @@ public class MagicSpells extends JavaPlugin {
 
 	public static String getSpellChangeEmptyMessage() {
 		return plugin.strSpellChangeEmpty;
+	}
+
+	public static String getConsoleName() {
+		return plugin.consoleName;
 	}
 
 	public static String getCooldownSound() {
@@ -2025,12 +2025,12 @@ public class MagicSpells extends JavaPlugin {
 		strOnCooldown = null;
 		strWrongWorld = null;
 		strSpellChange = null;
-		strConsoleName = null;
 		strUnknownSpell = null;
 		strXpAutoLearned = null;
 		lifeLengthTracker = null;
 		strMissingReagents = null;
 		strSpellChangeEmpty = null;
+		consoleName = null;
 		soundFailOnCooldown = null;
 		soundFailMissingReagents = null;
 

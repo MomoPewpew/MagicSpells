@@ -121,8 +121,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		trackerSet = new HashSet<>();
 
 		// Compatibility with start-forward-offset
-		ConfigData<Float> startForwardOffset = getConfigDataFloat("start-forward-offset", 1F);
-		startXOffset = getConfigDataFloat("start-x-offset", startForwardOffset);
+		startXOffset = getConfigDataFloat("start-x-offset", getConfigDataFloat("start-forward-offset", 1F));
 		startYOffset = getConfigDataFloat("start-y-offset", 1F);
 		startZOffset = getConfigDataFloat("start-z-offset", 0F);
 		targetYOffset = getConfigDataFloat("target-y-offset", 0F);
@@ -141,13 +140,11 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		horizontalRotation = getConfigDataDouble("horizontal-rotation", 0F);
 		xRotation = getConfigDataDouble("x-rotation", 0F);
 
-		ConfigData<Float> projectileGravity = getConfigDataFloat("projectile-gravity", 0F);
-		projectileVertGravity = getConfigDataFloat("projectile-vert-gravity", projectileGravity);
+		projectileVertGravity = getConfigDataFloat("projectile-vert-gravity", getConfigDataFloat("projectile-gravity", 0F));
 		projectileHorizGravity = getConfigDataFloat("projectile-horiz-gravity", 0F);
 
-		ConfigData<Float> projectileSpread = getConfigDataFloat("projectile-spread", 0F);
-		projectileVertSpread = getConfigDataFloat("projectile-vertical-spread", projectileSpread);
-		projectileHorizSpread = getConfigDataFloat("projectile-horizontal-spread", projectileSpread);
+		projectileVertSpread = getConfigDataFloat("projectile-vertical-spread", getConfigDataFloat("projectile-spread", 0F));
+		projectileHorizSpread = getConfigDataFloat("projectile-horizontal-spread", getConfigDataFloat("projectile-spread", 0F));
 
 		tickInterval = getConfigDataInt("tick-interval", 2);
 		spellInterval = getConfigDataInt("spell-interval", 20);
@@ -244,57 +241,59 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 	public void initialize() {
 		super.initialize();
 
+		String prefix = "ParticleProjectileSpell '" + internalName + "'";
+
 		defaultSpell = new Subspell(defaultSpellName);
 		if (!defaultSpell.process()) {
-			if (!defaultSpellName.isEmpty()) MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an invalid spell defined!");
+			if (!defaultSpellName.isEmpty()) MagicSpells.error(prefix + " has an invalid spell defined!");
 			defaultSpell = null;
 		}
 
 		airSpell = new Subspell(airSpellName);
 		if (!airSpell.process() || !airSpell.isTargetedLocationSpell()) {
-			if (!airSpellName.equals(defaultSpellName)) MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an invalid spell-on-hit-air defined!");
+			if (!airSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-air defined!");
 			airSpell = null;
 		}
 
 		selfSpell = new Subspell(selfSpellName);
 		if (!selfSpell.process()) {
-			if (!selfSpellName.equals(defaultSpellName)) MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an invalid spell-on-hit-self defined!");
+			if (!selfSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-self defined!");
 			selfSpell = null;
 		}
 
 		tickSpell = new Subspell(tickSpellName);
 		if (!tickSpell.process() || !tickSpell.isTargetedLocationSpell()) {
-			if (!tickSpellName.equals(defaultSpellName)) MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an invalid spell-on-tick defined!");
+			if (!tickSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-tick defined!");
 			tickSpell = null;
 		}
 
 		groundSpell = new Subspell(groundSpellName);
 		if (!groundSpell.process() || !groundSpell.isTargetedLocationSpell()) {
-			if (!groundSpellName.equals(defaultSpellName)) MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
+			if (!groundSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-ground defined!");
 			groundSpell = null;
 		}
 
 		entitySpell = new Subspell(entitySpellName);
 		if (!entitySpell.process()) {
-			if (!entitySpellName.equals(defaultSpellName)) MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an invalid spell-on-hit-entity defined!");
+			if (!entitySpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-entity defined!");
 			entitySpell = null;
 		}
 
 		durationSpell = new Subspell(durationSpellName);
 		if (!durationSpell.process()) {
-			if (!durationSpellName.equals(defaultSpellName)) MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an invalid spell-on-duration-end defined!");
+			if (!durationSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-duration-end defined!");
 			durationSpell = null;
 		}
 
 		modifierSpell = new Subspell(modifierSpellName);
 		if (!modifierSpell.process()) {
-			if (!modifierSpellName.equals(defaultSpellName)) MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an invalid spell-on-modifier-fail defined!");
+			if (!modifierSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-modifier-fail defined!");
 			modifierSpell = null;
 		}
 
 		entityLocationSpell = new Subspell(entityLocationSpellName);
 		if (!entityLocationSpell.process() || !entityLocationSpell.isTargetedLocationSpell()) {
-			if (!entityLocationSpellName.isEmpty()) MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an invalid spell-on-entity-location defined!");
+			if (!entityLocationSpellName.isEmpty()) MagicSpells.error(prefix + " has an invalid spell-on-entity-location defined!");
 			entityLocationSpell = null;
 		}
 
@@ -305,7 +304,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 
 				Subspell projectile = new Subspell(params[0]);
 				if (!projectile.process() || !(projectile.getSpell() instanceof ParticleProjectileSpell)) {
-					MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an interaction with '" + params[0] + "' but that's not a valid particle projectile!");
+					MagicSpells.error(prefix + " has an interaction with '" + params[0] + "' but that's not a valid particle projectile!");
 					continue;
 				}
 
@@ -317,7 +316,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 				if (params[1] == null) continue;
 				Subspell collisionSpell = new Subspell(params[1]);
 				if (!collisionSpell.process() || !collisionSpell.isTargetedLocationSpell()) {
-					MagicSpells.error("ParticleProjectileSpell '" + internalName + "' has an interaction with '" + params[0] + "' and their spell on collision '" + params[1] + "' is not a valid spell!");
+					MagicSpells.error(prefix + " has an interaction with '" + params[0] + "' and their spell on collision '" + params[1] + "' is not a valid spell!");
 					continue;
 				}
 				interactionSpells.put(params[0], collisionSpell);

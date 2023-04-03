@@ -44,6 +44,8 @@ public abstract class SpellEffect {
 	// for line
 	private ConfigData<Double> maxDistance;
 	private ConfigData<Double> distanceBetween;
+	private ConfigData<Double> endLocationHeightOffset;
+	private ConfigData<Double> startLocationHeightOffset;
 
 	// for buff/orbit
 	private ConfigData<Float> orbitXAxis;
@@ -86,6 +88,8 @@ public abstract class SpellEffect {
 
 		maxDistance = ConfigDataUtil.getDouble(config, "max-distance", 100);
 		distanceBetween = ConfigDataUtil.getDouble(config, "distance-between", 1);
+		endLocationHeightOffset = ConfigDataUtil.getDouble(config, "end-location-height-offset", 0);
+		startLocationHeightOffset = ConfigDataUtil.getDouble(config, "start-location-height-offset", 0);
 
 		String path = "orbit-";
 		orbitXAxis = ConfigDataUtil.getFloat(config, path + "x-axis", 0F);
@@ -431,39 +435,42 @@ public abstract class SpellEffect {
 	/**
 	 * Plays an effect between two locations (such as a smoke trail type effect).
 	 *
-	 * @param location1 the starting location
-	 * @param location2 the ending location
+	 * @param startLoc the starting location
+	 * @param endLoc the ending location
 	 */
 	@Deprecated
-	public Runnable playEffect(Location location1, Location location2) {
-		return playEffect(location1, location2, null);
+	public Runnable playEffect(Location startLoc, Location endLoc) {
+		return playEffect(startLoc, endLoc, null);
 	}
 
 	/**
 	 * Plays an effect between two locations (such as a smoke trail type effect).
 	 *
-	 * @param location1 the starting location
-	 * @param location2 the ending location
+	 * @param startLoc the starting location
+	 * @param endLoc the ending location
 	 */
-	public Runnable playEffect(Location location1, Location location2, SpellData data) {
-		double maxDistance = this.maxDistance.get(data);
-		if (location1.distanceSquared(location2) > maxDistance * maxDistance) return null;
+	public Runnable playEffect(Location startLoc, Location endLoc, SpellData data) {
+		double maxDistanceSquared = maxDistance.get(data);
+		maxDistanceSquared *= maxDistanceSquared;
 
-		Location loc1 = location1.clone();
-		Location loc2 = location2.clone();
+		Location start = startLoc.clone().add(0, startLocationHeightOffset.get(data), 0);
+		Location end = endLoc.clone().add(0, endLocationHeightOffset.get(data), 0);
 
 		double distanceBetween = this.distanceBetween.get(data);
-		int c = (int) Math.ceil(loc1.distance(loc2) / distanceBetween) - 1;
+		int c = (int) Math.ceil(start.distance(end) / distanceBetween) - 1;
 		if (c <= 0) return null;
 
-		Vector v = loc2.toVector().subtract(loc1.toVector()).normalize().multiply(distanceBetween);
-		Location l = loc1.clone();
+		Vector v = end.toVector().subtract(start.toVector()).normalize().multiply(distanceBetween);
+		Location l = start.clone();
 
 		double heightOffset = this.heightOffset.get(data);
 		if (heightOffset != 0) l.setY(l.getY() + heightOffset);
 
 		for (int i = 0; i < c; i++) {
 			l.add(v);
+			if (startLoc.distanceSquared(l) > maxDistanceSquared) return null;
+
+			l.setDirection(v);
 			playEffect(l, data);
 		}
 

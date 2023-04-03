@@ -106,7 +106,7 @@ public class MagicItemDataParser {
 
 					switch (key.toLowerCase()) {
 						case "name":
-							data.setAttribute(NAME, Util.getLegacyFromString(value.getAsString()));
+							data.setAttribute(NAME, Util.getMiniMessage(value.getAsString()));
 							break;
 						case "amount":
 							data.setAttribute(AMOUNT, value.getAsInt());
@@ -294,7 +294,7 @@ public class MagicItemDataParser {
 							List<Component> lore = new ArrayList<>();
 							JsonArray jsonArray = value.getAsJsonArray();
 							for (JsonElement elementInside : jsonArray) {
-								lore.add(Util.getLegacyFromString(elementInside.getAsString()));
+								lore.add(Util.getMiniMessage(elementInside.getAsString()));
 							}
 
 							if (!lore.isEmpty()) data.setAttribute(LORE, lore);

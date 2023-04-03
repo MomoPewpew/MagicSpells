@@ -2,7 +2,6 @@ package com.nisovin.magicspells.spells.buff;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.List;
 import java.util.HashMap;
 
 import org.bukkit.Location;
@@ -51,12 +50,7 @@ public class DodgeSpell extends BuffSpell {
 		spellBeforeDodgeName = getConfigString("spell-before-dodge", "");
 		spellAfterDodgeName = getConfigString("spell-after-dodge", "");
 
-		List<String> spells = getConfigStringList("spells", null);
-		List<String> deniedSpells = getConfigStringList("denied-spells", null);
-		List<String> spellTags = getConfigStringList("spell-tags", null);
-		List<String> deniedSpellTags = getConfigStringList("denied-spell-tags", null);
-
-		filter = new SpellFilter(spells, deniedSpells, spellTags, deniedSpellTags);
+		filter = getConfigSpellFilter();
 	}
 
 	@Override

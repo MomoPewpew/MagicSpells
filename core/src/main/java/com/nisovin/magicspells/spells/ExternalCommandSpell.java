@@ -41,8 +41,6 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 	private boolean executeAsTargetInstead;
 	private boolean executeOnConsoleInstead;
 	private boolean useTargetVariablesInstead;
-
-	private String strNoTarget;
 	private String strBlockedOutput;
 	private String strCantUseCommand;
 

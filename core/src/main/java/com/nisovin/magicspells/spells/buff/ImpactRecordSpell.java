@@ -29,10 +29,8 @@ public class ImpactRecordSpell extends BuffSpell {
 	public ImpactRecordSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
+		recordFilter = getConfigSpellFilter("filter");
 		variableName = getConfigString("variable-name", null);
-
-		recordFilter = SpellFilter.fromConfig(config, "spells." + internalName + ".filter");
-
 		recordCancelled = getConfigBoolean("record-cancelled", false);
 
 		entities = new HashSet<>();

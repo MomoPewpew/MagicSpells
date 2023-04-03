@@ -1,7 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import java.util.Map;
-import java.util.List;
 import java.util.HashMap;
 
 import org.bukkit.entity.Player;
@@ -35,14 +34,8 @@ public class MagicBondSpell extends TargetedSpell implements TargetedEntitySpell
 		super(config, spellName);
 
 		duration = getConfigDataInt("duration", 200);
-
 		strDurationEnd = getConfigString("str-duration", "");
-
-		List<String> spells = getConfigStringList("spells", null);
-		List<String> deniedSpells = getConfigStringList("denied-spells", null);
-		List<String> tagList = getConfigStringList("spell-tags", null);
-		List<String> deniedTagList = getConfigStringList("denied-spell-tags", null);
-		filter = new SpellFilter(spells, deniedSpells, tagList, deniedTagList);
+		filter = getConfigSpellFilter();
 
 		bondTarget = new HashMap<>();
 	}

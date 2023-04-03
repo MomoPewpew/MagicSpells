@@ -2,7 +2,6 @@ package com.nisovin.magicspells.spells.buff;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.List;
 import java.util.HashMap;
 
 import org.bukkit.event.EventHandler;
@@ -35,11 +34,7 @@ public class EmpowerSpell extends BuffSpell {
 
 		powerAffectsMultiplier = getConfigBoolean("power-affects-multiplier", true);
 
-		List<String> spells = getConfigStringList("spells", null);
-		List<String> deniedSpells = getConfigStringList("denied-spells", null);
-		List<String> tagList = getConfigStringList("spell-tags", null);
-		List<String> deniedTagList = getConfigStringList("denied-spell-tags", null);
-		filter = new SpellFilter(spells, deniedSpells, tagList, deniedTagList);
+		filter = getConfigSpellFilter();
 
 		entities = new HashMap<>();
 	}

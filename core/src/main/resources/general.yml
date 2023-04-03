@@ -32,6 +32,7 @@ ignore-default-bindings: false
 ignore-cast-item-enchants: true
 ignore-cast-item-names: false
 ignore-cast-item-amount: true
+ignore-cast-item-name-colors: false
 ignore-cast-item-breakability: true
 ignore-cast-item-color: true
 ignore-cast-item-potion-types: true

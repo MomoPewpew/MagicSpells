@@ -122,12 +122,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		pointBlank = getConfigBoolean("point-blank", true);
 		claimProjectiles = getConfigBoolean("claim-projectiles", false);
 
-		List<String> spells = getConfigStringList("spells", null);
-		List<String> deniedSpells = getConfigStringList("denied-spells", null);
-		List<String> spellTags = getConfigStringList("spell-tags", null);
-		List<String> deniedSpellTags = getConfigStringList("denied-spell-tags", null);
-
-		filter = new SpellFilter(spells, deniedSpells, spellTags, deniedSpellTags);
+		filter = getConfigSpellFilter();
 
 		velocity = getConfigDataFloat("projectile-velocity", 1F);
 		acceleration = getConfigDataFloat("projectile-acceleration", 0F);

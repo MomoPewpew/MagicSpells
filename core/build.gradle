@@ -6,7 +6,7 @@ plugins {
 
 dependencies {
     shadow(group: "org.apache.commons", name: "commons-math4-core", version: "4.0-beta1")
-    shadow(group: "com.github.Chronoken", name: "EffectLib", version: "29be820")
+    shadow(group: "com.github.Chronoken", name: "EffectLib", version: "49377cb")
     shadow(group: "co.aikar", name: "acf-paper", version: "0.5.1-SNAPSHOT")
     shadow(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: "1.8.10")
 

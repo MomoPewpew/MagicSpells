@@ -168,19 +168,17 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 			spellOnTick.castAtLocation(caster, currentLocation.clone(), power);
 		}
 
-		if (count > entityHitDelay) {
-			for (Entity e : entity.getNearbyEntities(hitRadius, vertHitRadius, hitRadius)) {
-				if (!(e instanceof LivingEntity target)) continue;
-				if (!targetList.canTarget(caster, e)) continue;
+		for (Entity e : entity.getNearbyEntities(count > entityHitDelay ? hitRadius : 0.1, count > entityHitDelay ? vertHitRadius : 0.1, count > entityHitDelay ? hitRadius : 0.1)) {
+			if (!(e instanceof LivingEntity target)) continue;
+			if (!targetList.canTarget(caster, e)) continue;
 
-				SpellTargetEvent event = new SpellTargetEvent(spell, caster, target, power, args);
-				EventUtil.call(event);
-				if (!event.isCancelled()) {
-					if (spell != null) spell.playEffects(EffectPosition.TARGET, event.getTarget(), data);
-					if (spellOnHitEntity != null) spellOnHitEntity.castAtEntity(caster, event.getTarget(), event.getPower());
-					if (stopOnHitEntity) stop();
-					return;
-				}
+			SpellTargetEvent event = new SpellTargetEvent(spell, caster, target, power, args);
+			EventUtil.call(event);
+			if (!event.isCancelled()) {
+				if (spell != null) spell.playEffects(EffectPosition.TARGET, event.getTarget(), data);
+				if (spellOnHitEntity != null) spellOnHitEntity.castAtEntity(caster, event.getTarget(), event.getPower());
+				if (stopOnHitEntity) stop();
+				return;
 			}
 		}
 

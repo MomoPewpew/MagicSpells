@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.util.NumberConversions;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.LivingEntity;
@@ -17,6 +18,7 @@ import org.bukkit.block.data.BlockData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
+import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
@@ -31,8 +33,8 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	private Map<Block, BlockData> blocks;
 
 	private boolean replaceAll;
-	private List<BlockData> replace;
-	private List<BlockData> replaceWith;
+	private List<List<BlockData>> replace;
+	private List<List<BlockData>> replaceWith;
 	private List<BlockData> replaceBlacklist;
 
 	private ConfigData<Integer> yOffset;
@@ -46,6 +48,8 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean powerAffectsRadius;
 	private final boolean checkPlugins;
 	private boolean resolveDurationPerBlock;
+	private boolean circleShape;
+
 
 	public ReplaceSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -66,36 +70,63 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		replaceRandom = getConfigBoolean("replace-random", true);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
 		resolveDurationPerBlock = getConfigBoolean("resolve-duration-per-block", false);
+		circleShape = getConfigBoolean("circle-shape", false);
 
 		List<String> list = getConfigStringList("replace-blocks", null);
 		if (list != null) {
 			replaceAll = false;
-			for (String block : list) {
-				if (block.equals("all")) {
+			for (int i = 0; i < list.size(); i++) {
+				if (list.get(i).equals("all")) {
 					replaceAll = true;
 					// Just a filler.
 					replace.add(null);
 					break;
 				}
 
-				try {
-					BlockData data = Bukkit.createBlockData(block.trim().toLowerCase());
-					replace.add(data);
-				} catch (IllegalArgumentException e) {
-					MagicSpells.error("ReplaceSpell " + internalName + " has an invalid replace-blocks item: " + block);
+				List<BlockData> blockList = new ArrayList<BlockData>();
+				String[] split = list.get(i).split("\\|");
+				for (String block : split) {
+					try {
+						BlockData data = Bukkit.createBlockData(block.trim().toLowerCase());
+						blockList.add(data);
+					} catch (IllegalArgumentException e) {
+						MagicSpells.error("ReplaceSpell " + internalName + " has an invalid replace-blocks item: " + block);
+					}
 				}
+				replace.add(blockList);
 			}
 		}
 
 		list = getConfigStringList("replace-with", null);
 		if (list != null) {
-			for (String s : list) {
-				try {
-					BlockData data = Bukkit.createBlockData(s.trim().toLowerCase());
-					replaceWith.add(data);
-				} catch (IllegalArgumentException e) {
-					MagicSpells.error("ReplaceSpell " + internalName + " has an invalid replace-with item: " + s);
+			for (int i = 0; i < list.size(); i++) {
+				List<BlockData> blockList = new ArrayList<BlockData>();
+				String[] split = list.get(i).split("\\|");
+
+				for (String block : split) {
+					try {
+						int n = 1;
+
+						String[] blockSplit = block.split("%");
+						String blockName = null;
+
+						if (blockSplit.length == 2) {
+							n = Integer.valueOf(blockSplit[0]);
+							blockName = blockSplit[1];
+						} else {
+							blockName = blockSplit[0];
+						}
+
+						BlockData data = Bukkit.createBlockData(blockName.trim().toLowerCase());
+
+						for (int j = 0; j < n; j++) {
+							blockList.add(data);
+						}
+					} catch (IllegalArgumentException e) {
+						MagicSpells.error("ReplaceSpell " + internalName + " has an invalid replace-with item: " + block);
+					}
 				}
+				replaceWith.add(blockList);
 			}
 		}
 
@@ -173,17 +204,57 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		int yOffset = this.yOffset.get(caster, null, power, args);
 		int replaceDuration = resolveDurationPerBlock ? 0 : this.replaceDuration.get(caster, null, power, args);
 
+		List<BlockData> allReplaceWithBlocks = new ArrayList<BlockData>();
+
+		if (replaceRandom) {
+			for (List<BlockData> blockList : replaceWith) {
+				for (BlockData blockData : blockList) {
+					allReplaceWithBlocks.add(blockData);
+				}
+			}
+		}
+
 		for (int y = target.getBlockY() - d + yOffset; y <= target.getBlockY() + u + yOffset; y++) {
 			for (int x = target.getBlockX() - h; x <= target.getBlockX() + h; x++) {
 				for (int z = target.getBlockZ() - h; z <= target.getBlockZ() + h; z++) {
+					if (circleShape) {
+						double hDistanceSq = NumberConversions.square(x - target.getBlockX()) + NumberConversions.square(z - target.getBlockZ());
+						if (hDistanceSq > (h * h)) continue;
+						double vDistance = NumberConversions.square(y - (target.getBlockY() + yOffset));
+						if (y > target.getBlockY() + yOffset) {
+							if (vDistance > (u * u)) continue;
+						} else {
+							if (vDistance > (d * d)) continue;
+						}
+					}
+
 					block = target.getWorld().getBlockAt(x, y, z);
 					for (int i = 0; i < replace.size(); i++) {
 						BlockData data = block.getBlockData();
 
 						// If specific blocks are being replaced, skip if the block isn't replaceable.
-						if (!replaceAll && !data.matches(replace.get(i))) continue;
+						if (!replaceAll) {
+							Boolean cont = true;
+
+							for (BlockData replaceData : replace.get(i)) {
+								if (data.matches(replaceData)) {
+									cont = false;
+								}
+							}
+							if (cont) continue;
+						}
+
 						// If all blocks are being replaced, skip if the block is already replaced.
-						if (replaceAll && data.matches(replaceWith.get(i))) continue;
+						if (replaceAll) {
+							Boolean cont = false;
+
+							for (BlockData replaceData : replaceWith.get(i)) {
+								if (data.matches(replaceData)) {
+									cont = true;
+								}
+							}
+							if (cont) continue;
+						}
 
 						if (replaceBlacklisted(data)) continue;
 
@@ -191,8 +262,8 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 						BlockState previousState = block.getState();
 
 						// Place block.
-						if (replaceRandom) block.setBlockData(replaceWith.get(Util.getRandomInt(replaceWith.size())));
-						else block.setBlockData(replaceWith.get(i));
+						if (replaceRandom) BlockUtils.setBlockData(block, data, allReplaceWithBlocks.get(Util.getRandomInt(allReplaceWithBlocks.size())));
+						else BlockUtils.setBlockData(block, data, replaceWith.get(i).get(Util.getRandomInt(replaceWith.get(i).size())));
 
 						if (checkPlugins && caster instanceof Player player) {
 							Block against = target.clone().add(target.getDirection()).getBlock();
@@ -244,5 +315,4 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 		return false;
 	}
-
 }

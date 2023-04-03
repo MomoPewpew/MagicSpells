@@ -1,5 +1,7 @@
 package com.nisovin.magicspells.spells;
 
+import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.NAME;
+
 import java.util.*;
 
 import net.kyori.adventure.text.Component;
@@ -23,6 +25,7 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.SpellData;
+import com.nisovin.magicspells.util.MenuData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.magicitems.MagicItem;

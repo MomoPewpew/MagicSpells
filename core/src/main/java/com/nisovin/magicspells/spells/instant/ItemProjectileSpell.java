@@ -46,6 +46,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	private ConfigData<Integer> spellInterval;
 	private ConfigData<Integer> itemNameDelay;
 	private ConfigData<Integer> specialEffectInterval;
+	private ConfigData<Integer> entityHitDelay;
 
 	private ConfigData<Float> speed;
 	private ConfigData<Float> yOffset;
@@ -83,6 +84,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 		spellInterval = getConfigDataInt("spell-interval", 2);
 		itemNameDelay = getConfigDataInt("item-name-delay", 10);
 		specialEffectInterval = getConfigDataInt("special-effect-interval", 2);
+		entityHitDelay = getConfigDataInt("entity-hit-delay", 0);
 
 		speed = getConfigDataFloat("speed", 1F);
 		yOffset = getConfigDataFloat("y-offset", 0F);
@@ -98,13 +100,13 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 		relativeOffset = getConfigVector("relative-offset", "0,0,0");
 
-		itemName = Util.getMiniMessage(getConfigString("item-name", ""));
+		itemName = Util.getMiniMessage(getConfigString("item-name", null));
 		spellOnTickName = getConfigString("spell-on-tick", "");
 		spellOnDelayName = getConfigString("spell-on-delay", "");
 		spellOnHitEntityName = getConfigString("spell-on-hit-entity", "");
 		spellOnHitGroundName = getConfigString("spell-on-hit-ground", "");
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -185,6 +187,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 		tracker.setSpellInterval(spellInterval.get(caster, null, power, args));
 		tracker.setItemNameDelay(itemNameDelay.get(caster, null, power, args));
 		tracker.setSpecialEffectInterval(specialEffectInterval.get(caster, null, power, args));
+		tracker.setentityHitDelay(entityHitDelay.get(caster, null, power, args));
 
 		tracker.setSpeed(speed.get(caster, null, power, args));
 

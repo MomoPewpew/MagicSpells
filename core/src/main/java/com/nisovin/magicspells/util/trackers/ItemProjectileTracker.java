@@ -36,6 +36,7 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 	private int spellInterval;
 	private int itemNameDelay;
 	private int specialEffectInterval;
+	private int entityHitDelay;
 
 	private float speed;
 	private float yOffset;
@@ -167,17 +168,19 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 			spellOnTick.castAtLocation(caster, currentLocation.clone(), power);
 		}
 
-		for (Entity e : entity.getNearbyEntities(hitRadius, vertHitRadius, hitRadius)) {
-			if (!(e instanceof LivingEntity target)) continue;
-			if (!targetList.canTarget(caster, e)) continue;
+		if (count > entityHitDelay) {
+			for (Entity e : entity.getNearbyEntities(hitRadius, vertHitRadius, hitRadius)) {
+				if (!(e instanceof LivingEntity target)) continue;
+				if (!targetList.canTarget(caster, e)) continue;
 
-			SpellTargetEvent event = new SpellTargetEvent(spell, caster, target, power, args);
-			EventUtil.call(event);
-			if (!event.isCancelled()) {
-				if (spell != null) spell.playEffects(EffectPosition.TARGET, event.getTarget(), data);
-				if (spellOnHitEntity != null) spellOnHitEntity.castAtEntity(caster, event.getTarget(), event.getPower());
-				if (stopOnHitEntity) stop();
-				return;
+				SpellTargetEvent event = new SpellTargetEvent(spell, caster, target, power, args);
+				EventUtil.call(event);
+				if (!event.isCancelled()) {
+					if (spell != null) spell.playEffects(EffectPosition.TARGET, event.getTarget(), data);
+					if (spellOnHitEntity != null) spellOnHitEntity.castAtEntity(caster, event.getTarget(), event.getPower());
+					if (stopOnHitEntity) stop();
+					return;
+				}
 			}
 		}
 
@@ -387,6 +390,14 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 
 	public void setSpecialEffectInterval(int specialEffectInterval) {
 		this.specialEffectInterval = specialEffectInterval;
+	}
+
+	public int getentityHitDelay() {
+		return entityHitDelay;
+	}
+
+	public void setentityHitDelay(int entityHitDelay) {
+		this.entityHitDelay = entityHitDelay;
 	}
 
 	public float getSpeed() {

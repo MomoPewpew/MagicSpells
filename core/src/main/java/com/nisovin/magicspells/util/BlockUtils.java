@@ -6,15 +6,23 @@ import java.util.ArrayList;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.MultipleFacing;
+import org.bukkit.block.data.Orientable;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.Hangable;
 import org.bukkit.block.data.Powerable;
+import org.bukkit.block.data.type.Slab;
+import org.bukkit.block.data.type.Stairs;
 import org.bukkit.block.data.AnaloguePowerable;
+import org.bukkit.block.data.Bisected;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
@@ -225,4 +233,45 @@ public class BlockUtils {
 		}
 	}
 
+	public static void setBlockData(Block block, BlockData oldBlockData, BlockData newBlockData) {
+		BlockData clone = newBlockData.clone();
+
+		if (oldBlockData instanceof Directional && clone instanceof Directional) {
+			if (((Directional) clone).getFaces().contains(((Directional) oldBlockData).getFacing())) {
+				((Directional) clone).setFacing(((Directional) oldBlockData).getFacing());
+			}
+		}
+
+		if (oldBlockData instanceof Stairs && clone instanceof Stairs) {
+			((Stairs) clone).setShape(((Stairs) oldBlockData).getShape());
+		}
+
+		if (oldBlockData instanceof Slab && clone instanceof Slab) {
+			((Slab) clone).setType(((Slab) oldBlockData).getType());
+		}
+
+		if (oldBlockData instanceof Hangable && clone instanceof Hangable) {
+			((Hangable) clone).setHanging(((Hangable) oldBlockData).isHanging());
+		}
+
+		if (oldBlockData instanceof Orientable && clone instanceof Orientable) {
+			if (((Orientable) clone).getAxes().contains(((Orientable) oldBlockData).getAxis())) {
+				((Orientable) clone).setAxis(((Orientable) oldBlockData).getAxis());
+			}
+		}
+
+		if (oldBlockData instanceof MultipleFacing && clone instanceof MultipleFacing) {
+			for (BlockFace blockFace : ((MultipleFacing) oldBlockData).getFaces()) {
+				if (((MultipleFacing) clone).getAllowedFaces().contains(blockFace)) {
+					((MultipleFacing) clone).setFace(blockFace, true);
+				}
+			}
+		}
+
+		if (oldBlockData instanceof Bisected && clone instanceof Bisected) {
+			((Bisected) clone).setHalf(((Bisected) oldBlockData).getHalf());
+		}
+
+		block.setBlockData(clone);
+	}
 }

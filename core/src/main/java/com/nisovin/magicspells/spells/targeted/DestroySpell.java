@@ -1,7 +1,9 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.List;
+import java.util.Random;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -33,6 +35,8 @@ import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
 
 public class DestroySpell extends TargetedSpell implements TargetedLocationSpell, TargetedEntityFromLocationSpell {
 
+	private final Random random = ThreadLocalRandom.current();
+
 	private Set<Material> blockTypesToThrow;
 	private Set<Material> blockTypesToRemove;
 	private Set<FallingBlock> fallingBlocks;
@@ -44,6 +48,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	private ConfigData<Double> velocity;
 
 	private ConfigData<Float> fallingBlockDamage;
+	private ConfigData<Float> throwChance;
 
 	private boolean checkPlugins;
 	private boolean preventLandingBlocks;
@@ -63,6 +68,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		velocity = getConfigDataDouble("velocity", 0);
 
 		fallingBlockDamage = getConfigDataFloat("falling-block-damage", 0);
+		throwChance = getConfigDataFloat("throw-chance", 100F);
 
 		checkPlugins = getConfigBoolean("check-plugins", true);
 		preventLandingBlocks = getConfigBoolean("prevent-landing-blocks", false);
@@ -184,6 +190,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		int vertRadius = this.vertRadius.get(caster, target, power, args);
 		int horizRadius = this.horizRadius.get(caster, target, power, args);
 
+		float throwChance = this.throwChance.get(caster, target, power, null) / 100;
+
 		for (int y = centerY - vertRadius; y <= centerY + vertRadius; y++) {
 			for (int x = centerX - horizRadius; x <= centerX + horizRadius; x++) {
 				for (int z = centerZ - horizRadius; z <= centerZ + horizRadius; z++) {
@@ -192,8 +200,13 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 					if (BlockUtils.isAir(b.getType())) continue;
 
 					if (blockTypesToThrow != null) {
-						if (blockTypesToThrow.contains(b.getType())) blocksToThrow.add(b);
-						else if (blockTypesToRemove != null) {
+						if (blockTypesToThrow.contains(b.getType())) {
+							if (throwChance < 1 && random.nextFloat() > throwChance) {
+								blocksToRemove.add(b);
+							} else {
+								blocksToThrow.add(b);
+							}
+						} else if (blockTypesToRemove != null) {
 							if (blockTypesToRemove.contains(b.getType())) {
 								blocksToRemove.add(b);
 							}

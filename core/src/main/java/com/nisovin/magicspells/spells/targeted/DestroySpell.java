@@ -215,7 +215,13 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 						continue;
 					}
 
-					if (b.getType().isSolid()) blocksToThrow.add(b);
+					if (b.getType().isSolid()) {
+						if (throwChance < 1 && random.nextFloat() > throwChance) {
+							blocksToRemove.add(b);
+						} else {
+							blocksToThrow.add(b);
+						}
+					}
 					else blocksToRemove.add(b);
 				}
 			}

@@ -125,4 +125,8 @@ class VolatileCode1_19_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         entityPlayer.startAutoSpinAttack(ticks)
     }
 
+    override fun createFalsePlayer(player: Player?, isSleeping: Boolean) {
+        TODO("Not yet implemented")
+    }
+
 }

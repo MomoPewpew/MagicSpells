@@ -1,5 +1,7 @@
 package com.nisovin.magicspells.volatilecode.v1_19_R3
 
+import com.mojang.authlib.GameProfile
+import com.mojang.authlib.properties.Property
 import org.bukkit.Bukkit
 import org.bukkit.entity.*
 import org.bukkit.Location
@@ -23,8 +25,15 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon
 
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
 import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
+import net.minecraft.network.syncher.EntityDataSerializers
+import net.minecraft.network.syncher.SynchedEntityData
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.server.network.ServerGamePacketListenerImpl
+import java.util.*
+import kotlin.collections.ArrayList
 
 private typealias nmsItemStack = net.minecraft.world.item.ItemStack
+private typealias nmsEntityPose = net.minecraft.world.entity.Pose
 
 class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helper) {
 
@@ -123,6 +132,36 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
     override fun startAutoSpinAttack(player: Player?, ticks: Int) {
         val entityPlayer = (player as CraftPlayer).handle
         entityPlayer.startAutoSpinAttack(ticks)
+    }
+
+    override fun createFalsePlayer(player: Player?, isSleeping: Boolean) {
+        val entityPlayer = (player as CraftPlayer).handle
+
+        val property = entityPlayer.gameProfile.properties.get("textures").iterator().next()
+        val gp = GameProfile(UUID.randomUUID(), "")
+        gp.properties.put("textures", Property("textures", property.value, property.signature))
+
+        val corpse = ServerPlayer((Bukkit.getServer() as CraftServer).server, (player.world as CraftWorld).handle, gp)
+
+        corpse.setPos(player.location.x, player.location.y, player.location.z)
+
+        if(isSleeping){
+            corpse.pose = nmsEntityPose.SLEEPING
+        }
+
+        Bukkit.getOnlinePlayers().forEach(action = {
+            val serverPlayer: ServerPlayer = (it as CraftPlayer).handle
+
+            val connection: ServerGamePacketListenerImpl = serverPlayer.connection
+
+            connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, corpse))
+            //connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, corpse))
+            connection.send(ClientboundAddPlayerPacket(corpse))
+
+            connection.send(ClientboundSetEntityDataPacket(corpse.id, corpse.entityData.packDirty()))
+
+            //connection.send(ClientboundPlayerInfoRemovePacket(arrayListOf(corpse.uuid)))
+        })
     }
 
 }

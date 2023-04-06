@@ -51,4 +51,9 @@ public class VolatileCodeDisabled extends VolatileCodeHandle {
 
 	}
 
+	@Override
+	public void createFalsePlayer(Player player, boolean isSleeping) {
+
+	}
+
 }

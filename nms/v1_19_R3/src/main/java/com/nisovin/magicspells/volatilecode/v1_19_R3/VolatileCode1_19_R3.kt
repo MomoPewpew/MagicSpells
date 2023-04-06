@@ -6,6 +6,7 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.*
 import org.bukkit.Location
 import org.bukkit.util.Vector
+import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.event.entity.ExplosionPrimeEvent
 
@@ -18,6 +19,7 @@ import net.minecraft.world.phys.Vec3
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.EntityType
 import net.minecraft.network.protocol.game.*
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.PrimedTnt
 import net.minecraft.world.item.alchemy.PotionUtils
 import net.minecraft.network.syncher.EntityDataAccessor
@@ -134,7 +136,7 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         entityPlayer.startAutoSpinAttack(ticks)
     }
 
-    override fun createFalsePlayer(player: Player?, isSleeping: Boolean) {
+    override fun createFalsePlayer(player: Player?, isSleeping: Boolean, cloneEquipment: Boolean, inventory: Inventory): Int {
         val entityPlayer = (player as CraftPlayer).handle
 
         val property = entityPlayer.gameProfile.properties.get("textures").iterator().next()
@@ -147,6 +149,10 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
         if(isSleeping){
             corpse.pose = nmsEntityPose.SLEEPING
+        }
+
+        if(cloneEquipment){
+
         }
 
         Bukkit.getOnlinePlayers().forEach(action = {
@@ -162,6 +168,17 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
             //connection.send(ClientboundPlayerInfoRemovePacket(arrayListOf(corpse.uuid)))
         })
+
+    	return corpse.getId()
     }
 
+	override fun removeFalsePlayer(id: Int) {
+        Bukkit.getOnlinePlayers().forEach(action = {
+            val serverPlayer: ServerPlayer = (it as CraftPlayer).handle
+
+            val connection: ServerGamePacketListenerImpl = serverPlayer.connection
+
+            connection.send(ClientboundRemoveEntitiesPacket(id))
+        })
+    }
 }

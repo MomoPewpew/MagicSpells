@@ -3,6 +3,7 @@ package com.nisovin.magicspells.volatilecode;
 import org.bukkit.entity.*;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 public abstract class VolatileCodeHandle {
@@ -29,6 +30,7 @@ public abstract class VolatileCodeHandle {
 
 	public abstract void startAutoSpinAttack(Player player, int ticks);
 
-	public abstract void createFalsePlayer(Player player, boolean isSleeping);
+	public abstract int createFalsePlayer(Player player, boolean isSleeping, boolean cloneEquipment, Inventory inventory);
 
+	public abstract void removeFalsePlayer(int id);
 }

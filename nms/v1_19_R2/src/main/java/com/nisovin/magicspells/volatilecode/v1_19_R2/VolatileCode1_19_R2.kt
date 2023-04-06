@@ -4,6 +4,7 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.*
 import org.bukkit.Location
 import org.bukkit.util.Vector
+import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.event.entity.ExplosionPrimeEvent
 
@@ -125,8 +126,12 @@ class VolatileCode1_19_R2(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         entityPlayer.startAutoSpinAttack(ticks)
     }
 
-    override fun createFalsePlayer(player: Player?, isSleeping: Boolean) {
+    override fun createFalsePlayer(player: Player?, isSleeping: Boolean, cloneEquipment: Boolean, inventory: Inventory): Int {
         TODO("Not yet implemented")
+    	return 0
     }
 
+	override fun removeFalsePlayer(id: Int) {
+        TODO("Not yet implemented")
+    }
 }

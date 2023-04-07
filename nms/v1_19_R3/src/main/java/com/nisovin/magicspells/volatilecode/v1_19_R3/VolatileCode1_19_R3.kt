@@ -141,7 +141,7 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         val entityPlayer = (player as CraftPlayer).handle
 
         val property = entityPlayer.gameProfile.properties.get("textures").iterator().next()
-        val gp = GameProfile(UUID.randomUUID(), "")
+        val gp = GameProfile(UUID.randomUUID(), player.name)
         gp.properties.put("textures", Property("textures", property.value, property.signature))
 
         val clone = ServerPlayer((Bukkit.getServer() as CraftServer).server, (player.world as CraftWorld).handle, gp)

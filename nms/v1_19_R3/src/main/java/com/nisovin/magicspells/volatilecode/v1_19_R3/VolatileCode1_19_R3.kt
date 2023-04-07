@@ -2,6 +2,7 @@ package com.nisovin.magicspells.volatilecode.v1_19_R3
 
 import com.mojang.authlib.GameProfile
 import com.mojang.authlib.properties.Property
+import com.mojang.datafixers.util.Pair
 import org.bukkit.Bukkit
 import org.bukkit.entity.*
 import org.bukkit.Location
@@ -27,12 +28,9 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon
 
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
 import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
-import net.minecraft.network.syncher.EntityDataSerializers
-import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.server.network.ServerGamePacketListenerImpl
 import java.util.*
-import kotlin.collections.ArrayList
 
 private typealias nmsItemStack = net.minecraft.world.item.ItemStack
 private typealias nmsEntityPose = net.minecraft.world.entity.Pose
@@ -151,7 +149,16 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
             corpse.pose = nmsEntityPose.SLEEPING
         }
 
+        val equipment: MutableList<Pair<EquipmentSlot, nmsItemStack>> = ArrayList()
         if(cloneEquipment){
+            //Supplied inventory argument will always be a player inventory, but in the event that it is not, I am directly getting the players inventory
+            //to handle setting the equipment up (A possible option to make use of the Inventory argument would be to make it PlayerInventory instead)
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.FEET, CraftItemStack.asNMSCopy(player.inventory.boots))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.LEGS, CraftItemStack.asNMSCopy(player.inventory.leggings))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.CHEST, CraftItemStack.asNMSCopy(player.inventory.chestplate))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.HEAD, CraftItemStack.asNMSCopy(player.inventory.helmet))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.MAINHAND, CraftItemStack.asNMSCopy(player.inventory.itemInMainHand))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.OFFHAND, CraftItemStack.asNMSCopy(player.inventory.itemInOffHand))
 
         }
 
@@ -164,7 +171,22 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
             //connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, corpse))
             connection.send(ClientboundAddPlayerPacket(corpse))
 
+            connection.send(ClientboundSetEquipmentPacket(corpse.id, equipment))
+
             connection.send(ClientboundSetEntityDataPacket(corpse.id, corpse.entityData.packDirty()))
+
+            /*
+            * The below code sets the rotation/position of the playerEntity after it is spawned.
+            * This DOES rotate the sleeping players so they do not all sit in the same direction
+            * However: This is not very consistant in how it rotates them.
+            * Sometimes, it will be the same direction the player is looking,
+            * Other times it will be the opposite,
+            * and sometimes it will default to one direction no matter how you look.
+            * Could be something wrong with my math.. I do not know 100%
+            * */
+
+            //connection.send(ClientboundMoveEntityPacket.PosRot(corpse.id, 0, 0, 0,
+            //        (player.location.yaw * 256.0f / 360.0f).toInt().toByte(), 0, false))
 
             //connection.send(ClientboundPlayerInfoRemovePacket(arrayListOf(corpse.uuid)))
         })

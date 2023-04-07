@@ -15,7 +15,7 @@ import org.bukkit.entity.Player;
 
 public class CloneSpell extends InstantSpell {
 
-	String[] poseNames = {"CROAKING", "DIGGING", "DYING", "EMERGING", "FALL_FLYING", "LONG_JUMPING", "ROARING", "SITTING", "SLEEPING", "SNEAKING", "SNIFFING", "SPIN_ATTACK", "STANDING", "SWIMMING", "USING_TONGUE"};
+	String[] poseNames = {"CROUCHING", "DYING", "FALL_FLYING", "LONG_JUMPING", "SLEEPING", "SPIN_ATTACK", "STANDING", "SWIMMING"};
 
 	private List<Integer> cloneIDs;
 

@@ -25,6 +25,11 @@ import net.minecraft.world.entity.item.PrimedTnt
 import net.minecraft.world.item.alchemy.PotionUtils
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon
+import net.minecraft.core.BlockPos
+import net.minecraft.world.level.block.BedBlock
+import net.minecraft.world.level.block.state.properties.BedPart
+import net.minecraft.world.level.block.Blocks
+import net.minecraft.core.Direction
 
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
 import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
@@ -155,11 +160,29 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         clone.setPos(player.location.x, player.location.y + yOffset, player.location.z)
         clone.setRot(player.location.yaw, player.location.pitch)
 
+		var direction = Direction.WEST
+
+		if (player.location.yaw >= 135f || player.location.yaw < -135f) {
+			direction = Direction.NORTH
+		} else if (player.location.yaw >= -135f && player.location.yaw < -45f) {
+			direction = Direction.EAST
+		} else if (player.location.yaw >= -45f && player.location.yaw < 45f) {
+			direction = Direction.SOUTH
+		}
+
+        val bedPos = BlockPos(player.location.getBlockX(), player.location.getBlockY(), player.location.getBlockZ())
+        val setBedPacket = ClientboundBlockUpdatePacket(bedPos, Blocks.WHITE_BED.defaultBlockState().setValue(BedBlock.FACING, direction.getOpposite()).setValue(BedBlock.PART, BedPart.HEAD))
+        val teleportNpcPacket = ClientboundTeleportEntityPacket(clone)
+
 		//show outer skin layer
     	clone.entityData.set(EntityDataAccessor(17, EntityDataSerializers.BYTE), 127.toByte())
 
         if(pose != ""){
 		    clone.pose = nmsEntityPose.valueOf(pose)
+
+		    if (pose == "SLEEPING") {
+		    	clone.entityData.set(EntityDataSerializers.OPTIONAL_BLOCK_POS.createAccessor(14), Optional.of(bedPos))
+		    }
         }
 
 		val equipment: MutableList<com.mojang.datafixers.util.Pair<EquipmentSlot, net.minecraft.world.item.ItemStack>> = mutableListOf()
@@ -199,6 +222,11 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
     		if (cloneEquipment) {
             	connection.send(ClientboundSetEquipmentPacket(clone.id, equipment));
+	        }
+
+	        if (pose == "SLEEPING") {
+				connection.send(setBedPacket)
+				connection.send(teleportNpcPacket)
 	        }
         })
 

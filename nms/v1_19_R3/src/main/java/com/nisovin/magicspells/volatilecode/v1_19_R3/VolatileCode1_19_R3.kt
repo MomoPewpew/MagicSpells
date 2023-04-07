@@ -146,6 +146,7 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         val clone = ServerPlayer((Bukkit.getServer() as CraftServer).server, (player.world as CraftWorld).handle, gp)
 
         clone.setPos(player.location.x, player.location.y, player.location.z)
+        clone.setRot(player.location.yaw, player.location.pitch)
 
         if(pose != ""){
 		    clone.pose = nmsEntityPose.valueOf(pose)

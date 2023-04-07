@@ -2,6 +2,7 @@ package com.nisovin.magicspells.volatilecode.v1_19_R3
 
 import com.mojang.authlib.GameProfile
 import com.mojang.authlib.properties.Property
+import com.mojang.datafixers.util.Pair
 import org.bukkit.Bukkit
 import org.bukkit.entity.*
 import org.bukkit.Location
@@ -155,8 +156,29 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 		    clone.pose = nmsEntityPose.valueOf(pose)
         }
 
-		if (cloneEquipment) {
+		val equipment: MutableList<com.mojang.datafixers.util.Pair<EquipmentSlot, net.minecraft.world.item.ItemStack>> = mutableListOf()
 
+		if (cloneEquipment) {
+			val inventory = entityPlayer.getInventory()
+
+			if (inventory.getItem(36) != null) {
+			    equipment.add(Pair(EquipmentSlot.FEET, inventory.getItem(36)))
+			}
+			if (inventory.getItem(37) != null) {
+			    equipment.add(Pair(EquipmentSlot.LEGS, inventory.getItem(37)))
+			}
+			if (inventory.getItem(38) != null) {
+			    equipment.add(Pair(EquipmentSlot.CHEST, inventory.getItem(38)))
+			}
+			if (inventory.getItem(39) != null) {
+			    equipment.add(Pair(EquipmentSlot.HEAD, inventory.getItem(39)))
+			}
+			if (inventory.getItem(0) != null) {
+			    equipment.add(Pair(EquipmentSlot.MAINHAND, inventory.getItem(0)))
+			}
+			if (inventory.getItem(40) != null) {
+			    equipment.add(Pair(EquipmentSlot.OFFHAND, inventory.getItem(40)))
+			}
 		}
 
         Bukkit.getOnlinePlayers().forEach(action = {
@@ -165,15 +187,11 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
             val connection: ServerGamePacketListenerImpl = serverPlayer.connection
 
             connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, clone))
-            //connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, clone))
             connection.send(ClientboundAddPlayerPacket(clone))
-
             connection.send(ClientboundSetEntityDataPacket(clone.id, clone.entityData.packDirty()))
 
-            //connection.send(ClientboundPlayerInfoRemovePacket(arrayListOf(clone.uuid)))
-
     		if (cloneEquipment) {
-
+            	connection.send(ClientboundSetEquipmentPacket(clone.id, equipment));
 	        }
         })
 

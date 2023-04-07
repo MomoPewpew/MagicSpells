@@ -30,7 +30,7 @@ public abstract class VolatileCodeHandle {
 
 	public abstract void startAutoSpinAttack(Player player, int ticks);
 
-	public abstract int createFalsePlayer(Player player, boolean isSleeping, boolean cloneEquipment, Inventory inventory);
+	public abstract int createFalsePlayer(Player player, boolean isSleeping, boolean cloneEquipment);
 
 	public abstract void removeFalsePlayer(int id);
 }

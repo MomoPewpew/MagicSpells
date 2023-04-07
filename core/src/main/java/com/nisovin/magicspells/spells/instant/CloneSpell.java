@@ -47,7 +47,7 @@ public class CloneSpell extends InstantSpell {
         if(!(caster instanceof Player player)) return PostCastAction.NO_MESSAGES;
 
         if(state == SpellCastState.NORMAL) {
-            int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer(player, sleeping, cloneEquipment, player.getInventory());
+            int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer(player, sleeping, cloneEquipment);
 
             if (!permanent) {
             	cloneIDs.add(cloneID);

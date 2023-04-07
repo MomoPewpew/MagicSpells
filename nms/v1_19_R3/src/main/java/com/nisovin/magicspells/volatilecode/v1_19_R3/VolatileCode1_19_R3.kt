@@ -136,40 +136,44 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         entityPlayer.startAutoSpinAttack(ticks)
     }
 
-    override fun createFalsePlayer(player: Player?, isSleeping: Boolean, cloneEquipment: Boolean, inventory: Inventory): Int {
+    override fun createFalsePlayer(player: Player?, isSleeping: Boolean, cloneEquipment: Boolean): Int {
         val entityPlayer = (player as CraftPlayer).handle
 
         val property = entityPlayer.gameProfile.properties.get("textures").iterator().next()
         val gp = GameProfile(UUID.randomUUID(), "")
         gp.properties.put("textures", Property("textures", property.value, property.signature))
 
-        val corpse = ServerPlayer((Bukkit.getServer() as CraftServer).server, (player.world as CraftWorld).handle, gp)
+        val clone = ServerPlayer((Bukkit.getServer() as CraftServer).server, (player.world as CraftWorld).handle, gp)
 
-        corpse.setPos(player.location.x, player.location.y, player.location.z)
+        clone.setPos(player.location.x, player.location.y, player.location.z)
 
         if(isSleeping){
-            corpse.pose = nmsEntityPose.SLEEPING
+            clone.pose = nmsEntityPose.SLEEPING
         }
 
-        if(cloneEquipment){
+		if (cloneEquipment) {
 
-        }
+		}
 
         Bukkit.getOnlinePlayers().forEach(action = {
             val serverPlayer: ServerPlayer = (it as CraftPlayer).handle
 
             val connection: ServerGamePacketListenerImpl = serverPlayer.connection
 
-            connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, corpse))
-            //connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, corpse))
-            connection.send(ClientboundAddPlayerPacket(corpse))
+            connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, clone))
+            //connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, clone))
+            connection.send(ClientboundAddPlayerPacket(clone))
 
-            connection.send(ClientboundSetEntityDataPacket(corpse.id, corpse.entityData.packDirty()))
+            connection.send(ClientboundSetEntityDataPacket(clone.id, clone.entityData.packDirty()))
 
-            //connection.send(ClientboundPlayerInfoRemovePacket(arrayListOf(corpse.uuid)))
+            //connection.send(ClientboundPlayerInfoRemovePacket(arrayListOf(clone.uuid)))
+
+    		if (cloneEquipment) {
+
+	        }
         })
 
-    	return corpse.getId()
+    	return clone.getId()
     }
 
 	override fun removeFalsePlayer(id: Int) {

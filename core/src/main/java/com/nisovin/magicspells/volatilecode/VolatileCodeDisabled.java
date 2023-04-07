@@ -53,7 +53,7 @@ public class VolatileCodeDisabled extends VolatileCodeHandle {
 	}
 
 	@Override
-	public int createFalsePlayer(Player player, boolean isSleeping, boolean cloneEquipment, Inventory inventory) {
+	public int createFalsePlayer(Player player, boolean isSleeping, boolean cloneEquipment) {
 		return 0;
 	}
 

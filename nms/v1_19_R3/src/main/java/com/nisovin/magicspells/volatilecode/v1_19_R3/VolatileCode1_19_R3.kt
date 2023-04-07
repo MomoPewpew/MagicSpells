@@ -149,7 +149,7 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 		var yOffset = 0.0
 
 		if (pose == "SLEEPING") {
-			yOffset = 0.1
+			yOffset = 0.3125
 		}
 
         clone.setPos(player.location.x, player.location.y + yOffset, player.location.z)

@@ -148,6 +148,9 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         clone.setPos(player.location.x, player.location.y, player.location.z)
         clone.setRot(player.location.yaw, player.location.pitch)
 
+		//show outer skin layer
+    	clone.entityData.set(EntityDataAccessor(17, EntityDataSerializers.BYTE), 127.toByte())
+
         if(pose != ""){
 		    clone.pose = nmsEntityPose.valueOf(pose)
         }

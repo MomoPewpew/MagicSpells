@@ -136,7 +136,7 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         entityPlayer.startAutoSpinAttack(ticks)
     }
 
-    override fun createFalsePlayer(player: Player?, isSleeping: Boolean, cloneEquipment: Boolean): Int {
+    override fun createFalsePlayer(player: Player?, pose: String, cloneEquipment: Boolean): Int {
         val entityPlayer = (player as CraftPlayer).handle
 
         val property = entityPlayer.gameProfile.properties.get("textures").iterator().next()
@@ -147,8 +147,8 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
         clone.setPos(player.location.x, player.location.y, player.location.z)
 
-        if(isSleeping){
-            clone.pose = nmsEntityPose.SLEEPING
+        if(pose != ""){
+		    clone.pose = nmsEntityPose.valueOf(pose)
         }
 
 		if (cloneEquipment) {

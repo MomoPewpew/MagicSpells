@@ -15,7 +15,7 @@ import org.bukkit.entity.Player;
 
 public class CloneSpell extends InstantSpell {
 
-	String[] poseNames = {"CROUCHING", "DYING", "FALL_FLYING", "LONG_JUMPING", "SLEEPING", "SPIN_ATTACK", "STANDING", "SWIMMING"};
+    ArrayList<String> poseNames = new ArrayList<>(Arrays.asList("CROAKING", "CROUCHING", "DIGGING", "DYING", "EMERGING", "FALL_FLYING", "LONG_JUMPING", "ROARING", "SITTING", "SLEEPING", "SNIFFING", "SPIN_ATTACK", "STANDING", "SWIMMING", "USING_TONGUE"));
 
 	private List<Integer> cloneIDs;
 
@@ -35,7 +35,7 @@ public class CloneSpell extends InstantSpell {
         cloneEquipment = getConfigBoolean("clone-equipment", true);
 
         pose = getConfigString("pose", "").toUpperCase();
-        if (!Arrays.asList(poseNames).contains(pose)) {
+        if (!poseNames.contains(pose)) {
         	pose = "";
         }
 

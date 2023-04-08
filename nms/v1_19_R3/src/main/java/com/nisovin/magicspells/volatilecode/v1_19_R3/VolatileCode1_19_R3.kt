@@ -158,7 +158,9 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
 		if (pose == "SLEEPING") {
 			yOffset = 0.15
-		}
+		} else if (pose == "SWIMMING" || pose == "FALL_FLYING") {
+            yOffset = -0.15
+        }
 
         clone.setPos(craftLocation.x, craftLocation.y + yOffset, craftLocation.z)
         clone.setRot(player.location.yaw, player.location.pitch)

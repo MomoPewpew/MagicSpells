@@ -170,7 +170,8 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 			direction = Direction.SOUTH
 		}
 
-        val bedPos = BlockPos(player.location.getBlockX(), player.location.getBlockY(), player.location.getBlockZ())
+		val bedData = player.location.getBlock().getBlockData()
+        val bedPos = BlockPos(player.location.getBlockX(), player.location.getWorld().getMinHeight(), player.location.getBlockZ())
         val setBedPacket = ClientboundBlockUpdatePacket(bedPos, Blocks.WHITE_BED.defaultBlockState().setValue(BedBlock.FACING, direction.getOpposite()).setValue(BedBlock.PART, BedPart.HEAD))
         val teleportNpcPacket = ClientboundTeleportEntityPacket(clone)
 

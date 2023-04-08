@@ -1,7 +1,7 @@
-package com.nisovin.magicspells.spells.instant;
+package com.nisovin.magicspells.spells.targeted;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.spells.InstantSpell;
+import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.config.ConfigData;
 
@@ -10,10 +10,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
-public class CloneSpell extends InstantSpell {
+public class CloneSpell extends TargetedSpell {
 
     ArrayList<String> poseNames = new ArrayList<>(Arrays.asList("CROAKING", "CROUCHING", "DIGGING", "DYING", "EMERGING", "FALL_FLYING", "LONG_JUMPING", "ROARING", "SITTING", "SLEEPING", "SNIFFING", "SPIN_ATTACK", "STANDING", "SWIMMING", "USING_TONGUE"));
 
@@ -54,8 +55,10 @@ public class CloneSpell extends InstantSpell {
     public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
         if(!(caster instanceof Player player)) return PostCastAction.NO_MESSAGES;
 
+        Location location = player.getLocation();
+
         if(state == SpellCastState.NORMAL) {
-            int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer(player, pose, cloneEquipment);
+            int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer(player, location, pose, cloneEquipment);
 
             if (!permanent) {
             	cloneIDs.add(cloneID);

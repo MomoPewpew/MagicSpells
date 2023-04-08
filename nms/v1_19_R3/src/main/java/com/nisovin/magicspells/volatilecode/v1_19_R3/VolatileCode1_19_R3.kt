@@ -142,8 +142,9 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         entityPlayer.startAutoSpinAttack(ticks)
     }
 
-    override fun createFalsePlayer(player: Player?, pose: String, cloneEquipment: Boolean): Int {
+    override fun createFalsePlayer(player: Player?, location: Location?, pose: String, cloneEquipment: Boolean): Int {
         val entityPlayer = (player as CraftPlayer).handle
+        val craftLocation = (location as Location)
 
         val property = entityPlayer.gameProfile.properties.get("textures").iterator().next()
         val gp = GameProfile(UUID.randomUUID(), player.name)
@@ -154,10 +155,10 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 		var yOffset = 0.0
 
 		if (pose == "SLEEPING") {
-			yOffset = 0.3125
+			yOffset = 0.15
 		}
 
-        clone.setPos(player.location.x, player.location.y + yOffset, player.location.z)
+        clone.setPos(craftLocation.x, craftLocation.y + yOffset, craftLocation.z)
         clone.setRot(player.location.yaw, player.location.pitch)
 
 		var direction = Direction.WEST
@@ -170,8 +171,8 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 			direction = Direction.SOUTH
 		}
 
-		val bedData = player.location.getBlock().getBlockData()
-        val bedPos = BlockPos(player.location.getBlockX(), player.location.getWorld().getMinHeight(), player.location.getBlockZ())
+		val bedData = craftLocation.getBlock().getBlockData()
+        val bedPos = BlockPos(craftLocation.getBlockX(), craftLocation.getWorld().getMinHeight(), craftLocation.getBlockZ())
         val setBedPacket = ClientboundBlockUpdatePacket(bedPos, Blocks.WHITE_BED.defaultBlockState().setValue(BedBlock.FACING, direction.getOpposite()).setValue(BedBlock.PART, BedPart.HEAD))
         val teleportNpcPacket = ClientboundTeleportEntityPacket(clone)
 

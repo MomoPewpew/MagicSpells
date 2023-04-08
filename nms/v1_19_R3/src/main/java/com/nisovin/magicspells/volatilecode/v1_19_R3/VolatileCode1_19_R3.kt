@@ -171,7 +171,6 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 			direction = Direction.SOUTH
 		}
 
-		val bedData = craftLocation.getBlock().getBlockData()
         val bedPos = BlockPos(craftLocation.getBlockX(), craftLocation.getWorld().getMinHeight(), craftLocation.getBlockZ())
         val setBedPacket = ClientboundBlockUpdatePacket(bedPos, Blocks.WHITE_BED.defaultBlockState().setValue(BedBlock.FACING, direction.getOpposite()).setValue(BedBlock.PART, BedPart.HEAD))
         val teleportNpcPacket = ClientboundTeleportEntityPacket(clone)
@@ -190,26 +189,12 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 		val equipment: MutableList<com.mojang.datafixers.util.Pair<EquipmentSlot, net.minecraft.world.item.ItemStack>> = mutableListOf()
 
 		if (cloneEquipment) {
-			val inventory = entityPlayer.getInventory()
-
-			if (inventory.getItem(36) != null) {
-			    equipment.add(Pair(EquipmentSlot.FEET, inventory.getItem(36)))
-			}
-			if (inventory.getItem(37) != null) {
-			    equipment.add(Pair(EquipmentSlot.LEGS, inventory.getItem(37)))
-			}
-			if (inventory.getItem(38) != null) {
-			    equipment.add(Pair(EquipmentSlot.CHEST, inventory.getItem(38)))
-			}
-			if (inventory.getItem(39) != null) {
-			    equipment.add(Pair(EquipmentSlot.HEAD, inventory.getItem(39)))
-			}
-			if (inventory.getItem(0) != null) {
-			    equipment.add(Pair(EquipmentSlot.MAINHAND, inventory.getItem(0)))
-			}
-			if (inventory.getItem(40) != null) {
-			    equipment.add(Pair(EquipmentSlot.OFFHAND, inventory.getItem(40)))
-			}
+			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.FEET, CraftItemStack.asNMSCopy(player.inventory.boots))
+			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.LEGS, CraftItemStack.asNMSCopy(player.inventory.leggings))
+			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.CHEST, CraftItemStack.asNMSCopy(player.inventory.chestplate))
+			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.HEAD, CraftItemStack.asNMSCopy(player.inventory.helmet))
+			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.MAINHAND, CraftItemStack.asNMSCopy(player.inventory.itemInMainHand))
+			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.OFFHAND, CraftItemStack.asNMSCopy(player.inventory.itemInOffHand))
 		}
 
         Bukkit.getOnlinePlayers().forEach(action = {

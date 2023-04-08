@@ -3,6 +3,7 @@ package com.nisovin.magicspells.volatilecode.v1_19_R3
 import com.mojang.authlib.GameProfile
 import com.mojang.authlib.properties.Property
 import com.mojang.datafixers.util.Pair
+
 import org.bukkit.Bukkit
 import org.bukkit.entity.*
 import org.bukkit.Location
@@ -16,27 +17,28 @@ import org.bukkit.craftbukkit.v1_19_R3.CraftWorld
 import org.bukkit.craftbukkit.v1_19_R3.CraftServer
 import org.bukkit.craftbukkit.v1_19_R3.inventory.CraftItemStack
 
-import net.minecraft.world.phys.Vec3
-import net.minecraft.network.chat.Component
-import net.minecraft.world.entity.EntityType
-import net.minecraft.network.protocol.game.*
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.item.PrimedTnt
-import net.minecraft.world.item.alchemy.PotionUtils
-import net.minecraft.network.syncher.EntityDataAccessor
-import net.minecraft.world.entity.boss.enderdragon.EnderDragon
 import net.minecraft.core.BlockPos
-import net.minecraft.world.level.block.BedBlock
-import net.minecraft.world.level.block.state.properties.BedPart
-import net.minecraft.world.level.block.Blocks
 import net.minecraft.core.Direction
-
-import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
-import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
+import net.minecraft.network.chat.Component
+import net.minecraft.network.protocol.game.*
+import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.server.network.ServerGamePacketListenerImpl
+import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.EquipmentSlot
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon
+import net.minecraft.world.entity.item.PrimedTnt
+import net.minecraft.world.item.alchemy.PotionUtils
+import net.minecraft.world.level.block.BedBlock
+import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.state.properties.BedPart
+import net.minecraft.world.phys.Vec3
+
+import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
+import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
+
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -179,11 +181,13 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
     	clone.entityData.set(EntityDataAccessor(17, EntityDataSerializers.BYTE), 127.toByte())
 
         if(pose != ""){
-		    clone.pose = nmsEntityPose.valueOf(pose)
+			if (enumValues<nmsEntityPose>().map { it.name }.contains(pose)) {
+			    clone.pose = nmsEntityPose.valueOf(pose)
 
-		    if (pose == "SLEEPING") {
-		    	clone.entityData.set(EntityDataSerializers.OPTIONAL_BLOCK_POS.createAccessor(14), Optional.of(bedPos))
-		    }
+			    if (pose == "SLEEPING") {
+			    	clone.entityData.set(EntityDataSerializers.OPTIONAL_BLOCK_POS.createAccessor(14), Optional.of(bedPos))
+			    }
+			}
         }
 
 		val equipment: MutableList<com.mojang.datafixers.util.Pair<EquipmentSlot, net.minecraft.world.item.ItemStack>> = mutableListOf()

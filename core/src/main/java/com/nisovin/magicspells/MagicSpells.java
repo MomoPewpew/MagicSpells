@@ -1022,7 +1022,7 @@ public class MagicSpells extends JavaPlugin {
 	public static boolean isDebugNumberFormat() {
 		return plugin.debugNumberFormat;
 	}
-	
+
 	public static boolean areBowCycleButtonsReversed() {
 		return plugin.reverseBowCycleButtons;
 	}

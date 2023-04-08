@@ -43,7 +43,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 	private boolean failIfNoTargets;
 	private boolean reverseProximity;
 	private boolean spellSourceInCenter;
-	
+
 	public AreaEffectSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -65,18 +65,18 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		reverseProximity = getConfigBoolean("reverse-proximity", false);
 		spellSourceInCenter = getConfigBoolean("spell-source-in-center", false);
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
-		
+
 		spells = new ArrayList<>();
 
 		if (spellNames == null || spellNames.isEmpty()) {
 			MagicSpells.error("AreaEffectSpell '" + internalName + "' has no spells defined!");
 			return;
 		}
-		
+
 		for (String spellName : spellNames) {
 			Subspell spell = new Subspell(spellName);
 
@@ -121,7 +121,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			}
 
 			if (loc == null) return noTarget(caster, args);
-			
+
 			boolean done = doAoe(caster, loc, power, args);
 			if (!done) return noTarget(caster, args);
 		}

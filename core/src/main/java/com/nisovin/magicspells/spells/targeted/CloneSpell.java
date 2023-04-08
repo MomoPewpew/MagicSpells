@@ -23,7 +23,8 @@ import org.bukkit.entity.Player;
 
 public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 
-	private Map<Integer, Location> cloneMap;
+	private static Map<Integer, Location> cloneMap = new HashMap<>();
+	private Map<Integer, Location> temporaryCloneMap;
 
 	private ConfigData<Boolean> permanent;
 	private ConfigData<Boolean> cloneEquipment;
@@ -36,7 +37,7 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
     public CloneSpell(MagicConfig config, String spellName) {
         super(config, spellName);
 
-        cloneMap = new HashMap<>();
+        temporaryCloneMap = new HashMap<>();
 
         permanent = getConfigDataBoolean("permanent", false);
         cloneEquipment = getConfigDataBoolean("clone-equipment", true);
@@ -49,10 +50,10 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	@Override
 	public void turnOff() {
-		for (int cloneID : cloneMap.keySet()) {
-			MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
+		for (int cloneID : temporaryCloneMap.keySet()) {
+			CloneSpell.this.removeTemporaryClone(cloneID);
 		}
-		cloneMap.clear();
+		temporaryCloneMap.clear();
 	}
 
     @Override
@@ -110,13 +111,13 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
     private boolean createFalsePlayer(LivingEntity caster, Location loc, float basePower, String[] args) {
         final int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer((Player) caster, loc, this.pose.get(caster, null, basePower, args).toUpperCase(), this.cloneEquipment.get(caster, null, basePower, args));
 
-        if (!this.permanent.get(caster, null, basePower, args)) {
-        	cloneMap.put(cloneID, loc);
+    	cloneMap.put(cloneID, loc);
 
+        if (!this.permanent.get(caster, null, basePower, args)) {
+        	this.temporaryCloneMap.put(cloneID, loc);
         	if (duration > 0) {
     			MagicSpells.scheduleDelayedTask(() -> {
-    				MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
-    				cloneMap.remove(cloneID);
+    				CloneSpell.this.removeTemporaryClone(cloneID);
     			}, duration);
         	}
         }
@@ -124,7 +125,17 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
         return true;
     }
 
-	public Map<Integer, Location> getCloneMap() {
+	public static Map<Integer, Location> getCloneMap() {
 		return cloneMap;
+	}
+
+	public Map<Integer, Location> getTemporaryCloneMap() {
+		return this.temporaryCloneMap;
+	}
+
+	private void removeTemporaryClone(int cloneID) {
+		MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
+		cloneMap.remove(cloneID);
+		this.temporaryCloneMap.remove(cloneID);
 	}
 }

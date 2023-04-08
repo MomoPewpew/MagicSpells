@@ -3,25 +3,17 @@ package com.nisovin.magicspells.spells.targeted;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
-import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
-import com.nisovin.magicspells.spells.instant.MarkSpell;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
-import com.nisovin.magicspells.util.MagicLocation;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -60,12 +52,6 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 				} else {
 					MagicSpells.error("RemoveClonesSpell '" + internalName + "' has an invalid spell defined in clone-spells!");
 					return;
-				}
-			}
-		} else {
-			for (Spell spell : MagicSpells.spells()) {
-				if (spell instanceof CloneSpell) {
-					cloneSpells.add((CloneSpell) spell);
 				}
 			}
 		}
@@ -127,15 +113,47 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 
 		boolean succes = false;
 
-		for (CloneSpell cloneSpell : cloneSpells) {
-			for (Integer id : cloneSpell.getCloneMap().keySet()) {
-				Location location = cloneSpell.getCloneMap().get(id);
+		if (!this.cloneSpells.isEmpty()) {
+		    for (CloneSpell cloneSpell : cloneSpells) {
+		        Iterator<Integer> iterator = cloneSpell.getTemporaryCloneMap().keySet().iterator();
+		        while (iterator.hasNext()) {
+		            Integer cloneID = iterator.next();
+		            Location location = cloneSpell.getTemporaryCloneMap().get(cloneID);
 
-				if (loc.distanceSquared(location) < radSq) {
-    				MagicSpells.getVolatileCodeHandler().removeFalsePlayer(id);
-    				succes = true;
-				}
-			}
+		            if (loc.distanceSquared(location) < radSq) {
+		        		MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
+	    				CloneSpell.getCloneMap().remove(cloneID);
+	    				iterator.remove();
+		                succes = true;
+		            }
+		        }
+		    }
+		} else {
+		    List<CloneSpell> cloneSpellsTemp = new ArrayList<CloneSpell>();
+
+		    for (Spell spell : MagicSpells.spells()) {
+		        if (spell instanceof CloneSpell) {
+		            cloneSpellsTemp.add((CloneSpell) spell);
+		        }
+		    }
+
+		    Iterator<Integer> iterator = CloneSpell.getCloneMap().keySet().iterator();
+		    while (iterator.hasNext()) {
+		        Integer cloneID = iterator.next();
+		        Location location = CloneSpell.getCloneMap().get(cloneID);
+		        if (loc.distanceSquared(location) < radSq) {
+		            for (CloneSpell cloneSpell : cloneSpellsTemp) {
+		                if (cloneSpell.getTemporaryCloneMap().containsKey(cloneID)) {
+		                    cloneSpell.getTemporaryCloneMap().remove(cloneID);
+		                    break;
+		                }
+		            }
+
+	        		MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
+	                iterator.remove();
+                    succes = true;
+		        }
+		    }
 		}
 
         return succes;

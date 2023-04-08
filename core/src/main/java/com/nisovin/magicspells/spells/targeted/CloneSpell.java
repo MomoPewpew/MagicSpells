@@ -11,7 +11,9 @@ import com.nisovin.magicspells.util.config.ConfigData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -21,7 +23,7 @@ import org.bukkit.entity.Player;
 
 public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 
-	private List<Integer> cloneIDs;
+	private Map<Integer, Location> cloneMap;
 
 	private ConfigData<Boolean> permanent;
 	private ConfigData<Boolean> cloneEquipment;
@@ -34,7 +36,7 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
     public CloneSpell(MagicConfig config, String spellName) {
         super(config, spellName);
 
-        cloneIDs = new ArrayList<>();
+        cloneMap = new HashMap<>();
 
         permanent = getConfigDataBoolean("permanent", false);
         cloneEquipment = getConfigDataBoolean("clone-equipment", true);
@@ -47,10 +49,10 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	@Override
 	public void turnOff() {
-		for (int cloneID : cloneIDs) {
+		for (int cloneID : cloneMap.keySet()) {
 			MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
 		}
-		cloneIDs.clear();
+		cloneMap.clear();
 	}
 
     @Override
@@ -106,19 +108,23 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
     private boolean createFalsePlayer(LivingEntity caster, Location loc, float basePower, String[] args) {
-        int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer((Player) caster, loc, this.pose.get(caster, null, basePower, args).toUpperCase(), this.cloneEquipment.get(caster, null, basePower, args));
+        final int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer((Player) caster, loc, this.pose.get(caster, null, basePower, args).toUpperCase(), this.cloneEquipment.get(caster, null, basePower, args));
 
         if (!this.permanent.get(caster, null, basePower, args)) {
-        	cloneIDs.add(cloneID);
+        	cloneMap.put(cloneID, loc);
 
         	if (duration > 0) {
     			MagicSpells.scheduleDelayedTask(() -> {
     				MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
-    				cloneIDs.remove(cloneID);
+    				cloneMap.remove(cloneID);
     			}, duration);
         	}
         }
 
         return true;
     }
+
+	public Map<Integer, Location> getCloneMap() {
+		return cloneMap;
+	}
 }

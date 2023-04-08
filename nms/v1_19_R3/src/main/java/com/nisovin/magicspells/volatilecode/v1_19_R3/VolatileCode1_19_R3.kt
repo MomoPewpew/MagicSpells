@@ -210,7 +210,7 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
             connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, clone))
             connection.send(ClientboundAddPlayerPacket(clone))
-            connection.send(ClientboundSetEntityDataPacket(clone.id, clone.entityData.packDirty()))
+            connection.send(ClientboundSetEntityDataPacket(clone.getId(), clone.entityData.getNonDefaultValues()))
             connection.send(ClientboundRotateHeadPacket(clone, (player.location.yaw % 360.0 * 256 / 360).toInt().toByte()))
 
     		if (cloneEquipment) {

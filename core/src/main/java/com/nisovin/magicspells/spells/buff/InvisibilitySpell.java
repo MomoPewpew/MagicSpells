@@ -51,9 +51,9 @@ public class InvisibilitySpell extends BuffSpell {
 
 	@Override
 	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		makeInvisible(entity, power, args);
 		entities.add(entity.getUniqueId());
 		addInvisibilitySpell(entity, this);
+		makeInvisible(entity, power, args);
 		return true;
 	}
 
@@ -164,5 +164,9 @@ public class InvisibilitySpell extends BuffSpell {
 	        return spells;
 	    }
 	    return Collections.emptyList();
+	}
+
+	public static Set<LivingEntity> getInvisibleEntities() {
+	    return entitySpellMap.keySet();
 	}
 }

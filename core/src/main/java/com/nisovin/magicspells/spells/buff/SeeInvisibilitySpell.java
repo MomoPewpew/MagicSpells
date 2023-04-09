@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
@@ -59,14 +58,9 @@ public class SeeInvisibilitySpell extends BuffSpell {
 		entities.add(entity.getUniqueId());
 		addSeeInvisibilitySpell(player, this);
 
-		List<Entity> entities = Bukkit.getServer().getWorlds().stream()
-			    .flatMap(world -> world.getEntities().stream())
-			    .collect(Collectors.toList());
-
-		for (Entity e : entities) {
-			if (!(e instanceof LivingEntity livingEntity)) continue;
-			if (shouldPlayerSeeEntity(player, livingEntity)) {
-				player.showEntity(MagicSpells.getInstance(), livingEntity);
+		for (LivingEntity e : InvisibilitySpell.getInvisibleEntities()) {
+			if (shouldPlayerSeeEntity(player, e)) {
+				player.showEntity(MagicSpells.getInstance(), e);
 			}
 		}
 
@@ -85,14 +79,9 @@ public class SeeInvisibilitySpell extends BuffSpell {
 		entities.remove(entity.getUniqueId());
 		removeSeeInvisibilitySpell(player, this);
 
-		List<Entity> entities = Bukkit.getServer().getWorlds().stream()
-			    .flatMap(world -> world.getEntities().stream())
-			    .collect(Collectors.toList());
-
-		for (Entity e : entities) {
-			if (!(e instanceof LivingEntity livingEntity)) continue;
-			if (!shouldPlayerSeeEntity(player, livingEntity)) {
-				player.hideEntity(MagicSpells.getInstance(), livingEntity);
+		for (LivingEntity e : InvisibilitySpell.getInvisibleEntities()) {
+			if (!shouldPlayerSeeEntity(player, e)) {
+				player.hideEntity(MagicSpells.getInstance(), e);
 			}
 		}
 	}
@@ -123,6 +112,8 @@ public class SeeInvisibilitySpell extends BuffSpell {
 	}
 
 	public static boolean shouldPlayerSeeEntity(Player observer, LivingEntity entity) {
+		List<InvisibilitySpell> entityList = InvisibilitySpell.getInvisibilitySpells(entity);
+		if (entityList.isEmpty()) return true;
 		if (!entitySeeSpellMap.containsKey(observer)) return false;
 
 	    Set<InvisibilitySpell> mergedSet = new HashSet<>();
@@ -130,10 +121,10 @@ public class SeeInvisibilitySpell extends BuffSpell {
 	    	if (spell.invisibilitySpells.isEmpty()) return true;
 	        mergedSet.addAll(spell.invisibilitySpells);
 	    }
-	    List<InvisibilitySpell> invisibilitySpells = new ArrayList<>(mergedSet);
+	    List<InvisibilitySpell> observerList = new ArrayList<>(mergedSet);
 
-	    for (InvisibilitySpell spell : InvisibilitySpell.getInvisibilitySpells(entity)) {
-	    	if (!invisibilitySpells.contains(spell)) {
+	    for (InvisibilitySpell spell : entityList) {
+	    	if (!observerList.contains(spell)) {
 	    		return false;
 	    	}
 	    }

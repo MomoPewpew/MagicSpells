@@ -46,8 +46,7 @@ public class InvisibilitySpell extends BuffSpell {
 
 	@Override
 	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player player)) return false;
-		makeInvisible(player, power, args);
+		makeInvisible(entity, power, args);
 		entities.add(entity.getUniqueId());
 		return true;
 	}
@@ -60,8 +59,7 @@ public class InvisibilitySpell extends BuffSpell {
 	@Override
 	public void turnOffBuff(LivingEntity entity) {
 		entities.remove(entity.getUniqueId());
-		if (!(entity instanceof Player player)) return;
-		Util.forEachPlayerOnline(p -> p.showPlayer(MagicSpells.getInstance(), player));
+		Util.forEachPlayerOnline(p -> p.showEntity(MagicSpells.getInstance(), entity));
 	}
 
 	@Override
@@ -69,15 +67,15 @@ public class InvisibilitySpell extends BuffSpell {
 		entities.clear();
 	}
 
-	private void makeInvisible(Player player, float power, String[] args) {
-		Util.forEachPlayerOnline(p -> p.hidePlayer(MagicSpells.getInstance(), player));
+	private void makeInvisible(LivingEntity entity, float power, String[] args) {
+		Util.forEachPlayerOnline(p -> p.hideEntity(MagicSpells.getInstance(), entity));
 
-		double radius = Math.min(mobRadius.get(player, null, power, args), MagicSpells.getGlobalRadius());
-		for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
-			if (!(entity instanceof Creature creature)) continue;
+		double radius = Math.min(mobRadius.get(entity, null, power, args), MagicSpells.getGlobalRadius());
+		for (Entity e : entity.getNearbyEntities(radius, radius, radius)) {
+			if (!(e instanceof Creature creature)) continue;
 			LivingEntity target = creature.getTarget();
 			if (target == null) continue;
-			if (!target.equals(player)) continue;
+			if (!target.equals(entity)) continue;
 			creature.setTarget(null);
 		}
 	}
@@ -106,12 +104,12 @@ public class InvisibilitySpell extends BuffSpell {
 		for (UUID id : entities) {
 			Entity entity = Bukkit.getEntity(id);
 			if (entity == null) continue;
-			if (!(entity instanceof Player)) continue;
-			player.hidePlayer(MagicSpells.getInstance(), (Player) entity);
+			if (!(entity instanceof LivingEntity)) continue;
+			player.hideEntity(MagicSpells.getInstance(), entity);
 		}
 
 		if (isActive(player)) {
-			Util.forEachPlayerOnline(p -> p.hidePlayer(MagicSpells.getInstance(), player));
+			Util.forEachPlayerOnline(p -> p.hideEntity(MagicSpells.getInstance(), player));
 		}
 
 	}

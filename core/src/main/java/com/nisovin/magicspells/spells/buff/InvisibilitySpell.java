@@ -114,16 +114,4 @@ public class InvisibilitySpell extends BuffSpell {
 
 	}
 
-	public Set<UUID> getEntities() {
-		return entities;
-	}
-
-	public boolean shouldPreventPickups() {
-		return preventPickups;
-	}
-
-	public void setPreventPickups(boolean preventPickups) {
-		this.preventPickups = preventPickups;
-	}
-
 }

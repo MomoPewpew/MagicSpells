@@ -2,7 +2,11 @@ package com.nisovin.magicspells.spells.buff;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
@@ -24,6 +28,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 public class InvisibilitySpell extends BuffSpell {
 
 	private final Set<UUID> entities;
+	private static HashMap<LivingEntity, List<InvisibilitySpell>> entitySpellMap = new HashMap<LivingEntity, List<InvisibilitySpell>>();
 
 	private ConfigData<Double> mobRadius;
 
@@ -48,6 +53,7 @@ public class InvisibilitySpell extends BuffSpell {
 	public boolean castBuff(LivingEntity entity, float power, String[] args) {
 		makeInvisible(entity, power, args);
 		entities.add(entity.getUniqueId());
+		addInvisibilitySpell(entity, this);
 		return true;
 	}
 
@@ -59,16 +65,22 @@ public class InvisibilitySpell extends BuffSpell {
 	@Override
 	public void turnOffBuff(LivingEntity entity) {
 		entities.remove(entity.getUniqueId());
-		Util.forEachPlayerOnline(p -> p.showEntity(MagicSpells.getInstance(), entity));
+		removeInvisibilitySpell(entity, this);
+		makeVisible(entity);
 	}
 
 	@Override
 	protected void turnOff() {
+		for (Entity entity : entitySpellMap.keySet()) {
+			Util.forEachPlayerOnline(p -> p.showEntity(MagicSpells.getInstance(), entity));
+		}
+
 		entities.clear();
+		entitySpellMap.clear();
 	}
 
 	private void makeInvisible(LivingEntity entity, float power, String[] args) {
-		Util.forEachPlayerOnline(p -> p.hideEntity(MagicSpells.getInstance(), entity));
+		hideEntity(entity);
 
 		double radius = Math.min(mobRadius.get(entity, null, power, args), MagicSpells.getGlobalRadius());
 		for (Entity e : entity.getNearbyEntities(radius, radius, radius)) {
@@ -79,7 +91,23 @@ public class InvisibilitySpell extends BuffSpell {
 			creature.setTarget(null);
 		}
 	}
-	
+
+	private static void hideEntity(LivingEntity entity) {
+		for (Player p : Bukkit.getOnlinePlayers()) {
+			if (!SeeInvisibilitySpell.shouldPlayerSeeEntity(p, entity)) {
+				p.hideEntity(MagicSpells.getInstance(), entity);
+			}
+		}
+	}
+
+	private void makeVisible(LivingEntity entity) {
+		for (Player p : Bukkit.getOnlinePlayers()) {
+			if (SeeInvisibilitySpell.shouldPlayerSeeEntity(p, entity)) {
+				p.showEntity(MagicSpells.getInstance(), entity);
+			}
+		}
+	}
+
 	@EventHandler
 	public void onEntityItemPickup(EntityPickupItemEvent event) {
 		if (!preventPickups) return;
@@ -101,17 +129,40 @@ public class InvisibilitySpell extends BuffSpell {
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 
-		for (UUID id : entities) {
-			Entity entity = Bukkit.getEntity(id);
-			if (entity == null) continue;
-			if (!(entity instanceof LivingEntity)) continue;
-			player.hideEntity(MagicSpells.getInstance(), entity);
+		for (LivingEntity entity : entitySpellMap.keySet()) {
+			if (!SeeInvisibilitySpell.shouldPlayerSeeEntity(player, entity)) {
+				player.hideEntity(MagicSpells.getInstance(), entity);
+			}
 		}
 
-		if (isActive(player)) {
-			Util.forEachPlayerOnline(p -> p.hideEntity(MagicSpells.getInstance(), player));
-		}
+		if (isActive(player)) hideEntity((LivingEntity) player);
 
 	}
 
+	public static void addInvisibilitySpell(LivingEntity entity, InvisibilitySpell spell) {
+	    List<InvisibilitySpell> spells = entitySpellMap.get(entity);
+	    if (spells == null) {
+	        spells = new ArrayList<>();
+	        entitySpellMap.put(entity, spells);
+	    }
+	    spells.add(spell);
+	}
+
+	public static void removeInvisibilitySpell(LivingEntity entity, InvisibilitySpell spell) {
+	    List<InvisibilitySpell> spells = entitySpellMap.get(entity);
+	    if (spells != null) {
+	        spells.remove(spell);
+	        if (spells.isEmpty()) {
+	            entitySpellMap.remove(entity);
+	        }
+	    }
+	}
+
+	public static List<InvisibilitySpell> getInvisibilitySpells(LivingEntity entity) {
+	    List<InvisibilitySpell> spells = entitySpellMap.get(entity);
+	    if (spells != null) {
+	        return spells;
+	    }
+	    return Collections.emptyList();
+	}
 }

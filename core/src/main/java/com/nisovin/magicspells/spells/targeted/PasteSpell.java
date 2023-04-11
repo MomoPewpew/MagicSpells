@@ -312,7 +312,15 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        if (!keepOld) block.setType(Material.AIR);
 
 	        ent.setBlock(data);
-	        ent.setBrightness(new Display.Brightness(15, 15));
+
+	        Block lightBlock = null;
+
+	        for (int i = 1; i <= 10; i++) {
+	        	lightBlock = block.getRelative(0, i, 0);
+	        	if (lightBlock.getBlockData().getMaterial().isAir()) break;
+	        }
+
+	        ent.setBrightness(new Display.Brightness(lightBlock.getLightFromBlocks(), lightBlock.getLightFromSky()));
 	        if (keepOld)
 	        {
 	            ent.setTransformation(new Transformation(new Vector3f(0.005f), new AxisAngle4f(), new Vector3f(0.955f), new AxisAngle4f()));

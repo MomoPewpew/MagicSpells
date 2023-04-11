@@ -214,7 +214,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    boolean stop = false;
 
 		public Builder(LivingEntity caster, Location target, float power, String[] args) {
-			this.target = target;
+			this.target = target.clone();
 			this.clipboard = PasteSpell.this.clipboard;
 
 	        for (BlockVector3 pos : this.clipboard.getRegion()) {
@@ -234,7 +234,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        int y = pos.getY() - this.clipboard.getOrigin().getY();
 	        int z = pos.getZ() - this.clipboard.getOrigin().getZ();
 
-	        Location loc = target.add(x, y, z);
+	        Location loc = target.clone().add(x, y, z);
 			Block startingBlock = loc.getBlock();
 
 			startingBlock.setBlockData(BukkitAdapter.adapt(clipboard.getBlock(pos)));
@@ -250,7 +250,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			double closestDistanceSq = 0;
 			BlockVector3 closestPos = null;
 
-	        for (BlockVector3 pos : blockVectors) {
+	        for (BlockVector3 pos : this.blockVectors) {
 	        	double distanceX = pos.getX() - origin.getX();
 	        	double distanceY = pos.getY() - origin.getY();
 	        	double distanceZ = pos.getZ() - origin.getZ();

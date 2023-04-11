@@ -14,11 +14,18 @@ import java.io.FileInputStream;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -236,17 +243,69 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				this.workingBlocks++;
 
-				Runnable runnable = new Runnable() {
-					@Override
-					public void run() {
-						to.setBlockData(data);
-						placeBlock(to, pos.getX(), pos.getY(), pos.getZ());
-					}
-				};
+				this.moveBlockEffects(block, data, face.getModX(), face.getModY(), face.getModZ(), duration);
+				this.moveBlock(block, data, face.getModX(), face.getModY(), face.getModZ(), duration, true);
 
-				MagicSpells.scheduleDelayedTask(runnable, duration);
+				MagicSpells.scheduleDelayedTask(() -> {
+					to.setBlockData(data);
+					this.placeBlock(to, pos.getX(), pos.getY(), pos.getZ());
+				}, duration);
+
 				this.workingBlocks--;
 	        }
+	    }
+
+		private void moveBlock(Block block, BlockData data, int x, int y, int z, int duration, boolean keepOld) {
+	        BlockDisplay ent = (BlockDisplay)block.getWorld().spawnEntity(block.getLocation(), EntityType.BLOCK_DISPLAY);
+	        Block b = block.getRelative(x, y, z);
+	        //var state = block.getState();
+
+	        if (!keepOld) block.setType(Material.AIR);
+
+	        ent.setBlock(data);
+	        //ent.setBrightness(new Display.Brightness(block.getLightFromBlocks(), block.getLightFromSky()));
+	        ent.setBrightness(new Display.Brightness(15, 15));
+	        if (keepOld)
+	        {
+	            ent.setTransformation(new Transformation(new Vector3f(0.005f), new AxisAngle4f(), new Vector3f(0.955f), new AxisAngle4f()));
+	            //var shape = getGeneralBlockShape(block.getBlockData());
+	            /*if (data.getSoundGroup()..equals(block.getBlockData().getAsString()))
+	                ent.setTransformation(new Transformation(new Vector3f(0.005f), new AxisAngle4f(), new Vector3f(0.955f), new AxisAngle4f()));
+	            else
+	                ent.setTransformation(new Transformation(new Vector3f(0.5f), new AxisAngle4f(), new Vector3f(), new AxisAngle4f()));*/
+	        }
+	        else ent.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(1), new AxisAngle4f()));
+
+			MagicSpells.scheduleDelayedTask(() -> {
+	            ent.setInterpolationDelay(-1);
+	            ent.setInterpolationDuration(duration);
+	            ent.setTransformation(new Transformation(new Vector3f(x, y, z), new AxisAngle4f(), new Vector3f(1), new AxisAngle4f()));
+			}, 2);
+
+			MagicSpells.scheduleDelayedTask(() -> {
+	            //b.setType(state.getType());
+	            b.setBlockData(data);
+	            //ent.remove();
+	            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
+			}, duration + 2);
+
+			MagicSpells.scheduleDelayedTask(() -> {
+		            ent.remove();
+			}, duration + 3);
+	    }
+
+	    private void moveBlockEffects(Block block, BlockData data, int x, int y, int z, int duration) {
+	        Vector3f vec = new Vector3f(x, y, z);
+	        vec.normalize();
+	        vec = vec.sub(new Vector3f(0.1f));
+	        Location loc = block.getLocation().add(0.5, 0.5, 0.5).add(vec.x, vec.y, vec.z);
+
+	        for (int i = 0; i < duration / 6; i++) MagicSpells.scheduleDelayedTask(() ->
+	        {
+	            Block b = block.getRelative(x, y, z);
+	            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getBreakSound(), 0.1f, 0.1f);
+	            block.getWorld().spawnParticle(Particle.BLOCK_CRACK, loc, 5, 0.2, 0.2, 0.2, data);
+	        }, i * 6);
 	    }
 	}
 }

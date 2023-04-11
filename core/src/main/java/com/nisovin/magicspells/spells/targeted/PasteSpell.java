@@ -78,7 +78,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		undoDelay = getConfigDataInt("undo-delay", 0);
 
 		buildInterval = getConfigInt("build-interval", 0);
-		maxWorkingBlocks = getConfigInt("max-working-blocks", 100);
+		maxWorkingBlocks = getConfigInt("max-working-blocks", 1000);
 
 		pasteAir = getConfigBoolean("paste-air", false);
 		removePaste = getConfigBoolean("remove-paste", true);

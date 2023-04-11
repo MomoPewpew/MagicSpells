@@ -2,13 +2,10 @@ package com.nisovin.magicspells.spells.targeted;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.io.IOException;
 import java.io.FileInputStream;
 
@@ -24,7 +21,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
-import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -235,7 +231,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				BlockVector3 pos = BlockVector3.at(x + face.getModX(), y + face.getModY(), z + face.getModZ());
 				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
 
-				if (data.getMaterial().isAir()) continue;
+				if (data.getMaterial().isAir() && !PasteSpell.this.pasteAir) continue;
 
 				this.handledBlocks.add(to);
 
@@ -243,8 +239,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				this.workingBlocks++;
 
-				this.moveBlockEffects(block, data, face.getModX(), face.getModY(), face.getModZ(), duration);
-				this.moveBlock(block, data, face.getModX(), face.getModY(), face.getModZ(), duration, true);
+				if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(block, data, face.getModX(), face.getModY(), face.getModZ(), duration);
+				if (PasteSpell.this.displayAnimation) this.moveBlock(block, data, face.getModX(), face.getModY(), face.getModZ(), duration, true);
 
 				MagicSpells.scheduleDelayedTask(() -> {
 					to.setBlockData(data);

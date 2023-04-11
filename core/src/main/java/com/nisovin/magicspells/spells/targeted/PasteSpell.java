@@ -55,6 +55,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	private ConfigData<Integer> undoDelay;
 
 	private final int buildInterval;
+	private final int maxWorkingBlocks;
 
 	private boolean pasteAir;
 	private boolean removePaste;
@@ -77,6 +78,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		undoDelay = getConfigDataInt("undo-delay", 0);
 
 		buildInterval = getConfigInt("build-interval", 0);
+		maxWorkingBlocks = getConfigInt("max-working-blocks", 100);
 
 		pasteAir = getConfigBoolean("paste-air", false);
 		removePaste = getConfigBoolean("remove-paste", true);
@@ -267,6 +269,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (this.stop) return;
 			Collections.shuffle(CARDINAL_BLOCK_FACES);
 			for (BlockFace face : CARDINAL_BLOCK_FACES) {
+				if (this.workingBlocks > PasteSpell.this.maxWorkingBlocks) return;
+
 				Block to = block.getRelative(face);
 				if (handledBlocks.contains(to)) continue;
 

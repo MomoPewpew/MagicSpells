@@ -3,7 +3,10 @@ package com.nisovin.magicspells.spells.targeted;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.io.IOException;
@@ -12,8 +15,10 @@ import java.io.FileInputStream;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.LivingEntity;
+import org.joml.Vector3d;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -25,7 +30,6 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.session.ClipboardHolder;
@@ -46,7 +50,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private ConfigData<Integer> yOffset;
 	private ConfigData<Integer> undoDelay;
-	private ConfigData<Integer> blocksPerInterval;
 
 	private final int buildInterval;
 
@@ -55,8 +58,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	private boolean pasteAtCaster;
 	private boolean displayAnimation;
 	private boolean playBlockBreakEffect;
-
-	private BuilderTicker ticker;
+	private boolean insideOut;
 
 
 	public PasteSpell(MagicConfig config, String spellName) {
@@ -70,7 +72,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		yOffset = getConfigDataInt("y-offset", 0);
 		undoDelay = getConfigDataInt("undo-delay", 0);
-		blocksPerInterval = getConfigDataInt("blocks-per-interval", 10);
 
 		buildInterval = getConfigInt("build-interval", 0);
 
@@ -79,11 +80,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		pasteAtCaster = getConfigBoolean("paste-at-caster", false);
 		displayAnimation = getConfigBoolean("display-animation", true);
 		playBlockBreakEffect = getConfigBoolean("play-block-break-effect", true);
+		insideOut = getConfigBoolean("inside-out", true);
 
 		sessions = new ArrayList<EditSession>();
 		builders = new ArrayList<Builder>();
-
-		ticker = new BuilderTicker();
 	}
 
 	@Override
@@ -105,7 +105,9 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		for (EditSession session : sessions) {
 			session.undo(session);
 		}
-		ticker.stop();
+		for (Builder builder : builders) {
+			builder.stop = true;
+		}
 		sessions.clear();
 		builders.clear();
 	}
@@ -185,7 +187,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	private boolean pasteOverTime(LivingEntity caster, Location target, float power, String[] args) {
 		try {
 			builders.add(new Builder(caster, target, power, args));
-			ticker.start();
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -194,114 +195,58 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	class Builder {
-        Map<BlockVector3, BlockData> blockDataMap = new HashMap<>();
-		List<BlockVector3> handledVecs = new ArrayList<BlockVector3>();
-		List<BuilderCrawler> builderCrawlers = new ArrayList<BuilderCrawler>();
+		List<BlockFace> CARDINAL_BLOCK_FACES = new ArrayList<BlockFace>(Arrays.asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
 
-        BlockVector3 origin;
-        Location target;
+	    final Block block;
 
-    	int buildInterval;
-    	int blocksPerInterval;
+	    Clipboard clipboard;
+
+	    int workingBlocks = 0;
+	    List<Block> handledBlocks = new ArrayList<>();
+
+	    boolean stop = false;
 
 		public Builder(LivingEntity caster, Location target, float power, String[] args) {
-			this.target = target;
-			this.blocksPerInterval = PasteSpell.this.blocksPerInterval.get(caster, null, power, args);
+			this.block = target.getBlock();
+			this.clipboard = PasteSpell.this.clipboard;
 
-			Clipboard cl = PasteSpell.this.clipboard;
+	        BlockVector3 origin = clipboard.getOrigin();
 
-	        this.origin = cl.getOrigin();
+	        this.block.setBlockData(BukkitAdapter.adapt(clipboard.getBlock(origin)));
+	        this.handledBlocks.add(this.block);
 
-	        for (BlockVector3 pt : cl.getRegion()) {
-	            BlockData blockData = BukkitAdapter.adapt(clipboard.getBlock(pt));
+	        this.placeBlock(this.block, origin.getX(), origin.getY(), origin.getZ());
+		}
 
-        		if (blockData.getMaterial() == Material.AIR) continue;
+		private void placeBlock(Block block, int x, int y, int z) {
+			if (this.stop) return;
+			Collections.shuffle(CARDINAL_BLOCK_FACES);
+			for (BlockFace face : CARDINAL_BLOCK_FACES) {
+				Block to = block.getRelative(face);
+				if (handledBlocks.contains(to)) continue;
 
-	            this.blockDataMap.put(pt, blockData);
+				BlockVector3 pos = BlockVector3.at(x + face.getModX(), y + face.getModY(), z + face.getModZ());
+				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
+
+				if (data.getMaterial().isAir()) continue;
+
+				this.handledBlocks.add(to);
+
+				int duration = new Random().nextInt(8) + buildInterval;
+
+				this.workingBlocks++;
+
+				Runnable runnable = new Runnable() {
+					@Override
+					public void run() {
+						to.setBlockData(data);
+						placeBlock(to, pos.getX(), pos.getY(), pos.getZ());
+					}
+				};
+
+				MagicSpells.scheduleDelayedTask(runnable, duration);
+				this.workingBlocks--;
 	        }
-		}
-
-		public boolean build() {
-			if (this.builderCrawlers.isEmpty()) {
-				BlockVector3 vec = getNextBuilderCrawlerLocation();
-				if (vec == null) return true;
-
-				builderCrawlers.add(new BuilderCrawler(this, vec));
-			}
-
-			Iterator<BuilderCrawler> iterator = this.builderCrawlers.iterator();
-			while (iterator.hasNext()) {
-			    BuilderCrawler crawler = iterator.next();
-
-			    crawler.build();
-
-			    iterator.remove();
-			}
-			return false;
-		}
-
-		public BlockVector3 getNextBuilderCrawlerLocation() {
-			double closestDistanceSq = 0;
-			BlockVector3 closestVec = null;
-
-	        for (BlockVector3 blockVec : blockDataMap.keySet()) {
-	        	if (!handledVecs.contains(blockVec)) {
-		        	double distanceX = blockVec.getX() - this.origin.getX();
-		        	double distanceY = blockVec.getY() - this.origin.getY();
-		        	double distanceZ = blockVec.getZ() - this.origin.getZ();
-		        	double distanceSq = distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
-
-		        	if (closestVec == null || distanceSq < closestDistanceSq) {
-		        		closestDistanceSq = distanceSq;
-		        		closestVec = blockVec;
-		        	}
-        		}
-			}
-			return closestVec;
-		}
-
-		class BuilderCrawler {
-			Builder builder;
-			BlockVector3 vec;
-
-			public BuilderCrawler(Builder builder, BlockVector3 vec) {
-				this.builder = builder;
-				this.vec = vec;
-			}
-
-			public void build() {
-				Location location = this.builder.target.clone();
-				location.add(this.vec.getX() - this.builder.origin.getX(), this.vec.getY() - this.builder.origin.getY(), this.vec.getZ() - this.builder.origin.getZ());
-				MagicSpells.error("BuilderCrawler attempted to build at " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ());
-				location.getBlock().setBlockData(this.builder.blockDataMap.get(this.vec));
-				this.builder.handledVecs.add(this.vec);
-			}
-		}
-	}
-
-	private class BuilderTicker implements Runnable {
-
-		private int taskId = -1;
-
-		private void start() {
-			if (taskId < 0) taskId = MagicSpells.scheduleRepeatingTask(this, 0, buildInterval);
-		}
-
-		private void stop() {
-			if (taskId > 0) {
-				MagicSpells.cancelTask(taskId);
-				taskId = -1;
-			}
-		}
-
-		@Override
-		public void run() {
-			for (Builder entry : new ArrayList<Builder>(builders)) {
-				boolean remove = entry.build();
-				if (remove) builders.remove(entry);
-			}
-			if (builders.isEmpty()) stop();
-		}
-
+	    }
 	}
 }

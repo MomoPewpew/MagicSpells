@@ -200,25 +200,67 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	class Builder {
 		List<BlockFace> CARDINAL_BLOCK_FACES = new ArrayList<BlockFace>(Arrays.asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
 
-	    final Block block;
+	    Location target;
 
 	    Clipboard clipboard;
 
 	    int workingBlocks = 0;
-	    List<Block> handledBlocks = new ArrayList<>();
+	    List<Block> handledBlocks = new ArrayList<Block>();
+
+	    List<BlockVector3> blockVectors = new ArrayList<BlockVector3>();
 
 	    boolean stop = false;
 
 		public Builder(LivingEntity caster, Location target, float power, String[] args) {
-			this.block = target.getBlock();
+			this.target = target;
 			this.clipboard = PasteSpell.this.clipboard;
 
-	        BlockVector3 origin = clipboard.getOrigin();
+	        for (BlockVector3 pos : this.clipboard.getRegion()) {
+				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
 
-	        this.block.setBlockData(BukkitAdapter.adapt(clipboard.getBlock(origin)));
-	        this.handledBlocks.add(this.block);
+				if (data.getMaterial().isAir() && !PasteSpell.this.pasteAir) continue;
 
-	        this.placeBlock(this.block, origin.getX(), origin.getY(), origin.getZ());
+				this.blockVectors.add(pos);
+	        }
+
+	        BlockVector3 origin = this.clipboard.getOrigin();
+	        intialize(origin);
+		}
+
+		private void intialize(BlockVector3 pos) {
+	        int x = pos.getX() - this.clipboard.getOrigin().getX();
+	        int y = pos.getY() - this.clipboard.getOrigin().getY();
+	        int z = pos.getZ() - this.clipboard.getOrigin().getZ();
+
+	        Location loc = target.add(x, y, z);
+			Block startingBlock = loc.getBlock();
+
+			startingBlock.setBlockData(BukkitAdapter.adapt(clipboard.getBlock(pos)));
+	        this.handledBlocks.add(startingBlock);
+	        this.blockVectors.remove(pos);
+
+	        this.placeBlock(startingBlock, pos.getX(), pos.getY(), pos.getZ());
+		}
+
+		private void reInitialize() {
+	        BlockVector3 origin = this.clipboard.getOrigin();
+
+			double closestDistanceSq = 0;
+			BlockVector3 closestPos = null;
+
+	        for (BlockVector3 pos : blockVectors) {
+	        	double distanceX = pos.getX() - origin.getX();
+	        	double distanceY = pos.getY() - origin.getY();
+	        	double distanceZ = pos.getZ() - origin.getZ();
+	        	double distanceSq = distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
+
+	        	if (closestPos == null || distanceSq < closestDistanceSq) {
+	        		closestDistanceSq = distanceSq;
+	        		closestPos = pos;
+	        	}
+			}
+
+	        if (closestPos != null) intialize(closestPos);
 		}
 
 		private void placeBlock(Block block, int x, int y, int z) {
@@ -231,9 +273,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				BlockVector3 pos = BlockVector3.at(x + face.getModX(), y + face.getModY(), z + face.getModZ());
 				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
 
+				this.handledBlocks.add(to);
+
 				if (data.getMaterial().isAir() && !PasteSpell.this.pasteAir) continue;
 
-				this.handledBlocks.add(to);
+		        this.blockVectors.remove(pos);
 
 				int duration = new Random().nextInt(8) + buildInterval;
 
@@ -245,30 +289,29 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				MagicSpells.scheduleDelayedTask(() -> {
 					to.setBlockData(data);
 					this.placeBlock(to, pos.getX(), pos.getY(), pos.getZ());
-				}, duration);
+					this.workingBlocks--;
 
-				this.workingBlocks--;
+					if (workingBlocks == 0 && !this.blockVectors.isEmpty()) {
+						this.reInitialize();
+					}
+				}, duration);
 	        }
+			if (workingBlocks == 0 && !this.blockVectors.isEmpty()) {
+				this.reInitialize();
+			}
 	    }
 
 		private void moveBlock(Block block, BlockData data, int x, int y, int z, int duration, boolean keepOld) {
 	        BlockDisplay ent = (BlockDisplay)block.getWorld().spawnEntity(block.getLocation(), EntityType.BLOCK_DISPLAY);
 	        Block b = block.getRelative(x, y, z);
-	        //var state = block.getState();
 
 	        if (!keepOld) block.setType(Material.AIR);
 
 	        ent.setBlock(data);
-	        //ent.setBrightness(new Display.Brightness(block.getLightFromBlocks(), block.getLightFromSky()));
 	        ent.setBrightness(new Display.Brightness(15, 15));
 	        if (keepOld)
 	        {
 	            ent.setTransformation(new Transformation(new Vector3f(0.005f), new AxisAngle4f(), new Vector3f(0.955f), new AxisAngle4f()));
-	            //var shape = getGeneralBlockShape(block.getBlockData());
-	            /*if (data.getSoundGroup()..equals(block.getBlockData().getAsString()))
-	                ent.setTransformation(new Transformation(new Vector3f(0.005f), new AxisAngle4f(), new Vector3f(0.955f), new AxisAngle4f()));
-	            else
-	                ent.setTransformation(new Transformation(new Vector3f(0.5f), new AxisAngle4f(), new Vector3f(), new AxisAngle4f()));*/
 	        }
 	        else ent.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(1), new AxisAngle4f()));
 
@@ -279,9 +322,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			}, 2);
 
 			MagicSpells.scheduleDelayedTask(() -> {
-	            //b.setType(state.getType());
 	            b.setBlockData(data);
-	            //ent.remove();
 	            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
 			}, duration + 2);
 

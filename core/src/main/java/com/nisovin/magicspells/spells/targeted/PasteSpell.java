@@ -216,16 +216,20 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		public Builder(LivingEntity caster, Location target, float power, String[] args) {
 			this.target = target.clone();
 			this.clipboard = PasteSpell.this.clipboard;
+	        BlockVector3 origin = this.clipboard.getOrigin();
 
 	        for (BlockVector3 pos : this.clipboard.getRegion()) {
 				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
 
-				if (data.getMaterial().isAir() && !PasteSpell.this.pasteAir) continue;
+				Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
 
-				this.blockVectors.add(pos);
+				if (data.matches(bl.getBlockData()) || (data.getMaterial().isAir() && !PasteSpell.this.pasteAir)) {
+					this.handledBlocks.add(bl);
+				} else {
+					this.blockVectors.add(pos);
+				}
 	        }
 
-	        BlockVector3 origin = this.clipboard.getOrigin();
 	        intialize(origin);
 		}
 

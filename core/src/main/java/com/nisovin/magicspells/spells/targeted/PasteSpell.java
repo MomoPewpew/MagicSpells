@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.io.IOException;
 import java.io.FileInputStream;
 
@@ -244,7 +243,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			Block animatorBlock = null;
 			BlockFace face = null;
 
-			Collections.shuffle(CARDINAL_BLOCK_FACES);
 			for (BlockFace f : CARDINAL_BLOCK_FACES) {
 				Block b = startingBlock.getRelative(f);
 				if (b.getBlockData().getMaterial().isSolid()) {
@@ -259,7 +257,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				startingBlock.setBlockData(data);
 		        this.placeBlock(startingBlock, pos.getX(), pos.getY(), pos.getZ());
 			} else {
-		        this.placeBlock(animatorBlock, pos.getX() - face.getModX(), pos.getY() - face.getModY(), pos.getZ() - face.getModZ());
+		        this.placeBlock(animatorBlock, pos.getX() + face.getModX(), pos.getY() + face.getModY(), pos.getZ() + face.getModZ());
 			}
 		}
 
@@ -286,7 +284,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		private void placeBlock(Block block, int x, int y, int z) {
 			if (this.stop) return;
-			Collections.shuffle(CARDINAL_BLOCK_FACES);
 			for (BlockFace face : CARDINAL_BLOCK_FACES) {
 				if (this.workingBlocks > PasteSpell.this.maxWorkingBlocks) return;
 

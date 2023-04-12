@@ -245,10 +245,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 			for (BlockFace f : CARDINAL_BLOCK_FACES) {
 				Block b = startingBlock.getRelative(f);
-				if (b.getBlockData().getMaterial().isSolid()) {
+				BlockData bd = b.getBlockData();
+				if (bd.getMaterial().isSolid()) {
 					animatorBlock = b;
 					face = f;
-					break;
+					if (data.matches(bd)) break;
 				}
 			}
 

@@ -236,12 +236,27 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	        Location loc = target.clone().add(x, y, z);
 			Block startingBlock = loc.getBlock();
+			BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
+			Block animatorBlock = null;
+			BlockFace face = null;
 
-			startingBlock.setBlockData(BukkitAdapter.adapt(clipboard.getBlock(pos)));
-	        this.handledBlocks.add(startingBlock);
-	        this.blockVectors.remove(pos);
+			Collections.shuffle(CARDINAL_BLOCK_FACES);
+			for (BlockFace f : CARDINAL_BLOCK_FACES) {
+				Block b = startingBlock.getRelative(f);
+				if (b.getBlockData().getMaterial().isSolid()) {
+					animatorBlock = b;
+					face = f;
+					break;
+				}
+			}
 
-	        this.placeBlock(startingBlock, pos.getX(), pos.getY(), pos.getZ());
+			if (animatorBlock == null) {
+				if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(startingBlock, data, 0, 0, 0, 0);
+				startingBlock.setBlockData(data);
+		        this.placeBlock(startingBlock, pos.getX(), pos.getY(), pos.getZ());
+			} else {
+		        this.placeBlock(animatorBlock, pos.getX() - face.getModX(), pos.getY() - face.getModY(), pos.getZ() - face.getModZ());
+			}
 		}
 
 		private void reInitialize() {

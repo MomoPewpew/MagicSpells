@@ -206,9 +206,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    Clipboard clipboard;
 
 	    int workingBlocks = 0;
-	    List<Block> handledBlocks = new ArrayList<Block>();
+	    int workingAir = 0;
 
 	    List<BlockVector3> blockVectors = new ArrayList<BlockVector3>();
+	    List<BlockVector3> airVectors = new ArrayList<BlockVector3>();
 
 	    boolean stop = false;
 
@@ -222,14 +223,17 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
 
-				if (data.matches(bl.getBlockData()) || (data.getMaterial().isAir() && !PasteSpell.this.pasteAir)) {
-					this.handledBlocks.add(bl);
-				} else {
-					this.blockVectors.add(pos);
+				if (!data.matches(bl.getBlockData())) {
+					if (data.getMaterial().isAir()) {
+						this.airVectors.add(pos);
+					} else {
+						this.blockVectors.add(pos);
+					}
 				}
 	        }
 
-	        intialize(origin);
+	        if (this.blockVectors.size() > 0) intialize(origin);
+	        if (PasteSpell.this.pasteAir && this.airVectors.size() > 0) intializeWithdraw(origin);
 		}
 
 		private void intialize(BlockVector3 pos) {
@@ -237,7 +241,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        int y = pos.getY() - this.clipboard.getOrigin().getY();
 	        int z = pos.getZ() - this.clipboard.getOrigin().getZ();
 
-	        Location loc = target.clone().add(x, y, z);
+	        Location loc = this.target.clone().add(x, y, z);
 			Block startingBlock = loc.getBlock();
 			BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
 			Block animatorBlock = null;
@@ -262,6 +266,28 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			}
 		}
 
+		private void intializeWithdraw(BlockVector3 pos) {
+	        int x = pos.getX() - this.clipboard.getOrigin().getX();
+	        int y = pos.getY() - this.clipboard.getOrigin().getY();
+	        int z = pos.getZ() - this.clipboard.getOrigin().getZ();
+
+	        Location loc = this.target.clone().add(x, y, z);
+			Block startingBlock = loc.getBlock();
+
+			BlockFace face = null;
+
+			for (BlockFace f : CARDINAL_BLOCK_FACES) {
+				Block b = startingBlock.getRelative(f);
+				BlockData bd = b.getBlockData();
+				if (bd.getMaterial().isSolid()) {
+					face = f;
+					if (startingBlock.getBlockData().matches(bd)) break;
+				}
+			}
+
+			this.withdrawBlock(startingBlock, pos.getX(), pos.getY(), pos.getZ(), face);
+		}
+
 		private void reInitialize() {
 	        BlockVector3 origin = this.clipboard.getOrigin();
 
@@ -280,23 +306,41 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        	}
 			}
 
-	        if (closestPos != null) intialize(closestPos);
+	        if (closestPos != null) this.intialize(closestPos);
+		}
+
+		private void reInitializeWithdraw() {
+	        BlockVector3 origin = this.clipboard.getOrigin();
+
+			double furthestDistanceSq = 0;
+			BlockVector3 furthestPos = null;
+
+	        for (BlockVector3 pos : this.airVectors) {
+	        	double distanceX = pos.getX() - origin.getX();
+	        	double distanceY = pos.getY() - origin.getY();
+	        	double distanceZ = pos.getZ() - origin.getZ();
+	        	double distanceSq = distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
+
+	        	if (furthestPos == null || distanceSq > furthestDistanceSq) {
+	        		furthestDistanceSq = distanceSq;
+	        		furthestPos = pos;
+	        	}
+			}
+
+	        if (furthestPos != null) this.intializeWithdraw(furthestPos);
 		}
 
 		private void placeBlock(Block block, int x, int y, int z) {
 			if (this.stop) return;
+
 			for (BlockFace face : CARDINAL_BLOCK_FACES) {
-				if (this.workingBlocks > PasteSpell.this.maxWorkingBlocks) return;
+				if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return; //TODO: Make this something more elegant
 
 				Block to = block.getRelative(face);
-				if (handledBlocks.contains(to)) continue;
-
 				BlockVector3 pos = BlockVector3.at(x + face.getModX(), y + face.getModY(), z + face.getModZ());
+				if (!this.blockVectors.contains(pos)) continue;
+
 				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
-
-				this.handledBlocks.add(to);
-
-				if (data.getMaterial().isAir() && !PasteSpell.this.pasteAir) continue;
 
 		        this.blockVectors.remove(pos);
 
@@ -312,15 +356,75 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					this.placeBlock(to, pos.getX(), pos.getY(), pos.getZ());
 					this.workingBlocks--;
 
-					if (workingBlocks == 0 && !this.blockVectors.isEmpty()) {
+					if (this.workingBlocks < 1 && !this.blockVectors.isEmpty()) {
 						this.reInitialize();
 					}
 				}, duration);
 	        }
-			if (workingBlocks == 0 && !this.blockVectors.isEmpty()) {
+			if (this.workingBlocks < 1 && !this.blockVectors.isEmpty()) {
 				this.reInitialize();
 			}
 	    }
+
+		private void withdrawBlock(Block block, int x, int y, int z, BlockFace priorityFace) {
+			if (this.stop) return;
+
+			BlockVector3 currPos = BlockVector3.at(x, y, z);
+			if (this.airVectors.contains(currPos)) {
+				this.workingAir++;
+				this.airVectors.remove(currPos);
+
+				BlockData data = block.getBlockData();
+				Block withdrawBlock = null;
+
+				if (priorityFace != null) {
+					withdrawBlock = block.getRelative(priorityFace);
+					if (withdrawBlock.getBlockData().getMaterial().isAir()) {
+						withdrawBlock = null;
+					}
+				}
+
+				for (BlockFace face : CARDINAL_BLOCK_FACES) {
+					//if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return; //TODO: Make this something more elegant
+
+					Block to = block.getRelative(face);
+
+					if (to.getBlockData().getMaterial().isAir()) continue;
+
+					int duration = new Random().nextInt(8) + buildInterval;
+
+					if (withdrawBlock == null) {
+						withdrawBlock = to;
+					}
+
+					if (to.getLocation().equals(withdrawBlock.getLocation())) {
+						if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(block, data, face.getModX(), face.getModY(), face.getModZ(), duration);
+						if (PasteSpell.this.displayAnimation) this.moveBlock(block, data, face.getModX(), face.getModY(), face.getModZ(), duration, false);
+
+						MagicSpells.scheduleDelayedTask(() -> {
+							this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
+							this.workingAir--;
+
+							if (this.workingAir < 1 && !this.airVectors.isEmpty()) {
+								this.reInitializeWithdraw();
+							}
+						}, duration);
+					} else {
+						this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
+					}
+				}
+
+				if (withdrawBlock == null) {
+					if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(block, data, 0, 0, 0, 0);
+					block.setType(Material.AIR);
+					this.workingAir--;
+				}
+			}
+
+			if (this.workingAir < 1 && !this.airVectors.isEmpty()) {
+				this.reInitializeWithdraw();
+			}
+		}
 
 		private void moveBlock(Block block, BlockData data, int x, int y, int z, int duration, boolean keepOld) {
 	        BlockDisplay ent = (BlockDisplay)block.getWorld().spawnEntity(block.getLocation(), EntityType.BLOCK_DISPLAY);
@@ -338,10 +442,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        }
 
 	        ent.setBrightness(new Display.Brightness(lightBlock.getLightFromBlocks(), lightBlock.getLightFromSky()));
-	        if (keepOld)
-	        {
-	            ent.setTransformation(new Transformation(new Vector3f(0.005f), new AxisAngle4f(), new Vector3f(0.955f), new AxisAngle4f()));
-	        }
+	        if (keepOld) ent.setTransformation(new Transformation(new Vector3f(0.005f), new AxisAngle4f(), new Vector3f(0.955f), new AxisAngle4f()));
 	        else ent.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(1), new AxisAngle4f()));
 
 			MagicSpells.scheduleDelayedTask(() -> {
@@ -350,13 +451,15 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	            ent.setTransformation(new Transformation(new Vector3f(x, y, z), new AxisAngle4f(), new Vector3f(1), new AxisAngle4f()));
 			}, 2);
 
-			MagicSpells.scheduleDelayedTask(() -> {
-	            b.setBlockData(data);
-	            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
-			}, duration + 2);
+			if (keepOld) {
+				MagicSpells.scheduleDelayedTask(() -> {
+		            b.setBlockData(data);
+		            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
+				}, duration + 2);
+			}
 
 			MagicSpells.scheduleDelayedTask(() -> {
-		            ent.remove();
+	            ent.remove();
 			}, duration + 3);
 	    }
 

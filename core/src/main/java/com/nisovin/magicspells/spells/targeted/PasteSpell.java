@@ -46,6 +46,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private List<EditSession> sessions;
 	private List<Builder> builders;
+	private List<String> buildStartOffsetStrings;
+	private List<String> dismantleStartOffsetStrings;
+	private List<Vector3f> buildStartOffsets;
+	private List<Vector3f> dismantleStartOffsets;
 
 	private File file;
 	private Clipboard clipboard;
@@ -86,6 +90,9 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		displayAnimation = getConfigBoolean("display-animation", true);
 		playBlockBreakEffect = getConfigBoolean("play-block-break-effect", true);
 
+		buildStartOffsetStrings = getConfigStringList("build-start-offsets", null);
+		dismantleStartOffsetStrings = getConfigStringList("dismantle-start-offsets", null);
+
 		sessions = new ArrayList<EditSession>();
 		builders = new ArrayList<Builder>();
 	}
@@ -102,6 +109,36 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 
 		if (clipboard == null) MagicSpells.error("PasteSpell " + internalName + " has a wrong schematic!");
+
+		this.buildStartOffsets = new ArrayList<Vector3f>();
+		if (this.buildStartOffsetStrings != null) {
+			for (String s : this.buildStartOffsetStrings) {
+				if (s.matches("^-?\\d+ -?\\d+ -?\\d+$")) {
+				    String[] parts = s.split(" ");
+				    int x = Integer.parseInt(parts[0]);
+				    int y = Integer.parseInt(parts[1]);
+				    int z = Integer.parseInt(parts[2]);
+				    this.buildStartOffsets.add(new Vector3f(x, y, z));
+				} else {
+					MagicSpells.error("PasteSpell " + internalName + " has a wrong build-start-offset. The correct syntax is `- 1 2 3`");
+				}
+			}
+		}
+
+		this.dismantleStartOffsets = new ArrayList<Vector3f>();
+		if (this.dismantleStartOffsetStrings != null) {
+			for (String s : this.dismantleStartOffsetStrings) {
+				if (s.matches("^-?\\d+ -?\\d+ -?\\d+$")) {
+				    String[] parts = s.split(" ");
+				    int x = Integer.parseInt(parts[0]);
+				    int y = Integer.parseInt(parts[1]);
+				    int z = Integer.parseInt(parts[2]);
+				    this.dismantleStartOffsets.add(new Vector3f(x, y, z));
+				} else {
+					MagicSpells.error("PasteSpell " + internalName + " has a wrong dismantle-start-offset. The correct syntax is `- 1 2 3`");
+				}
+			}
+		}
 	}
 
 	@Override
@@ -229,13 +266,37 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
     				}
     	        }
 
-    	        if (this.airVectors.size() > 0) this.intializeWithdraw(origin);
-    	        else if (this.blockVectors.size() > 0) this.intialize(origin);
+    	        if (this.airVectors.size() > 0) this.firstWithdrawInit(origin);
+    	        else if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
 
 	        } else {
-    	        if (this.blockVectors.size() > 0) this.intialize(origin);
-    	        if (PasteSpell.this.pasteAir && this.airVectors.size() > 0) this.intializeWithdraw(origin);
+    	        if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
+    	        if (PasteSpell.this.pasteAir && this.airVectors.size() > 0) this.firstWithdrawInit(origin);
 	        }
+		}
+
+		private void firstBuildInit(BlockVector3 origin) {
+			List<Vector3f> vecs = PasteSpell.this.buildStartOffsets;
+
+			if (vecs.isEmpty()) {
+				this.intialize(origin);
+			} else {
+				for (Vector3f vec : vecs) {
+					this.intialize(BlockVector3.at(origin.getX() + vec.x, origin.getY() + vec.y, origin.getZ() + vec.z));
+				}
+			}
+		}
+
+		private void firstWithdrawInit(BlockVector3 origin) {
+			List<Vector3f> vecs = PasteSpell.this.dismantleStartOffsets;
+
+			if (vecs.isEmpty()) {
+				this.intializeWithdraw(origin);
+			} else {
+				for (Vector3f vec : vecs) {
+					this.intializeWithdraw(BlockVector3.at(origin.getX() + vec.x, origin.getY() + vec.y, origin.getZ() + vec.z));
+				}
+			}
 		}
 
 		private void parseClipboard() {
@@ -353,7 +414,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        if (furthestPos != null) this.intializeWithdraw(furthestPos);
 	        else if (PasteSpell.this.dismantleFirst) {
 	        	this.parseClipboard();
-    	        if (this.blockVectors.size() > 0) this.intialize(origin);
+    	        if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
 	        }
 		}
 

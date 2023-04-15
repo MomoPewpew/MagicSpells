@@ -372,7 +372,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			BlockVector3 currPos = BlockVector3.at(x, y, z);
 			if (this.airVectors.contains(currPos)) {
 				this.workingAir++;
-				this.airVectors.remove(currPos);
 
 				BlockData data = block.getBlockData();
 				Block withdrawBlock = null;
@@ -385,7 +384,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				}
 
 				for (BlockFace face : CARDINAL_BLOCK_FACES) {
-					//if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return; //TODO: Make this something more elegant
+					if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
+					this.airVectors.remove(currPos);
 
 					Block to = block.getRelative(face);
 

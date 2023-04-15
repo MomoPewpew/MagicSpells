@@ -61,7 +61,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	private boolean pasteAtCaster;
 	private boolean displayAnimation;
 	private boolean playBlockBreakEffect;
-	private boolean insideOut;
+	private boolean dismantleFirst;
 
 
 	public PasteSpell(MagicConfig config, String spellName) {
@@ -80,11 +80,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		maxWorkingBlocks = getConfigInt("max-working-blocks", 1000);
 
 		pasteAir = getConfigBoolean("paste-air", false);
+		dismantleFirst = getConfigBoolean("dismantle-first", false);
 		removePaste = getConfigBoolean("remove-paste", true);
 		pasteAtCaster = getConfigBoolean("paste-at-caster", false);
 		displayAnimation = getConfigBoolean("display-animation", true);
 		playBlockBreakEffect = getConfigBoolean("play-block-break-effect", true);
-		insideOut = getConfigBoolean("inside-out", true);
 
 		sessions = new ArrayList<EditSession>();
 		builders = new ArrayList<Builder>();
@@ -208,14 +208,40 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    int workingBlocks = 0;
 	    int workingAir = 0;
 
-	    List<BlockVector3> blockVectors = new ArrayList<BlockVector3>();
-	    List<BlockVector3> airVectors = new ArrayList<BlockVector3>();
+	    List<BlockVector3> blockVectors;
+	    List<BlockVector3> airVectors;
 
 	    boolean stop = false;
 
 		public Builder(LivingEntity caster, Location target, float power, String[] args) {
 			this.target = target.clone();
 			this.clipboard = PasteSpell.this.clipboard;
+
+			this.parseClipboard();
+
+	        BlockVector3 origin = this.clipboard.getOrigin();
+
+        	if (PasteSpell.this.dismantleFirst && PasteSpell.this.pasteAir) {
+    	        for (BlockVector3 pos : this.blockVectors) {
+    				Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
+    				if (!bl.getBlockData().getMaterial().isAir()) {
+    					this.airVectors.add(pos);
+    				}
+    	        }
+
+    	        if (this.airVectors.size() > 0) this.intializeWithdraw(origin);
+    	        else if (this.blockVectors.size() > 0) this.intialize(origin);
+
+	        } else {
+    	        if (this.blockVectors.size() > 0) this.intialize(origin);
+    	        if (PasteSpell.this.pasteAir && this.airVectors.size() > 0) this.intializeWithdraw(origin);
+	        }
+		}
+
+		private void parseClipboard() {
+		    this.blockVectors = new ArrayList<BlockVector3>();
+		    this.airVectors = new ArrayList<BlockVector3>();
+
 	        BlockVector3 origin = this.clipboard.getOrigin();
 
 	        for (BlockVector3 pos : this.clipboard.getRegion()) {
@@ -231,9 +257,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					}
 				}
 	        }
-
-	        if (this.blockVectors.size() > 0) intialize(origin);
-	        if (PasteSpell.this.pasteAir && this.airVectors.size() > 0) intializeWithdraw(origin);
 		}
 
 		private void intialize(BlockVector3 pos) {
@@ -328,6 +351,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			}
 
 	        if (furthestPos != null) this.intializeWithdraw(furthestPos);
+	        else if (PasteSpell.this.dismantleFirst) {
+	        	this.parseClipboard();
+    	        if (this.blockVectors.size() > 0) this.intialize(origin);
+	        }
 		}
 
 		private void placeBlock(Block block, int x, int y, int z) {
@@ -405,12 +432,14 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 							this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
 							this.workingAir--;
 
-							if (this.workingAir < 1 && !this.airVectors.isEmpty()) {
+							if (this.workingAir < 1) {
 								this.reInitializeWithdraw();
 							}
 						}, duration);
 					} else {
-						this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
+						MagicSpells.scheduleDelayedTask(() -> {
+							this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
+						}, duration);
 					}
 				}
 
@@ -421,7 +450,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				}
 			}
 
-			if (this.workingAir < 1 && !this.airVectors.isEmpty()) {
+			if (this.workingAir < 1) {
 				this.reInitializeWithdraw();
 			}
 		}

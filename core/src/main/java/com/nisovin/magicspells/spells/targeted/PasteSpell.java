@@ -526,10 +526,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	        Block lightBlock = null;
 
-	        for (int i = 1; i <= 10; i++) {
-	        	lightBlock = block.getRelative(0, i, 0);
+			for (BlockFace face : CARDINAL_BLOCK_FACES) {
+				lightBlock = block.getRelative(face);
 	        	if (lightBlock.getBlockData().getMaterial().isAir()) break;
-	        }
+			}
 
 	        ent.setBrightness(new Display.Brightness(lightBlock.getLightFromBlocks(), lightBlock.getLightFromSky()));
 	        if (keepOld) ent.setTransformation(new Transformation(new Vector3f(0.005f), new AxisAngle4f(), new Vector3f(0.955f), new AxisAngle4f()));

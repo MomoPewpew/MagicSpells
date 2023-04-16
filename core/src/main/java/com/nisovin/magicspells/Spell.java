@@ -1341,6 +1341,12 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				if (!(blockY - yLower <= entityY && entityY <= blockY + yUpper)) continue;
 				if (!(blockZ - zLower <= entityZ && entityZ <= blockZ + zUpper)) continue;
 
+				//Check if caster is facing target
+			    Location loc1 = caster.getLocation();
+			    Vector dir1 = loc1.getDirection();
+			    Vector dir2 = location.toVector().subtract(loc1.toVector()).normalize();
+			    if (dir1.dot(dir2) <= 0.0) continue;
+
 				// Check for invalid target
 				if (target instanceof Player && (((Player) target).getGameMode() == GameMode.CREATIVE || ((Player) target).getGameMode() == GameMode.SPECTATOR)) {
 					blacklistedEntities.add(target);

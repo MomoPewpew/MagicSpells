@@ -122,7 +122,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 		            Integer cloneID = iterator.next();
 		            Location location = cloneSpell.getTemporaryCloneMap().get(cloneID);
 
-					if (!location.getWorld().equals(locWorld.getName())) continue;
+					if (!location.getWorld().getName().equals(locWorld.getName())) continue;
 			        if (location.distanceSquared(loc) < radSq) {
 		        		MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
 	    				CloneSpell.getCloneMap().remove(cloneID);
@@ -145,7 +145,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 		        Integer cloneID = iterator.next();
 		        Location location = CloneSpell.getCloneMap().get(cloneID);
 
-				if (!location.getWorld().equals(locWorld.getName())) continue;
+				if (!location.getWorld().getName().equals(locWorld.getName())) continue;
 		        if (location.distanceSquared(loc) < radSq) {
 		            for (CloneSpell cloneSpell : cloneSpellsTemp) {
 		                if (cloneSpell.getTemporaryCloneMap().containsKey(cloneID)) {

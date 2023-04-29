@@ -82,7 +82,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		undoDelay = getConfigDataInt("undo-delay", 0);
 
 		buildInterval = getConfigInt("build-interval", 0);
-		buildIntervalRandomness = getConfigInt("build-interval-randomness", 7) + 1;
+		buildIntervalRandomness = Math.max(getConfigInt("build-interval-randomness", 7), 0) + 1;
 		maxWorkingBlocks = getConfigInt("max-working-blocks", 1000);
 
 		pasteAir = getConfigBoolean("paste-air", false);

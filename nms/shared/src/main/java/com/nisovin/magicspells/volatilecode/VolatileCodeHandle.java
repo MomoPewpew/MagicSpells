@@ -33,4 +33,11 @@ public abstract class VolatileCodeHandle {
 	public abstract int createFalsePlayer(Player player, Location location, String pose, boolean cloneEquipment);
 
 	public abstract void removeFalsePlayer(int id);
+
+	public abstract boolean isRelatedToFalsePlayer(Display entityDisplay);
+
+	public abstract void updateFalsePlayer(Display entityDisplay);
+
+	public abstract void updateAllFalsePlayers();
+
 }

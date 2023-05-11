@@ -59,6 +59,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private final int buildInterval;
 	private final int maxWorkingBlocks;
+	private final int buildIntervalRandomness;
 
 	private boolean pasteAir;
 	private boolean removePaste;
@@ -81,6 +82,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		undoDelay = getConfigDataInt("undo-delay", 0);
 
 		buildInterval = getConfigInt("build-interval", 0);
+		buildIntervalRandomness = Math.max(getConfigInt("build-interval-randomness", 7), 0) + 1;
 		maxWorkingBlocks = getConfigInt("max-working-blocks", 1000);
 
 		pasteAir = getConfigBoolean("paste-air", false);
@@ -432,7 +434,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		        this.blockVectors.remove(pos);
 
-				int duration = new Random().nextInt(8) + buildInterval;
+				int duration = new Random().nextInt(buildIntervalRandomness) + buildInterval;
 
 				this.workingBlocks++;
 

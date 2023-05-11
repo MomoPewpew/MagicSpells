@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -112,6 +113,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 		radSq *= radSq;
 
 		boolean succes = false;
+		World locWorld = loc.getWorld();
 
 		if (!this.cloneSpells.isEmpty()) {
 		    for (CloneSpell cloneSpell : cloneSpells) {
@@ -120,7 +122,8 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 		            Integer cloneID = iterator.next();
 		            Location location = cloneSpell.getTemporaryCloneMap().get(cloneID);
 
-		            if (loc.distanceSquared(location) < radSq) {
+					if (!location.getWorld().getName().equals(locWorld.getName())) continue;
+			        if (location.distanceSquared(loc) < radSq) {
 		        		MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
 	    				CloneSpell.getCloneMap().remove(cloneID);
 	    				iterator.remove();
@@ -141,7 +144,9 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 		    while (iterator.hasNext()) {
 		        Integer cloneID = iterator.next();
 		        Location location = CloneSpell.getCloneMap().get(cloneID);
-		        if (loc.distanceSquared(location) < radSq) {
+
+				if (!location.getWorld().getName().equals(locWorld.getName())) continue;
+		        if (location.distanceSquared(loc) < radSq) {
 		            for (CloneSpell cloneSpell : cloneSpellsTemp) {
 		                if (cloneSpell.getTemporaryCloneMap().containsKey(cloneID)) {
 		                    cloneSpell.getTemporaryCloneMap().remove(cloneID);

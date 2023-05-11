@@ -61,4 +61,19 @@ public class VolatileCodeDisabled extends VolatileCodeHandle {
 	public void removeFalsePlayer(int id) {
 
 	}
+
+	@Override
+	public boolean isRelatedToFalsePlayer(Display entityDisplay) {
+		return false;
+	}
+
+	@Override
+	public void updateFalsePlayer(Display entityDisplay) {
+
+	}
+
+	@Override
+	public void updateAllFalsePlayers() {
+
+	}
 }

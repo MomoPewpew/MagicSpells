@@ -38,6 +38,8 @@ import net.minecraft.world.phys.Vec3
 
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
 import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.entity.Entity
 
 import java.util.*
 import kotlin.collections.ArrayList
@@ -144,6 +146,8 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         entityPlayer.startAutoSpinAttack(ticks)
     }
 
+    private var displayEntityList: MutableMap<Display, ServerPlayer> = HashMap<Display, ServerPlayer>();
+
     override fun createFalsePlayer(player: Player?, location: Location?, pose: String, cloneEquipment: Boolean): Int {
         val entityPlayer = (player as CraftPlayer).handle
         val craftLocation = (location as Location)
@@ -223,10 +227,15 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 	        }
         })
 
-    	return clone.getId()
+        val markerEntity: Display = player.world.spawnEntity(Location(player.world, clone.x, clone.y, clone.z), org.bukkit.entity.EntityType.BLOCK_DISPLAY) as Display
+        markerEntity.displayHeight = 1.0f
+        markerEntity.displayWidth = 1.0f
+        displayEntityList[markerEntity] = clone //Create a Display Entity and spawn it ontop of the player. No collider means easy way to track positioning
+        return clone.id
     }
 
 	override fun removeFalsePlayer(id: Int) {
+        //Discovering now a possible problem with CloneMap being stored in the CloneSpell. I can't remove the clone if the display entity is destroyed.
         Bukkit.getOnlinePlayers().forEach(action = {
             val serverPlayer: ServerPlayer = (it as CraftPlayer).handle
 
@@ -234,5 +243,47 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
             connection.send(ClientboundRemoveEntitiesPacket(id))
         })
+        if(getDisplayFromID(id) != null){   //Dont want to keep removed clones in the track list
+            displayEntityList.remove(getDisplayFromID(id));
+        }
+    }
+
+    override fun updateFalsePlayer(entityDisplay: Display) {
+        if(!entityDisplay.isValid){
+            val clone: ServerPlayer? = displayEntityList.remove(entityDisplay)
+
+            if(clone != null){   //If the display entity was removed that implies that the false player should be removed as well.
+                removeFalsePlayer(clone.id)
+            }
+        } else{
+            val clone: ServerPlayer = displayEntityList[entityDisplay]
+                    ?: return
+            val displayLocation = entityDisplay.location
+            clone.setPos(displayLocation.x, displayLocation.y, displayLocation.z)    //Change the NPC Location to the displayEntities location
+            val teleportPacket = ClientboundTeleportEntityPacket(clone)      //Update it for all players on the server
+            for(player in Bukkit.getOnlinePlayers()){
+                (player as CraftPlayer).handle.connection.send(teleportPacket)
+            }
+        }
+    }
+
+    override fun isRelatedToFalsePlayer(entityDisplay: Display?): Boolean {
+        return displayEntityList.contains(entityDisplay);   //Returns true if the Display Entity relates to a Server Player
+                                                            //More going to be used for a Passive Spell to avoid bug triggers
+    }
+
+    override fun updateAllFalsePlayers() {
+        for (entityDisplay: Display in displayEntityList.keys){     //Update all EntityPlayer positions (Useful for a random trigger or AOE Effects)
+            updateFalsePlayer(entityDisplay)
+        }
+    }
+
+    private fun getDisplayFromID(id: Int): Display? {
+        for (entityDisplay: Display in displayEntityList.keys){     //Need to obtain the Display Entity from the entity id sometimes
+            if(displayEntityList[entityDisplay]!!.id == id){
+                return entityDisplay
+            }
+        }
+        return null
     }
 }

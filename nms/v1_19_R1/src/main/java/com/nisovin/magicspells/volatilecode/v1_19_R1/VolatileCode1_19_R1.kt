@@ -131,7 +131,19 @@ class VolatileCode1_19_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
     	return 0
     }
 
+    override fun isRelatedToFalsePlayer(entityDisplay: Display?): Boolean {
+        TODO("Not yet implemented")
+    }
+
 	override fun removeFalsePlayer(id: Int) {
+        TODO("Not yet implemented")
+    }
+
+    override fun updateFalsePlayer(entityDisplay: Display) {
+        TODO("Not yet implemented")
+    }
+
+    override fun updateAllFalsePlayers() {
         TODO("Not yet implemented")
     }
 }

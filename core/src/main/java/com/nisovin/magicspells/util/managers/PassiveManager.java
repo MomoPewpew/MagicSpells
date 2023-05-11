@@ -146,6 +146,8 @@ public class PassiveManager {
 		addListener("teleport", TeleportListener.class);
 		addListener("ticks", TicksListener.class);
 		addListener("unequip", UnequipListener.class);
+		addListener("clonekilled", CloneKillListener.class);
+		addListener("clonemoved", CloneMoveListener.class);
 		addListener("worldchange", WorldChangeListener.class);
 	}
 

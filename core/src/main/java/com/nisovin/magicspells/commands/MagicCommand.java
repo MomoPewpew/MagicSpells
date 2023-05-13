@@ -28,6 +28,8 @@ import com.nisovin.magicspells.util.*;
 import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.variables.Variable;
+import com.nisovin.magicspells.variables.variabletypes.GlobalVariable;
+import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.spells.PassiveSpell;
 import com.nisovin.magicspells.mana.ManaChangeReason;
 import com.nisovin.magicspells.handlers.MagicXpHandler;
@@ -505,7 +507,7 @@ public class MagicCommand extends BaseCommand {
 			Player player = null;
 			if (ACFBukkitUtil.isValidName(args[1])) {
 				player = Bukkit.getPlayer(args[1]);
-				if (player == null || !player.isOnline()) throw new ConditionFailedException("No matching player found: '" + args[1] + "'");
+				if ((player == null || !player.isOnline()) && !(variable instanceof GlobalVariable || variable instanceof GlobalStringVariable)) throw new ConditionFailedException("No matching player found: '" + args[1] + "'");
 			}
 			String playerName = player == null ? "-" : player.getName();
 

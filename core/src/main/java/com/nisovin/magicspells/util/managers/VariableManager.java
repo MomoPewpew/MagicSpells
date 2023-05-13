@@ -592,10 +592,11 @@ public class VariableManager {
 
 	public String processVariableMods(String var, VariableMod mod, Player playerToMod, Player caster, Player target, float power, String[] args) {
 		if (mod == null) return 0 + "";
-		if (playerToMod == null) return 0 + "";
 
 		Variable variable = getVariable(var);
 		if (variable == null) return 0 + "";
+
+		if (playerToMod == null && !(variable instanceof GlobalVariable || variable instanceof GlobalStringVariable)) return 0 + "";
 
 		return processVariableMods(variable, mod, playerToMod, caster, target, power, args);
 	}
@@ -638,7 +639,7 @@ public class VariableManager {
 		if (value == variable.getDefaultValue() && !(variable instanceof MetaVariable)) {
 			reset(variable, playerToMod);
 		} else {
-			set(variable, playerToMod.getName(), value);
+			set(variable, playerToMod == null ? "-" : playerToMod.getName(), value);
 		}
 
 		return Double.toString(value);

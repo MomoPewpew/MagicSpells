@@ -55,6 +55,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean resolveDamagePerBlock;
 	private boolean resolveVelocityPerBlock;
 	private boolean resolveMaxHeightPerBlock;
+	private boolean powerAffectsRadius;
 
 	private VelocityType velocityType;
 
@@ -75,6 +76,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		resolveDamagePerBlock = getConfigBoolean("resolve-damage-per-block", false);
 		resolveVelocityPerBlock = getConfigBoolean("resolve-velocity-per-block", false);
 		resolveMaxHeightPerBlock = getConfigBoolean("resolve-max-height-per-block", false);
+		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
 
 		String vType = getConfigString("velocity-type", "none");
 
@@ -190,6 +192,11 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		int vertRadius = this.vertRadius.get(caster, target, power, args);
 		int horizRadius = this.horizRadius.get(caster, target, power, args);
 
+		if (powerAffectsRadius) {
+			vertRadius = Math.round(vertRadius * power);
+			horizRadius = Math.round(horizRadius * power);
+		}
+
 		float throwChance = this.throwChance.get(caster, target, power, null) / 100;
 
 		for (int y = centerY - vertRadius; y <= centerY + vertRadius; y++) {
@@ -211,7 +218,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 								blocksToRemove.add(b);
 							}
 						} else if (!b.getType().isSolid()) blocksToRemove.add(b);
-            
+
 						continue;
 					}
 

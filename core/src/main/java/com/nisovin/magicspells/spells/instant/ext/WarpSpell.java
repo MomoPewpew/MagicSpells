@@ -4,6 +4,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.Spell.PostCastAction;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 
@@ -11,8 +12,6 @@ import com.Zrips.CMI.CMI;
 import com.Zrips.CMI.Modules.Warps.CmiWarp;
 
 public class WarpSpell extends InstantSpell {
-	private CmiWarp targetWarp;
-
 	private String targetWarpName;
 
 	private boolean rememberOffset;
@@ -26,24 +25,18 @@ public class WarpSpell extends InstantSpell {
 	}
 
 	@Override
-	public void initialize() {
-		super.initialize();
-
-		targetWarp = CMI.getInstance().getWarpManager().getWarp(targetWarpName);
+	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		CmiWarp targetWarp = CMI.getInstance().getWarpManager().getWarp(targetWarpName);
 
 		if (targetWarp == null) {
 			MagicSpells.error("WarpSpell '" + internalName + "' has an invalid warp defined!");
-			return;
+			return PostCastAction.ALREADY_HANDLED;
 		}
-	}
 
-
-	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		Location twLoc = ((Location) targetWarp.getLoc()).clone();
+		Location cLoc = caster.getLocation();
 
 		if (rememberOffset) {
-			Location cLoc = caster.getLocation();
 			Location nearestWarpLoc = null;
 			Double smallestDistSq = 0D;
 
@@ -69,6 +62,8 @@ public class WarpSpell extends InstantSpell {
 			}
 		}
 
+		twLoc.setPitch(cLoc.getPitch());
+		twLoc.setYaw(cLoc.getYaw());
 		caster.teleport(twLoc);
 
 		return PostCastAction.HANDLE_NORMALLY;

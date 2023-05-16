@@ -4,7 +4,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.Spell.PostCastAction;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 

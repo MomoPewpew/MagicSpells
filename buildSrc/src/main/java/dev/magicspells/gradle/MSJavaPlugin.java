@@ -25,7 +25,6 @@ public class MSJavaPlugin implements Plugin<Project> {
         repositories.mavenLocal();
 
         String[] mavenUrls = new String[] {
-                "https://repo.dmulloy2.net/nexus/repository/public/",
                 "https://repo.md-5.net/content/repositories/releases/",
                 "https://papermc.io/repo/repository/maven-public/",
                 "https://repo.aikar.co/content/groups/aikar/",

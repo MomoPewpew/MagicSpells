@@ -13,6 +13,7 @@ import com.Zrips.CMI.Modules.Warps.CmiWarp;
 
 public class WarpSpell extends InstantSpell {
 	private String targetWarpName;
+	private String warpNameContains;
 
 	private boolean rememberOffset;
 
@@ -20,6 +21,7 @@ public class WarpSpell extends InstantSpell {
 		super(config, spellName);
 
 		targetWarpName = getConfigString("warp-name", null);
+		warpNameContains = getConfigString("warp-name-contains", null);
 
 		rememberOffset = getConfigBoolean("remember-offset", true);
 	}
@@ -41,6 +43,8 @@ public class WarpSpell extends InstantSpell {
 			Double smallestDistSq = 0D;
 
 			for (CmiWarp warp : CMI.getInstance().getWarpManager().getWarps().values()) {
+				if (warpNameContains != null && !warp.getName().contains(warpNameContains)) continue;
+
 				Location wLoc = (Location) warp.getLoc();
 
 				if (!cLoc.getWorld().getName().equals(wLoc.getWorld().getName())) continue;

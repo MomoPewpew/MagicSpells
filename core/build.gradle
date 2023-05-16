@@ -4,6 +4,12 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.0"
 }
 
+repositories {
+    flatDir {
+        dirs '../libs'
+    }
+}
+
 dependencies {
     shadow(group: "org.apache.commons", name: "commons-math4-core", version: "4.0-beta1")
     shadow(group: "com.github.Chronoken", name: "EffectLib", version: "49377cb")
@@ -15,6 +21,8 @@ dependencies {
     shadow(project(path: ":nms:v1_19_R2", configuration: "reobf"))
     shadow(project(path: ":nms:v1_19_R3", configuration: "reobf"))
 
+    implementation(name:'CMI-API9.5.0.8', ext:'jar')
+    implementation(name:'CMILib1.2.4.5', ext:'jar')
     implementation(group: "com.comphenix.protocol", name: "ProtocolLib", version: "5.0.0-SNAPSHOT") { transitive = false }
     implementation(group: "com.github.libraryaddict", name: "LibsDisguises", version: "v10.0.25") { transitive = false }
     implementation(group: "com.github.MilkBowl", name: "VaultAPI", version: "master-SNAPSHOT") { transitive = false }

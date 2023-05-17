@@ -11,14 +11,14 @@ import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
 
 public class TxtUtil {
-	
+
 	public static String getStringNumber(double number, int places) {
 		if (places < 0) return number + "";
 		if (places == 0) return (int) Math.round(number) + "";
 		int x = (int) Math.pow(10, places);
 		return ((double) Math.round(number * x) / x) + "";
 	}
-	
+
 	public static String getStringNumber(String textNumber, int places) {
 		String ret;
 		try {
@@ -29,10 +29,30 @@ public class TxtUtil {
 		return ret;
 	}
 
+	public static String getProgressBar(double number, double max) {
+		String bar = "[";
+
+		double progress = Math.min(number / max, 1);
+
+		long progressPer100 = Math.round(Math.floor(progress * 100));
+		long progressPer10 = Math.round(Math.floor(progress * 10));
+
+		for (int n = 0; n < progressPer10; n++) {
+			bar += "\u25A0";
+		}
+		for (int n = 0; n < (10 - progressPer10); n++) {
+			bar += "-";
+		}
+
+		bar += "]" + progressPer100 + "%";
+
+		return bar;
+	}
+
 	public static String escapeJSON(String str) {
 		return str.replaceAll("[\"\\\\]", "\\\\$0");
 	}
-	
+
 	public static List<String> tabCompleteSpellName(CommandSender sender, String partial) {
 		List<String> matches = new ArrayList<>();
 		if (sender instanceof Player player) {

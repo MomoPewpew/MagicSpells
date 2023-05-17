@@ -1546,7 +1546,7 @@ public class MagicSpells extends JavaPlugin {
 		return matcher.appendTail(builder).toString();
 	}
 
-	private static final Pattern VARIABLE_PATTERN = Pattern.compile("%(var|castervar|targetvar|playervar:(" + RegexUtil.USERNAME_REGEXP + ")):(\\w+)(?::(\\d+))?%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	private static final Pattern VARIABLE_PATTERN = Pattern.compile("%(var|castervar|targetvar|varasbar|playervar:(" + RegexUtil.USERNAME_REGEXP + ")):(\\w+)(?::(\\w+))?%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 	public static String doVariableReplacements(String message, LivingEntity caster, LivingEntity target) {
 		if (message == null || message.isEmpty()) return message;
 
@@ -1555,6 +1555,8 @@ public class MagicSpells extends JavaPlugin {
 
 		Matcher matcher = VARIABLE_PATTERN.matcher(message);
 		StringBuilder builder = new StringBuilder();
+
+		boolean placeStringIsNumeric = true;
 
 		while (matcher.find()) {
 			String placeString = matcher.group(4);
@@ -1567,7 +1569,8 @@ public class MagicSpells extends JavaPlugin {
 				try {
 					place = Integer.parseInt(placeString);
 				} catch (NumberFormatException ignored) {
-					continue;
+					placeStringIsNumeric = false;
+					if (!matcher.group(1).toLowerCase().equals("varasbar")) continue;
 				}
 			}
 
@@ -1595,6 +1598,23 @@ public class MagicSpells extends JavaPlugin {
 					}
 
 					yield variable.getStringValue(playerTarget);
+				}
+				case "varasbar" -> {
+					if (playerCaster == null) yield null;
+
+					double max = place;
+
+					if (!placeStringIsNumeric) {
+						Variable compareVar = getVariableManager().getVariable(placeString);
+
+						if (compareVar != null) {
+							max = compareVar.getValue(playerCaster);
+						}
+					}
+
+					if (max == -1) max = 100;
+
+					yield TxtUtil.getProgressBar(variable.getValue(playerCaster), max);
 				}
 				default -> {
 					String player = matcher.group(2);

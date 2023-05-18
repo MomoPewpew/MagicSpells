@@ -1,13 +1,17 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import java.io.File;
-import java.util.List;
-import java.util.Random;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.io.IOException;
 import java.io.FileInputStream;
 
+import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
+import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
+import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldedit.regions.Region;
+import com.sk89q.worldguard.bukkit.BukkitUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -18,6 +22,7 @@ import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.util.BlockVector;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
@@ -53,6 +58,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private File file;
 	private Clipboard clipboard;
+	private Clipboard ogClipboard;
 
 	private ConfigData<Integer> yOffset;
 	private ConfigData<Integer> undoDelay;
@@ -256,25 +262,74 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			this.target = target.clone();
 			this.clipboard = PasteSpell.this.clipboard;
 
-			this.parseClipboard();
+			this.storeStartRegion();
 
-	        BlockVector3 origin = this.clipboard.getOrigin();
+			int numBlocks = this.parseClipboard();
 
-        	if (PasteSpell.this.dismantleFirst && PasteSpell.this.pasteAir) {
-    	        for (BlockVector3 pos : this.blockVectors) {
-    				Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
-    				if (!bl.getBlockData().getMaterial().isAir()) {
-    					this.airVectors.add(pos);
-    				}
-    	        }
+			startBuilder(caster, target, power, args);
 
-    	        if (this.airVectors.size() > 0) this.firstWithdrawInit(origin);
-    	        else if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
+			int undoDelay = PasteSpell.this.undoDelay.get(caster, null, power, args);	//Timing for this will be very difficult :\
+																							//Just calculating the max blocks and setting up timer around that value
 
-	        } else {
-    	        if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
-    	        if (PasteSpell.this.pasteAir && this.airVectors.size() > 0) this.firstWithdrawInit(origin);
-	        }
+			Bukkit.getLogger().info("" + ((numBlocks * buildInterval) + undoDelay));
+
+
+			if(undoDelay > 0){
+				MagicSpells.scheduleDelayedTask(() ->{
+					clipboard = ogClipboard;
+					this.parseClipboard();
+					startBuilder(caster, target, power, args);
+					Bukkit.getLogger().info("Undoing!");
+				}, (numBlocks * buildInterval) + undoDelay);
+			}
+		}
+
+		private void startBuilder(LivingEntity caster, Location target, float power, String[] args){
+
+			BlockVector3 origin = this.clipboard.getOrigin();
+
+			if (PasteSpell.this.dismantleFirst && PasteSpell.this.pasteAir) {
+				for (BlockVector3 pos : this.blockVectors) {
+					Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
+					if (!bl.getBlockData().getMaterial().isAir()) {
+						this.airVectors.add(pos);
+					}
+				}
+
+				if (this.airVectors.size() > 0) this.firstWithdrawInit(origin);
+				else if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
+
+			} else {
+				if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
+				if (PasteSpell.this.pasteAir && this.airVectors.size() > 0) this.firstWithdrawInit(origin);
+			}
+		}
+
+		private void storeStartRegion(){
+			Region region = clipboard.getRegion();
+
+			BlockVector3 minPos = region.getMinimumPoint();
+			BlockVector3 maxPos = region.getMaximumPoint();
+			BlockVector3 origin = clipboard.getOrigin();
+
+			Block minBlock = this.target.getBlock().getRelative(minPos.getX() - origin.getX(), minPos.getY() - origin.getY(), minPos.getZ() - origin.getZ());
+			Block maxBlock = this.target.getBlock().getRelative(maxPos.getX() - origin.getX(), maxPos.getY() - origin.getY(), maxPos.getZ() - origin.getZ());
+
+			CuboidRegion cuboidRegion = new CuboidRegion(BukkitAdapter.adapt(this.target.getWorld()),
+					BlockVector3.at(minBlock.getX(), minBlock.getY(), minBlock.getZ()),
+					BlockVector3.at(maxBlock.getX(), maxBlock.getY(), maxBlock.getZ()));
+
+			BlockArrayClipboard bAClipboard = new BlockArrayClipboard(cuboidRegion);
+			EditSession session = WorldEdit.getInstance().newEditSessionBuilder().world(cuboidRegion.getWorld()).maxBlocks(-1).build();
+
+			ForwardExtentCopy fec = new ForwardExtentCopy(session, cuboidRegion, bAClipboard, cuboidRegion.getMinimumPoint());
+			try {
+				Operations.complete(fec);
+			} catch (WorldEditException e) {
+				throw new RuntimeException(e);
+			}
+			bAClipboard.setOrigin(BlockVector3.at(this.target.getX(), this.target.getY(), this.target.getZ()));
+			ogClipboard = bAClipboard;
 		}
 
 		private void firstBuildInit(BlockVector3 origin) {
@@ -301,7 +356,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			}
 		}
 
-		private void parseClipboard() {
+		private int parseClipboard() {
+			int changingBlocks = 0;
 		    this.blockVectors = new ArrayList<BlockVector3>();
 		    this.airVectors = new ArrayList<BlockVector3>();
 
@@ -316,10 +372,12 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					if (data.getMaterial().isAir()) {
 						this.airVectors.add(pos);
 					} else {
+						changingBlocks++;
 						this.blockVectors.add(pos);
 					}
 				}
 	        }
+			return changingBlocks;
 		}
 
 		private void intialize(BlockVector3 pos) {

@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.volatilecode;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.bukkit.entity.*;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
@@ -39,5 +40,7 @@ public abstract class VolatileCodeHandle {
 	public abstract void updateFalsePlayer(Display entityDisplay);
 
 	public abstract void updateAllFalsePlayers();
+
+	public String nicknamePlayer(Player player, String nickname) { return null; } //Not defining as abstract so no updating unused versions
 
 }

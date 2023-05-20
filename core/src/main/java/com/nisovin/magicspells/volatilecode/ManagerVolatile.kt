@@ -3,6 +3,7 @@ package com.nisovin.magicspells.volatilecode
 import org.bukkit.Bukkit
 
 import com.nisovin.magicspells.MagicSpells
+import org.bukkit.plugin.Plugin
 
 object ManagerVolatile {
 
@@ -13,6 +14,10 @@ object ManagerVolatile {
 
         override fun scheduleDelayedTask(task: Runnable?, delay: Long): Int {
             return MagicSpells.scheduleDelayedTask(task, delay)
+        }
+
+        override fun getInstance(): Plugin {
+            return MagicSpells.getInstance()
         }
     }
 

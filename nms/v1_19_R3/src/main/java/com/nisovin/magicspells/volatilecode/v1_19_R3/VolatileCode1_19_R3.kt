@@ -158,54 +158,54 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
         val clone = ServerPlayer((Bukkit.getServer() as CraftServer).server, (player.world as CraftWorld).handle, gp)
 
-		var yOffset = 0.0
+        var yOffset = 0.0
 
-		if (pose == "SLEEPING") {
-			yOffset = 0.15
-		} else if (pose == "SWIMMING" || pose == "FALL_FLYING") {
+        if (pose == "SLEEPING") {
+            yOffset = 0.15
+        } else if (pose == "SWIMMING" || pose == "FALL_FLYING") {
             yOffset = -0.15
         }
 
         clone.setPos(craftLocation.x, craftLocation.y + yOffset, craftLocation.z)
         clone.setRot(player.location.yaw, player.location.pitch)
 
-		var direction = Direction.WEST
+        var direction = Direction.WEST
 
-		if (player.location.yaw >= 135f || player.location.yaw < -135f) {
-			direction = Direction.NORTH
-		} else if (player.location.yaw >= -135f && player.location.yaw < -45f) {
-			direction = Direction.EAST
-		} else if (player.location.yaw >= -45f && player.location.yaw < 45f) {
-			direction = Direction.SOUTH
-		}
+        if (player.location.yaw >= 135f || player.location.yaw < -135f) {
+            direction = Direction.NORTH
+        } else if (player.location.yaw >= -135f && player.location.yaw < -45f) {
+            direction = Direction.EAST
+        } else if (player.location.yaw >= -45f && player.location.yaw < 45f) {
+            direction = Direction.SOUTH
+        }
 
         val bedPos = BlockPos(craftLocation.getBlockX(), craftLocation.getWorld().getMinHeight(), craftLocation.getBlockZ())
         val setBedPacket = ClientboundBlockUpdatePacket(bedPos, Blocks.WHITE_BED.defaultBlockState().setValue(BedBlock.FACING, direction.getOpposite()).setValue(BedBlock.PART, BedPart.HEAD))
         val teleportNpcPacket = ClientboundTeleportEntityPacket(clone)
 
-		//show outer skin layer
-    	clone.entityData.set(EntityDataAccessor(17, EntityDataSerializers.BYTE), 127.toByte())
+        //show outer skin layer
+        clone.entityData.set(EntityDataAccessor(17, EntityDataSerializers.BYTE), 127.toByte())
 
-        if(pose != ""){
-			if (enumValues<nmsEntityPose>().map { it.name }.contains(pose)) {
-			    clone.pose = nmsEntityPose.valueOf(pose)
+        if (pose != "") {
+            if (enumValues<nmsEntityPose>().map { it.name }.contains(pose)) {
+                clone.pose = nmsEntityPose.valueOf(pose)
 
-			    if (pose == "SLEEPING") {
-			    	clone.entityData.set(EntityDataSerializers.OPTIONAL_BLOCK_POS.createAccessor(14), Optional.of(bedPos))
-			    }
-			}
+                if (pose == "SLEEPING") {
+                    clone.entityData.set(EntityDataSerializers.OPTIONAL_BLOCK_POS.createAccessor(14), Optional.of(bedPos))
+                }
+            }
         }
 
-		val equipment: MutableList<com.mojang.datafixers.util.Pair<EquipmentSlot, net.minecraft.world.item.ItemStack>> = mutableListOf()
+        val equipment: MutableList<com.mojang.datafixers.util.Pair<EquipmentSlot, net.minecraft.world.item.ItemStack>> = mutableListOf()
 
-		if (cloneEquipment) {
-			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.FEET, CraftItemStack.asNMSCopy(player.inventory.boots))
-			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.LEGS, CraftItemStack.asNMSCopy(player.inventory.leggings))
-			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.CHEST, CraftItemStack.asNMSCopy(player.inventory.chestplate))
-			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.HEAD, CraftItemStack.asNMSCopy(player.inventory.helmet))
-			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.MAINHAND, CraftItemStack.asNMSCopy(player.inventory.itemInMainHand))
-			equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.OFFHAND, CraftItemStack.asNMSCopy(player.inventory.itemInOffHand))
-		}
+        if (cloneEquipment) {
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.FEET, CraftItemStack.asNMSCopy(player.inventory.boots))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.LEGS, CraftItemStack.asNMSCopy(player.inventory.leggings))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.CHEST, CraftItemStack.asNMSCopy(player.inventory.chestplate))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.HEAD, CraftItemStack.asNMSCopy(player.inventory.helmet))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.MAINHAND, CraftItemStack.asNMSCopy(player.inventory.itemInMainHand))
+            equipment += Pair<EquipmentSlot, nmsItemStack>(EquipmentSlot.OFFHAND, CraftItemStack.asNMSCopy(player.inventory.itemInOffHand))
+        }
 
         Bukkit.getOnlinePlayers().forEach(action = {
             val serverPlayer: ServerPlayer = (it as CraftPlayer).handle
@@ -217,14 +217,14 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
             connection.send(ClientboundSetEntityDataPacket(clone.getId(), clone.entityData.getNonDefaultValues()))
             connection.send(ClientboundRotateHeadPacket(clone, (player.location.yaw % 360.0 * 256 / 360).toInt().toByte()))
 
-    		if (cloneEquipment) {
-            	connection.send(ClientboundSetEquipmentPacket(clone.id, equipment));
-	        }
+            if (cloneEquipment) {
+                connection.send(ClientboundSetEquipmentPacket(clone.id, equipment));
+            }
 
-	        if (pose == "SLEEPING") {
-				connection.send(setBedPacket)
-				connection.send(teleportNpcPacket)
-	        }
+            if (pose == "SLEEPING") {
+                connection.send(setBedPacket)
+                connection.send(teleportNpcPacket)
+            }
         })
 
         val markerEntity: Display = player.world.spawnEntity(Location(player.world, clone.x, clone.y, clone.z), org.bukkit.entity.EntityType.BLOCK_DISPLAY) as Display
@@ -234,7 +234,7 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         return clone.id
     }
 
-	override fun removeFalsePlayer(id: Int) {
+    override fun removeFalsePlayer(id: Int) {
         //Discovering now a possible problem with CloneMap being stored in the CloneSpell. I can't remove the clone if the display entity is destroyed.
         Bukkit.getOnlinePlayers().forEach(action = {
             val serverPlayer: ServerPlayer = (it as CraftPlayer).handle
@@ -243,25 +243,25 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
             connection.send(ClientboundRemoveEntitiesPacket(id))
         })
-        if(getDisplayFromID(id) != null){   //Dont want to keep removed clones in the track list
+        if (getDisplayFromID(id) != null) {   //Dont want to keep removed clones in the track list
             displayEntityList.remove(getDisplayFromID(id));
         }
     }
 
     override fun updateFalsePlayer(entityDisplay: Display) {
-        if(!entityDisplay.isValid){
+        if (!entityDisplay.isValid) {
             val clone: ServerPlayer? = displayEntityList.remove(entityDisplay)
 
-            if(clone != null){   //If the display entity was removed that implies that the false player should be removed as well.
+            if (clone != null) {   //If the display entity was removed that implies that the false player should be removed as well.
                 removeFalsePlayer(clone.id)
             }
-        } else{
+        } else {
             val clone: ServerPlayer = displayEntityList[entityDisplay]
                     ?: return
             val displayLocation = entityDisplay.location
             clone.setPos(displayLocation.x, displayLocation.y, displayLocation.z)    //Change the NPC Location to the displayEntities location
             val teleportPacket = ClientboundTeleportEntityPacket(clone)      //Update it for all players on the server
-            for(player in Bukkit.getOnlinePlayers()){
+            for (player in Bukkit.getOnlinePlayers()) {
                 (player as CraftPlayer).handle.connection.send(teleportPacket)
             }
         }
@@ -269,21 +269,35 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
     override fun isRelatedToFalsePlayer(entityDisplay: Display?): Boolean {
         return displayEntityList.contains(entityDisplay);   //Returns true if the Display Entity relates to a Server Player
-                                                            //More going to be used for a Passive Spell to avoid bug triggers
+        //More going to be used for a Passive Spell to avoid bug triggers
     }
 
     override fun updateAllFalsePlayers() {
-        for (entityDisplay: Display in displayEntityList.keys){     //Update all EntityPlayer positions (Useful for a random trigger or AOE Effects)
+        for (entityDisplay: Display in displayEntityList.keys) {     //Update all EntityPlayer positions (Useful for a random trigger or AOE Effects)
             updateFalsePlayer(entityDisplay)
         }
     }
 
     private fun getDisplayFromID(id: Int): Display? {
-        for (entityDisplay: Display in displayEntityList.keys){     //Need to obtain the Display Entity from the entity id sometimes
-            if(displayEntityList[entityDisplay]!!.id == id){
+        for (entityDisplay: Display in displayEntityList.keys) {     //Need to obtain the Display Entity from the entity id sometimes
+            if (displayEntityList[entityDisplay]!!.id == id) {
                 return entityDisplay
             }
         }
         return null
+    }
+
+    override fun nicknamePlayer(player: Player?, nickname: String?): String {
+        val sPlayer: ServerPlayer = ((player as CraftPlayer)).handle;
+        val OGName = player.name;
+        val newGP = GameProfile(player.uniqueId, nickname);
+        sPlayer.gameProfile = newGP;
+
+        for (otherPlayer in Bukkit.getOnlinePlayers()) {
+            if (otherPlayer == player) continue
+            otherPlayer.hidePlayer(helper.instance, player)
+            otherPlayer.showPlayer(helper.instance, player)
+        }
+        return OGName;
     }
 }

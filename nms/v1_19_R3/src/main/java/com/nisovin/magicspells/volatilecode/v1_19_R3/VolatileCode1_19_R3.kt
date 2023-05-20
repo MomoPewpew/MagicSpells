@@ -289,8 +289,16 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
 
     override fun nicknamePlayer(player: Player?, nickname: String?): String {
         val sPlayer: ServerPlayer = ((player as CraftPlayer)).handle;
-        val OGName = player.name;
+        val playerGP = sPlayer.gameProfile;
+
         val newGP = GameProfile(player.uniqueId, nickname);
+        try {
+            val skinProp = playerGP.properties.get("textures").iterator().next();
+            newGP.properties.put("texture", Property("textures", skinProp.value, skinProp.signature));
+        } catch(e: NoSuchElementException){
+            player.sendMessage("Failed to update skin. You might need to load your skin URL again!") //I got NoSuchElement when casting nickname a second time
+        }
+        val OGName = player.name;
         sPlayer.gameProfile = newGP;
 
         for (otherPlayer in Bukkit.getOnlinePlayers()) {

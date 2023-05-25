@@ -475,7 +475,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (this.stop) return;
 
 			for (BlockFace face : CARDINAL_BLOCK_FACES) {
-				if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return; //TODO: Make this something more elegant
+				if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 
 				Block to = block.getRelative(face);
 				BlockVector3 pos = BlockVector3.at(x + face.getModX(), y + face.getModY(), z + face.getModZ());
@@ -503,7 +503,38 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				}, duration);
 	        }
 			if (this.workingBlocks < 1 && !this.blockVectors.isEmpty()) {
-				this.reInitialize();
+				//this.reInitialize();
+
+				BlockVector3 pos = this.blockVectors.get(0);
+
+				int _x = pos.getX() - this.clipboard.getOrigin().getX();
+				int _y = pos.getY() - this.clipboard.getOrigin().getY();
+				int _z = pos.getZ() - this.clipboard.getOrigin().getZ();
+
+				Location loc = this.target.clone().add(_x, _y, _z);
+				Block startingBlock = loc.getBlock();
+				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
+
+				if(startingBlock.getType() == data.getMaterial()){
+					this.blockVectors.remove(0);
+				}
+
+				if(!this.blockVectors.isEmpty())
+					this.intialize(this.blockVectors.get(0));
+				else{
+					if(undoDelay > 0){
+						MagicSpells.scheduleDelayedTask(() ->{
+							clipboard = ogClipboard;
+							this.parseClipboard();
+							undoDelay = 0;
+							if(instantUndo){
+								undoInstant();
+							}else {
+								startBuilder();
+							}
+						}, undoDelay);
+					}
+				}
 			}
             else if(this.blockVectors.isEmpty()) {
                 if(undoDelay > 0){

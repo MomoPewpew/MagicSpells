@@ -115,7 +115,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private final EntityPulserTicker ticker;
 
-	private List<String> mountList;
+	private Set<String> mountList;
+	private boolean removeMountsOnAnyDeath;
 
 	// DEBUG INFO: level 2, invalid potion effect on internalname spell data
 	public SpawnEntitySpell(MagicConfig config, String spellName) {
@@ -230,7 +231,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 		}
 
-		mountList = getConfigStringList("mounts", null);
+		mountList = getConfigKeys("mounts");
+		removeMountsOnAnyDeath = getConfigBoolean("remove-mounts-if-any-die", true);
 
 		pulsers = new HashMap<>();
 		ticker = new EntityPulserTicker();
@@ -451,7 +453,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 		);
 
-		if(!mountList.isEmpty()) createMounts(entity);
+		if(!mountList.isEmpty()) createMounts(caster, target, power, args, entity);
 
 		int targetInterval = this.targetInterval.get(caster, null, power, args);
 		if (targetInterval > 0) new Targeter(caster, entity, power, args);
@@ -539,18 +541,50 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		}
 	}
 
-	private void createMounts(LivingEntity head){
-		List<Entity> riding = new ArrayList<>();
-		for(String entityType : mountList){
-			if(EntityType.valueOf(entityType.toUpperCase()) != EntityType.UNKNOWN){
-				//Spawn all the entities
-				riding.add(head.getWorld().spawnEntity(head.getLocation(), EntityType.valueOf(entityType.toUpperCase())));
-			}
+	private void createMounts(LivingEntity caster, LivingEntity target, float power, String[] args, LivingEntity head){
+
+		List<Entity> ents = new ArrayList<>();
+
+		//All need to be unique names
+		for(String sectionName : mountList){
+			ConfigurationSection section = getConfigSection("mounts." + sectionName);
+			EntityData mountData = new EntityData(section);
+			Entity mount = mountData.spawn(head.getLocation(), e -> {
+				{
+					LivingEntity preSpawned = (LivingEntity) e;
+					prepMob(caster, target, preSpawned, power, args);
+
+					int fireTicks = this.fireTicks.get(caster, target, power, args);
+					if (fireTicks > 0) preSpawned.setFireTicks(fireTicks);
+					if (potionEffects != null) preSpawned.addPotionEffects(potionEffects);
+
+					// Apply attributes
+					if (attributes != null) MagicSpells.getAttributeManager().addEntityAttributes(preSpawned, attributes);
+
+					if (removeAI) {
+						if (addLookAtPlayerAI) {
+							if (preSpawned instanceof Mob mob) {
+								MobGoals mobGoals = Bukkit.getMobGoals();
+								mobGoals.removeAllGoals(mob);
+								mobGoals.addGoal(mob, 1, new LookAtEntityGoal(mob, HumanEntity.class, 10.0F, 1.0F));
+							}
+						} else {
+							preSpawned.setAI(false);
+						}
+					}
+					preSpawned.setAI(!noAI);
+					preSpawned.setInvulnerable(invulnerable);
+
+					if (target != null) MobUtil.setTarget(preSpawned, target);
+				}
+			});
+			ents.add(mount);
 		}
-		for(int i = riding.size()-1; i > 0; i--){
-			riding.get(i).addPassenger(riding.get(i-1));
+
+		for(int i = ents.size()-1; i > 0; i--){
+			ents.get(i).addPassenger(ents.get(i-1));
 		}
-		riding.get(0).addPassenger(head);
+		ents.get(0).addPassenger(head);
 	}
 
 	@EventHandler
@@ -564,7 +598,31 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	}
 
 	private void entityDeath(LivingEntity entity) {
-		if (!entities.contains(entity)) return;
+		if (!entities.contains(entity)) {
+			if(!removeMountsOnAnyDeath) return;
+			List<Entity> forRemoval = new ArrayList<>();
+			Entity _ent = entity;
+			Entity _riding = entity.getVehicle();
+
+			while(_ent.getPassengers().size() > 0){
+				forRemoval.add(_ent);
+				_ent = _ent.getPassengers().get(0);
+			}
+			while(_riding != null){
+				forRemoval.add(_riding);
+				_riding = _riding.getVehicle();
+			}
+
+			if(_ent instanceof LivingEntity && entities.contains(_ent)){
+				for(Entity ent : forRemoval){
+					ent.remove();
+				}
+				_ent.remove();
+			}
+
+
+			return;
+		}
 		if (removeMob) {
 			if(!mountList.isEmpty()){
 				//Removing the mounts of the entity is removed

@@ -162,6 +162,14 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent event) {
 		Player pl = event.getEntity();
+		UUID _caster = null;
+		for(Levitator lev : levitating.values()){
+			if(lev.target instanceof Player && pl.getUniqueId().equals(lev.target.getUniqueId())){
+				_caster = lev.caster.getUniqueId();
+				break;
+			}
+		}
+		if(_caster != null) levitating.remove(_caster).stop();
 		if (!isLevitating(pl)) return;
 		levitating.remove(pl.getUniqueId()).stop();
 	}

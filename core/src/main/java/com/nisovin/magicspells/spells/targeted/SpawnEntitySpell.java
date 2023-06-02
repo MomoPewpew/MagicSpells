@@ -115,6 +115,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private final EntityPulserTicker ticker;
 
+	private List<String> mountList;
+
 	// DEBUG INFO: level 2, invalid potion effect on internalname spell data
 	public SpawnEntitySpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -227,6 +229,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				}
 			}
 		}
+
+		mountList = getConfigStringList("mounts", null);
 
 		pulsers = new HashMap<>();
 		ticker = new EntityPulserTicker();
@@ -447,6 +451,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 		);
 
+		if(!mountList.isEmpty()) createMounts(entity);
+
 		int targetInterval = this.targetInterval.get(caster, null, power, args);
 		if (targetInterval > 0) new Targeter(caster, entity, power, args);
 
@@ -464,6 +470,15 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		entities.add(entity);
 		if (duration > 0) {
 			MagicSpells.scheduleDelayedTask(() -> {
+				if(!mountList.isEmpty()){
+					//Removing the mounts of the entity is removed
+					Entity _riding = entity.getVehicle();
+					while(_riding != null){
+						Entity _prev = _riding;
+						_riding = _riding.getVehicle();
+						_prev.remove();
+					}
+				}
 				entity.remove();
 				entities.remove(entity);
 			}, duration);
@@ -524,6 +539,20 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		}
 	}
 
+	private void createMounts(LivingEntity head){
+		List<Entity> riding = new ArrayList<>();
+		for(String entityType : mountList){
+			if(EntityType.valueOf(entityType.toUpperCase()) != EntityType.UNKNOWN){
+				//Spawn all the entities
+				riding.add(head.getWorld().spawnEntity(head.getLocation(), EntityType.valueOf(entityType.toUpperCase())));
+			}
+		}
+		for(int i = riding.size()-1; i > 0; i--){
+			riding.get(i).addPassenger(riding.get(i-1));
+		}
+		riding.get(0).addPassenger(head);
+	}
+
 	@EventHandler
 	private void onEntityDeath(EntityDeathEvent event) {
 		entityDeath(event.getEntity());
@@ -537,6 +566,15 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private void entityDeath(LivingEntity entity) {
 		if (!entities.contains(entity)) return;
 		if (removeMob) {
+			if(!mountList.isEmpty()){
+				//Removing the mounts of the entity is removed
+				Entity _riding = entity.getVehicle();
+				while(_riding != null){
+					Entity _prev = _riding;
+					_riding = _riding.getVehicle();
+					_prev.remove();
+				}
+			}
 			entities.remove(entity);
 			if (pulsers.containsKey(entity)) pulsers.remove(entity);
 		}

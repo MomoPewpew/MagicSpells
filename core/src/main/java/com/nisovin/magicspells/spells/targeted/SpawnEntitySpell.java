@@ -453,7 +453,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 		);
 
-		if(!mountList.isEmpty()) createMounts(caster, target, power, args, entity);
+		if(mountList != null && !mountList.isEmpty()) createMounts(caster, target, power, args, entity);
 
 		int targetInterval = this.targetInterval.get(caster, null, power, args);
 		if (targetInterval > 0) new Targeter(caster, entity, power, args);

@@ -57,7 +57,7 @@ Being able to toggle between half spheres and whole spheres (so half sphere woul
     public FillSpell(MagicConfig config, String spellName) {
         super(config, spellName);
 
-        castAtCaster = getConfigBoolean("cast-at-caster", false);
+        castAtCaster = getConfigBoolean("point-blank", false);
         fullSphere = getConfigBoolean("full-sphere", true);
         maxFillBlocks = getConfigInt("max-fill-blocks", -1);
 
@@ -67,7 +67,7 @@ Being able to toggle between half spheres and whole spheres (so half sphere woul
         toReplace = getConfigStringList("to-replace", defaultToReplaceList);
         replaceWith = getConfigStringList("replace-with", defaultToPlaceList);
 
-        radius = getConfigInt("block-radius", 5);
+        radius = getConfigInt("radius", 5);
     }
 
     @Override

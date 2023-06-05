@@ -298,7 +298,7 @@ public class EntityData {
 			addOptBoolean(transformers, config, "shadow", TextDisplay.class, TextDisplay::setShadowed);
 			addOptBoolean(transformers, config, "see-through", TextDisplay.class, TextDisplay::setSeeThrough);
 			addOptBoolean(transformers, config, "default-background", TextDisplay.class, TextDisplay::setDefaultBackground);
-			addOptEnum(transformers, config, "alignment", TextDisplay.class, TextDisplay.TextAlignment.class, TextDisplay::setAlignment);
+			//addOptEnum(transformers, config, "alignment", TextDisplay.class, TextDisplay.TextAlignment.class, TextDisplay::setAlignment);
 		}
 
 		for (EntityType entityType : EntityType.values()) {

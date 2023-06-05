@@ -1,18 +1,16 @@
 package com.nisovin.magicspells.spelleffects.effecttypes;
 
-import java.util.Set;
+import java.util.Map;
 import java.util.List;
-import java.util.Random;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.util.Vector;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
@@ -28,11 +26,9 @@ import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
 public class NovaEffect extends SpellEffect {
 
-	private Random random;
-
 	private List<BlockData> blockDataList;
 
-	private BlockData blockData;
+	private ConfigData<BlockData> blockData;
 
 	private ConfigData<Double> range;
 
@@ -49,7 +45,6 @@ public class NovaEffect extends SpellEffect {
 		List<String> materialList = config.getStringList("types");
 		if (!materialList.isEmpty()) {
 			blockDataList = new ArrayList<>();
-
 			for (String str : materialList) {
 				BlockData data;
 				try {
@@ -68,19 +63,7 @@ public class NovaEffect extends SpellEffect {
 			}
 		}
 
-		String blockName = config.getString("type", "fire");
-
-		try {
-			blockData = Bukkit.createBlockData(blockName.toLowerCase());
-		} catch (IllegalArgumentException e) {
-			blockData = null;
-			MagicSpells.error("Wrong nova type defined: '" + blockName + "'");
-		}
-
-		if (blockData != null && !blockData.getMaterial().isBlock()) {
-			blockData = null;
-			MagicSpells.error("Wrong nova type defined: '" + blockName + "'");
-		}
+		blockData = ConfigDataUtil.getBlockData(config, "type", Bukkit.createBlockData(Material.FIRE));
 
 		range = ConfigDataUtil.getDouble(config, "range", 20);
 
@@ -92,8 +75,6 @@ public class NovaEffect extends SpellEffect {
 
 		circleShape = config.getBoolean("circle-shape", false);
 		removePreviousBlocks = config.getBoolean("remove-previous-blocks", true);
-
-		random = ThreadLocalRandom.current();
 	}
 
 	@Override
@@ -103,53 +84,52 @@ public class NovaEffect extends SpellEffect {
 		double range = this.range.get(data);
 		range = Math.max(Math.min(range, MagicSpells.getGlobalRadius()), 1);
 
-		// Get nearby players
-		Collection<Entity> nearbyEntities = location.getWorld().getNearbyEntities(location, range, range, range);
-		List<Player> nearby = new ArrayList<>();
-		for (Entity e : nearbyEntities) {
-			if (!(e instanceof Player)) continue;
-			nearby.add((Player) e);
-		}
+		Collection<Player> nearbyPlayers = location.getWorld().getNearbyPlayers(location, range, range, range);
 
 		// Start animation
 		if (circleShape) {
 			if (blockDataList != null && !blockDataList.isEmpty())
-				new NovaAnimationCircle(nearby, location.getBlock(), blockDataList, data);
+				new NovaAnimationCircle(nearbyPlayers, location.getBlock(), blockDataList, data);
 			else
-				new NovaAnimationCircle(nearby, location.getBlock(), blockData, data);
+				new NovaAnimationCircle(nearbyPlayers, location.getBlock(), blockData, data);
 		} else {
 			if (blockDataList != null && !blockDataList.isEmpty())
-				new NovaAnimationSquare(nearby, location.getBlock(), blockDataList, data);
+				new NovaAnimationSquare(nearbyPlayers, location.getBlock(), blockDataList, data);
 			else
-				new NovaAnimationSquare(nearby, location.getBlock(), blockData, data);
+				new NovaAnimationSquare(nearbyPlayers, location.getBlock(), blockData, data);
 		}
 		return null;
 	}
 
 	private abstract class NovaAnimation extends SpellAnimation {
 
-		protected final List<Player> nearby;
+		protected final SpellData data;
+
+		protected final Collection<Player> nearby;
 		protected final Block center;
 
 		protected final List<BlockData> blockDataList;
-		protected final BlockData blockData;
+		protected final ConfigData<BlockData> blockData;
 
-		protected final Set<Block> blocks;
+		protected final Map<Location, BlockData> previousBlocks;
+		protected final Map<Location, BlockData> currentBlocks;
 
 		protected final int radius;
 		protected final int startRadius;
 		protected final int heightPerTick;
 		protected final int expandingRadiusChange;
 
-		public NovaAnimation(List<Player> nearby, Block center, BlockData blockData, List<BlockData> blockDataList, SpellData data) {
-			super(expandInterval.get(data), true);
+		public NovaAnimation(Collection<Player> nearby, Block center, ConfigData<BlockData> blockData, List<BlockData> blockDataList, SpellData data) {
+			super(0, expandInterval.get(data), true, false);
 
+			this.data = data;
 			this.nearby = nearby;
 			this.center = center;
 			this.blockData = blockData;
 			this.blockDataList = blockDataList;
 
-			blocks = new HashSet<>();
+			previousBlocks = new HashMap<>();
+			currentBlocks = new HashMap<>();
 
 			radius = NovaEffect.this.radius.get(data);
 			startRadius = NovaEffect.this.startRadius.get(data);
@@ -160,15 +140,27 @@ public class NovaEffect extends SpellEffect {
 			expandingRadiusChange = radiusChange;
 		}
 
+		@Override
+		public void stop() {
+			super.stop();
+
+			for (Player p : nearby) {
+				p.sendMultiBlockChange(previousBlocks, true);
+			}
+
+			previousBlocks.clear();
+			currentBlocks.clear();
+		}
+
 	}
 
 	private class NovaAnimationSquare extends NovaAnimation {
 
-		public NovaAnimationSquare(List<Player> nearby, Block center, BlockData blockData, SpellData data) {
+		public NovaAnimationSquare(Collection<Player> nearby, Block center, ConfigData<BlockData> blockData, SpellData data) {
 			super(nearby, center, blockData, null, data);
 		}
 
-		public NovaAnimationSquare(List<Player> nearby, Block center, List<BlockData> blockDataList, SpellData data) {
+		public NovaAnimationSquare(Collection<Player> nearby, Block center, List<BlockData> blockDataList, SpellData data) {
 			super(nearby, center, null, blockDataList, data);
 		}
 
@@ -179,17 +171,19 @@ public class NovaEffect extends SpellEffect {
 
 			// Remove old blocks
 			if (removePreviousBlocks) {
-				for (Block b : blocks)
-					for (Player p : nearby)
-						p.sendBlockChange(b.getLocation(), b.getBlockData());
+				for (Player p : nearby) {
+					p.sendMultiBlockChange(previousBlocks, true);
+				}
 
-				blocks.clear();
+				previousBlocks.clear();
 			}
 
 			if (tick > radius + 1) {
-				stop(true);
+				stop();
 				return;
-			} else if (tick > radius) {
+			}
+
+			if (tick > radius) {
 				return;
 			}
 
@@ -199,53 +193,49 @@ public class NovaEffect extends SpellEffect {
 			int bz = center.getZ();
 			y += tick * heightPerTick;
 
+			Block b;
+			Block under;
 			for (int x = bx - tick; x <= bx + tick; x++) {
 				for (int z = bz - tick; z <= bz + tick; z++) {
 					if (Math.abs(x - bx) != tick && Math.abs(z - bz) != tick) continue;
 
-					Block b = center.getWorld().getBlockAt(x, y, z);
-					if (BlockUtils.isPathable(b) && !BlockUtils.isLiquid(b)) {
-						Block under = b.getRelative(BlockFace.DOWN);
-						if (BlockUtils.isPathable(under) && !BlockUtils.isLiquid(under)) b = under;
-					} else if (BlockUtils.isPathable(b.getRelative(BlockFace.UP)) && !BlockUtils.isLiquid(b.getRelative(BlockFace.UP))) {
+					b = center.getWorld().getBlockAt(x, y, z);
+					if (BlockUtils.isPathable(b) && !b.isLiquid()) {
+						under = b.getRelative(BlockFace.DOWN);
+						if (BlockUtils.isPathable(under) && !under.isLiquid()) b = under;
+					} else if (BlockUtils.isPathable(b.getRelative(BlockFace.UP)) && !b.getRelative(BlockFace.UP).isLiquid()) {
 						b = b.getRelative(BlockFace.UP);
 					}
 
-					if (!BlockUtils.isPathable(b) || BlockUtils.isLiquid(b) || blocks.contains(b)) continue;
+					if (!BlockUtils.isPathable(b) || b.isLiquid()) continue;
+					if (previousBlocks.containsKey(b.getLocation()) || currentBlocks.containsKey(b.getLocation())) continue;
 
-					for (Player p : nearby) {
-						if (blockDataList != null && !blockDataList.isEmpty())
-							p.sendBlockChange(b.getLocation(), blockDataList.get(random.nextInt(blockDataList.size())));
-						else if (blockData != null)
-							p.sendBlockChange(b.getLocation(), blockData);
+					if (blockDataList != null && !blockDataList.isEmpty()) {
+						currentBlocks.put(b.getLocation(), blockDataList.get(random.nextInt(blockDataList.size())));
+					} else if (blockData != null) {
+						currentBlocks.put(b.getLocation(), blockData.get(data));
 					}
 
-					blocks.add(b);
+					previousBlocks.put(b.getLocation(), b.getBlockData());
 				}
 			}
-		}
 
-		@Override
-		public void stop(boolean removeEntry) {
-			super.stop(removeEntry);
-
-			for (Block b : blocks) {
-				for (Player p : nearby)
-					p.sendBlockChange(b.getLocation(), b.getBlockData());
+			for (Player p : nearby) {
+				p.sendMultiBlockChange(currentBlocks, true);
 			}
 
-			blocks.clear();
+			currentBlocks.clear();
 		}
 
 	}
 
 	private class NovaAnimationCircle extends NovaAnimation {
 
-		public NovaAnimationCircle(List<Player> nearby, Block center, BlockData blockData, SpellData data) {
+		public NovaAnimationCircle(Collection<Player> nearby, Block center, ConfigData<BlockData> blockData, SpellData data) {
 			super(nearby, center, blockData, null, data);
 		}
 
-		public NovaAnimationCircle(List<Player> nearby, Block center, List<BlockData> blockDataList, SpellData data) {
+		public NovaAnimationCircle(Collection<Player> nearby, Block center, List<BlockData> blockDataList, SpellData data) {
 			super(nearby, center, null, blockDataList, data);
 		}
 
@@ -256,44 +246,47 @@ public class NovaEffect extends SpellEffect {
 
 			// Remove old blocks
 			if (removePreviousBlocks) {
-				for (Block b : blocks)
-					for (Player p : nearby)
-						p.sendBlockChange(b.getLocation(), b.getBlockData());
+				for (Player p : nearby) {
+					p.sendMultiBlockChange(previousBlocks, true);
+				}
 
-				blocks.clear();
+				previousBlocks.clear();
 			}
 
 			if (tick > radius + 1) {
-				stop(true);
+				stop();
 				return;
-			} else if (tick > radius) {
+			}
+
+			if (tick > radius) {
 				return;
 			}
 
 			// Generate the bottom block
 			Location centerLocation = center.getLocation().clone();
 			centerLocation.add(0.5, tick * heightPerTick, 0.5);
-			Block b;
 
+			Block b;
+			Block under;
 			if (startRadius == 0 && tick == 0) {
-				b = centerLocation.getWorld().getBlockAt(centerLocation);
-				if (BlockUtils.isPathable(b) && !BlockUtils.isLiquid(b)) {
-					Block under = b.getRelative(BlockFace.DOWN);
-					if (BlockUtils.isPathable(under) && !BlockUtils.isLiquid(under)) b = under;
-				} else if (BlockUtils.isPathable(b.getRelative(BlockFace.UP)) && !BlockUtils.isLiquid(b.getRelative(BlockFace.UP))) {
+				b = centerLocation.getBlock();
+				if (BlockUtils.isPathable(b) && !b.isLiquid()) {
+					under = b.getRelative(BlockFace.DOWN);
+					if (BlockUtils.isPathable(under) && !under.isLiquid()) b = under;
+				} else if (BlockUtils.isPathable(b.getRelative(BlockFace.UP)) && !b.getRelative(BlockFace.UP).isLiquid()) {
 					b = b.getRelative(BlockFace.UP);
 				}
 
-				if (!BlockUtils.isPathable(b) || BlockUtils.isLiquid(b) || blocks.contains(b)) return;
+				if (!BlockUtils.isPathable(b) || b.isLiquid()) return;
+				if (previousBlocks.containsKey(b.getLocation()) || currentBlocks.containsKey(b.getLocation())) return;
 
-				for (Player p : nearby) {
-					if (blockDataList != null && !blockDataList.isEmpty())
-						p.sendBlockChange(b.getLocation(), blockDataList.get(random.nextInt(blockDataList.size())));
-					else if (blockData != null)
-						p.sendBlockChange(b.getLocation(), blockData);
+				if (blockDataList != null && !blockDataList.isEmpty()) {
+					currentBlocks.put(b.getLocation(), blockDataList.get(random.nextInt(blockDataList.size())));
+				} else if (blockData != null) {
+					currentBlocks.put(b.getLocation(), blockData.get(data));
 				}
 
-				blocks.add(b);
+				previousBlocks.put(b.getLocation(), b.getBlockData());
 			}
 
 			// Generate the circle
@@ -303,42 +296,40 @@ public class NovaEffect extends SpellEffect {
 			double inc = (2 * Math.PI) / amount;
 			for (int i = 0; i < amount; i++) {
 				angle = i * inc;
+
 				x = tick * Math.cos(angle);
 				z = tick * Math.sin(angle);
+
 				v = new Vector(x, 0, z);
-				b = center.getWorld().getBlockAt(centerLocation.add(v));
+
+				b = centerLocation.add(v).getBlock();
 				centerLocation.subtract(v);
 
-				if (BlockUtils.isPathable(b) && !BlockUtils.isLiquid(b)) {
-					Block under = b.getRelative(BlockFace.DOWN);
-					if (BlockUtils.isPathable(under) && !BlockUtils.isLiquid(under)) b = under;
-				} else if (BlockUtils.isPathable(b.getRelative(BlockFace.UP)) && !BlockUtils.isLiquid(b.getRelative(BlockFace.UP))) {
+				if (BlockUtils.isPathable(b) && !b.isLiquid()) {
+					under = b.getRelative(BlockFace.DOWN);
+					if (BlockUtils.isPathable(under) && !under.isLiquid()) b = under;
+				} else if (BlockUtils.isPathable(b.getRelative(BlockFace.UP)) && !b.getRelative(BlockFace.UP).isLiquid()) {
 					b = b.getRelative(BlockFace.UP);
 				}
 
-				if (!BlockUtils.isPathable(b) || BlockUtils.isLiquid(b) || blocks.contains(b)) continue;
+				if (!BlockUtils.isPathable(b) || b.isLiquid()) continue;
+				if (previousBlocks.containsKey(b.getLocation()) || currentBlocks.containsKey(b.getLocation())) continue;
 
-				for (Player p : nearby) {
-					if (blockDataList != null && !blockDataList.isEmpty())
-						p.sendBlockChange(b.getLocation(), blockDataList.get(random.nextInt(blockDataList.size())));
-					else if (blockData != null)
-						p.sendBlockChange(b.getLocation(), blockData);
+				if (blockDataList != null && !blockDataList.isEmpty()) {
+					currentBlocks.put(b.getLocation(), blockDataList.get(random.nextInt(blockDataList.size())));
+				} else if (blockData != null) {
+					currentBlocks.put(b.getLocation(), blockData.get(data));
 				}
 
-				blocks.add(b);
+				previousBlocks.put(b.getLocation(), b.getBlockData());
 			}
 
-		}
+			for (Player p : nearby) {
+				p.sendMultiBlockChange(currentBlocks, true);
+			}
 
-		@Override
-		public void stop(boolean removeEntry) {
-			super.stop(removeEntry);
+			currentBlocks.clear();
 
-			for (Block b : blocks)
-				for (Player p : nearby)
-					p.sendBlockChange(b.getLocation(), b.getBlockData());
-
-			blocks.clear();
 		}
 
 	}

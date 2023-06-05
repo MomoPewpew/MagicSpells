@@ -55,8 +55,8 @@ public class SwitchSpell extends TargetedSpell implements TargetedEntitySpell {
 	private void switchPlaces(LivingEntity caster, final LivingEntity target, float power, String[] args) {
 		Location targetLoc = target.getLocation();
 		Location casterLoc = caster.getLocation();
-		caster.teleport(targetLoc);
-		target.teleport(casterLoc);
+		caster.teleportAsync(targetLoc);
+		target.teleportAsync(casterLoc);
 
 		int switchBack = this.switchBack.get(caster, target, power, args);
 		if (switchBack <= 0) return;
@@ -67,8 +67,8 @@ public class SwitchSpell extends TargetedSpell implements TargetedEntitySpell {
 			if (caster.isDead() || target.isDead()) return;
 			Location targetLoc1 = target.getLocation();
 			Location casterLoc1 = caster.getLocation();
-			caster.teleport(targetLoc1);
-			target.teleport(casterLoc1);
+			caster.teleportAsync(targetLoc1);
+			target.teleportAsync(casterLoc1);
 		}, switchBack);
 	}
 

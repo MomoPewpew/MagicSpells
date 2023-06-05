@@ -18,13 +18,15 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import com.google.common.collect.Multimap;
 import com.google.gson.JsonSyntaxException;
+
+import com.google.common.collect.Multimap;
 import com.google.common.collect.HashMultimap;
 
 import net.kyori.adventure.text.Component;
 
 import org.bukkit.Color;
+import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.FireworkEffect;
@@ -33,6 +35,7 @@ import org.bukkit.potion.PotionType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.banner.Pattern;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.block.banner.PatternType;
@@ -111,6 +114,19 @@ public class MagicItemDataParser {
 						case "amount":
 							data.setAttribute(AMOUNT, value.getAsInt());
 							break;
+						case "block-data":
+							String blockDataString = value.getAsString();
+							BlockData blockData;
+							try {
+								blockData = Bukkit.createBlockData(type, blockDataString);
+							} catch (IllegalArgumentException e) {
+								MagicSpells.error("Invalid block data '" + blockDataString + "' when parsing magic item '" + str + "'.");
+								DebugHandler.debugIllegalArgumentException(e);
+
+								continue;
+							}
+
+							data.setAttribute(BLOCK_DATA, blockData);
 						case "durability":
 							data.setAttribute(DURABILITY, value.getAsInt());
 							break;
@@ -443,6 +459,11 @@ public class MagicItemDataParser {
 						case "strict-durability":
 						case "strict_durability":
 							data.setStrictDurability(value.getAsBoolean());
+							break;
+						case "strictblockdata":
+						case "strict-block-data":
+						case "strict_block_data":
+							data.setStrictBlockData(value.getAsBoolean());
 							break;
 						case "strictenchantlevel":
 						case "strict-enchant-level":

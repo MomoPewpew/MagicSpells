@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "8.1.0"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 repositories {
@@ -14,7 +14,7 @@ dependencies {
     shadow(group: "org.apache.commons", name: "commons-math4-core", version: "4.0-beta1")
     shadow(group: "com.github.Chronoken", name: "EffectLib", version: "49377cb")
     shadow(group: "co.aikar", name: "acf-paper", version: "0.5.1-SNAPSHOT")
-    shadow(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: "1.8.10")
+    shadow(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: "1.8.20")
 
     shadow(project(path: ":nms:shared", configuration: "apiElements"))
     shadow(project(path: ":nms:v1_19_R1", configuration: "reobf"))

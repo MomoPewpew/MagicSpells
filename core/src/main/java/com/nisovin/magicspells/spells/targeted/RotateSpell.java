@@ -105,7 +105,7 @@ public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, T
 			loc.setYaw(loc.getYaw() + rotationYaw.get(caster, target, power, args));
 			if (affectPitch) loc.setPitch(loc.getPitch() + rotationPitch.get(caster, target, power, args));
 		}
-		target.teleport(loc);
+		target.teleportAsync(loc);
 	}
 
 	private void spinFace(LivingEntity caster, LivingEntity target, float power, String[] args) {
@@ -119,24 +119,24 @@ public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, T
 
 		Location loc;
 		switch (face) {
-			case "target" -> caster.teleport(changeDirection(casterLoc, targetLoc));
-			case "caster" -> target.teleport(changeDirection(targetLoc, casterLoc));
+			case "target" -> caster.teleportAsync(changeDirection(casterLoc, targetLoc));
+			case "caster" -> target.teleportAsync(changeDirection(targetLoc, casterLoc));
 			case "away-from-caster" -> {
 				loc = changeDirection(targetLoc, casterLoc);
 				loc.setYaw(loc.getYaw() + 180);
-				target.teleport(loc);
+				target.teleportAsync(loc);
 			}
 			case "away-from-target" -> {
 				loc = changeDirection(casterLoc, targetLoc);
 				loc.setYaw(loc.getYaw() + 180);
-				caster.teleport(loc);
+				caster.teleportAsync(loc);
 			}
 		}
 
 	}
 
 	private void spin(LivingEntity entity, Location target) {
-		entity.teleport(changeDirection(entity.getLocation(), target));
+		entity.teleportAsync(changeDirection(entity.getLocation(), target));
 	}
 
 	private Location changeDirection(Location pos1, Location pos2) {

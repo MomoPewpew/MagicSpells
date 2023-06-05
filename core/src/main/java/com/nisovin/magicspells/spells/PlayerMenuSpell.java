@@ -6,6 +6,7 @@ import java.util.*;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -172,7 +173,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		ItemStack item = new ItemStack(Material.GREEN_WOOL);
 		ItemMeta meta = item.getItemMeta();
 
-		meta.displayName(Component.text(defaultName).color(NamedTextColor.GOLD));
+		meta.displayName(Component.text(defaultName).color(NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
 		item.setItemMeta(meta);
 
 		return item;
@@ -182,14 +183,15 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		MenuData data = new MenuData(new SpellData(caster, opener, power, args), 0);
 		menuData.put(opener.getUniqueId(), data);
 
-		if (delay > 0) MagicSpells.scheduleDelayedTask(() -> open(opener, data, 0), delay);
-		else open(opener, data, 0);
+		if (delay > 0) MagicSpells.scheduleDelayedTask(() -> open(opener, data), delay);
+		else open(opener, data);
 	}
 
-	private Component translate(Player player, Player target, String string) {
-		if (target != null) string = string.replaceAll("%t", target.getName());
-		string = string.replaceAll("%a", player.getName());
-		return Util.getMiniMessageWithVars(player, string);
+	private Component translate(Player opener, Player target, String string, String[] args) {
+		return Util.getMiniMessage(MagicSpells.doReplacements(string, opener, target, args,
+			"%a", opener.getName(),
+			"%t", target == null ? null : target.getName()
+		));
 	}
 
 	private void processClickSpell(Subspell subspell, Player caster, Player target, float power) {
@@ -201,51 +203,46 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		subspell.cast(caster, power);
 	}
 
-	private void open(Player opener, MenuData data, int page) {
-		SpellData spellData = data.spellData();
-
+	private void open(Player opener, MenuData data) {
 		List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
 		if (!addOpener) players.remove(opener);
 		if (playerModifiers != null) players.removeIf(player -> !playerModifiers.check(player));
 		if (radius > 0) players.removeIf(player -> opener.getLocation().distance(player.getLocation()) > radius);
 
-		int size = (int) Math.ceil(Math.min((players.size()+1), 54) / 9.0) * 9;
+		int size = Math.max((int) Math.ceil(Math.min(players.size(), 54) / 9.0) * 9, 9);
 		Inventory inv = Bukkit.createInventory(opener, size, Component.text(internalName));
+		SpellData spellData = data.spellData;
+		String[] args = spellData.args();
 
-		for (int i = (page * 52); i < Math.min(players.size(), (page + 1) * 52); i++) {
+		for (int i = (data.page * 52); i < Math.min(players.size(), (data.page + 1) * 52); i++) {
 			ItemStack head = new ItemStack(Material.PLAYER_HEAD);
 			ItemMeta itemMeta = head.getItemMeta();
+
 			SkullMeta skullMeta = (SkullMeta) itemMeta;
 			if (skullMeta == null) continue;
+
 			skullMeta.setOwningPlayer(players.get(i));
-			itemMeta.displayName(translate(opener, players.get(i), skullName));
+			itemMeta.displayName(translate(opener, players.get(i), skullName, args));
+
 			if (skullLore != null) {
 				List<Component> lore = new ArrayList<>();
-				for (String loreLine : skullLore) {
-					lore.add(translate(opener, players.get(i), loreLine));
-				}
+				for (String loreLine : skullLore) lore.add(translate(opener, players.get(i), loreLine, args));
+
 				itemMeta.lore(lore);
 			}
+
 			head.setItemMeta(skullMeta);
-			inv.setItem(i%52, head);
+			inv.setItem(i % 52, head);
 		}
 
-		if (page > 0) {
-			inv.setItem(52, previousPageItem);
-		}
-
-		if (players.size() > ((page + 1) * 52)) {
-			inv.setItem(53, nextPageItem);
-		}
+		if (data.page > 0) inv.setItem(52, previousPageItem);
+		if (players.size() > (data.page + 1) * 52) inv.setItem(53, nextPageItem);
 
 		opener.openInventory(inv);
 		Util.setInventoryTitle(opener, title);
 
 		if (spellData.caster() != null) playSpellEffects(spellData.caster(), spellData.target(), spellData);
 		else playSpellEffects(EffectPosition.TARGET, spellData.target(), spellData);
-
-		MenuData newMenuData = new MenuData(spellData, page);
-		menuData.put(opener.getUniqueId(), newMenuData);
 	}
 
 	@EventHandler
@@ -255,73 +252,92 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 
 	@EventHandler
 	public void onItemClick(InventoryClickEvent event) {
-		Player player = (Player) event.getWhoClicked();
 		if (!Util.getStringFromComponent(event.getView().title()).equals(internalName)) return;
+
 		event.setCancelled(true);
+		if (!(event.getWhoClicked() instanceof Player opener)) return;
+
 		ItemStack item = event.getCurrentItem();
 		if (item == null) return;
-		ItemMeta itemMeta = item.getItemMeta();
 
-		MenuData data = menuData.get(player.getUniqueId());
+		ItemMeta meta = item.getItemMeta();
+		if (meta == null) return;
+
+		MenuData data = menuData.get(opener.getUniqueId());
 		SpellData spellData = data.spellData();
+		String[] args = spellData.args();
+		float power = spellData.power();
 
 		if (event.getRawSlot() == 52) {
-			open(player, data, data.page() - 1);
+			data = new MenuData(spellData, data.page - 1);
+			menuData.put(opener.getUniqueId(), data);
+			open(opener, data);
+
 			return;
 		} else if (event.getRawSlot() == 53) {
-			open(player, data, data.page() + 1);
+			data = new MenuData(spellData, data.page + 1);
+			menuData.put(opener.getUniqueId(), data);
+			open(opener, data);
+
 			return;
 		}
 
-		SkullMeta skullMeta = (SkullMeta) itemMeta;
-		if (skullMeta == null) return;
+		if (!(meta instanceof SkullMeta skullMeta)) return;
+
 		OfflinePlayer target = skullMeta.getOwningPlayer();
-		float power = spellData == null ? 1f : spellData.power();
 		if (target == null || !target.isOnline()) {
-			itemMeta.displayName(translate(player, null, skullNameOffline));
-			if (spellOffline != null) spellOffline.cast(player, power);
-			if (stayOpen) item.setItemMeta(itemMeta);
+			meta.displayName(translate(opener, null, skullNameOffline, args));
+			if (spellOffline != null) spellOffline.cast(opener, power);
+
+			if (stayOpen) item.setItemMeta(meta);
 			else {
-				player.closeInventory();
-				menuData.remove(player.getUniqueId());
-				playSpellEffects(EffectPosition.DISABLED, player, spellData);
+				opener.closeInventory();
+				menuData.remove(opener.getUniqueId());
+				playSpellEffects(EffectPosition.DISABLED, opener, spellData);
 			}
-			return;
-		} else {
-			itemMeta.displayName(translate(player, (Player) target, skullName));
-			item.setItemMeta(itemMeta);
-		}
-		Player targetPlayer = (Player) target;
-		if (radius > 0  && targetPlayer.getLocation().distance(player.getLocation()) > radius) {
-			itemMeta.displayName(translate(player, targetPlayer, skullNameRadius));
-			if (spellRange != null) spellRange.cast(player, power);
-			if (stayOpen) item.setItemMeta(itemMeta);
-			else {
-				player.closeInventory();
-				menuData.remove(player.getUniqueId());
-				playSpellEffects(EffectPosition.DISABLED, player, spellData);
-			}
+
 			return;
 		}
+
+		Player targetPlayer = target.getPlayer();
+		if (targetPlayer == null) return;
+
+		meta.displayName(translate(opener, targetPlayer, skullName, args));
+		item.setItemMeta(meta);
+
+		if (radius > 0 && targetPlayer.getLocation().distance(opener.getLocation()) > radius) {
+			meta.displayName(translate(opener, targetPlayer, skullNameRadius, args));
+			if (spellRange != null) spellRange.cast(opener, power);
+
+			if (stayOpen) item.setItemMeta(meta);
+			else {
+				opener.closeInventory();
+				menuData.remove(opener.getUniqueId());
+				playSpellEffects(EffectPosition.DISABLED, opener, spellData);
+			}
+
+			return;
+		}
+
 		switch (event.getClick()) {
-			case LEFT -> processClickSpell(spellOnLeft, player, targetPlayer, power);
-			case RIGHT -> processClickSpell(spellOnRight, player, targetPlayer, power);
-			case MIDDLE -> processClickSpell(spellOnMiddle, player, targetPlayer, power);
-			case SHIFT_LEFT -> processClickSpell(spellOnSneakLeft, player, targetPlayer, power);
-			case SHIFT_RIGHT -> processClickSpell(spellOnSneakRight, player, targetPlayer, power);
+			case LEFT -> processClickSpell(spellOnLeft, opener, targetPlayer, power);
+			case RIGHT -> processClickSpell(spellOnRight, opener, targetPlayer, power);
+			case MIDDLE -> processClickSpell(spellOnMiddle, opener, targetPlayer, power);
+			case SHIFT_LEFT -> processClickSpell(spellOnSneakLeft, opener, targetPlayer, power);
+			case SHIFT_RIGHT -> processClickSpell(spellOnSneakRight, opener, targetPlayer, power);
 		}
-		if (variableTarget != null && !variableTarget.isEmpty() && MagicSpells.getVariableManager().getVariable(variableTarget) != null) {
-			MagicSpells.getVariableManager().set(variableTarget, player, target.getName());
-		}
-		if (stayOpen) open(player, data, data.page());
+
+		if (variableTarget != null && !variableTarget.isEmpty() && MagicSpells.getVariableManager().getVariable(variableTarget) != null)
+			MagicSpells.getVariableManager().set(variableTarget, opener, target.getName());
+
+		if (stayOpen) open(opener, data);
 		else {
-			player.closeInventory();
-			menuData.remove(player.getUniqueId());
-			playSpellEffects(EffectPosition.DISABLED, player, spellData);
+			opener.closeInventory();
+			menuData.remove(opener.getUniqueId());
+			playSpellEffects(EffectPosition.DISABLED, opener, spellData);
 		}
 	}
 
-	public record MenuData(SpellData spellData, int page) {
+	public record MenuData(SpellData spellData, int page) {}
 
-	}
 }

@@ -3,6 +3,9 @@ package com.nisovin.magicspells.util;
 import java.util.Set;
 import java.util.HashSet;
 
+import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitTask;
+
 import com.nisovin.magicspells.MagicSpells;
 
 /**
@@ -14,9 +17,11 @@ import com.nisovin.magicspells.MagicSpells;
  */
 public abstract class SpellAnimation implements Runnable {
 
-	private static Set<SpellAnimation> animations = new HashSet<>();
+	private static final Set<SpellAnimation> animations = new HashSet<>();
 
-	private int taskId;
+	private final boolean async;
+
+	private BukkitTask task;
 	private int delay;
 	private int interval;
 	private int tick;
@@ -26,7 +31,7 @@ public abstract class SpellAnimation implements Runnable {
 	 * @param interval the animation interval, in server ticks (animation speed)
 	 */
 	public SpellAnimation(int interval) {
-		this(0, interval, false);
+		this(0, interval, false, false);
 	}
 
 	/**
@@ -35,7 +40,7 @@ public abstract class SpellAnimation implements Runnable {
 	 * @param autoStart whether the animation should start immediately upon being created
 	 */
 	public SpellAnimation(int interval, boolean autoStart) {
-		this(0, interval, autoStart);
+		this(0, interval, autoStart, false);
 	}
 
 	/**
@@ -44,7 +49,7 @@ public abstract class SpellAnimation implements Runnable {
 	 * @param interval the animation interval, in server ticks (animation speed)
 	 */
 	public SpellAnimation(int delay, int interval) {
-		this(delay, interval, false);
+		this(delay, interval, false, false);
 	}
 
 	/**
@@ -52,8 +57,10 @@ public abstract class SpellAnimation implements Runnable {
 	 * @param delay the delay before the animation begins, in server ticks
 	 * @param interval the animation interval, in server ticks (animation speed)
 	 * @param autoStart whether the animation should start immediately upon being created
+	 * @param async whether the animation should be off the main thread
 	 */
-	public SpellAnimation(int delay, int interval, boolean autoStart) {
+	public SpellAnimation(int delay, int interval, boolean autoStart, boolean async) {
+		this.async = async;
 		this.delay = delay;
 		this.interval = interval;
 		this.tick = -1;
@@ -65,14 +72,19 @@ public abstract class SpellAnimation implements Runnable {
 	 * Start the spell animation.
 	 */
 	public void play() {
-		taskId = MagicSpells.scheduleRepeatingTask(this, delay, interval);
+		if (async) task = Bukkit.getScheduler().runTaskTimerAsynchronously(MagicSpells.getInstance(), this, delay, interval);
+		else task = Bukkit.getScheduler().runTaskTimer(MagicSpells.getInstance(), this, delay, interval);
 	}
 
 	/**
 	 * Stop the spell animation.
 	 */
+	public void stop() {
+		stop(true);
+	}
+
 	public void stop(boolean removeEntry) {
-		MagicSpells.cancelTask(taskId);
+		task.cancel();
 		if (removeEntry) animations.remove(this);
 	}
 
@@ -94,4 +106,5 @@ public abstract class SpellAnimation implements Runnable {
 	public static Set<SpellAnimation> getAnimations() {
 		return animations;
 	}
+
 }

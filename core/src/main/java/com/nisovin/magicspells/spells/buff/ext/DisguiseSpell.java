@@ -5,7 +5,9 @@ import java.util.UUID;
 import java.util.HashSet;
 
 import org.bukkit.Bukkit;
+import org.bukkit.DyeColor;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Villager;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.configuration.ConfigurationSection;
@@ -32,12 +34,8 @@ public class DisguiseSpell extends BuffSpell {
 
 	private EntityData entityData;
 
-	private Disguise disguise;
-
 	private String playerName;
 	private String skinName;
-
-	private short data;
 
 	private boolean burning;
 	private boolean glowing;
@@ -49,8 +47,6 @@ public class DisguiseSpell extends BuffSpell {
 
 		playerName = getConfigString("player-name", "");
 		skinName = getConfigString("skin-name", playerName);
-
-		data = (short) getConfigInt("data", 0);
 
 		burning = getConfigBoolean("burning", false);
 		glowing = getConfigBoolean("glowing", false);
@@ -99,14 +95,8 @@ public class DisguiseSpell extends BuffSpell {
 
 		if (disguiseData != null) return;
 
-		if (entityData == null || entityData.getEntityType() == null) {
+		if (entityData == null || entityData.getEntityType() == null)
 			MagicSpells.error("DisguiseSpell '" + internalName + "' has an invalid disguise defined!");
-			return;
-		}
-
-		if (entityData.isPlayer()) disguise = new PlayerDisguise(playerName, skinName);
-		else if (entityData.isMob()) disguise = new MobDisguise(DisguiseType.getType(entityData.getEntityType()), !entityData.isBaby());
-		else if (entityData.isMisc()) disguise = new MiscDisguise(DisguiseType.getType(entityData.getEntityType()), entityData.getMaterial(), data);
 	}
 
 	@Override
@@ -122,58 +112,92 @@ public class DisguiseSpell extends BuffSpell {
 			return true;
 		}
 
-		// CONFIG SECTION
-		if (disguise == null) return false;
+		if (entityData == null) return false;
+
+		DisguiseType disguiseType = DisguiseType.getType(entityData.getEntityType().get(entity, null, power, args));
+
+		Disguise disguise;
+		if (disguiseType.isPlayer()) disguise = new PlayerDisguise(playerName, skinName);
+		else if (disguiseType.isMob()) disguise = new MobDisguise(disguiseType);
+		else if (disguiseType.isMisc()) disguise = new MiscDisguise(disguiseType);
+		else return false;
 
 		FlagWatcher watcher = disguise.getWatcher();
-
 		watcher.setBurning(burning);
 		watcher.setGlowing(glowing);
 
-		if (watcher instanceof AbstractHorseWatcher) {
-			((AbstractHorseWatcher) watcher).setSaddled(entityData.isSaddled());
-			if (watcher instanceof MuleWatcher) {
-				((MuleWatcher) watcher).setCarryingChest(entityData.isChested());
+		if (watcher instanceof AgeableWatcher ageableWatcher)
+			ageableWatcher.setBaby(entityData.getBaby().get(entity, null, power, args));
+
+		if (watcher instanceof AbstractHorseWatcher abstractHorseWatcher) {
+			abstractHorseWatcher.setSaddled(entityData.getSaddled().get(entity, null, power, args));
+
+			if (abstractHorseWatcher instanceof ChestedHorseWatcher chestedHorseWatcher)
+				chestedHorseWatcher.setCarryingChest(entityData.getChested().get(entity, null, power, args));
+
+			if (abstractHorseWatcher instanceof HorseWatcher horseWatcher) {
+				horseWatcher.setColor(entityData.getHorseColor().get(entity, null, power, args));
+				horseWatcher.setStyle(entityData.getHorseStyle().get(entity, null, power, args));
 			}
-			if (watcher instanceof HorseWatcher) {
-				((HorseWatcher) watcher).setColor(entityData.getHorseColor());
-				((HorseWatcher) watcher).setStyle(entityData.getHorseStyle());
+
+			if (abstractHorseWatcher instanceof LlamaWatcher llamaWatcher)
+				llamaWatcher.setColor(entityData.getLlamaColor().get(entity, null, power, args));
+		}
+
+		if (watcher instanceof TameableWatcher tameableWatcher) {
+			tameableWatcher.setTamed(entityData.getTamed().get(entity, null, power, args));
+
+			if (tameableWatcher instanceof ParrotWatcher parrotWatcher)
+				parrotWatcher.setVariant(entityData.getParrotVariant().get(entity, null, power, args));
+
+			if (tameableWatcher instanceof WolfWatcher wolfWatcher) {
+				DyeColor color = entityData.getColor().get(entity, null, power, args);
+				if (color != null) wolfWatcher.setCollarColor(color);
 			}
-			if (watcher instanceof LlamaWatcher) {
-				((LlamaWatcher) watcher).setColor(entityData.getLlamaColor());
-			}
-		} else if (watcher instanceof CreeperWatcher) {
-			((CreeperWatcher) watcher).setPowered(entityData.isPowered());
-		} else if (watcher instanceof VillagerWatcher) {
-			if (entityData.getProfession() != null) ((VillagerWatcher) watcher).setProfession(entityData.getProfession());
-		} else if (watcher instanceof SheepWatcher) {
-			if (entityData.getDyeColor() != null) ((SheepWatcher) watcher).setColor(entityData.getDyeColor());
-			((SheepWatcher) watcher).setSheared(entityData.isSheared());
-		} else if (watcher instanceof WolfWatcher) {
-			if (entityData.getDyeColor() != null) ((WolfWatcher) watcher).setCollarColor(entityData.getDyeColor());
-			((WolfWatcher) watcher).setTamed(entityData.isTamed());
-		} else if (watcher instanceof PigWatcher) {
-			((PigWatcher) watcher).setSaddled(entityData.isSaddled());
-		} else if (watcher instanceof FallingBlockWatcher) {
-			((FallingBlockWatcher) watcher).setBlock(new ItemStack(entityData.getMaterial()));
-		} else if (watcher instanceof DroppedItemWatcher) {
-			((DroppedItemWatcher) watcher).setItemStack(new ItemStack(entityData.getMaterial()));
-		} else if (watcher instanceof PufferFishWatcher) {
-			((PufferFishWatcher) watcher).setPuffState(entityData.getSize());
-		} else if (watcher instanceof TropicalFishWatcher) {
-			((TropicalFishWatcher) watcher).setBodyColor(entityData.getDyeColor());
-			((TropicalFishWatcher) watcher).setPatternColor(entityData.getPatternDyeColor());
-			((TropicalFishWatcher) watcher).setPattern(entityData.getFishPattern());
-		} else if (watcher instanceof ParrotWatcher) {
-			((ParrotWatcher) watcher).setVariant(entityData.getParrotVariant());
-		} else if (watcher instanceof SlimeWatcher) {
-			((SlimeWatcher) watcher).setSize(entityData.getSize());
-		} else if (watcher instanceof EndermanWatcher) {
-			((EndermanWatcher) watcher).setItemInMainHand(entityData.getMaterial());
+		}
+
+		if (watcher instanceof CreeperWatcher creeperWatcher)
+			creeperWatcher.setPowered(entityData.getPowered().get(entity, null, power, args));
+
+		if (watcher instanceof DroppedItemWatcher droppedItemWatcher)
+			droppedItemWatcher.setItemStack(new ItemStack(entityData.getDroppedItemStack().get(entity, null, power, args)));
+
+		if (watcher instanceof EndermanWatcher endermanWatcher)
+			endermanWatcher.setItemInMainHand(entityData.getCarriedBlockData().get(entity, null, power, args).getMaterial());
+
+		if (watcher instanceof FallingBlockWatcher fallingBlockWatcher)
+			fallingBlockWatcher.setBlockData(entityData.getFallingBlockData().get(entity, null, power, args));
+
+		if (watcher instanceof PigWatcher pigWatcher)
+			pigWatcher.setSaddled(entityData.getSaddled().get(entity, null, power, args));
+
+		if (watcher instanceof PufferFishWatcher pufferFishWatcher)
+			pufferFishWatcher.setPuffState(entityData.getSize().get(entity, null, power, args));
+
+		if (watcher instanceof SheepWatcher sheepWatcher) {
+			DyeColor color = entityData.getColor().get(entity, null, power, args);
+			if (color != null) sheepWatcher.setColor(color);
+
+			sheepWatcher.setSheared(entityData.getSheared().get(entity, null, power, args));
+		}
+
+		if (watcher instanceof SlimeWatcher slimeWatcher)
+			slimeWatcher.setSize(entityData.getSize().get(entity, null, power, args));
+
+		if (watcher instanceof TropicalFishWatcher tropicalFishWatcher) {
+			tropicalFishWatcher.setBodyColor(entityData.getColor().get(entity, null, power, args));
+			tropicalFishWatcher.setPatternColor(entityData.getTropicalFishPatternColor().get(entity, null, power, args));
+			tropicalFishWatcher.setPattern(entityData.getTropicalFishPattern().get(entity, null, power, args));
+		}
+
+		if (watcher instanceof VillagerWatcher villagerWatcher) {
+			Villager.Profession profession = entityData.getProfession().get(entity, null, power, args);
+			if (profession != null) villagerWatcher.setProfession(profession);
 		}
 
 		DisguiseAPI.disguiseEntity(entity, disguise);
 		entities.add(entity.getUniqueId());
+
 		return true;
 	}
 
@@ -208,14 +232,6 @@ public class DisguiseSpell extends BuffSpell {
 
 	public void setEntityData(EntityData entityData) {
 		this.entityData = entityData;
-	}
-
-	public Disguise getDisguise() {
-		return disguise;
-	}
-
-	public void setDisguise(Disguise disguise) {
-		this.disguise = disguise;
 	}
 
 }

@@ -39,6 +39,7 @@ public class ParticlesEffect extends SpellEffect {
 	protected Vector vibrationRelativeOffset;
 
 	protected ConfigData<Integer> count;
+	protected ConfigData<Integer> radius;
 	protected ConfigData<Integer> arrivalTime;
 	protected ConfigData<Integer> shriekDelay;
 
@@ -67,6 +68,7 @@ public class ParticlesEffect extends SpellEffect {
 		vibrationRelativeOffset = ConfigReaderUtil.readVector(config.getString("vibration-relative-offset", "0,0,0"));
 
 		count = ConfigDataUtil.getInteger(config, "count", 5);
+		radius = ConfigDataUtil.getInteger(config, "radius", 50);
 		arrivalTime = ConfigDataUtil.getInteger(config, "arrival-time", -1);
 		shriekDelay = ConfigDataUtil.getInteger(config, "shriek-delay", 0);
 
@@ -99,9 +101,16 @@ public class ParticlesEffect extends SpellEffect {
 	@Override
 	public Runnable playEffectLocation(Location location, SpellData data) {
 		Particle particle = this.particle.get(data);
-		Object particleData = getParticleData(particle, location, data);
 
-		location.getWorld().spawnParticle(particle, location, count.get(data), xSpread.get(data), ySpread.get(data), zSpread.get(data), speed.get(data), particleData, force);
+		particle.builder()
+				.location(location)
+				.count(count.get(data))
+				.offset(xSpread.get(data), ySpread.get(data), zSpread.get(data))
+				.extra(speed.get(data))
+				.data(getParticleData(particle, location, data))
+				.force(force)
+				.receivers(radius.get(data), true)
+				.spawn();
 
 		return null;
 	}
@@ -112,7 +121,9 @@ public class ParticlesEffect extends SpellEffect {
 		if (type == ItemStack.class) {
 			Material material = this.material.get(data);
 			return material == null ? null : new ItemStack(material);
-		} else if (type == Vibration.class) {
+		}
+
+		if (type == Vibration.class) {
 			Location originLocation = getLocation(location, data, vibrationOrigin);
 			if (originLocation == null) return null;
 
@@ -137,23 +148,26 @@ public class ParticlesEffect extends SpellEffect {
 			if (destination == null) return null;
 
 			return new Vibration(destination, arrivalTime.get(data));
-		} else if (type == BlockData.class) return blockData.get(data);
-		else if (type == DustOptions.class) return dustOptions.get(data);
-		else if (type == DustTransition.class) return dustTransition.get(data);
-		else if (type == Float.class) return sculkChargeRotation.get(data);
-		else if (type == Integer.class) return shriekDelay.get(data);
+		}
+
+		if (type == BlockData.class) return blockData.get(data);
+		if (type == DustOptions.class) return dustOptions.get(data);
+		if (type == DustTransition.class) return dustTransition.get(data);
+		if (type == Float.class) return sculkChargeRotation.get(data);
+		if (type == Integer.class) return shriekDelay.get(data);
 
 		return null;
 	}
 
 	protected Object getParticleData(Particle particle, Location location, SpellData data) {
 		Class<?> type = particle.getDataType();
-		Object particleData = null;
 
 		if (type == ItemStack.class) {
 			Material material = this.material.get(data);
-			particleData = material == null ? null : new ItemStack(material);
-		} else if (type == Vibration.class) {
+			return material == null ? null : new ItemStack(material);
+		}
+
+		if (type == Vibration.class) {
 			Location originLocation = getLocation(location, data, vibrationOrigin);
 			if (originLocation == null) return null;
 
@@ -163,12 +177,14 @@ public class ParticlesEffect extends SpellEffect {
 			Destination destination = new BlockDestination(applyOffsets(targetLocation, vibrationOffset,
 				vibrationRelativeOffset, 0, 0, 0));
 
-			particleData = new Vibration(destination, arrivalTime.get(data));
-		} else if (type == BlockData.class) particleData = blockData.get(data);
-		else if (type == DustOptions.class) particleData = dustOptions.get(data);
-		else if (type == DustTransition.class) particleData = dustTransition.get(data);
+			return new Vibration(destination, arrivalTime.get(data));
+		}
 
-		return particleData;
+		if (type == BlockData.class) return blockData.get(data);
+		if (type == DustOptions.class) return dustOptions.get(data);
+		if (type == DustTransition.class) return dustTransition.get(data);
+
+		return null;
 	}
 
 	protected Location getLocation(Location location, SpellData data, ConfigData<ParticlePosition> position) {

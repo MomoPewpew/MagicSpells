@@ -108,7 +108,7 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 				pendingTimes.put(target, System.currentTimeMillis());
 				sendMessage(strSummonPending, target, args, "%a", displayName);
 			} else {
-				target.teleport(landLoc);
+				target.teleportAsync(landLoc);
 				sendMessage(strSummonAccepted, target, args, "%a", displayName);
 			}
 
@@ -133,12 +133,14 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
 		if (!validTargetList.canTarget(caster, target)) return false;
-		return target.teleport(from);
+		target.teleportAsync(from);
+		return true;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		return target.teleport(from);
+		target.teleportAsync(from);
+		return true;
 	}
 
 	@EventHandler(priority=EventPriority.LOW)
@@ -151,7 +153,7 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 		if (maxAcceptDelay > 0 && pendingTimes.get(player) + maxAcceptDelay * TimeUtil.MILLISECONDS_PER_SECOND < System.currentTimeMillis()) {
 			sendMessage(strSummonExpired, player, MagicSpells.NULL_ARGS);
 		} else {
-			player.teleport(pendingSummons.get(player));
+			player.teleportAsync(pendingSummons.get(player));
 			sendMessage(strSummonAccepted, player, MagicSpells.NULL_ARGS);
 		}
 		pendingSummons.remove(player);

@@ -76,6 +76,9 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 	private final String spellNameOnBreak;
 	private Subspell spellOnBreak;
 
+	private String spellOnSpawnName;
+	private Subspell spellOnSpawn;
+
 	public TotemSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -145,6 +148,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		spellNames = getConfigStringList("spells", null);
 		spellNameOnBreak = getConfigString("spell-on-break", "");
+		spellOnSpawnName = getConfigString("spell-on-spawn", null);
 
 		totems = new HashSet<>();
 		ticker = new PulserTicker();
@@ -169,6 +173,17 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 				MagicSpells.error("TotemSpell '" + internalName + "' has an invalid spell-on-break defined");
 				spellOnBreak = null;
 			}
+		}
+
+		if (spellOnSpawnName != null) {
+			spellOnSpawn = new Subspell(spellOnSpawnName);
+
+			if (!spellOnSpawn.process()) {
+				MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid spell-on-spawn '" + spellOnSpawnName + "' defined!");
+				spellOnSpawn = null;
+			}
+
+			spellOnSpawnName = null;
 		}
 
 		if (spells.isEmpty()) MagicSpells.error("TotemSpell '" + internalName + "' has no spells defined!");
@@ -340,30 +355,37 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 			maxDistanceSq = maxDistance * maxDistance;
 
 			totalPulses = TotemSpell.this.totalPulses.get(caster, null, power, args);
-
 			pulseCount = 0;
+
 			loc.setYaw(caster.getLocation().getYaw());
-			armorStand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
-			if (!totemName.isEmpty()) {
-				armorStand.customName(Util.getMiniMessage(MagicSpells.doReplacements(totemName, caster, args)));
-				armorStand.setCustomNameVisible(totemNameVisible);
-			}
-			EntityEquipment totemEquipment = armorStand.getEquipment();
-			armorStand.setGravity(gravity);
-			armorStand.addScoreboardTag("MS_Totem");
+			armorStand = loc.getWorld().spawn(loc, ArmorStand.class, stand -> {
+				if (!totemName.isEmpty()) {
+					stand.customName(Util.getMiniMessage(MagicSpells.doReplacements(totemName, caster, args)));
+					stand.setCustomNameVisible(totemNameVisible);
+				}
 
-			if (mainHand != null) totemEquipment.setItemInMainHand(mainHand);
-			if (offHand != null) totemEquipment.setItemInOffHand(offHand);
-			if (helmet != null) totemEquipment.setHelmet(helmet);
-			if (chestplate != null) totemEquipment.setChestplate(chestplate);
-			if (leggings != null) totemEquipment.setLeggings(leggings);
-			if (boots != null) totemEquipment.setBoots(boots);
+				stand.setMarker(marker);
+				stand.setSilent(silenced);
+				stand.setGravity(gravity);
+				stand.setInvulnerable(true);
+				stand.setVisible(visibility);
+				stand.addScoreboardTag("MS_Totem");
 
-			armorStand.setVisible(visibility);
-			armorStand.setMarker(marker);
-			armorStand.setSilent(silenced);
-			armorStand.setInvulnerable(true);
+				EntityEquipment totemEquipment = stand.getEquipment();
+				totemEquipment.setItemInMainHand(mainHand);
+				totemEquipment.setItemInOffHand(offHand);
+				totemEquipment.setHelmet(helmet);
+				totemEquipment.setChestplate(chestplate);
+				totemEquipment.setLeggings(leggings);
+				totemEquipment.setBoots(boots);
+			});
 			totemLocation = armorStand.getLocation();
+
+			if (spellOnSpawn != null) {
+				if (spellOnSpawn.isTargetedEntitySpell()) spellOnSpawn.castAtEntity(caster, armorStand, power);
+				else if (spellOnSpawn.isTargetedLocationSpell()) spellOnSpawn.castAtLocation(caster, armorStand.getLocation(), power);
+				else spellOnSpawn.cast(caster, power);
+			}
 		}
 
 		private boolean pulse() {

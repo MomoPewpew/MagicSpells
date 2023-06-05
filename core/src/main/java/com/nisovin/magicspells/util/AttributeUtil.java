@@ -2,11 +2,9 @@ package com.nisovin.magicspells.util;
 
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Objects;
 
 import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.inventory.EquipmentSlot;
+
 import static org.bukkit.attribute.AttributeModifier.Operation;
 
 public class AttributeUtil {

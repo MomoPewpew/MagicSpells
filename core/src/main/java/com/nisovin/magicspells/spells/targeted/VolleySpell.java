@@ -214,7 +214,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 
 		event.setCancelled(true);
 		arrow.setVelocity(arrow.getVelocity().multiply(-1));
-		arrow.teleport(arrow.getLocation().add(arrow.getVelocity()));
+		arrow.teleportAsync(arrow.getLocation().add(arrow.getVelocity()));
 	}
 
 	private class ArrowShooter implements Runnable {

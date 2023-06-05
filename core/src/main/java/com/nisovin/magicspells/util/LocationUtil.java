@@ -173,5 +173,20 @@ public class LocationUtil {
 
 		return loc;
 	}
+
+	// Returns a vector pointing from startLoc to endLoc
+	public static Vector getDirection(Location startLoc, Location endLoc) {
+		return endLoc.toVector().subtract(startLoc.toVector()).normalize();
+	}
+
+	// Returns a cloned location with updated direction vector
+	public static Location updateDirection(Location location, Vector direction) {
+		return location.clone().setDirection(direction);
+	}
+
+	// Returns a cloned startLoc with updated direction, pointing at endLoc
+	public static Location getRotatedLocation(Location startLoc, Location endLoc) {
+		return updateDirection(startLoc, getDirection(startLoc, endLoc));
+	}
 	
 }

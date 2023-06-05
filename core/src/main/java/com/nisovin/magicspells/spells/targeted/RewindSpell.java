@@ -237,7 +237,7 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 
 			if (locations != null && locations.size() > 0) tempLocation = locations.get(counter - 1);
 			if (tempLocation != null) {
-				entity.teleport(tempLocation);
+				entity.teleportAsync(tempLocation);
 				locations.remove(tempLocation);
 				if (delayedEffectInterval > 0 && counter % delayedEffectInterval == 0)
 					locations.forEach(loc -> playSpellEffects(EffectPosition.DELAYED, loc, data));

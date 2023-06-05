@@ -86,7 +86,7 @@ public class BlinkSpell extends TargetedSpell implements TargetedLocationSpell {
 			loc.setYaw(caster.getLocation().getYaw());
 
 			playSpellEffects(caster, loc, power, args);
-			caster.teleport(loc);
+			caster.teleportAsync(loc);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
@@ -98,7 +98,7 @@ public class BlinkSpell extends TargetedSpell implements TargetedLocationSpell {
 		location.setPitch(caster.getLocation().getPitch());
 
 		playSpellEffects(caster, location, power, args);
-		caster.teleport(location);
+		caster.teleportAsync(location);
 		return true;
 	}
 

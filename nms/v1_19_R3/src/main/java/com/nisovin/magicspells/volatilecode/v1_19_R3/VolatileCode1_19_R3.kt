@@ -9,6 +9,7 @@ import org.bukkit.entity.*
 import org.bukkit.Location
 import org.bukkit.util.Vector
 import org.bukkit.inventory.Inventory
+import org.bukkit.SoundCategory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.event.entity.ExplosionPrimeEvent
 
@@ -308,4 +309,14 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         }
         return OGName;
     }
+    // KEEP IT AT 90 DEGREES (90 degrees = camera shake forward) UNTIL A PROPER MATH FUNCTION FOR THE DEGREES IS DEFINED.
+    override fun playHurtAnimation(entity: LivingEntity?, yaw: Float) {
+        val entityLiving = (entity as CraftLivingEntity).handle
+
+        for (p : Player in entity.location.getNearbyPlayers((entity.server.simulationDistance * 16).toDouble())) {
+            (p as CraftPlayer).handle.connection.send(ClientboundHurtAnimationPacket(entityLiving.id, 90f))
+            p.playSound(entity.location, "entity.generic.hurt", SoundCategory.PLAYERS, 1F, 1F)
+        }
+    }
+
 }

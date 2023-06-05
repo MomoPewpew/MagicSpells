@@ -37,6 +37,14 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 	private final ConfigData<T> dataDef;
 	private final T def;
 
+	public FunctionData(@NotNull Expression expression, @NotNull Map<String, ConfigData<Double>> variables, @NotNull Function<Double, T> converter) {
+		this.expression = expression;
+		this.variables = variables;
+		this.converter = converter;
+		this.dataDef = null;
+		this.def = null;
+	}
+
 	public FunctionData(@NotNull Expression expression, @NotNull Map<String, ConfigData<Double>> variables, @NotNull Function<Double, T> converter, @NotNull T def) {
 		this.expression = expression;
 		this.variables = variables;
@@ -51,6 +59,21 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		this.converter = converter;
 		this.dataDef = def;
 		this.def = null;
+	}
+
+	@Nullable
+	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString, @NotNull Function<Double, T> converter) {
+		return build(expressionString, converter, false);
+	}
+
+	@Nullable
+	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString, @NotNull Function<Double, T> converter, boolean silent) {
+		Map<String, ConfigData<Double>> variables = new HashMap<>();
+
+		Expression expression = buildExpression(expressionString, variables, silent);
+		if (expression == null) return null;
+
+		return new FunctionData<>(expression, variables, converter);
 	}
 
 	@Nullable

@@ -79,7 +79,7 @@ public class Util {
 	// - <potionEffectType> (level) (duration) (ambient)
 	public static PotionEffect buildPotionEffect(String effectString) {
 		String[] data = effectString.split(" ");
-		PotionEffectType t = PotionEffectHandler.getPotionEffectType(data[0]);
+		PotionEffectType t = getPotionEffectType(data[0]);
 
 		if (t == null) {
 			MagicSpells.error('\'' + data[0] + "' could not be connected to a potion effect type");
@@ -116,7 +116,7 @@ public class Util {
 	// - <potionEffectType> (duration)
 	public static PotionEffect buildSuspiciousStewPotionEffect(String effectString) {
 		String[] data = effectString.split(" ");
-		PotionEffectType t = PotionEffectHandler.getPotionEffectType(data[0]);
+		PotionEffectType t = getPotionEffectType(data[0]);
 
 		if (t == null) {
 			MagicSpells.error('\'' + data[0] + "' could not be connected to a potion effect type");
@@ -156,7 +156,7 @@ public class Util {
 	}
 
 	public static PotionEffectType getPotionEffectType(String type) {
-		return PotionEffectHandler.getPotionEffectType(type.trim());
+		return PotionEffectHandler.getPotionEffectType(type);
 	}
 
 	public static Particle getParticle(String type) {
@@ -170,7 +170,7 @@ public class Util {
 	public static void setFacing(Player player, Vector vector) {
 		Location loc = player.getLocation();
 		setLocationFacingFromVector(loc, vector);
-		player.teleport(loc);
+		player.teleportAsync(loc);
 	}
 
 	public static void setLocationFacingFromVector(Location location, Vector vector) {
@@ -232,43 +232,47 @@ public class Util {
 	public static String[] splitParams(String string, int max) {
 		String[] words = string.trim().split(" ");
 		if (words.length <= 1) return words;
-		List<String> list = new ArrayList<>();
+
 		char quote = ' ';
-		String building = "";
+		List<String> list = new ArrayList<>();
+		StringBuilder building = new StringBuilder();
 
 		for (String word : words) {
 			if (word.isEmpty()) continue;
 			if (max > 0 && list.size() == max - 1) {
-				if (!building.isEmpty()) building += " ";
-				building += word;
+				if (building.length() > 0) building.append(" ");
+				building.append(word);
 				continue;
 			}
 
 			if (quote == ' ') {
 				if (word.length() == 1 || (word.charAt(0) != '"' && word.charAt(0) != '\'')) {
 					list.add(word);
-				} else {
-					quote = word.charAt(0);
-					if (quote == word.charAt(word.length() - 1)) {
-						quote = ' ';
-						list.add(word.substring(1, word.length() - 1));
-					} else {
-						building = word.substring(1);
-					}
+					continue;
 				}
+
+				quote = word.charAt(0);
+
+				if (quote == word.charAt(word.length() - 1)) {
+					quote = ' ';
+					list.add(word.substring(1, word.length() - 1));
+					continue;
+				}
+
+				building = new StringBuilder(word.substring(1));
 				continue;
 			}
 
 			if (word.charAt(word.length() - 1) == quote) {
-				list.add(building + ' ' + word.substring(0, word.length() - 1));
-				building = "";
+				list.add(building.toString() + ' ' + word.substring(0, word.length() - 1));
+				building = new StringBuilder();
 				quote = ' ';
-			} else {
-				building += ' ' + word;
+				continue;
 			}
+			building.append(' ').append(word);
 		}
 
-		if (!building.isEmpty()) list.add(building);
+		if (building.length() > 0) list.add(building.toString());
 
 		return list.toArray(new String[0]);
 	}
@@ -290,30 +294,35 @@ public class Util {
 		if (itemData == null) return false;
 
 		int amt = item.getAmount();
+		MagicItemData magicData;
 		ItemStack[] items = inventory.getContents();
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] == null) continue;
 
-			MagicItemData magicData = MagicItems.getMagicItemDataFromItemStack(items[i]);
+			magicData = MagicItems.getMagicItemDataFromItemStack(items[i]);
 			if (magicData == null || !itemData.matches(magicData)) continue;
 
 			if (items[i].getAmount() > amt) {
 				items[i].setAmount(items[i].getAmount() - amt);
 				amt = 0;
 				break;
-			} else if (items[i].getAmount() == amt) {
+			}
+
+			if (items[i].getAmount() == amt) {
 				items[i] = null;
 				amt = 0;
 				break;
-			} else {
-				amt -= items[i].getAmount();
-				items[i] = null;
 			}
+
+			amt -= items[i].getAmount();
+			items[i] = null;
 		}
+
 		if (amt == 0) {
 			inventory.setContents(items);
 			return true;
 		}
+
 		return false;
 	}
 
@@ -322,6 +331,7 @@ public class Util {
 		if (itemData == null) return false;
 
 		int amt = item.getAmount();
+		MagicItemData magicData;
 		ItemStack[] armorContents = entityEquipment.getArmorContents();
 		ItemStack[] items = new ItemStack[6];
 		System.arraycopy(armorContents, 0, items, 0, 4);
@@ -331,21 +341,23 @@ public class Util {
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] == null) continue;
 
-			MagicItemData magicData = MagicItems.getMagicItemDataFromItemStack(items[i]);
+			magicData = MagicItems.getMagicItemDataFromItemStack(items[i]);
 			if (magicData == null || !itemData.matches(magicData)) continue;
 
 			if (items[i].getAmount() > amt) {
 				items[i].setAmount(items[i].getAmount() - amt);
 				amt = 0;
 				break;
-			} else if (items[i].getAmount() == amt) {
+			}
+
+			if (items[i].getAmount() == amt) {
 				items[i] = null;
 				amt = 0;
 				break;
-			} else {
-				amt -= items[i].getAmount();
-				items[i] = null;
 			}
+
+			amt -= items[i].getAmount();
+			items[i] = null;
 		}
 
 		if (amt == 0) {
@@ -372,11 +384,11 @@ public class Util {
 					itemStack.setAmount(itemStack.getAmount() + amt);
 					amt = 0;
 					break;
-				} else {
-					int diff = itemStack.getMaxStackSize() - itemStack.getAmount();
-					itemStack.setAmount(itemStack.getMaxStackSize());
-					amt -= diff;
 				}
+
+				int diff = itemStack.getMaxStackSize() - itemStack.getAmount();
+				itemStack.setAmount(itemStack.getMaxStackSize());
+				amt -= diff;
 			}
 		}
 
@@ -387,12 +399,13 @@ public class Util {
 					items[i] = item.clone();
 					items[i].setAmount(item.getMaxStackSize());
 					amt -= item.getMaxStackSize();
-				} else {
-					items[i] = item.clone();
-					items[i].setAmount(amt);
-					amt = 0;
-					break;
+					continue;
 				}
+
+				items[i] = item.clone();
+				items[i].setAmount(amt);
+				amt = 0;
+				break;
 			}
 		}
 
@@ -408,8 +421,10 @@ public class Util {
 		double rad = AccurateMath.toRadians(degrees);
 		double sin = AccurateMath.sin(rad);
 		double cos = AccurateMath.cos(rad);
+
 		double x = (v.getX() * cos) - (v.getZ() * sin);
 		double z = (v.getX() * sin) + (v.getZ() * cos);
+
 		v.setX(x);
 		v.setZ(z);
 	}
@@ -476,9 +491,11 @@ public class Util {
 			URL website = new URL(url);
 			ReadableByteChannel rbc = Channels.newChannel(website.openStream());
 			FileOutputStream fos = new FileOutputStream(file);
+
 			fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
 			fos.close();
 			rbc.close();
+
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -783,8 +800,10 @@ public class Util {
 	public static void setTexture(SkullMeta meta, String texture, String signature, String uuid, OfflinePlayer offlinePlayer) {
 		try {
 			PlayerProfile profile;
+
 			if (uuid != null) profile = Bukkit.createProfile(UUID.fromString(uuid), offlinePlayer.getName());
 			else profile = Bukkit.createProfile(null, offlinePlayer.getName());
+
 			setTexture(profile, texture, signature);
 			meta.setPlayerProfile(profile);
 		} catch (SecurityException | IllegalArgumentException e) {
@@ -796,11 +815,15 @@ public class Util {
 	public static Entity getNearestEntity(Entity entity, double range, @Nullable Predicate<Entity> predicate) {
 		Entity nearestEntity = null;
 		double nearestDistance = range * range;
+		double distance;
+
 		for (Entity nextEntity : entity.getNearbyEntities(range, range, range)) {
 			if (predicate != null && !predicate.test(nextEntity)) {
 				continue;
 			}
-			double distance = entity.getLocation().distanceSquared(nextEntity.getLocation());
+
+			distance = entity.getLocation().distanceSquared(nextEntity.getLocation());
+
 			if (distance < nearestDistance) {
 				nearestDistance = distance;
 				nearestEntity = nextEntity;

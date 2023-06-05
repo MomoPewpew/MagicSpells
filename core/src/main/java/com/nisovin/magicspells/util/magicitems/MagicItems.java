@@ -159,6 +159,9 @@ public class MagicItems {
 		// patterns
 		BannerHandler.processMagicItemData(meta, data);
 
+		// block data
+		BlockDataHandler.processMagicItemData(meta, data, itemStack.getType());
+
 		itemStackCache.put(itemStack, data);
 		return data;
 	}
@@ -260,6 +263,9 @@ public class MagicItems {
 		// Suspicious Stew
 		SuspiciousStewHandler.processItemMeta(meta, data);
 
+		// Block Data
+		BlockDataHandler.processItemMeta(meta, data);
+
 		// Unbreakable
 		if (data.hasAttribute(UNBREAKABLE))
 			meta.setUnbreakable((boolean) data.getAttribute(UNBREAKABLE));
@@ -324,6 +330,9 @@ public class MagicItems {
 
 				if (section.isBoolean("strict-enchants"))
 					magicItem.getMagicItemData().setStrictEnchants(section.getBoolean("strict-enchants"));
+
+				if (section.isBoolean("strict-block-data"))
+					magicItem.getMagicItemData().setStrictBlockData(section.getBoolean("strict-block-data"));
 
 				if (section.isBoolean("strict-durability"))
 					magicItem.getMagicItemData().setStrictDurability(section.getBoolean("strict-durability"));
@@ -446,6 +455,9 @@ public class MagicItems {
 			// Suspicious Stew
 			SuspiciousStewHandler.process(section, meta, itemData);
 
+			// Block Data
+			BlockDataHandler.process(section, meta, itemData, type);
+
 			// Unbreakable
 			if (section.isBoolean("unbreakable")) {
 				boolean unbreakable = section.getBoolean("unbreakable");
@@ -526,6 +538,9 @@ public class MagicItems {
 
 			if (section.isBoolean("strict-enchants"))
 				itemData.setStrictEnchants(section.getBoolean("strict-enchants"));
+
+			if (section.isBoolean("strict-block-data"))
+				itemData.setStrictBlockData(section.getBoolean("strict-block-data"));
 
 			if (section.isBoolean("strict-durability"))
 				itemData.setStrictDurability(section.getBoolean("strict-durability"));

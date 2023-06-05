@@ -1,10 +1,8 @@
 package com.nisovin.magicspells.spells;
 
 import java.util.List;
-import java.util.Random;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -20,11 +18,9 @@ import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
-public final class TargetedMultiSpell extends TargetedSpell implements TargetedEntitySpell, TargetedLocationSpell {
+public final class TargetedMultiSpell extends TargetedSpell implements TargetedEntitySpell, TargetedLocationSpell, TargetedEntityFromLocationSpell {
 
 	private static final Pattern DELAY_PATTERN = Pattern.compile("DELAY [0-9]+");
-
-	private final Random random;
 
 	private List<Action> actions;
 	private List<String> spellList;
@@ -39,8 +35,6 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 
 	public TargetedMultiSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-
-		random = ThreadLocalRandom.current();
 
 		actions = new ArrayList<>();
 		spellList = getConfigStringList("spells", null);
@@ -106,7 +100,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 				locTarget.setDirection(caster.getLocation().getDirection());
 			}
 			
-			boolean somethingWasDone = runSpells(caster, entTarget, locTarget, power, args);
+			boolean somethingWasDone = runSpells(caster, null, entTarget, locTarget, power, args);
 			if (!somethingWasDone) return noTarget(caster, args);
 			
 			if (entTarget != null) {
@@ -120,46 +114,46 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return runSpells(caster, null, target.clone().add(0, yOffset.get(caster, null, power, args), 0), power, null);
+		return runSpells(caster, null, null, target.clone().add(0, yOffset.get(caster, null, power, args), 0), power, null);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return runSpells(caster, null, target.clone().add(0, yOffset.get(caster, null, power, null), 0), power, null);
+		return runSpells(caster, null, null, target.clone().add(0, yOffset.get(caster, null, power, null), 0), power, null);
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		return runSpells(null, null, target.clone().add(0, yOffset.get(null, null, power, args), 0), power, null);
+		return runSpells(null, null, null, target.clone().add(0, yOffset.get(null, null, power, args), 0), power, null);
 	}
 
 	@Override
 	public boolean castAtLocation(Location location, float power) {
-		return runSpells(null, null, location.clone().add(0, yOffset.get(null, null, power, null), 0), power, null);
+		return runSpells(null, null, null, location.clone().add(0, yOffset.get(null, null, power, null), 0), power, null);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return runSpells(caster, target, null, power, args);
+		return runSpells(caster, null, target, null, power, args);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return runSpells(caster, target, null, power, null);
+		return runSpells(caster, null, target, null, power, null);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return runSpells(null, target, null, power, args);
+		return runSpells(null, null, target, null, power, args);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
-		return runSpells(null, target, null, power, null);
+		return runSpells(null, null, target, null, power, null);
 	}
 
-	private boolean runSpells(LivingEntity livingEntity, LivingEntity entTarget, Location locTarget, float power, String[] args) {
-		if (entTarget != null && (livingEntity == null ? !validTargetList.canTarget(entTarget) : !validTargetList.canTarget(livingEntity, entTarget)))
+	private boolean runSpells(LivingEntity caster, Location center, LivingEntity targetEnt, Location targetLoc, float power, String[] args) {
+		if (targetEnt != null && (caster == null ? !validTargetList.canTarget(targetEnt) : !validTargetList.canTarget(caster, targetEnt)))
 			return false;
 
 		boolean somethingWasDone = false;
@@ -172,16 +166,17 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 					delay += action.getDelay();
 					continue;
 				}
+
 				if (action.isSpell()) {
 					spell = action.getSpell();
 					if (delay == 0) {
-						boolean ok = castTargetedSpell(spell, livingEntity, entTarget, locTarget, power);
+						boolean ok = castTargetedSpells(spell, caster, center, targetEnt, targetLoc, power);
 						if (ok) somethingWasDone = true;
 						else if (stopOnFail) break;
 						continue;
 					}
 
-					DelayedSpell ds = new DelayedSpell(spell, livingEntity, entTarget, locTarget, power, delayedSpells);
+					DelayedSpell ds = new DelayedSpell(spell, caster, center, targetEnt, targetLoc, power, delayedSpells);
 					delayedSpells.add(ds);
 					MagicSpells.scheduleDelayedTask(ds, delay);
 					somethingWasDone = true;
@@ -189,35 +184,58 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 			}
 		} else {
 			Action action = actions.get(random.nextInt(actions.size()));
-			if (action.isSpell()) somethingWasDone = castTargetedSpell(action.getSpell(), livingEntity, entTarget, locTarget, power);
-			else somethingWasDone = false;
+			if (action.isSpell()) somethingWasDone = castTargetedSpells(action.getSpell(), caster, center, targetEnt, targetLoc, power);
 		}
 		if (somethingWasDone) {
-			if (livingEntity != null) {
-				if (entTarget != null) playSpellEffects(livingEntity, entTarget, power, args);
-				else if (locTarget != null) playSpellEffects(livingEntity, locTarget, power, args);
+			if (caster != null) {
+				if (targetEnt != null) playSpellEffects(caster, targetEnt, power, args);
+				else if (targetLoc != null) playSpellEffects(caster, targetLoc, power, args);
 			} else {
-				if (entTarget != null) playSpellEffects(EffectPosition.TARGET, entTarget, power, args);
-				else if (locTarget != null) playSpellEffects(EffectPosition.TARGET, locTarget, power, args);
+				if (targetEnt != null) playSpellEffects(EffectPosition.TARGET, targetEnt, power, args);
+				else if (targetLoc != null) playSpellEffects(EffectPosition.TARGET, targetLoc, power, args);
 			}
 		}
 		return somethingWasDone;
 	}
 	
-	private boolean castTargetedSpell(Subspell spell, LivingEntity caster, LivingEntity entTarget, Location locTarget, float power) {
-		if (spell.isTargetedEntitySpell() && entTarget != null) {
-			return spell.castAtEntity(caster, entTarget, power, passTargeting);
+	private boolean castTargetedSpells(Subspell spell, LivingEntity caster, Location center, LivingEntity targetEnt, Location targetLoc, float power) {
+		if (spell.isTargetedEntityFromLocationSpell() && targetEnt != null && center != null) {
+			return spell.castAtEntityFromLocation(caster, center, targetEnt, power, passTargeting);
+		}
+
+		if (spell.isTargetedEntitySpell() && targetEnt != null) {
+			return spell.castAtEntity(caster, targetEnt, power, passTargeting);
 		}
 
 		if (spell.isTargetedLocationSpell()) {
-			if (entTarget != null) return spell.castAtLocation(caster, entTarget.getLocation(), power);
-			if (locTarget != null) return spell.castAtLocation(caster, locTarget, power);
+			if (targetEnt != null) return spell.castAtLocation(caster, targetEnt.getLocation(), power);
+			if (targetLoc != null) return spell.castAtLocation(caster, targetLoc, power);
 		}
 
 		PostCastAction action = spell.cast(caster, power);
 		return action == PostCastAction.HANDLE_NORMALLY || action == PostCastAction.NO_MESSAGES;
 	}
-	
+
+	@Override
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
+		return runSpells(caster, from, target, null, power, args);
+	}
+
+	@Override
+	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
+		return runSpells(null, from, target, null, power, args);
+	}
+
+	@Override
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
+		return runSpells(caster, from, target, null, power, null);
+	}
+
+	@Override
+	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
+		return runSpells(null, from, target, null, power, null);
+	}
+
 	private static class Action {
 		
 		private final Subspell spell;
@@ -255,20 +273,23 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 		
 		private final Subspell spell;
 		private final LivingEntity caster;
-		private final LivingEntity entTarget;
-		private final Location locTarget;
+		private final Location center;
+		private final LivingEntity targetEnt;
+		private final Location targetLoc;
 		private final float power;
 		
 		private List<DelayedSpell> delayedSpells;
 		private boolean cancelled;
 		
-		private DelayedSpell(Subspell spell, LivingEntity caster, LivingEntity entTarget, Location locTarget, float power, List<DelayedSpell> delayedSpells) {
+		private DelayedSpell(Subspell spell, LivingEntity caster, Location center, LivingEntity targetEnt, Location targetLoc, float power, List<DelayedSpell> delayedSpells) {
 			this.spell = spell;
 			this.caster = caster;
-			this.entTarget = entTarget;
-			this.locTarget = locTarget;
+			this.center = center;
+			this.targetEnt = targetEnt;
+			this.targetLoc = targetLoc;
 			this.power = power;
 			this.delayedSpells = delayedSpells;
+
 			cancelled = false;
 		}
 		
@@ -294,7 +315,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 			}
 
 			if (caster == null || caster.isValid()) {
-				boolean ok = castTargetedSpell(spell, caster, entTarget, locTarget, power);
+				boolean ok = castTargetedSpells(spell, caster, center, targetEnt, targetLoc, power);
 				delayedSpells.remove(this);
 				if (!ok && stopOnFail) cancelAll();
 			} else cancelAll();

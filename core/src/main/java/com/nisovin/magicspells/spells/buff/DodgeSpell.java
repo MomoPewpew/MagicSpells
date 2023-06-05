@@ -129,7 +129,7 @@ public class DodgeSpell extends BuffSpell {
 		if (spellBeforeDodge != null) spellBeforeDodge.castAtLocation(entity, entityLoc, 1F);
 
 		if (!BlockUtils.isPathable(targetLoc.getBlock().getType()) || !BlockUtils.isPathable(targetLoc.getBlock().getRelative(BlockFace.UP))) return;
-		entity.teleport(targetLoc);
+		entity.teleportAsync(targetLoc);
 		addUseAndChargeCost(entity);
 
 		playSpellEffectsTrail(entityLoc, targetLoc, spellData);

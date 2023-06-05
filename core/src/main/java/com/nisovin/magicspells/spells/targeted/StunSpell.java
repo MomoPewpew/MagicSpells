@@ -201,7 +201,7 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 				if (entity instanceof Player) continue;
 
 				if (entity.isValid() && until > System.currentTimeMillis()) {
-					entity.teleport(info.targetLocation);
+					entity.teleportAsync(info.targetLocation);
 					continue;
 				}
 

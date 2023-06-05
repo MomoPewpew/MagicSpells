@@ -66,6 +66,7 @@ public class ConditionManager {
 		addCondition("storm", StormCondition.class);
 		addCondition("moonphase", MoonPhaseCondition.class);
 		addCondition("lightlevel", LightLevelCondition.class);
+		addCondition("los", LineOfSightCondition.class);
 		addCondition("onblock", OnBlockCondition.class);
 		addCondition("inblock", InBlockCondition.class);
 		addCondition("onground", OnGroundCondition.class);
@@ -176,6 +177,7 @@ public class ConditionManager {
 		addCondition("loopactive", LoopActiveCondition.class);
 		addCondition("ownedloopactive", OwnedLoopActiveCondition.class);
 		addCondition("always", AlwaysCondition.class);
+		addCondition("velocityactive", VelocityActiveCondition.class);
 	}
 
 }

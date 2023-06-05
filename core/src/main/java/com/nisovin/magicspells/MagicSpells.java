@@ -61,10 +61,12 @@ import com.nisovin.magicspells.storage.StorageHandler;
 import com.nisovin.magicspells.util.prompt.PromptType;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.zones.NoMagicZoneManager;
+import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.commands.CommandHelpFilter;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.storage.types.TXTFileStorage;
 import com.nisovin.magicspells.volatilecode.ManagerVolatile;
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle;
@@ -1504,6 +1506,11 @@ public class MagicSpells extends JavaPlugin {
 		return doVariableReplacements(player, doArgumentSubstitution(string, args));
 	}
 
+	public static String doReplacements(String message, SpellData data) {
+		if (data == null) return doReplacements(message, null, null, null, (String[]) null);
+		return doReplacements(message, data.caster(), data.target(), data.args(), (String[]) null);
+	}
+
 	public static String doReplacements(String message, LivingEntity caster) {
 		return doReplacements(message, caster, null, null, (String[]) null);
 	}
@@ -1937,10 +1944,30 @@ public class MagicSpells extends JavaPlugin {
 			storageHandler = null;
 		}
 
-		// Turn off spells
+		// Turn off spells and their spell effects
 		for (Spell spell : spells.values()) {
+			EffectPosition position;
+			List<SpellEffect> spellEffects;
+			Iterator<SpellEffect> iterator;
+			if (spell.getEffects() != null) {
+				for (Map.Entry<EffectPosition, List<SpellEffect>> entry : spell.getEffects().entrySet()) {
+					if (entry == null) continue;
+
+					position = entry.getKey();
+					spellEffects = entry.getValue();
+					if (position == null || spellEffects == null) continue;
+
+					iterator = spellEffects.iterator();
+					while (iterator.hasNext()) {
+						iterator.next().turnOff();
+						iterator.remove();
+					}
+				}
+			}
+
 			spell.turnOff();
 		}
+
 		// Clear spell animations.
 		for (SpellAnimation animation : SpellAnimation.getAnimations()) {
 			animation.stop(false);
@@ -1953,12 +1980,19 @@ public class MagicSpells extends JavaPlugin {
 			if (file.exists()) file.delete();
 			try {
 				Writer writer = new FileWriter(file);
+				Map<UUID, Long> cooldowns;
+				long cooldown;
 				for (Spell spell : spells.values()) {
-					Map<UUID, Long> cooldowns = spell.getCooldowns();
+					cooldowns = spell.getCooldowns();
 					for (UUID id : cooldowns.keySet()) {
-						long cooldown = cooldowns.get(id);
+						cooldown = cooldowns.get(id);
 						if (cooldown <= System.currentTimeMillis()) continue;
-						writer.append(spell.getInternalName()).append(String.valueOf(':')).append(id.toString()).append(String.valueOf(':')).append(String.valueOf(cooldown)).append(String.valueOf('\n'));
+						writer.append(spell.getInternalName())
+								.append(String.valueOf(':'))
+								.append(id.toString())
+								.append(String.valueOf(':'))
+								.append(String.valueOf(cooldown))
+								.append(String.valueOf('\n'));
 					}
 				}
 				writer.close();
@@ -1991,7 +2025,6 @@ public class MagicSpells extends JavaPlugin {
 		losTransparentBlocks = null;
 		ignoreCastItemDurability.clear();
 		ignoreCastItemDurability = null;
-
 
 		if (profilingRuns != null) {
 			profilingRuns.clear();
@@ -2038,6 +2071,7 @@ public class MagicSpells extends JavaPlugin {
 		}
 
 		config = null;
+		consoleName = null;
 		strCantCast = null;
 		strCantBind = null;
 		moneyHandler = null;
@@ -2050,7 +2084,6 @@ public class MagicSpells extends JavaPlugin {
 		lifeLengthTracker = null;
 		strMissingReagents = null;
 		strSpellChangeEmpty = null;
-		consoleName = null;
 		soundFailOnCooldown = null;
 		soundFailMissingReagents = null;
 

@@ -27,6 +27,8 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.spigotmc.event.entity.EntityDismountEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
+import com.nisovin.magicspells.Subspell;
+import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MobUtil;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -48,6 +50,7 @@ public class SteedSpell extends InstantSpell {
 
 	private ConfigData<Double> jumpStrength;
 
+	private String strInvalidType;
 	private String strAlreadyMounted;
 
 	private EntityType type;
@@ -56,6 +59,9 @@ public class SteedSpell extends InstantSpell {
 	private Horse.Style style;
 
 	private ItemStack armor;
+
+	private Subspell spellOnSpawn;
+	private String spellOnSpawnName;
 
 	public SteedSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -69,6 +75,8 @@ public class SteedSpell extends InstantSpell {
 
 		jumpStrength = getConfigDataDouble("jump-strength", 1);
 
+		strInvalidType = getConfigString("str-invalid-type", "Invalid entity type.");
+		spellOnSpawnName = getConfigString("spell-on-spawn", null);
 		strAlreadyMounted = getConfigString("str-already-mounted", "You are already mounted!");
 
 		type = MobUtil.getEntityType(getConfigString("type", "horse"));
@@ -101,6 +109,22 @@ public class SteedSpell extends InstantSpell {
 	}
 
 	@Override
+	protected void initialize() {
+		super.initialize();
+
+		if (spellOnSpawnName != null) {
+			spellOnSpawn = new Subspell(spellOnSpawnName);
+
+			if (!spellOnSpawn.process()) {
+				MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid spell-on-spawn '" + spellOnSpawnName + "' defined!");
+				spellOnSpawn = null;
+			}
+
+			spellOnSpawnName = null;
+		}
+	}
+
+	@Override
 	public void turnOff() {
 		for (UUID id : mounted.keySet()) {
 			Player player = Bukkit.getPlayer(id);
@@ -119,28 +143,41 @@ public class SteedSpell extends InstantSpell {
 				return PostCastAction.ALREADY_HANDLED;
 			}
 
-			Entity entity = caster.getWorld().spawnEntity(caster.getLocation(), type);
-			entity.setGravity(gravity);
-
-			if (entity instanceof AbstractHorse abstractHorse) {
-				abstractHorse.setAdult();
-				abstractHorse.setTamed(true);
-				if (caster instanceof AnimalTamer tamer) abstractHorse.setOwner(tamer);
-				abstractHorse.setJumpStrength(jumpStrength.get(caster, null, power, args));
-				abstractHorse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
-
-				if (entity instanceof Horse horse) {
-					if (color != null) horse.setColor(color);
-					else horse.setColor(Horse.Color.values()[random.nextInt(Horse.Color.values().length)]);
-					if (style != null) horse.setStyle(style);
-					else horse.setStyle(Horse.Style.values()[random.nextInt(Horse.Style.values().length)]);
-					if (armor != null) horse.getInventory().setArmor(armor);
-				} else if (entity instanceof ChestedHorse chestedHorse) {
-					chestedHorse.setCarryingChest(hasChest);
-				}
+			Class<? extends Entity> entityClass = type == null ? null : type.getEntityClass();
+			if (entityClass == null) {
+				sendMessage(strInvalidType, caster, args);
+				return PostCastAction.ALREADY_HANDLED;
 			}
 
+			Entity entity = caster.getWorld().spawn(caster.getLocation(), entityClass, e -> {
+				e.setGravity(gravity);
+
+				if (e instanceof AbstractHorse abstractHorse) {
+					abstractHorse.setAdult();
+					abstractHorse.setTamed(true);
+					if (caster instanceof AnimalTamer tamer) abstractHorse.setOwner(tamer);
+					abstractHorse.setJumpStrength(jumpStrength.get(caster, null, power, args));
+					abstractHorse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
+
+					if (abstractHorse instanceof Horse horse) {
+						if (color != null) horse.setColor(color);
+						else horse.setColor(Horse.Color.values()[random.nextInt(Horse.Color.values().length)]);
+						if (style != null) horse.setStyle(style);
+						else horse.setStyle(Horse.Style.values()[random.nextInt(Horse.Style.values().length)]);
+						if (armor != null) horse.getInventory().setArmor(armor);
+					} else if (abstractHorse instanceof ChestedHorse chestedHorse) {
+						chestedHorse.setCarryingChest(hasChest);
+					}
+				}
+			});
 			entity.addPassenger(caster);
+
+			if (spellOnSpawn != null && entity instanceof LivingEntity le) {
+				if (spellOnSpawn.isTargetedEntitySpell()) spellOnSpawn.castAtEntity(caster, le, power);
+				else if (spellOnSpawn.isTargetedLocationSpell()) spellOnSpawn.castAtLocation(caster, le.getLocation(), power);
+				else spellOnSpawn.cast(caster, power);
+			}
+
 			playSpellEffects(EffectPosition.CASTER, caster, power, args);
 			mounted.put(caster.getUniqueId(), entity.getEntityId());
 		}

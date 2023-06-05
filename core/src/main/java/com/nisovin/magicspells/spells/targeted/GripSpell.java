@@ -114,7 +114,8 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		playSpellEffects(EffectPosition.TARGET, target, data);
 		playSpellEffectsTrail(from, loc, data);
 
-		return target.teleport(loc);
+		target.teleportAsync(loc);
+		return true;
 	}
 
 }

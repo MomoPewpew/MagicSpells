@@ -24,6 +24,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.events.TrackerMoveEvent;
 import com.nisovin.magicspells.events.SpellTargetEvent;
+import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.zones.NoMagicZoneManager;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -43,7 +44,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 	private NoMagicZoneManager zoneManager;
 
 	private Set<EffectlibSpellEffect> effectSet;
-	private Set<Entity> entitySet;
+	private Map<SpellEffect, Entity> entityMap;
 	private Set<ArmorStand> armorStandSet;
 
 	private LivingEntity caster;
@@ -240,7 +241,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 		if (spell != null) {
 			effectSet = spell.playEffectsProjectile(EffectPosition.PROJECTILE, currentLocation, data);
-			entitySet = spell.playEntityEffectsProjectile(EffectPosition.PROJECTILE, currentLocation, data);
+			entityMap = spell.playEntityEffectsProjectile(EffectPosition.PROJECTILE, currentLocation, data);
 			armorStandSet = spell.playArmorStandEffectsProjectile(EffectPosition.PROJECTILE, currentLocation, data);
 			ParticleProjectileSpell.getProjectileTrackers().add(tracker);
 		}
@@ -371,7 +372,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			}
 		}
 
-		if (armorStandSet != null || entitySet != null) {
+		if (armorStandSet != null || entityMap != null) {
 			// Changing the effect location
 			EulerAngle angle;
 
@@ -395,9 +396,9 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 				}
 			}
 
-			if (entitySet != null) {
-				for (Entity entity : entitySet) {
-					entity.teleportAsync(effectLoc);
+			if (entityMap != null) {
+				for (var entry : entityMap.entrySet()) {
+					entry.getValue().teleportAsync(entry.getKey().applyOffsets(effectLoc.clone()));
 				}
 			}
 		}
@@ -643,11 +644,11 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			}
 			armorStandSet.clear();
 		}
-		if (entitySet != null) {
-			for (Entity entity : entitySet) {
+		if (entityMap != null) {
+			for (Entity entity : entityMap.values()) {
 				entity.remove();
 			}
-			entitySet.clear();
+			entityMap.clear();
 		}
 		caster = null;
 		startLocation = null;

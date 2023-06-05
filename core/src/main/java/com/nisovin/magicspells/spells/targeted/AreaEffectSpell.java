@@ -164,20 +164,28 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		double vRadiusSquared = vRadius * vRadius;
 		double hRadiusSquared = hRadius * hRadius;
 
+		SpellTargetEvent event;
+		SpellData data;
+
+		float power;
+
+		double hDistance;
+		double vDistance;
+
 		if (validTargetList.canTargetOnlyCaster()) {
 			if (caster == null) return false;
 
 			LivingEntity target = caster;
-			float power = basePower;
+			power = basePower;
 
 			if (!target.getWorld().equals(location.getWorld())) return false;
 
-			double hDistance = NumberConversions.square(target.getLocation().getX() - location.getX()) + NumberConversions.square(target.getLocation().getZ() - location.getZ());
+			hDistance = NumberConversions.square(target.getLocation().getX() - location.getX()) + NumberConversions.square(target.getLocation().getZ() - location.getZ());
 			if (hDistance > hRadiusSquared) return false;
-			double vDistance = NumberConversions.square(target.getLocation().getY() - location.getY());
+			vDistance = NumberConversions.square(target.getLocation().getY() - location.getY());
 			if (vDistance > vRadiusSquared) return false;
 
-			SpellTargetEvent event = new SpellTargetEvent(this, caster, target, power, args);
+			event = new SpellTargetEvent(this, caster, target, power, args);
 			EventUtil.call(event);
 			if (event.isCancelled()) return false;
 
@@ -186,11 +194,11 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 
 			castSpells(caster, location, target, power);
 
-			SpellData data = new SpellData(caster, target, power, args);
+			data = new SpellData(caster, target, power, args);
 
 			playSpellEffects(EffectPosition.TARGET, target, data);
 			playSpellEffects(EffectPosition.SPECIAL, location, data);
-			if (spellSourceInCenter) playSpellEffectsTrail(location, target.getLocation(), data);
+			if (spellSourceInCenter) playSpellEffects(caster, location, target, data);
 			else playSpellEffectsTrail(caster.getLocation(), target.getLocation(), data);
 
 			return true;
@@ -215,9 +223,9 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (!validTargetList.canTarget(caster, target)) continue;
 
 			if (circleShape) {
-				double hDistance = NumberConversions.square(target.getLocation().getX() - location.getX()) + NumberConversions.square(target.getLocation().getZ() - location.getZ());
+				hDistance = NumberConversions.square(target.getLocation().getX() - location.getX()) + NumberConversions.square(target.getLocation().getZ() - location.getZ());
 				if (hDistance > hRadiusSquared) continue;
-				double vDistance = NumberConversions.square(target.getLocation().getY() - location.getY());
+				vDistance = NumberConversions.square(target.getLocation().getY() - location.getY());
 				if (vDistance > vRadiusSquared) continue;
 			}
 
@@ -228,9 +236,9 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 				if (AccurateMath.toDegrees(AccurateMath.abs(dir.angle(location.getDirection()))) > cone) continue;
 			}
 
-			float power = basePower;
+			power = basePower;
 
-			SpellTargetEvent event = new SpellTargetEvent(this, caster, target, power, args);
+			event = new SpellTargetEvent(this, caster, target, power, args);
 			EventUtil.call(event);
 			if (event.isCancelled()) continue;
 
@@ -239,10 +247,10 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 
 			castSpells(caster, location, target, power);
 
-			SpellData data = new SpellData(caster, target, power, args);
+			data = new SpellData(caster, target, power, args);
 			playSpellEffects(EffectPosition.TARGET, target, data);
 
-			if (spellSourceInCenter) playSpellEffectsTrail(location, target.getLocation(), data);
+			if (spellSourceInCenter) playSpellEffects(caster, location, target, data);
 			else if (caster != null) playSpellEffectsTrail(caster.getLocation(), target.getLocation(), data);
 
 			count++;
@@ -252,7 +260,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 
 		boolean success = count > 0 || !failIfNoTargets;
 		if (success) {
-			SpellData data = new SpellData(caster, basePower, args);
+			data = new SpellData(caster, basePower, args);
 			playSpellEffects(EffectPosition.SPECIAL, location, data);
 			if (caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
 		}

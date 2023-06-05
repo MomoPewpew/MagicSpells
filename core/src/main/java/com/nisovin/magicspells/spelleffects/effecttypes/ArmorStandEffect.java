@@ -7,6 +7,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.configuration.ConfigurationSection;
 
+import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.EntityData;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
@@ -34,7 +36,7 @@ public class ArmorStandEffect extends SpellEffect {
 		if (section == null) return;
 
 		entityData = new EntityData(section);
-		entityData.setEntityType(EntityType.ARMOR_STAND);
+		entityData.setEntityType((caster, target, power, args) -> EntityType.ARMOR_STAND);
 
 		gravity = section.getBoolean("gravity", false);
 
@@ -57,18 +59,18 @@ public class ArmorStandEffect extends SpellEffect {
 
 	@Override
 	protected ArmorStand playArmorStandEffectLocation(Location location, SpellData data) {
-		return (ArmorStand) entityData.spawn(location, entity -> {
+		return (ArmorStand) entityData.spawn(location, data, entity -> {
 			ArmorStand armorStand = (ArmorStand) entity;
 
 			armorStand.addScoreboardTag(ENTITY_TAG);
 			armorStand.setGravity(gravity);
 			armorStand.setSilent(true);
-			armorStand.setCustomName(customName);
+			armorStand.customName(Util.getMiniMessage(MagicSpells.doReplacements(customName, data)));
 			armorStand.setCustomNameVisible(customNameVisible);
 
-			if (headItem != null) armorStand.setItem(EquipmentSlot.HEAD, headItem);
-			if (mainhandItem != null) armorStand.setItem(EquipmentSlot.HAND, mainhandItem);
-			if (offhandItem != null) armorStand.setItem(EquipmentSlot.OFF_HAND, offhandItem);
+			armorStand.setItem(EquipmentSlot.HEAD, headItem);
+			armorStand.setItem(EquipmentSlot.HAND, mainhandItem);
+			armorStand.setItem(EquipmentSlot.OFF_HAND, offhandItem);
 		});
 	}
 

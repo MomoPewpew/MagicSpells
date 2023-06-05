@@ -113,7 +113,7 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 
 	private void magnet(LivingEntity caster, Location origin, Item item, float power, String[] args, SpellData data, double velocity) {
 		if (removeItemGravity) item.setGravity(false);
-		if (teleport) item.teleport(origin);
+		if (teleport) item.teleportAsync(origin);
 		else {
 			if (resolveVelocityPerItem) {
 				velocity = this.velocity.get(caster, null, power, args);

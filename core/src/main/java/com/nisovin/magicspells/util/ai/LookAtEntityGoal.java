@@ -74,7 +74,7 @@ public class LookAtEntityGoal implements Goal<Mob> {
 
     @Override
     public void tick() {
-        this.mob.teleport(this.mob.getLocation().setDirection(this.target.getLocation().subtract(this.mob.getLocation()).toVector()));
+        this.mob.teleportAsync(this.mob.getLocation().setDirection(this.target.getLocation().subtract(this.mob.getLocation()).toVector()));
         this.lookTime--;
     }
 

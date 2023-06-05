@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.List;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.events.SpellTargetEvent;
+import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
@@ -232,7 +234,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		private String internalName;
 
 		private Set<EffectlibSpellEffect> effectSet;
-		private Set<Entity> entitySet;
+		private Map<SpellEffect, Entity> entityMap;
 		private Set<ArmorStand> armorStandSet;
 
 		private LivingEntity caster;
@@ -312,7 +314,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			maxDuration = OrbitSpell.this.maxDuration.get(caster, target, power, args) * TimeUtil.MILLISECONDS_PER_SECOND;
 
 			effectSet = playSpellEffectLibEffects(EffectPosition.PROJECTILE, targetLoc, data);
-			entitySet = playSpellEntityEffects(EffectPosition.PROJECTILE, targetLoc, data);
+			entityMap = playSpellEntityEffects(EffectPosition.PROJECTILE, targetLoc, data);
 			armorStandSet = playSpellArmorStandEffects(EffectPosition.PROJECTILE, targetLoc, data);
 
 			trackerSet.add(this);
@@ -366,9 +368,9 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				}
 			}
 
-			if (entitySet != null) {
-				for (Entity entity : entitySet) {
-					entity.teleportAsync(loc);
+			if (entityMap != null) {
+				for (var entry : entityMap.entrySet()) {
+					entry.getValue().teleportAsync(entry.getKey().applyOffsets(loc.clone()));
 				}
 			}
 
@@ -443,8 +445,8 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 					armorStand.remove();
 				}
 			}
-			if (entitySet != null) {
-				for (Entity entity : entitySet) {
+			if (entityMap != null) {
+				for (Entity entity : entityMap.values()) {
 					entity.remove();
 				}
 			}

@@ -7,7 +7,6 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
-import org.bukkit.EntityEffect;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
@@ -15,6 +14,7 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
 import com.nisovin.magicspells.util.*;
+import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -87,7 +87,8 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 				double health = target.getHealth() - damage;
 				if (health < 0) health = 0;
 				target.setHealth(health);
-				target.playEffect(EntityEffect.HURT);
+				if (caster != null) MagicSpells.getVolatileCodeHandler().playHurtAnimation(target, LocationUtil.getRotatedLocation(caster.getLocation(), target.getLocation()).getYaw());
+				else MagicSpells.getVolatileCodeHandler().playHurtAnimation(target, target.getLocation().getYaw());
 			} else {
 				if (caster != null) target.damage(damage, caster);
 				else target.damage(damage);
@@ -151,7 +152,7 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 		private final Location start;
 
 		private GeyserAnimation(BlockData blockData, Location start, List<Player> nearby, int animationSpeed, int geyserHeight) {
-			super(0, animationSpeed, true);
+			super(0, animationSpeed, true, false);
 
 			this.blockData = blockData;
 			this.start = start;
@@ -162,12 +163,12 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 		@Override
 		protected void onTick(int tick) {
 			if (blockData == null) {
-				stop(true);
+				stop();
 				return;
 			}
 
 			if (tick > geyserHeight << 1) {
-				stop(true);
+				stop();
 				return;
 			}
 

@@ -1,13 +1,19 @@
 package com.nisovin.magicspells.util.trackers;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
+
 import org.bukkit.entity.*;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
 import net.kyori.adventure.text.Component;
 
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
+import de.slikey.effectlib.Effect;
+import de.slikey.effectlib.effect.ModifiedEffect;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
@@ -19,14 +25,19 @@ import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.events.TrackerMoveEvent;
 import com.nisovin.magicspells.zones.NoMagicZoneManager;
+import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.instant.ProjectileSpell;
 import com.nisovin.magicspells.util.projectile.ProjectileManager;
+import com.nisovin.magicspells.spelleffects.util.EffectlibSpellEffect;
 
 public class ProjectileTracker implements Runnable, Tracker {
 
 	private final Random rand = ThreadLocalRandom.current();
+
+	private Set<EffectlibSpellEffect> effectSet;
+	private Map<SpellEffect, Entity> entityMap;
 
 	private ProjectileSpell spell;
 
@@ -35,10 +46,13 @@ public class ProjectileTracker implements Runnable, Tracker {
 	private ProjectileManager projectileManager;
 
 	private Vector relativeOffset;
+	private Vector effectOffset;
 
 	private int tickInterval;
 	private int tickSpellInterval;
 	private int specialEffectInterval;
+	private int intermediateEffects;
+	private int intermediateHitboxes;
 
 	private float rotation;
 	private float velocity;
@@ -47,6 +61,7 @@ public class ProjectileTracker implements Runnable, Tracker {
 	private float horizSpread;
 	private float verticalHitRadius;
 
+	private boolean visible;
 	private boolean gravity;
 	private boolean charged;
 	private boolean incendiary;
@@ -104,7 +119,7 @@ public class ProjectileTracker implements Runnable, Tracker {
 		taskId = MagicSpells.scheduleRepeatingTask(this, 0, tickInterval);
 
 		Vector startDir = startLocation.clone().getDirection().normalize();
-		Vector horizOffset = new Vector(-startDir.getZ(), 0.0, startDir.getX()).normalize();
+		Vector horizOffset = new Vector(-startDir.getZ(), 0D, startDir.getX()).normalize();
 		startLocation.add(horizOffset.multiply(relativeOffset.getZ())).getBlock().getLocation();
 		startLocation.add(startLocation.getDirection().multiply(relativeOffset.getX()));
 		startLocation.setY(startLocation.getY() + relativeOffset.getY());
@@ -116,11 +131,13 @@ public class ProjectileTracker implements Runnable, Tracker {
 		currentVelocity.multiply(velocity * power);
 		if (rotation != 0) Util.rotateVector(currentVelocity, rotation);
 		if (horizSpread > 0 || vertSpread > 0) {
-			float rx = -1 + rand.nextFloat() * (1 + 1);
-			float ry = -1 + rand.nextFloat() * (1 + 1);
-			float rz = -1 + rand.nextFloat() * (1 + 1);
+			float rx = -1 + rand.nextFloat() * 2;
+			float ry = -1 + rand.nextFloat() * 2;
+			float rz = -1 + rand.nextFloat() * 2;
 			currentVelocity.add(new Vector(rx * horizSpread, ry * vertSpread, rz * horizSpread));
 		}
+
+		projectile.setVisibleByDefault(visible);
 		projectile.setVelocity(currentVelocity);
 		projectile.setGravity(gravity);
 		projectile.setShooter(caster);
@@ -133,7 +150,8 @@ public class ProjectileTracker implements Runnable, Tracker {
 
 		if (spell != null) {
 			spell.playEffects(EffectPosition.CASTER, startLocation, spellData);
-			spell.playEffects(EffectPosition.PROJECTILE, projectile, spellData);
+			effectSet = spell.playEffectsProjectile(EffectPosition.PROJECTILE, currentLocation, spellData);
+			entityMap = spell.playEntityEffectsProjectile(EffectPosition.PROJECTILE, currentLocation, spellData);
 			spell.playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, startLocation, projectile.getLocation(), caster, projectile, spellData);
 		}
 		ProjectileSpell.getProjectileTrackers().add(this);
@@ -191,19 +209,92 @@ public class ProjectileTracker implements Runnable, Tracker {
 
 		if (counter % tickSpellInterval == 0 && tickSpell != null) tickSpell.castAtLocation(caster, currentLocation, power);
 
-		if (spell != null && specialEffectInterval > 0 && counter % specialEffectInterval == 0) spell.playEffects(EffectPosition.SPECIAL, currentLocation, spellData);
+		if (spell != null) {
+			if (specialEffectInterval > 0 && counter % specialEffectInterval == 0) spell.playEffects(EffectPosition.SPECIAL, currentLocation, spellData);
+			if (intermediateEffects > 0) playIntermediateEffects(previousLocation, currentVelocity);
+		}
+
+		if (effectSet != null) {
+			Effect effect;
+			Location effectLoc;
+			for (EffectlibSpellEffect spellEffect : effectSet) {
+				if (spellEffect == null) continue;
+				effect = spellEffect.getEffect();
+				if (effect == null) continue;
+
+				effectLoc = spellEffect.getSpellEffect().applyOffsets(currentLocation.clone(), spellData);
+				effect.setLocation(effectLoc);
+
+				if (effect instanceof ModifiedEffect mod) {
+					Effect modifiedEffect = mod.getInnerEffect();
+					if (modifiedEffect != null) modifiedEffect.setLocation(effectLoc);
+				}
+			}
+		}
+
+		if (entityMap != null) {
+			// Changing the effect location
+			Vector dir = currentLocation.getDirection().normalize();
+			Vector horizOffset = new Vector(-dir.getZ(), 0.0, dir.getX()).normalize();
+			Location effectLoc = currentLocation.clone();
+			effectLoc.add(horizOffset.multiply(effectOffset.getZ()));
+			effectLoc.add(effectLoc.getDirection().multiply(effectOffset.getX()));
+			effectLoc.setY(effectLoc.getY() + effectOffset.getY());
+
+			effectLoc = Util.makeFinite(effectLoc);
+
+			for (var entry : entityMap.entrySet()) {
+				entry.getValue().teleportAsync(entry.getKey().applyOffsets(effectLoc.clone()));
+			}
+		}
 
 		counter++;
 
-		for (Entity e : projectile.getNearbyEntities(hitRadius, verticalHitRadius, hitRadius)) {
-			if (!(e instanceof LivingEntity livingEntity)) continue;
-			if (!targetList.canTarget(caster, e)) continue;
+		if (intermediateHitboxes > 0) checkIntermediateHitboxes(previousLocation, currentVelocity);
+		checkHitbox(currentLocation);
+	}
 
-			SpellTargetEvent event = new SpellTargetEvent(spell, caster, livingEntity, power, args);
+	public void playIntermediateEffects(Location old, Vector movement) {
+		if (old == null) return;
+		int divideFactor = intermediateEffects + 1;
+		Vector v = movement.clone();
+
+		v.setX(v.getX() / divideFactor);
+		v.setY(v.getY() / divideFactor);
+		v.setZ(v.getZ() / divideFactor);
+
+		for (int i = 0; i < intermediateEffects; i++) {
+			old = old.add(v).setDirection(v);
+			if (specialEffectInterval > 0 && counter % specialEffectInterval == 0) spell.playEffects(EffectPosition.SPECIAL, old, spellData);
+		}
+	}
+
+	public void checkIntermediateHitboxes(Location old, Vector movement) {
+		if (old == null) return;
+		int divideFactor = intermediateHitboxes + 1;
+		Vector v = movement.clone();
+
+		v.setX(v.getX() / divideFactor);
+		v.setY(v.getY() / divideFactor);
+		v.setZ(v.getZ() / divideFactor);
+
+		for (int i = 0; i < intermediateHitboxes; i++) {
+			old = old.add(v).setDirection(v);
+			checkHitbox(old);
+		}
+	}
+
+	public void checkHitbox(Location location) {
+		if (location == null) return;
+		if (caster == null) return;
+		for (LivingEntity entity : projectile.getLocation().getNearbyLivingEntities(hitRadius, verticalHitRadius, hitRadius)) {
+			if (!targetList.canTarget(caster, entity)) continue;
+
+			SpellTargetEvent event = new SpellTargetEvent(spell, caster, entity, power, args);
 			EventUtil.call(event);
 			if (event.isCancelled()) continue;
 
-			if (hitSpell != null) hitSpell.castAtEntity(caster, livingEntity, event.getPower());
+			if (hitSpell != null) hitSpell.castAtEntity(caster, entity, event.getPower());
 			if (entityLocationSpell != null) entityLocationSpell.castAtLocation(caster, currentLocation, event.getPower());
 
 			stop();
@@ -222,6 +313,20 @@ public class ProjectileTracker implements Runnable, Tracker {
 			if (removeTracker) ProjectileSpell.getProjectileTrackers().remove(this);
 		}
 		MagicSpells.cancelTask(taskId);
+		if (effectSet != null) {
+			for (EffectlibSpellEffect spellEffect : effectSet) {
+				if (spellEffect == null) continue;
+				if (spellEffect.getEffect() == null) continue;
+				spellEffect.getEffect().cancel();
+			}
+			effectSet.clear();
+		}
+		if (entityMap != null) {
+			for (Entity entity : entityMap.values()) {
+				entity.remove();
+			}
+			entityMap.clear();
+		}
 		caster = null;
 		currentLocation = null;
 		if (projectile != null) projectile.remove();
@@ -261,6 +366,14 @@ public class ProjectileTracker implements Runnable, Tracker {
 		this.relativeOffset = relativeOffset;
 	}
 
+	public Vector getEffectOffset() {
+		return effectOffset;
+	}
+
+	public void setEffectOffset(Vector effectOffset) {
+		this.effectOffset = effectOffset;
+	}
+
 	public int getTickInterval() {
 		return tickInterval;
 	}
@@ -283,6 +396,22 @@ public class ProjectileTracker implements Runnable, Tracker {
 
 	public void setSpecialEffectInterval(int specialEffectInterval) {
 		this.specialEffectInterval = specialEffectInterval;
+	}
+
+	public void setIntermediateEffects(int intermediateEffects) {
+		this.intermediateEffects = intermediateEffects;
+	}
+
+	public int getIntermediateEffects() {
+		return intermediateEffects;
+	}
+
+	public void setIntermediateHitboxes(int intermediateHitboxes) {
+		this.intermediateHitboxes = intermediateHitboxes;
+	}
+
+	public int getIntermediateHitboxes() {
+		return intermediateHitboxes;
 	}
 
 	public float getRotation() {
@@ -331,6 +460,14 @@ public class ProjectileTracker implements Runnable, Tracker {
 
 	public void setVerticalHitRadius(float verticalHitRadius) {
 		this.verticalHitRadius = verticalHitRadius;
+	}
+
+	public boolean isVisible() {
+		return visible;
+	}
+
+	public void setVisible(boolean visible) {
+		this.visible = visible;
 	}
 
 	public boolean hasGravity() {

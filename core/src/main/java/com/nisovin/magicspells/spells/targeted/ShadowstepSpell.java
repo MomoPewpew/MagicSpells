@@ -91,7 +91,7 @@ public class ShadowstepSpell extends TargetedSpell implements TargetedEntitySpel
 		if (!BlockUtils.isPathable(b.getType()) || !BlockUtils.isPathable(b.getRelative(BlockFace.UP))) return false;
 
 		playSpellEffects(caster.getLocation(), targetLoc, new SpellData(caster, target, power, args));
-		caster.teleport(targetLoc);
+		caster.teleportAsync(targetLoc);
 
 		return true;
 	}

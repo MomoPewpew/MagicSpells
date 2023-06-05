@@ -4,6 +4,7 @@ import org.bukkit.entity.*;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.EntityEffect;
 import org.bukkit.inventory.ItemStack;
 
 public class VolatileCodeDisabled extends VolatileCodeHandle {
@@ -76,4 +77,9 @@ public class VolatileCodeDisabled extends VolatileCodeHandle {
 	public void updateAllFalsePlayers() {
 
 	}
+	
+	public void playHurtAnimation(LivingEntity entity, float yaw) {
+		entity.playEffect(EntityEffect.HURT);
+	}
+
 }

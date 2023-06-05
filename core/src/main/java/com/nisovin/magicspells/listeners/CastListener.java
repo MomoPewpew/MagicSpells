@@ -45,24 +45,22 @@ public class CastListener implements Listener {
 		boolean noInteract = false;
 		if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 			Material m = event.getClickedBlock().getType();
-			if (BlockUtils.isWoodDoor(m) ||
-					BlockUtils.isWoodFenceGate(m) ||
-					BlockUtils.isWoodTrapdoor(m) ||
+			if (BlockUtils.isDoor(m) ||
+					BlockUtils.isFenceGate(m) ||
+					BlockUtils.isTrapdoor(m) ||
 					BlockUtils.isShulkerBox(m) ||
-					BlockUtils.isWoodButton(m) ||
+					BlockUtils.isButton(m) ||
 					BlockUtils.isBed(m) ||
-					m == Material.ANVIL ||
+					BlockUtils.isChest(m) ||
+					m.name().contains("ANVIL") ||
 					m == Material.BARREL ||
 					m == Material.BEACON ||
 					m == Material.BLAST_FURNACE ||
 					m == Material.BREWING_STAND ||
 					m == Material.CARTOGRAPHY_TABLE ||
-					m == Material.CHEST ||
-					m == Material.CHIPPED_ANVIL ||
 					m == Material.COMPARATOR ||
 					m == Material.CRAFTING_TABLE ||
 					m == Material.DAYLIGHT_DETECTOR ||
-					m == Material.DAMAGED_ANVIL ||
 					m == Material.DISPENSER ||
 					m == Material.DROPPER ||
 					m == Material.ENCHANTING_TABLE ||
@@ -77,9 +75,7 @@ public class CastListener implements Listener {
 					m == Material.REPEATER ||
 					m == Material.SMITHING_TABLE ||
 					m == Material.SMOKER ||
-					m == Material.STONECUTTER ||
-					m == Material.STONE_BUTTON ||
-					m == Material.TRAPPED_CHEST) {
+					m == Material.STONECUTTER) {
 				noInteract = true;
 			} else if (event.hasItem() && event.getItem().getType().isBlock()) {
 				noInteract = true;

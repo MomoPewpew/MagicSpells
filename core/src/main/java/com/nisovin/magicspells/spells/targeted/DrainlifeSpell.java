@@ -2,22 +2,16 @@ package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.World;
 import org.bukkit.Location;
-import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.util.Vector;
-import org.bukkit.EntityEffect;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
+import com.nisovin.magicspells.util.*;
 import com.nisovin.magicspells.Subspell;
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.SpellData;
-import com.nisovin.magicspells.util.TargetInfo;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.DamageSpell;
-import com.nisovin.magicspells.util.SpellAnimation;
-import com.nisovin.magicspells.util.ExperienceUtils;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.mana.ManaChangeReason;
@@ -173,7 +167,7 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 					if (health == MIN_HEALTH && caster instanceof Player) target.setKiller((Player) caster);
 					target.setHealth(health);
 					target.setLastDamage(take);
-					target.playEffect(EntityEffect.HURT);
+					MagicSpells.getVolatileCodeHandler().playHurtAnimation(target, LocationUtil.getRotatedLocation(caster.getLocation(), target.getLocation()).getYaw());
 				} else target.damage(take, caster);
 			}
 			case STR_MANA -> {

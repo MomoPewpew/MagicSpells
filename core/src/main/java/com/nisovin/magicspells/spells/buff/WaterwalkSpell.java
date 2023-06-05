@@ -106,15 +106,18 @@ public class WaterwalkSpell extends BuffSpell {
 			count++;
 			if (count >= 4) count = 0;
 
+			Player pl;
 			Block feet;
 			Block underfeet;
 			Location loc;
-
+			CastData data;
 			for (UUID id : entities.keySet()) {
-				Player pl = Bukkit.getPlayer(id);
+				pl = Bukkit.getPlayer(id);
 				if (pl == null) continue;
 				if (!pl.isValid()) continue;
 				if (!pl.isOnline()) continue;
+
+				data = entities.get(id);
 
 				loc = pl.getLocation();
 				feet = loc.getBlock();
@@ -131,7 +134,6 @@ public class WaterwalkSpell extends BuffSpell {
 				feet = pl.getLocation().getBlock();
 				underfeet = feet.getRelative(BlockFace.DOWN);
 
-				CastData data = entities.get(id);
 				if (BlockUtils.isAir(feet.getType()) && underfeet.getType() == Material.WATER) {
 					if (!pl.isFlying()) {
 						pl.setAllowFlight(true);
@@ -139,7 +141,10 @@ public class WaterwalkSpell extends BuffSpell {
 						pl.setFlySpeed(speed.get(pl, null, data.power(), data.args()));
 					}
 					if (count == 0) addUseAndChargeCost(pl);
-				} else if (pl.isFlying()) {
+					continue;
+				}
+
+				if (pl.isFlying()) {
 					pl.setFlying(false);
 					if (pl.getGameMode() != GameMode.CREATIVE) pl.setAllowFlight(false);
 					pl.setFlySpeed(0.1F);

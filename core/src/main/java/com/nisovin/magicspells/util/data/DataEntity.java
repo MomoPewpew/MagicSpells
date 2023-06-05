@@ -27,6 +27,8 @@ public class DataEntity {
 		dataElements.put("falldistance", entity -> entity.getFallDistance() + "");
 		dataElements.put("fireticks", entity -> entity.getFireTicks() + "");
 		dataElements.put("tickslived", entity -> entity.getTicksLived() + "");
+		dataElements.put("height", entity -> entity.getHeight() + "");
+		dataElements.put("width", entity -> entity.getWidth() + "");
 		dataElements.put("class", entity -> entity.getClass().toString());
 		dataElements.put("class.canonicalname", entity -> entity.getClass().getCanonicalName());
 		dataElements.put("class.simplename", entity -> entity.getClass().getSimpleName());

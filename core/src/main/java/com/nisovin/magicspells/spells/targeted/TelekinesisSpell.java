@@ -84,11 +84,11 @@ public class TelekinesisSpell extends TargetedSpell implements TargetedLocationS
 
 	private boolean activate(Player caster, Block target) {
 		Material targetType = target.getType();
-		if (targetType == Material.LEVER || targetType == Material.STONE_BUTTON || BlockUtils.isWoodButton(targetType)) {
+		if (targetType == Material.LEVER || BlockUtils.isButton(targetType)) {
 			if (!checkPlugins(caster, target)) return false;
 			BlockUtils.activatePowerable(target);
 			return true;
-		} else if (BlockUtils.isWoodPressurePlate(targetType) || targetType == Material.STONE_PRESSURE_PLATE || targetType == Material.HEAVY_WEIGHTED_PRESSURE_PLATE || targetType == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
+		} else if (BlockUtils.isPressurePlate(targetType)) {
 			if (!checkPlugins(caster, target)) return false;
 			BlockUtils.activatePowerable(target);
 			return true;

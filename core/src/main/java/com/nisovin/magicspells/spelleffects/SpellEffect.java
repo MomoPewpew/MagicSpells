@@ -29,7 +29,7 @@ import de.slikey.effectlib.util.VectorUtils;
 
 public abstract class SpellEffect {
 
-	private final Random random = ThreadLocalRandom.current();
+	protected final Random random = ThreadLocalRandom.current();
 
 	private ConfigData<Integer> delay;
 
@@ -511,6 +511,11 @@ public abstract class SpellEffect {
 
 	public OrbitTracker playEffectWhileActiveOrbit(final Entity entity, final SpellEffectActiveChecker checker, final SpellData data) {
 		return new OrbitTracker(entity, checker, this, data);
+	}
+
+	// override if you need to do additional stuff when disabling spell effects
+	public void turnOff() {
+
 	}
 
 	@FunctionalInterface

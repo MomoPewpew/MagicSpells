@@ -1,10 +1,10 @@
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.8.10"
+  id("org.jetbrains.kotlin.jvm") version "1.8.20"
   id("dev.magicspells.msjava")
 }
 
 wrapper {
-  gradleVersion = "8.0.2"
+  gradleVersion = "8.1.1"
   setDistributionType(Wrapper.DistributionType.ALL)
 }
 

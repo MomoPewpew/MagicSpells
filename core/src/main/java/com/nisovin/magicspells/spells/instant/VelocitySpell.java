@@ -40,6 +40,10 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		powerAffectsSpeed = getConfigBoolean("power-affects-speed", true);
 	}
 
+	public boolean isJumping(LivingEntity livingEntity) {
+		return jumping.contains(livingEntity.getUniqueId());
+	}
+
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {

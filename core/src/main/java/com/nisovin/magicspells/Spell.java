@@ -1595,20 +1595,20 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	@Deprecated
-	protected Set<Entity> playSpellEntityEffects(EffectPosition pos, Location location) {
+	protected Map<SpellEffect, Entity> playSpellEntityEffects(EffectPosition pos, Location location) {
 		return playSpellEntityEffects(pos, location, null);
 	}
 
-	protected Set<Entity> playSpellEntityEffects(EffectPosition pos, Location location, SpellData data) {
+	protected Map<SpellEffect, Entity> playSpellEntityEffects(EffectPosition pos, Location location, SpellData data) {
 		if (effects == null) return null;
 		List<SpellEffect> effectsList = effects.get(pos);
 		if (effectsList == null) return null;
-		Set<Entity> entities = new HashSet<>();
+		Map<SpellEffect, Entity> values = new HashMap<>();
 		for (SpellEffect effect : effectsList) {
 			if (!(effect instanceof EntityEffect)) continue;
-			entities.add(effect.playEntityEffect(location, data));
+			values.put(effect, effect.playEntityEffect(location, data));
 		}
-		return entities;
+		return values;
 	}
 
 	@Deprecated
@@ -1668,7 +1668,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		if (callbacks == null) return;
 		String key = p.getUniqueId().toString();
 		Map<EffectPosition, List<Runnable>> entry = new EnumMap<>(EffectPosition.class);
-		for (EffectPosition pos: EffectPosition.values()) {
+		for (EffectPosition pos : EffectPosition.values()) {
 			List<Runnable> runnables = new ArrayList<>();
 			entry.put(pos, runnables);
 		}
@@ -1677,7 +1677,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	public void unloadPlayerEffectTracker(Player p) {
 		String uuid = p.getUniqueId().toString();
-		for (EffectPosition pos: EffectPosition.values()) {
+		for (EffectPosition pos : EffectPosition.values()) {
 			cancelEffects(pos, uuid);
 		}
 		callbacks.remove(uuid);
@@ -1696,7 +1696,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	public void cancelEffectForAllPlayers(EffectPosition pos) {
-		for (String key: callbacks.keySet()) {
+		for (String key : callbacks.keySet()) {
 			cancelEffects(pos, key);
 		}
 	}

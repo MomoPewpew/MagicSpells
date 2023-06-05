@@ -22,7 +22,6 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.BuffSpell;
-import com.nisovin.magicspells.spells.PassiveSpell;
 import com.nisovin.magicspells.util.OverridePriority;
 import com.nisovin.magicspells.events.SpellLearnEvent;
 import com.nisovin.magicspells.events.SpellForgetEvent;
@@ -31,7 +30,7 @@ import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 // No trigger variable currently used
 public class BuffListener extends PassiveListener {
 
-	private final EnumSet<GameMode> gameModes = EnumSet.of(GameMode.CREATIVE, GameMode.SPECTATOR);
+	private final EnumSet<GameMode> invalidGameModes = EnumSet.of(GameMode.CREATIVE, GameMode.SPECTATOR);
 
 	@Override
 	public void initialize(String var) {
@@ -82,8 +81,8 @@ public class BuffListener extends PassiveListener {
 	@OverridePriority
 	@EventHandler
 	public void onGameModeChange(PlayerGameModeChangeEvent event) {
-		if (gameModes.contains(event.getNewGameMode())) off(event.getPlayer());
-		else on(event.getPlayer());
+		if (invalidGameModes.contains(event.getNewGameMode())) off(event.getPlayer());
+		else MagicSpells.scheduleDelayedTask(() -> on(event.getPlayer()), 1);
 	}
 
 	@OverridePriority
@@ -113,9 +112,7 @@ public class BuffListener extends PassiveListener {
 	@OverridePriority
 	@EventHandler
 	public void onSpellLearn(final SpellLearnEvent event) {
-		Spell spell = event.getSpell();
-		if (!(spell instanceof PassiveSpell)) return;
-		if (!spell.getInternalName().equalsIgnoreCase(passiveSpell.getInternalName())) return;
+		if (!passiveSpell.equals(event.getSpell())) return;
 		MagicSpells.scheduleDelayedTask(() -> on(event.getLearner()), 1);
 	}
 
@@ -123,24 +120,22 @@ public class BuffListener extends PassiveListener {
 	@EventHandler
 	public void onSpellForget(SpellForgetEvent event) {
 		Spell spell = event.getSpell();
-		if (!(spell instanceof PassiveSpell)) return;
-		if (!spell.getInternalName().equalsIgnoreCase(passiveSpell.getInternalName())) return;
+		if (spell != null && !passiveSpell.equals(spell)) return;
 		off(event.getForgetter());
 	}
 
 	private void on(LivingEntity entity) {
-		if (!canTrigger(entity, true)) return;
+		if (!canTrigger(entity, false)) return;
 		if (!hasSpell(entity)) return;
 
 		for (Subspell s : passiveSpell.getActivatedSpells()) {
-			if (!(s.getSpell() instanceof BuffSpell buff)) continue;
-			if (buff.isActive(entity)) continue;
-			buff.castAtEntity(entity, entity, 1F);
+			if (s.getSpell() instanceof BuffSpell buff && buff.isActive(entity)) continue;
+			s.cast(entity, 1F);
 		}
 	}
 
 	private void off(LivingEntity entity) {
-		if (!canTrigger(entity, true)) return;
+		if (!canTrigger(entity, false)) return;
 		if (!hasSpell(entity)) return;
 
 		for (Subspell s : passiveSpell.getActivatedSpells()) {

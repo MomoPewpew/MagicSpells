@@ -10,6 +10,8 @@ import org.bukkit.Color;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.util.Vector;
+import org.bukkit.util.EulerAngle;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.Particle.DustOptions;
@@ -17,11 +19,30 @@ import org.bukkit.Particle.DustTransition;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.configuration.ConfigurationSection;
 
+import net.kyori.adventure.text.Component;
+
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.ParticleUtil;
 
 public class ConfigDataUtil {
+
+	@NotNull
+	public static ConfigData<Integer> getInteger(@NotNull ConfigurationSection config, @NotNull String path) {
+		if (config.isInt(path)) {
+			int value = config.getInt(path);
+			return (caster, target, power, args) -> value;
+		}
+
+		if (config.isString(path)) {
+			FunctionData<Integer> data = FunctionData.build(config.getString(path), Double::intValue);
+			if (data == null) return (caster, target, power, args) -> null;
+
+			return data;
+		}
+
+		return (caster, target, power, args) -> null;
+	}
 
 	@NotNull
 	public static ConfigData<Integer> getInteger(@NotNull ConfigurationSection config, @NotNull String path, int def) {
@@ -55,6 +76,23 @@ public class ConfigDataUtil {
 		}
 
 		return def;
+	}
+
+	@NotNull
+	public static ConfigData<Long> getLong(@NotNull ConfigurationSection config, @NotNull String path) {
+		if (config.isInt(path) || config.isLong(path)) {
+			long value = config.getLong(path);
+			return (caster, target, power, args) -> value;
+		}
+
+		if (config.isString(path)) {
+			FunctionData<Long> data = FunctionData.build(config.getString(path), Double::longValue);
+			if (data == null) return (caster, target, power, args) -> null;
+
+			return data;
+		}
+
+		return (caster, target, power, args) -> null;
 	}
 
 	@NotNull
@@ -92,6 +130,23 @@ public class ConfigDataUtil {
 	}
 
 	@NotNull
+	public static ConfigData<Short> getShort(@NotNull ConfigurationSection config, @NotNull String path) {
+		if (config.isInt(path)) {
+			short value = (short) config.getInt(path);
+			return (caster, target, power, args) -> value;
+		}
+
+		if (config.isString(path)) {
+			FunctionData<Short> data = FunctionData.build(config.getString(path), Double::shortValue);
+			if (data == null) return (caster, target, power, args) -> null;
+
+			return data;
+		}
+
+		return (caster, target, power, args) -> null;
+	}
+
+	@NotNull
 	public static ConfigData<Short> getShort(@NotNull ConfigurationSection config, @NotNull String path, short def) {
 		if (config.isInt(path)) {
 			short value = (short) config.getInt(path, def);
@@ -123,6 +178,23 @@ public class ConfigDataUtil {
 		}
 
 		return def;
+	}
+
+	@NotNull
+	public static ConfigData<Byte> getByte(@NotNull ConfigurationSection config, @NotNull String path) {
+		if (config.isInt(path)) {
+			byte value = (byte) config.getInt(path);
+			return (caster, target, power, args) -> value;
+		}
+
+		if (config.isString(path)) {
+			FunctionData<Byte> data = FunctionData.build(config.getString(path), Double::byteValue);
+			if (data == null) return (caster, target, power, args) -> null;
+
+			return data;
+		}
+
+		return (caster, target, power, args) -> null;
 	}
 
 	@NotNull
@@ -160,6 +232,23 @@ public class ConfigDataUtil {
 	}
 
 	@NotNull
+	public static ConfigData<Double> getDouble(@NotNull ConfigurationSection config, @NotNull String path) {
+		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
+			double value = config.getDouble(path);
+			return (caster, target, power, args) -> value;
+		}
+
+		if (config.isString(path)) {
+			FunctionData<Double> data = FunctionData.build(config.getString(path), Function.identity());
+			if (data == null) return (caster, target, power, args) -> null;
+
+			return data;
+		}
+
+		return (caster, target, power, args) -> null;
+	}
+
+	@NotNull
 	public static ConfigData<Double> getDouble(@NotNull ConfigurationSection config, @NotNull String path, double def) {
 		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
 			double value = config.getDouble(path, def);
@@ -191,6 +280,23 @@ public class ConfigDataUtil {
 		}
 
 		return def;
+	}
+
+	@NotNull
+	public static ConfigData<Float> getFloat(@NotNull ConfigurationSection config, @NotNull String path) {
+		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
+			float value = (float) config.getDouble(path);
+			return (caster, target, power, args) -> value;
+		}
+
+		if (config.isString(path)) {
+			FunctionData<Float> data = FunctionData.build(config.getString(path), Double::floatValue);
+			if (data == null) return (caster, target, power, args) -> null;
+
+			return data;
+		}
+
+		return (caster, target, power, args) -> null;
 	}
 
 	@NotNull
@@ -248,6 +354,49 @@ public class ConfigDataUtil {
 			return values.get(0);
 
 		return data;
+	}
+
+	@NotNull
+	public static ConfigData<Component> getComponent(@NotNull ConfigurationSection config, @NotNull String path, @Nullable Component def) {
+		ConfigData<String> supplier = getString(config, path, null);
+		if (supplier.isConstant()) {
+			String value = supplier.get(null);
+			if (value == null) return (caster, target, power, args) -> def;
+
+			Component component = Util.getMiniMessage(value);
+			return (caster, target, power, args) -> component;
+		}
+
+		return new ConfigData<>() {
+
+			@Override
+			public Component get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+				String value = supplier.get(caster, target, power, args);
+				if (value == null) return def;
+
+				return Util.getMiniMessage(value);
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+
+		};
+	}
+
+	public static ConfigData<Boolean> getBoolean(@NotNull ConfigurationSection config, @NotNull String path) {
+		if (config.isBoolean(path)) {
+			boolean val = config.getBoolean(path);
+			return (caster, target, power, args) -> val;
+		}
+
+		if (config.isString(path)) {
+			ConfigData<String> supplier = getString(config, path, null);
+			return (caster, target, power, args) -> Boolean.parseBoolean(supplier.get(caster, target, power, args));
+		}
+
+		return (caster, target, power, args) -> null;
 	}
 
 	public static ConfigData<Boolean> getBoolean(@NotNull ConfigurationSection config, @NotNull String path, boolean def) {
@@ -444,67 +593,190 @@ public class ConfigDataUtil {
 	}
 
 	@NotNull
+	public static ConfigData<Vector> getVector(@NotNull ConfigurationSection config, @NotNull String path, @NotNull Vector def) {
+		if (config.isString(path)) {
+			String value = config.getString(path);
+			if (value == null) return (caster, target, power, args) -> def;
+
+			String[] data = value.split(",");
+			if (data.length != 3) return (caster, target, power, args) -> def;
+
+			try {
+				Vector vector = new Vector(Double.parseDouble(data[0]), Double.parseDouble(data[1]), Double.parseDouble(data[2]));
+				return (caster, target, power, args) -> vector;
+			} catch (NumberFormatException e) {
+				return (caster, target, power, args) -> def;
+			}
+		}
+
+		if (config.isConfigurationSection(path)) {
+			ConfigurationSection section = config.getConfigurationSection(path);
+			if (section == null) return (caster, target, power, args) -> def;
+
+			ConfigData<Double> x = getDouble(section, "x", def.getX());
+			ConfigData<Double> y = getDouble(section, "y", def.getY());
+			ConfigData<Double> z = getDouble(section, "z", def.getZ());
+
+			if (x.isConstant() && y.isConstant() && z.isConstant()) {
+				Vector vector = new Vector(x.get(null), y.get(null), z.get(null));
+				return (caster, target, power, args) -> vector;
+			}
+
+			return (caster, target, power, args) -> new Vector(
+				x.get(caster, target, power, args),
+				y.get(caster, target, power, args),
+				z.get(caster, target, power, args)
+			);
+		}
+
+		return (caster, target, power, args) -> def;
+	}
+
+	@NotNull
+	public static ConfigData<EulerAngle> getEulerAngle(@NotNull ConfigurationSection config, @NotNull String path, @NotNull EulerAngle def) {
+		if (config.isString(path)) {
+			String value = config.getString(path);
+			if (value == null) return (caster, target, power, args) -> def;
+
+			String[] data = value.split(",");
+			if (data.length != 3) return (caster, target, power, args) -> def;
+
+			try {
+				EulerAngle angle = new EulerAngle(Double.parseDouble(data[0]), Double.parseDouble(data[1]), Double.parseDouble(data[2]));
+				return (caster, target, power, args) -> angle;
+			} catch (NumberFormatException e) {
+				return (caster, target, power, args) -> def;
+			}
+		}
+
+		if (config.isConfigurationSection(path)) {
+			ConfigurationSection section = config.getConfigurationSection(path);
+			if (section == null) return (caster, target, power, args) -> def;
+
+			ConfigData<Double> x = getDouble(section, "x", def.getX());
+			ConfigData<Double> y = getDouble(section, "y", def.getY());
+			ConfigData<Double> z = getDouble(section, "z", def.getZ());
+
+			if (x.isConstant() && y.isConstant() && z.isConstant()) {
+				EulerAngle angle = new EulerAngle(x.get(null), y.get(null), z.get(null));
+				return (caster, target, power, args) -> angle;
+			}
+
+			return (caster, target, power, args) -> new EulerAngle(
+				x.get(caster, target, power, args),
+				y.get(caster, target, power, args),
+				z.get(caster, target, power, args)
+			);
+		}
+
+		return (caster, target, power, args) -> def;
+	}
+
+	public static ConfigData<Color> getColor(@NotNull ConfigurationSection config, @NotNull String path, @Nullable Color def) {
+		if (config.isInt(path) || config.isString(path)) {
+			String value = config.getString(path);
+			if (value == null) return (caster, target, power, args) -> def;
+
+			ConfigData<String> supplier = getString(value);
+			if (supplier.isConstant()) {
+				Color color = ColorUtil.getColorFromHexString(value, false);
+				if (color == null) return (caster, target, power, args) -> def;
+
+				return (caster, target, power, args) -> color;
+			}
+
+			return new ConfigData<>() {
+
+				@Override
+				public Color get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+					Color color = ColorUtil.getColorFromHexString(supplier.get(caster, target, power, args), false);
+					return color == null ? def : color;
+				}
+
+				@Override
+				public boolean isConstant() {
+					return false;
+				}
+
+			};
+		}
+
+		if (config.isConfigurationSection(path)) {
+			ConfigurationSection section = config.getConfigurationSection(path);
+			if (section == null) return (caster, target, power, args) -> def;
+
+			ConfigData<Integer> alpha = getInteger(section, "alpha", 255);
+			ConfigData<Integer> red = getInteger(section, "red");
+			ConfigData<Integer> green = getInteger(section, "green");
+			ConfigData<Integer> blue = getInteger(section, "blue");
+
+			if (alpha.isConstant() && red.isConstant() && green.isConstant() && blue.isConstant()) {
+				Integer a = alpha.get(null);
+				Integer r = red.get(null);
+				Integer g = green.get(null);
+				Integer b = blue.get(null);
+				if (a == null || r == null || g == null || b == null || a < 0 || a > 255 || r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+					return (caster, target, power, args) -> def;
+
+				Color c = Color.fromARGB(a, r, g, b);
+				return (caster, target, power, args) -> c;
+			}
+
+			return new ConfigData<>() {
+
+				@Override
+				public Color get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+					Integer a = alpha.get(caster, target, power, args);
+					Integer r = red.get(caster, target, power, args);
+					Integer g = green.get(caster, target, power, args);
+					Integer b = blue.get(caster, target, power, args);
+					if (a == null || r == null || g == null || b == null || a < 0 || a > 255 || r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+						return def;
+
+					return Color.fromARGB(a, r, g, b);
+				}
+
+				@Override
+				public boolean isConstant() {
+					return false;
+				}
+
+			};
+		}
+
+		return (caster, target, power, args) -> def;
+	}
+
+	@NotNull
 	public static ConfigData<DustOptions> getDustOptions(@NotNull ConfigurationSection config,
 														 @NotNull String colorPath,
 														 @NotNull String sizePath,
 														 @Nullable DustOptions def) {
-		String colorHex = config.getString(colorPath);
-		Color color = colorHex != null ? ColorUtil.getColorFromHexString(colorHex, false) : (def != null ? def.getColor() : null);
+		ConfigData<Color> color = getColor(config, colorPath, def == null ? null : def.getColor());
+		ConfigData<Float> size = def == null ? getFloat(config, sizePath) : getFloat(config, sizePath, def.getSize());
 
-		if (color != null) {
-			if (config.isInt(sizePath) || config.isLong(sizePath) || config.isDouble(sizePath)) {
-				DustOptions options = new DustOptions(color, (float) config.getDouble(sizePath));
-				return (caster, target, power, args) -> options;
-			}
+		if (color.isConstant() && size.isConstant()) {
+			Color c = color.get(null);
+			if (c == null) return (caster, target, power, args) -> def;
 
-			ConfigData<Float> size = getFloat(config, sizePath, def == null ? 0 : def.getSize());
-			return new ConfigData<>() {
+			Float s = size.get(null);
+			if (s == null) return (caster, target, power, args) -> def;
 
-				@Override
-				public DustOptions get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					return new DustOptions(color, size.get(caster, target, power, args));
-				}
-
-				@Override
-				public boolean isConstant() {
-					return false;
-				}
-
-			};
-		}
-		if (colorHex == null) return (caster, target, power, args) -> null;
-
-		ConfigData<String> colorSupplier = getString(colorHex);
-		if (config.isInt(sizePath)) {
-			float size = (float) config.getDouble(sizePath);
-
-			return new ConfigData<>() {
-
-				@Override
-				public DustOptions get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Color c = ColorUtil.getColorFromHexString(colorSupplier.get(caster, target, power, args), false);
-					if (c == null) return def;
-
-					return new DustOptions(c, size);
-				}
-
-				@Override
-				public boolean isConstant() {
-					return false;
-				}
-
-			};
+			DustOptions options = new DustOptions(c, s);
+			return (caster, target, power, args) -> options;
 		}
 
-		ConfigData<Float> size = getFloat(config, sizePath, def == null ? 0 : def.getSize());
 		return new ConfigData<>() {
 
 			@Override
 			public DustOptions get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				Color c = ColorUtil.getColorFromHexString(colorSupplier.get(caster, target, power, args), false);
+				Color c = color.get(caster, target, power, args);
 				if (c == null) return def;
 
-				return new DustOptions(c, size.get(caster, target, power, args));
+				Float s = size.get(caster, target, power, args);
+				if (s == null) return def;
+
+				return new DustOptions(c, s);
 			}
 
 			@Override
@@ -521,265 +793,38 @@ public class ConfigDataUtil {
 															   @NotNull String toColorPath,
 															   @NotNull String sizePath,
 															   @Nullable DustTransition def) {
-		Color color = null;
-		String colorHex = config.getString(colorPath);
-		if (colorHex != null) color = ColorUtil.getColorFromHexString(colorHex, false);
-		else if (def != null) color = def.getColor();
+		ConfigData<Color> color = getColor(config, colorPath, def == null ? null : def.getColor());
+		ConfigData<Color> toColor = getColor(config, toColorPath, def == null ? null : def.getToColor());
+		ConfigData<Float> size = def == null ? getFloat(config, sizePath) : getFloat(config, sizePath, def.getSize());
 
-		Color toColor = null;
-		String toColorHex = config.getString(toColorPath);
-		if (toColorHex != null) toColor = ColorUtil.getColorFromHexString(toColorHex, false);
-		else if (def != null) toColor = def.getToColor();
+		if (color.isConstant() && toColor.isConstant() && size.isConstant()) {
+			Color c = color.get(null);
+			if (c == null) return (caster, target, power, args) -> def;
 
-		final Color finalColor = color;
-		final Color finalToColor = toColor;
+			Color tc = toColor.get(null);
+			if (tc == null) return (caster, target, power, args) -> def;
 
-		if (finalColor != null && finalToColor != null) {
-			if (config.isInt(sizePath) || config.isLong(sizePath) || config.isDouble(sizePath)) {
-				DustTransition transition = new DustTransition(finalColor, finalToColor, (float) config.getDouble(sizePath));
-				return (caster, target, power, args) -> transition;
-			}
+			Float s = size.get(null);
+			if (s == null) return (caster, target, power, args) -> def;
 
-			if (!config.isSet(sizePath) && def != null) {
-				DustTransition transition = new DustTransition(finalColor, finalToColor, def.getSize());
-				return (caster, target, power, args) -> transition;
-			}
-
-			ConfigData<Float> size = getFloat(config, sizePath, def == null ? 0 : def.getSize());
-			return new ConfigData<>() {
-
-				@Override
-				public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					return new DustTransition(finalColor, finalToColor, size.get(caster, target, power, args));
-				}
-
-				@Override
-				public boolean isConstant() {
-					return false;
-				}
-
-			};
+			DustTransition transition = new DustTransition(c, tc, s);
+			return (caster, target, power, args) -> transition;
 		}
 
-		if (finalColor != null) {
-			if (toColorHex == null) return (caster, target, power, args) -> null;
-
-			ConfigData<String> toColorSupplier = getString(toColorHex);
-
-			if (config.isInt(sizePath) || config.isLong(sizePath) || config.isDouble(sizePath)) {
-				float size = (float) config.getDouble(sizePath);
-
-				return new ConfigData<>() {
-
-					@Override
-					public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-						Color c = ColorUtil.getColorFromHexString(toColorSupplier.get(caster, target, power, args), false);
-						if (c == null) {
-							if (def != null) c = def.getToColor();
-							else return null;
-						}
-
-						return new DustTransition(finalColor, c, size);
-					}
-
-					@Override
-					public boolean isConstant() {
-						return false;
-					}
-
-				};
-			}
-
-			if (!config.isSet(sizePath) && def != null) {
-				float size = def.getSize();
-
-				return new ConfigData<>() {
-
-					@Override
-					public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-						Color c = ColorUtil.getColorFromHexString(toColorSupplier.get(caster, target, power, args), false);
-						if (c == null) c = def.getToColor();
-
-						return new DustTransition(finalColor, c, size);
-					}
-
-					@Override
-					public boolean isConstant() {
-						return false;
-					}
-
-				};
-			}
-
-			ConfigData<Float> size = getFloat(config, sizePath, def == null ? 0 : def.getSize());
-			return new ConfigData<>() {
-
-				@Override
-				public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Color c = ColorUtil.getColorFromHexString(toColorSupplier.get(caster, target, power, args), false);
-					if (c == null) {
-						if (def != null) c = def.getToColor();
-						else return null;
-					}
-
-					return new DustTransition(finalColor, c, size.get(caster, target, power, args));
-				}
-
-				@Override
-				public boolean isConstant() {
-					return false;
-				}
-
-			};
-		}
-
-		if (finalToColor != null) {
-			if (colorHex == null) return (caster, target, power, args) -> null;
-
-			ConfigData<String> colorSupplier = getString(colorHex);
-
-			if (config.isInt(sizePath) || config.isLong(sizePath) || config.isDouble(sizePath)) {
-				float size = (float) config.getDouble(sizePath);
-
-				return new ConfigData<>() {
-
-					@Override
-					public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-						Color c = ColorUtil.getColorFromHexString(colorSupplier.get(caster, target, power, args), false);
-						if (c == null) {
-							if (def != null) c = def.getColor();
-							else return null;
-						}
-
-						return new DustTransition(c, finalToColor, size);
-					}
-
-					@Override
-					public boolean isConstant() {
-						return false;
-					}
-
-				};
-			}
-
-			if (!config.isSet(sizePath) && def != null) {
-				float size = def.getSize();
-
-				return new ConfigData<>() {
-
-					@Override
-					public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-						Color c = ColorUtil.getColorFromHexString(colorSupplier.get(caster, target, power, args), false);
-						if (c == null) c = def.getToColor();
-
-						return new DustTransition(c, finalToColor, size);
-					}
-
-					@Override
-					public boolean isConstant() {
-						return false;
-					}
-
-				};
-			}
-
-			ConfigData<Float> size = getFloat(config, sizePath, def == null ? 0 : def.getSize());
-			return new ConfigData<>() {
-
-				@Override
-				public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Color c = ColorUtil.getColorFromHexString(colorSupplier.get(caster, target, power, args), false);
-					if (c == null) {
-						if (def != null) c = def.getColor();
-						else return null;
-					}
-
-					return new DustTransition(c, finalToColor, size.get(caster, target, power, args));
-				}
-
-				@Override
-				public boolean isConstant() {
-					return false;
-				}
-
-			};
-		}
-
-		ConfigData<String> colorSupplier = getString(colorHex);
-		ConfigData<String> toColorSupplier = getString(toColorHex);
-
-		if (config.isInt(sizePath) || config.isLong(sizePath) || config.isDouble(sizePath)) {
-			float size = (float) config.getDouble(sizePath);
-
-			return new ConfigData<>() {
-
-				@Override
-				public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Color col = ColorUtil.getColorFromHexString(colorSupplier.get(caster, target, power, args), false);
-					if (col == null) {
-						if (def != null) col = def.getColor();
-						else return null;
-					}
-
-					Color toCol = ColorUtil.getColorFromHexString(toColorSupplier.get(caster, target, power, args), false);
-					if (toCol == null) {
-						if (def != null) toCol = def.getColor();
-						else return null;
-					}
-
-					return new DustTransition(col, toCol, size);
-				}
-
-				@Override
-				public boolean isConstant() {
-					return false;
-				}
-
-			};
-		}
-
-		if (!config.isSet(sizePath) && def != null) {
-			float size = def.getSize();
-
-			return new ConfigData<>() {
-
-				@Override
-				public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Color col = ColorUtil.getColorFromHexString(colorSupplier.get(caster, target, power, args), false);
-					if (col == null) return def;
-
-					Color toCol = ColorUtil.getColorFromHexString(toColorSupplier.get(caster, target, power, args), false);
-					if (toCol == null) return def;
-
-					return new DustTransition(col, toCol, size);
-				}
-
-				@Override
-				public boolean isConstant() {
-					return false;
-				}
-
-			};
-		}
-
-		ConfigData<Float> size = getFloat(config, sizePath, def == null ? 0 : def.getSize());
 		return new ConfigData<>() {
 
 			@Override
 			public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				Color col = ColorUtil.getColorFromHexString(colorSupplier.get(caster, target, power, args), false);
-				if (col == null) {
-					if (def != null) col = def.getColor();
-					else return null;
-				}
+				Color c = color.get(caster, target, power, args);
+				if (c == null) return def;
 
-				Color toCol = ColorUtil.getColorFromHexString(toColorSupplier.get(caster, target, power, args), false);
-				if (toCol == null) {
-					if (def != null) toCol = def.getColor();
-					else return null;
-				}
+				Color tc = toColor.get(caster, target, power, args);
+				if (tc == null) return def;
 
-				return new DustTransition(col, toCol, size.get(caster, target, power, args));
+				Float s = size.get(caster, target, power, args);
+				if (s == null) return def;
+
+				return new DustTransition(c, tc, s);
 			}
 
 			@Override

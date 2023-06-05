@@ -1,7 +1,7 @@
 package com.nisovin.magicspells.spells.passive;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.bukkit.World;
 import org.bukkit.Bukkit;
@@ -143,7 +143,7 @@ public class TicksListener extends PassiveListener {
 
 	private static class Ticker implements Runnable {
 
-		private final Collection<LivingEntity> entities;
+		private final Set<LivingEntity> entities;
 
 		private final PassiveSpell passiveSpell;
 
@@ -154,7 +154,7 @@ public class TicksListener extends PassiveListener {
 			this.passiveSpell = passiveSpell;
 			taskId = MagicSpells.scheduleRepeatingTask(this, interval, interval);
 			profilingKey = MagicSpells.profilingEnabled() ? "PassiveTick:" + interval : null;
-			entities = new ArrayList<>();
+			entities = new HashSet<>();
 		}
 
 		public void add(LivingEntity livingEntity) {
@@ -169,7 +169,7 @@ public class TicksListener extends PassiveListener {
 		public void run() {
 			long start = System.nanoTime();
 
-			for (LivingEntity entity : new ArrayList<>(entities)) {
+			for (LivingEntity entity : new HashSet<>(entities)) {
 				if (entity == null || !entity.isValid()) {
 					entities.remove(entity);
 					continue;

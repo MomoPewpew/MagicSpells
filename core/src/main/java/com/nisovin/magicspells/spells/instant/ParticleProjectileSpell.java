@@ -18,6 +18,7 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -445,7 +446,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		return playSpellEffectLibEffects(position, location, data);
 	}
 
-	public Set<Entity> playEntityEffectsProjectile(EffectPosition position, Location location, SpellData data) {
+	public Map<SpellEffect, Entity> playEntityEffectsProjectile(EffectPosition position, Location location, SpellData data) {
 		return playSpellEntityEffects(position, location, data);
 	}
 

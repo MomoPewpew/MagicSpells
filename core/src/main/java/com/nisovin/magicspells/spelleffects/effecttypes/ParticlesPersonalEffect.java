@@ -30,9 +30,15 @@ public class ParticlesPersonalEffect extends ParticlesEffect {
 		Location location = applyOffsets(entity.getLocation(), data);
 
 		Particle particle = this.particle.get(data);
-		Object particleData = getParticleData(particle, entity, location, data);
-
-		player.spawnParticle(particle, location, count.get(data), xSpread.get(data), ySpread.get(data), zSpread.get(data), speed.get(data), particleData);
+		particle.builder()
+				.location(location)
+				.count(count.get(data))
+				.offset(xSpread.get(data), ySpread.get(data), zSpread.get(data))
+				.extra(speed.get(data))
+				.data(getParticleData(particle, location, data))
+				.force(force)
+				.receivers(player)
+				.spawn();
 
 		return null;
 	}
@@ -43,9 +49,15 @@ public class ParticlesPersonalEffect extends ParticlesEffect {
 		if (player == null) return null;
 
 		Particle particle = this.particle.get(data);
-		Object particleData = getParticleData(particle, location, data);
-
-		player.spawnParticle(particle, location, count.get(data), xSpread.get(data), ySpread.get(data), zSpread.get(data), speed.get(data), particleData);
+		particle.builder()
+				.location(location)
+				.count(count.get(data))
+				.offset(xSpread.get(data), ySpread.get(data), zSpread.get(data))
+				.extra(speed.get(data))
+				.data(getParticleData(particle, location, data))
+				.force(force)
+				.receivers(player)
+				.spawn();
 
 		return null;
 	}

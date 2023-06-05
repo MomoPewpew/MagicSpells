@@ -33,6 +33,7 @@ public class PortalSpell extends InstantSpell {
 	private ConfigData<Integer> effectInterval;
 
 	private ConfigData<Double> teleportCooldown;
+	private ConfigData<Double> startTeleportCooldown;
 
 	private ConfigData<Float> vRadiusStart;
 	private ConfigData<Float> hRadiusStart;
@@ -68,6 +69,7 @@ public class PortalSpell extends InstantSpell {
 		effectInterval = getConfigDataInt("effect-interval", 10);
 
 		teleportCooldown = getConfigDataDouble("teleport-cooldown", 5.0);
+		startTeleportCooldown = getConfigDataDouble("start-teleport-cooldown", teleportCooldown);
 
 		hRadiusStart = getConfigDataFloat("horiz-radius", 1F);
 		vRadiusStart = getConfigDataFloat("vert-radius", 1F);
@@ -138,12 +140,12 @@ public class PortalSpell extends InstantSpell {
 				if (!loc.getWorld().equals(locSecond.getWorld())) {
 					sendMessage(strTooFar, caster, args);
 					return PostCastAction.ALREADY_HANDLED;
-				} else {
-					distanceSq = locSecond.distanceSquared(loc);
-					if (distanceSq > maxDistanceSq) {
-						sendMessage(strTooFar, caster, args);
-						return PostCastAction.ALREADY_HANDLED;
-					}
+				}
+
+				distanceSq = locSecond.distanceSquared(loc);
+				if (distanceSq > maxDistanceSq) {
+					sendMessage(strTooFar, caster, args);
+					return PostCastAction.ALREADY_HANDLED;
 				}
 			}
 
@@ -187,6 +189,10 @@ public class PortalSpell extends InstantSpell {
 
 	public ConfigData<Double> getTeleportCooldown() {
 		return teleportCooldown;
+	}
+
+	public ConfigData<Double> getStartTeleportCooldown() {
+		return startTeleportCooldown;
 	}
 
 	public ConfigData<Float> getHRadiusStart() {
@@ -292,7 +298,7 @@ public class PortalSpell extends InstantSpell {
 			tpCooldowns = new HashMap<>();
 			MagicSpells.registerEvents(this);
 
-			tpCooldowns.put(caster.getUniqueId(), (long) (System.currentTimeMillis() + tpCooldown));
+			tpCooldowns.put(caster.getUniqueId(), (long) (System.currentTimeMillis() + startTeleportCooldown.get(data) * 1000));
 
 			int interval = effectInterval.get(data);
 			if (interval > 0) {
@@ -314,7 +320,7 @@ public class PortalSpell extends InstantSpell {
 		@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 		private void onMove(PlayerMoveEvent event) {
 			if (!teleportOtherPlayers && !event.getPlayer().equals(caster)) return;
-			if (event.getFrom().toVector().equals(event.getTo().toVector())) return;
+			if (!event.hasExplicitlyChangedPosition()) return;
 			if (!caster.isValid()) {
 				stop();
 				return;
@@ -326,7 +332,6 @@ public class PortalSpell extends InstantSpell {
 			if (checkHitbox(event.getTo(), startPortal)) {
 				if (!checkTeleport(pl, startPortal)) return;
 				teleport(endPortal.portalLocation().clone(), pl, event);
-
 				return;
 			}
 
@@ -372,28 +377,27 @@ public class PortalSpell extends InstantSpell {
 		}
 
 		private boolean checkCost(Player target, Portal portal) {
-			LivingEntity payer = null;
+			LivingEntity payer;
+			if (portal.portalCost == null) return true;
 
-			if (portal.portalCost() != null) {
-				if (chargeCostToTeleporter) {
-					if (SpellUtil.hasReagents(target, portal.portalCost())) {
-						payer = target;
-					} else {
-						sendMessage(strTeleportNoCost, target, data.args());
-						return false;
-					}
+			if (chargeCostToTeleporter) {
+				if (SpellUtil.hasReagents(target, portal.portalCost())) {
+					payer = target;
 				} else {
-					if (SpellUtil.hasReagents(caster, portal.portalCost())) {
-						payer = caster;
-					} else {
-						sendMessage(strTeleportNoCost, target, data.args());
-						return false;
-					}
+					sendMessage(strTeleportNoCost, target, data.args());
+					return false;
 				}
-				if (payer == null) return false;
+			} else {
+				if (SpellUtil.hasReagents(caster, portal.portalCost())) {
+					payer = caster;
+				} else {
+					sendMessage(strTeleportNoCost, target, data.args());
+					return false;
+				}
 			}
 
-			if (payer != null) SpellUtil.removeReagents(payer, portal.portalCost());
+			if (payer == null) return false;
+			SpellUtil.removeReagents(payer, portal.portalCost());
 			return true;
 		}
 

@@ -76,6 +76,12 @@ public class BlockUtils {
 		block.setBlockData(blockData, physics);
 	}
 
+	public static void setGrowthLevel(Block block, int level) {
+		Ageable age = ((Ageable) block.getBlockData());
+		age.setAge(level);
+		block.setBlockData(age);
+	}
+
 	public static int getWaterLevel(Block block) {
 		return ((Levelled) block.getBlockData()).getLevel();
 	}
@@ -92,12 +98,6 @@ public class BlockUtils {
 		return b.getBlockData() instanceof Ageable;
 	}
 
-	public static void setGrowthLevel(Block block, int level) {
-		Ageable age = ((Ageable) block.getBlockData());
-		age.setAge(level);
-		block.setBlockData(age);
-	}
-
 	public static int getWaterLevel(BlockState blockState) {
 		return ((Levelled) blockState.getBlockData()).getLevel();
 	}
@@ -111,10 +111,6 @@ public class BlockUtils {
 			case CHEST, TRAPPED_CHEST -> true;
 			default -> false;
 		};
-	}
-
-	public static boolean isLiquid(Block block) {
-		return isLiquid(block.getType());
 	}
 
 	public static boolean isLiquid(Material m) {
@@ -141,49 +137,28 @@ public class BlockUtils {
 		return m.name().contains("_BED");
 	}
 
-	public static boolean isWoodDoor(Material m) {
-		return switch (m) {
-			case OAK_DOOR, ACACIA_DOOR, JUNGLE_DOOR, SPRUCE_DOOR, DARK_OAK_DOOR, BIRCH_DOOR, CRIMSON_DOOR, WARPED_DOOR -> true;
-			default -> false;
-		};
+	public static boolean isDoor(Material m) {
+		return m.name().contains("_DOOR");
 	}
 
-	public static boolean isWoodButton(Material m) {
-		return switch (m) {
-			case OAK_BUTTON, ACACIA_BUTTON, JUNGLE_BUTTON, SPRUCE_BUTTON, DARK_OAK_BUTTON, BIRCH_BUTTON, CRIMSON_BUTTON, WARPED_BUTTON -> true;
-			default -> false;
-		};
+	public static boolean isButton(Material m) {
+		return m.name().contains("_BUTTON");
 	}
 
-	public static boolean isWoodPressurePlate(Material m) {
-		return switch (m) {
-			case OAK_PRESSURE_PLATE, ACACIA_PRESSURE_PLATE, JUNGLE_PRESSURE_PLATE, SPRUCE_PRESSURE_PLATE, DARK_OAK_PRESSURE_PLATE, BIRCH_PRESSURE_PLATE, CRIMSON_PRESSURE_PLATE, WARPED_PRESSURE_PLATE -> true;
-			default -> false;
-		};
+	public static boolean isPressurePlate(Material m) {
+		return m.name().contains("_PRESSURE_PLATE");
 	}
 
-	public static boolean isWoodTrapdoor(Material m) {
-		return switch (m) {
-			case OAK_TRAPDOOR, ACACIA_TRAPDOOR, JUNGLE_TRAPDOOR, SPRUCE_TRAPDOOR, BIRCH_TRAPDOOR, DARK_OAK_TRAPDOOR, CRIMSON_TRAPDOOR, WARPED_TRAPDOOR -> true;
-			default -> false;
-		};
+	public static boolean isTrapdoor(Material m) {
+		return m.name().contains("_TRAPDOOR");
 	}
 
-	public static boolean isWoodFenceGate(Material m) {
-		return switch (m) {
-			case OAK_FENCE_GATE, ACACIA_FENCE_GATE, JUNGLE_FENCE_GATE, SPRUCE_FENCE_GATE, BIRCH_FENCE_GATE, DARK_OAK_FENCE_GATE, CRIMSON_FENCE_GATE, WARPED_FENCE_GATE -> true;
-			default -> false;
-		};
+	public static boolean isFenceGate(Material m) {
+		return m.name().contains("_FENCE_GATE");
 	}
 
 	public static boolean isShulkerBox(Material m) {
-		return switch (m) {
-			case BLACK_SHULKER_BOX, BLUE_SHULKER_BOX, BROWN_SHULKER_BOX, CYAN_SHULKER_BOX, GRAY_SHULKER_BOX, GREEN_SHULKER_BOX,
-					LIGHT_BLUE_SHULKER_BOX, LIGHT_GRAY_SHULKER_BOX, LIME_SHULKER_BOX, MAGENTA_SHULKER_BOX, ORANGE_SHULKER_BOX,
-					PINK_SHULKER_BOX, PURPLE_SHULKER_BOX, RED_SHULKER_BOX, SHULKER_BOX, SHULKER_SHELL, SHULKER_SPAWN_EGG,
-					WHITE_SHULKER_BOX, YELLOW_SHULKER_BOX -> true;
-			default -> false;
-		};
+		return m.name().contains("SHULKER_BOX");
 	}
 
 	public static boolean isWood(Material m) {
@@ -196,21 +171,24 @@ public class BlockUtils {
 
 	public static boolean isPathable(Material mat) {
 		String name = mat.name();
+
+		if (mat.isAir()) return true;
+		if (isLiquid(mat)) return true;
+		if (isPressurePlate(mat)) return true;
+		if (isButton(mat)) return true;
+
 		if (name.contains("SIGN")) return true;
 		if (name.contains("CARPET")) return true;
-		if (name.contains("PRESSURE_PLATE")) return true;
-		if (name.contains("BUTTON")) return true;
 		if (name.contains("TULIP")) return true;
 		if (name.contains("SAPLING")) return true;
-		if (name.contains("FAN")) return true;
 		if (name.contains("RAIL")) return true;
-		if (name.contains("_AIR")) return true;
+		if (name.contains("CORAL") && !name.endsWith("_BLOCK")) return true;
+
 		return switch (mat) {
-			case AIR, LIGHT, WATER, LAVA, TALL_GRASS, LARGE_FERN, GRASS, DEAD_BUSH, FERN, SEAGRASS, TALL_SEAGRASS, LILY_PAD,
+			case LIGHT, TALL_GRASS, LARGE_FERN, GRASS, DEAD_BUSH, FERN, SEAGRASS, TALL_SEAGRASS, LILY_PAD,
 					DANDELION, POPPY, BLUE_ORCHID, ALLIUM, AZURE_BLUET, OXEYE_DAISY, SUNFLOWER, LILAC, PEONY, ROSE_BUSH,
 					BROWN_MUSHROOM, RED_MUSHROOM, TORCH, FIRE, REDSTONE_WIRE, WHEAT, LADDER, LEVER, REDSTONE_TORCH, SNOW,
-					SUGAR_CANE, VINE, SCULK_VEIN, NETHER_WART, TUBE_CORAL, BRAIN_CORAL, BUBBLE_CORAL, FIRE_CORAL, HORN_CORAL,
-					DEAD_TUBE_CORAL, DEAD_BRAIN_CORAL, DEAD_BUBBLE_CORAL, DEAD_FIRE_CORAL, DEAD_HORN_CORAL -> true;
+					SUGAR_CANE, VINE, SCULK_VEIN, NETHER_WART -> true;
 			default -> false;
 		};
 	}

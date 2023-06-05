@@ -289,6 +289,8 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell, Ta
 			if (gravity != 0) dir.add(new Vector(0, gravity, 0));
 			if (rotation != 0 || gravity != 0) loc.setDirection(dir);
 
+			loc = Util.makeFinite(loc);
+
 			if (zoneManager.willFizzle(loc, this)) break;
 
 			//check block collision

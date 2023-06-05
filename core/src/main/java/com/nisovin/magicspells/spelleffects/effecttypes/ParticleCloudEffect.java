@@ -21,6 +21,8 @@ public class ParticleCloudEffect extends ParticlesEffect {
 
 	@Override
 	public void loadFromConfig(ConfigurationSection config) {
+		super.loadFromConfig(config);
+
 		color = ConfigDataUtil.getInteger(config, "color", 0xFF0000);
 		duration = ConfigDataUtil.getInteger(config, "duration", 60);
 

@@ -5,6 +5,7 @@ import org.bukkit.entity.*
 import org.bukkit.Location
 import org.bukkit.util.Vector
 import org.bukkit.inventory.Inventory
+import org.bukkit.EntityEffect
 import org.bukkit.inventory.ItemStack
 import org.bukkit.event.entity.ExplosionPrimeEvent
 
@@ -146,4 +147,8 @@ class VolatileCode1_19_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
     override fun updateAllFalsePlayers() {
         TODO("Not yet implemented")
     }
+    override fun playHurtAnimation(entity: LivingEntity?, yaw: Float) {
+        entity!!.playEffect(EntityEffect.HURT)
+    }
+
 }

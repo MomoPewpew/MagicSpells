@@ -42,5 +42,7 @@ public abstract class VolatileCodeHandle {
 	public abstract void updateAllFalsePlayers();
 
 	public String nicknamePlayer(Player player, String nickname) { return null; } //Not defining as abstract so no updating unused versions
+	
+	public abstract void playHurtAnimation(LivingEntity entity, float yaw);
 
 }

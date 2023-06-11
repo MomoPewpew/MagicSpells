@@ -18,18 +18,23 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.events.MagicSpellsBlockBreakEvent;
+import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -261,11 +266,13 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    List<BlockVector3> airVectors;
 
 	    boolean stop = false;
+	    private LivingEntity caster;
 
 
 		public Builder(LivingEntity caster, Location target, float power, String[] args) {
 			this.target = target.clone();
 			this.clipboard = PasteSpell.this.clipboard;
+			this.caster = caster;
 
             this.undoDelay = PasteSpell.this.undoDelay.get(caster, null, power, args);
             this.instantUndo = PasteSpell.this.instantUndo;
@@ -397,6 +404,13 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (animatorBlock == null) {
 				if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(startingBlock, data, 0, 0, 0, 0);
 				startingBlock.setBlockData(data);
+
+	            if (this.caster instanceof Player player) {
+					BlockState previousState = startingBlock.getState();
+					MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(startingBlock, previousState, startingBlock.getRelative(BlockFace.DOWN), player.getInventory().getItemInMainHand(), player, true);
+					EventUtil.call(event);
+	            }
+
 		        this.placeBlock(startingBlock, pos.getX(), pos.getY(), pos.getZ());
 			} else {
 		        this.placeBlock(animatorBlock, pos.getX() + face.getModX(), pos.getY() + face.getModY(), pos.getZ() + face.getModZ());
@@ -618,7 +632,17 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        BlockDisplay ent = (BlockDisplay)block.getWorld().spawnEntity(block.getLocation(), EntityType.BLOCK_DISPLAY);
 	        Block b = block.getRelative(x, y, z);
 
-	        if (!keepOld) block.setType(Material.AIR);
+	        if (!keepOld) {
+	        	if (this.caster instanceof Player player) {
+					MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player);
+					EventUtil.call(event);
+					if (!event.isCancelled()) {
+			        	block.setType(Material.AIR);
+					};
+				} else {
+		        	block.setType(Material.AIR);
+				}
+	        }
 
 	        ent.setBlock(data);
 
@@ -641,8 +665,18 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 			if (keepOld) {
 				MagicSpells.scheduleDelayedTask(() -> {
-		            b.setBlockData(data);
-		            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
+		            if (this.caster instanceof Player player) {
+						BlockState previousState = b.getState();
+						MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(b, previousState, block, player.getInventory().getItemInMainHand(), player, true);
+						EventUtil.call(event);
+						if (!event.isCancelled()) {
+				            b.setBlockData(data);
+				            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
+						}
+					} else {
+						b.setBlockData(data);
+			            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
+					}
 				}, duration + 2);
 			}
 

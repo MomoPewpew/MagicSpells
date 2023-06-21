@@ -1,12 +1,8 @@
 package com.nisovin.magicspells.spells.buff;
 
-import java.util.Set;
-import java.util.List;
-import java.util.UUID;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.ArrayList;
+import java.util.*;
 
+import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
@@ -16,7 +12,10 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -43,6 +42,7 @@ public class ArmorSpell extends BuffSpell {
 
 	private boolean permanent;
 	private boolean replace;
+	private boolean revert;
 
 	private ItemStack helmet;
 	private ItemStack chestplate;
@@ -60,6 +60,7 @@ public class ArmorSpell extends BuffSpell {
 
 		permanent = getConfigBoolean("permanent", false);
 		replace = getConfigBoolean("replace", false);
+		revert = getConfigBoolean("revert", false);
 
 		helmet = getItem(getConfigString("helmet", ""));
 		chestplate = getItem(getConfigString("chestplate", ""));
@@ -145,7 +146,8 @@ public class ArmorSpell extends BuffSpell {
 		if (!entities.remove(entity.getUniqueId())) return;
 		if (!entity.isValid()) return;
 		EntityEquipment inv = entity.getEquipment();
-		removeArmor(inv);
+		if(revert) revertArmor(inv, entity.getUniqueId());
+		else removeArmor(inv);
 	}
 
 	@Override
@@ -155,31 +157,46 @@ public class ArmorSpell extends BuffSpell {
 			if (entity == null) continue;
 			if (!entity.isValid()) continue;
 			EntityEquipment inv = ((LivingEntity) entity).getEquipment();
-			removeArmor(inv);
+			if(revert) revertArmor(inv, entity.getUniqueId());
+			else removeArmor(inv);
 		}
 		entities.clear();
 	}
 
+	private static class EquipStore {
+		public ItemStack helmet;
+		public ItemStack chest;
+		public ItemStack legs;
+		public ItemStack boots;
+	}
+	private final Map<UUID, EquipStore> equipStore = new HashMap<>();
+
 	private void setArmor(EntityEquipment inv) {
+		EquipStore eStore = new EquipStore();
 		if (helmet != null) {
+			eStore.helmet = inv.getHelmet();
 			if (replace) inv.setHelmet(null);
 			inv.setHelmet(helmet.clone());
 		}
 
 		if (chestplate != null) {
+			eStore.chest = inv.getChestplate();
 			if (replace) inv.setChestplate(null);
 			inv.setChestplate(chestplate.clone());
 		}
 
 		if (leggings != null) {
+			eStore.legs = inv.getLeggings();
 			if (replace) inv.setLeggings(null);
 			inv.setLeggings(leggings.clone());
 		}
 
 		if (boots != null) {
+			eStore.boots = inv.getBoots();
 			if (replace) inv.setBoots(null);
 			inv.setBoots(boots.clone());
 		}
+		equipStore.put(inv.getHolder().getUniqueId(), eStore);
 	}
 
 	private void removeArmor(EntityEquipment inv) {
@@ -204,6 +221,29 @@ public class ArmorSpell extends BuffSpell {
 		}
 	}
 
+	private void revertArmor(EntityEquipment inv, UUID id){
+		if(equipStore.containsKey(id)){
+			EquipStore eStore = equipStore.remove(id);
+			if(eStore.helmet != null){
+				inv.setHelmet(null);
+				inv.setHelmet(eStore.helmet);
+			}
+			if(eStore.chest != null){
+				inv.setChestplate(null);
+				inv.setChestplate(eStore.chest);
+			}
+			if(eStore.legs != null){
+				inv.setLeggings(null);
+				inv.setLeggings(eStore.legs);
+			}
+			if(eStore.boots != null){
+				inv.setBoots(null);
+				inv.setBoots(eStore.boots);
+			}
+		}
+		removeArmor(inv);
+	}
+
 	private class ArmorListener implements Listener {
 
 		@EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
@@ -222,6 +262,24 @@ public class ArmorSpell extends BuffSpell {
 			if (!(entity instanceof Player p)) return;
 			if (!isActive(p)) return;
 			event.setCancelled(true);
+		}
+
+		@EventHandler
+		public void onArmorSwap(PlayerInteractEvent event){
+			Player player = event.getPlayer();
+			PlayerInventory inventory = player.getInventory();
+			//Messy but it works!
+			if(!(inventory.getItemInMainHand().getType().toString().toLowerCase().contains("chestplate")
+			|| inventory.getItemInMainHand().getType().toString().toLowerCase().contains("boots")
+			|| inventory.getItemInMainHand().getType().toString().toLowerCase().contains("helmet")
+			|| inventory.getItemInMainHand().getType().toString().toLowerCase().contains("legging")
+			|| inventory.getItemInOffHand().getType().toString().toLowerCase().contains("chestplate")
+					|| inventory.getItemInOffHand().getType().toString().toLowerCase().contains("boots")
+					|| inventory.getItemInOffHand().getType().toString().toLowerCase().contains("helmet")
+					|| inventory.getItemInOffHand().getType().toString().toLowerCase().contains("legging"))) return;
+			if(!isActive(player)) return;
+			event.setCancelled(true);
+
 		}
 
 		@EventHandler

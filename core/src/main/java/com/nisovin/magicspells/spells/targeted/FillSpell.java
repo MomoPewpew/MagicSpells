@@ -1,51 +1,24 @@
 package com.nisovin.magicspells.spells.targeted;
 
-import com.comphenix.protocol.wrappers.BlockPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
-import com.sk89q.worldedit.regions.factory.CuboidRegionFactory;
 import com.sk89q.worldedit.regions.factory.SphereRegionFactory;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.util.BlockVector;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
-
-
-    /* Concept:
-    I was theorycrafting a new location target spell: FillSpell
-The idea behind it would be this: Target a location, check a sphere with radius X around the location, and fill the lowest Y air blocks with material Z
-Ideally it would have configurations for: How big is the radius, how many blocks does it fill per cast, A list of materials that it can replace (defaults to [Air]),
-a list of materials that it randomly picks from for replacing (defaults to [Dirt])
-This spell should check the sphere from bottom to top layer, and then from the centre going outward
-
-Oh and another config idea for the floodspell:
-Being able to toggle between half spheres and whole spheres (so half sphere would just mean don't fill anything that's higher than the target location)
-
-    [x] Target a Location
-    [x] Get a Sphere Radius X at that location
-    [] Fill the lowest AirBlocks with material ???
-    [x] Config for Radius, Blocks-Per-Cast, List to Replace, List to Pick randomly and replace with, Toggle for Half and Full Sphere
-    [] Start from bottom layer and make the way up going from the center outwards
-    [] Option between full sphere or half sphere
-     */
 
     public boolean castAtCaster;
     public boolean fullSphere;

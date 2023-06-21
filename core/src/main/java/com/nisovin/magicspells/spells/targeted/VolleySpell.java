@@ -50,6 +50,7 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 	private boolean noTarget;
 	private boolean powerAffectsSpeed;
 	private boolean powerAffectsArrowCount;
+	private float addPitch;
 
 	public VolleySpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -71,6 +72,8 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 		noTarget = getConfigBoolean("no-target", false);
 		powerAffectsSpeed = getConfigBoolean("power-affects-speed", false);
 		powerAffectsArrowCount = getConfigBoolean("power-affects-arrow-count", true);
+
+		addPitch = getConfigFloat("add-pitch", 0);
 	}
 
 	@Override
@@ -140,6 +143,10 @@ public class VolleySpell extends TargetedSpell implements TargetedLocationSpell,
 
 		if (noTarget || targetLoc == null) v = from.getDirection();
 		else v = targetLoc.toVector().subtract(spawn.toVector()).normalize();
+
+		if(addPitch != 0){
+			v = v.add(new Vector(0, addPitch/90, 0));
+		}
 
 		SpellData data = new SpellData(caster, target, power, args);
 		int shootInterval = this.shootInterval.get(caster, target, power, args);

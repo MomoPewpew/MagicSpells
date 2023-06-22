@@ -161,7 +161,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			session.undo(session);
 		}
 		for (Builder builder : builders) {
-			builder.stop = true;
+			builder.cleanup();
 			if (removePaste && !builder.undone) {
                 builder.clipboard = builder.ogClipboard;
                 builder.parseClipboard();
@@ -227,9 +227,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					.ignoreAirBlocks(!pasteAir)
 					.build();
 			Operations.complete(operation);
-			if (removePaste) sessions.add(editSession);
 
 			int undoDelay = this.undoDelay.get(caster, null, power, args);
+
+			if (removePaste || undoDelay > 0) sessions.add(editSession);
+
 			if (undoDelay > 0) {
 				MagicSpells.scheduleDelayedTask(() -> {
 					editSession.undo(editSession);
@@ -255,22 +257,23 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	class Builder {
-		List<BlockFace> CARDINAL_BLOCK_FACES = new ArrayList<BlockFace>(Arrays.asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
+		private static List<BlockFace> CARDINAL_BLOCK_FACES = new ArrayList<BlockFace>(Arrays.asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
 
-	    Location target;
+		private Location target;
 
-	    Clipboard clipboard;
-		Clipboard ogClipboard;
+	    private Clipboard clipboard;
+	    private Clipboard ogClipboard;
 
-	    int workingBlocks = 0;
-	    int workingAir = 0;
-        int undoDelay;
-        boolean instantUndo;
+		private int workingBlocks = 0;
+	    private int workingAir = 0;
+	    private int undoDelay;
+        private boolean instantUndo;
         boolean built = false;
         boolean undone = false;
 
-	    List<BlockVector3> blockVectors;
-	    List<BlockVector3> airVectors;
+        private List<BlockVector3> blockVectors;
+	    private List<BlockVector3> airVectors;
+	    private List<BlockDisplay> blockDisplays;
 
 	    boolean stop = false;
 	    private LivingEntity caster;
@@ -367,6 +370,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			int changingBlocks = 0;
 		    this.blockVectors = new ArrayList<BlockVector3>();
 		    this.airVectors = new ArrayList<BlockVector3>();
+		    this.blockDisplays = new ArrayList<BlockDisplay>();
 
 	        BlockVector3 origin = this.clipboard.getOrigin();
 
@@ -500,7 +504,9 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (this.built) this.undone = true;
 			this.built = true;
 
-			if (!this.undone) {
+			this.blockDisplays = new ArrayList<BlockDisplay>();
+
+			if (!this.undone && this.undoDelay > 0) {
 				MagicSpells.scheduleDelayedTask(() ->{
 					this.clipboard = this.ogClipboard;
 					this.parseClipboard();
@@ -636,6 +642,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        if (keepOld) ent.setTransformation(new Transformation(new Vector3f(0.005f), new AxisAngle4f(), new Vector3f(0.955f), new AxisAngle4f()));
 	        else ent.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(1), new AxisAngle4f()));
 
+	        this.blockDisplays.add(ent);
+
 			MagicSpells.scheduleDelayedTask(() -> {
 	            ent.setInterpolationDelay(-1);
 	            ent.setInterpolationDuration(duration);
@@ -692,6 +700,13 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
             }
 
             return true;
+        }
+
+        public void cleanup() {
+        	this.stop = true;
+        	for (BlockDisplay ent : this.blockDisplays) {
+        		if (ent != null && ent.isValid()) ent.remove();
+        	}
         }
 	}
 }

@@ -162,10 +162,9 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 		for (Builder builder : builders) {
 			builder.stop = true;
-			if (removePaste) {
+			if (removePaste && !builder.undone) {
                 builder.clipboard = builder.ogClipboard;
                 builder.parseClipboard();
-                builder.undoDelay = 0;
 				builder.undoInstant();
 			}
 		}
@@ -267,6 +266,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    int workingAir = 0;
         int undoDelay;
         boolean instantUndo;
+        boolean built = false;
+        boolean undone = false;
 
 	    List<BlockVector3> blockVectors;
 	    List<BlockVector3> airVectors;
@@ -461,7 +462,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        	}
 			}
 
-	        if (closestPos != null) this.intialize(closestPos);
+	        if (closestPos != null) {
+	        	this.intialize(closestPos);
+	        } else if (this.airVectors.isEmpty()) {
+	        	this.finalise();
+	        }
 		}
 
 		private void reInitializeWithdraw() {
@@ -483,10 +488,29 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			}
 
 	        if (furthestPos != null) this.intializeWithdraw(furthestPos);
-	        else if (PasteSpell.this.dismantleFirst) {
+	        else if (PasteSpell.this.dismantleFirst && !this.built) {
 	        	this.parseClipboard();
     	        if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
+	        } else if (this.blockVectors.isEmpty()) {
+	        	this.finalise();
 	        }
+		}
+
+		private void finalise() {
+			if (this.built) this.undone = true;
+			this.built = true;
+
+			if (!this.undone) {
+				MagicSpells.scheduleDelayedTask(() ->{
+					this.clipboard = this.ogClipboard;
+					this.parseClipboard();
+					if(this.instantUndo){
+						this.undoInstant();
+					}else {
+						this.startBuilder();
+					}
+				}, this.undoDelay);
+			}
 		}
 
 		private void placeBlock(Block block, int x, int y, int z) {
@@ -515,59 +539,14 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					this.placeBlock(to, pos.getX(), pos.getY(), pos.getZ());
 					this.workingBlocks--;
 
-					if (this.workingBlocks < 1 && !this.blockVectors.isEmpty()) {
+					if (this.workingBlocks < 1) {
 						this.reInitialize();
 					}
 				}, duration);
 	        }
-			if (this.workingBlocks < 1 && !this.blockVectors.isEmpty()) {
-				//this.reInitialize();
-
-				BlockVector3 pos = this.blockVectors.get(0);
-
-				int _x = pos.getX() - this.clipboard.getOrigin().getX();
-				int _y = pos.getY() - this.clipboard.getOrigin().getY();
-				int _z = pos.getZ() - this.clipboard.getOrigin().getZ();
-
-				Location loc = this.target.clone().add(_x, _y, _z);
-				Block startingBlock = loc.getBlock();
-				BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos));
-
-				if(startingBlock.getType() == data.getMaterial()){
-					this.blockVectors.remove(0);
-				}
-
-				if(!this.blockVectors.isEmpty())
-					this.intialize(this.blockVectors.get(0));
-				else{
-					if(undoDelay > 0){
-						MagicSpells.scheduleDelayedTask(() ->{
-							this.clipboard = this.ogClipboard;
-							this.parseClipboard();
-							undoDelay = 0;
-							if(instantUndo){
-								undoInstant();
-							}else {
-								startBuilder();
-							}
-						}, undoDelay);
-					}
-				}
+			if (this.workingBlocks < 1) {
+				this.reInitialize();
 			}
-            else if(this.blockVectors.isEmpty()) {
-                if(undoDelay > 0){
-                    MagicSpells.scheduleDelayedTask(() ->{
-                        this.clipboard = this.ogClipboard;
-                        this.parseClipboard();
-                        undoDelay = 0;
-                        if(instantUndo){
-                            undoInstant();
-                        }else {
-                            startBuilder();
-                        }
-                    }, undoDelay);
-                }
-            }
 	    }
 
 		private void withdrawBlock(Block block, int x, int y, int z, BlockFace priorityFace) {

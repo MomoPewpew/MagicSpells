@@ -59,6 +59,7 @@ public class Util {
 	private static final Pattern HEX_PATTERN = Pattern.compile("[&§](#[0-9a-f]{6})", Pattern.CASE_INSENSITIVE);
 
 	public static int getRandomInt(int bound) {
+		if (bound < 1) return 0;
 		return random.nextInt(bound);
 	}
 

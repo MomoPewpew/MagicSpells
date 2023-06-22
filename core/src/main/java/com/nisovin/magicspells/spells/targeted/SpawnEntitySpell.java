@@ -258,10 +258,13 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			spellOnSpawnName = null;
 		}
 
-		attackSpell = new Subspell(attackSpellName);
-		if (!attackSpellName.isEmpty() && !attackSpell.process()) {
-			MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid attack-spell defined!");
-			attackSpell = null;
+		if (!attackSpellName.isEmpty()) {
+			attackSpell = new Subspell(attackSpellName);
+
+			if (!attackSpell.process()) {
+				MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid attack-spell defined!");
+				attackSpell = null;
+			}
 		}
 
 		if (!intervalSpellName.isEmpty()) {
@@ -443,36 +446,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 		loc.add(0, yOffset.get(data), 0);
 
-		LivingEntity entity = (LivingEntity) entityData.spawn(
-			loc.add(0.5, yOffset.get(caster, target, power, args), 0.5),
-			e -> {
-				LivingEntity preSpawned = (LivingEntity) e;
-				prepMob(caster, target, preSpawned, power, args);
-
-				int fireTicks = this.fireTicks.get(caster, target, power, args);
-				if (fireTicks > 0) preSpawned.setFireTicks(fireTicks);
-				if (potionEffects != null) preSpawned.addPotionEffects(potionEffects);
-
-				// Apply attributes
-				if (attributes != null) MagicSpells.getAttributeManager().addEntityAttributes(preSpawned, attributes);
-
-				if (removeAI) {
-					if (addLookAtPlayerAI) {
-						if (preSpawned instanceof Mob mob) {
-							MobGoals mobGoals = Bukkit.getMobGoals();
-							mobGoals.removeAllGoals(mob);
-							mobGoals.addGoal(mob, 1, new LookAtEntityGoal(mob, HumanEntity.class, 10.0F, 1.0F));
-						}
-					} else {
-						preSpawned.setAI(false);
-					}
-				}
-				preSpawned.setAI(!noAI);
-				preSpawned.setInvulnerable(invulnerable);
-
-				if (target != null) MobUtil.setTarget(preSpawned, target);
-			}
-		);
+		LivingEntity entity = (LivingEntity) entityData.spawn(loc, data, mob -> prepMob(caster, target, mob, power, args));
 
 		if(mountList != null && !mountList.isEmpty()) createMounts(caster, target, power, args, entity);
 

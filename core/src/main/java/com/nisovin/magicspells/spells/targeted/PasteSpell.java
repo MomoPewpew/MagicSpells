@@ -356,7 +356,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			}
 		}
 
-		private int parseClipboard() {
+		private void parseClipboard() {
 			int changingBlocks = 0;
 		    this.blockVectors = new ArrayList<BlockVector3>();
 		    this.airVectors = new ArrayList<BlockVector3>();
@@ -369,7 +369,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
 
 				if (!data.matches(bl.getBlockData())) {
-					changingBlocks++;
 					if (data.getMaterial().isAir()) {
 						this.airVectors.add(pos);
 					} else {
@@ -377,7 +376,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					}
 				}
 	        }
-			return changingBlocks;
 		}
 
 		private void intialize(BlockVector3 pos) {

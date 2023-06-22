@@ -604,20 +604,16 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					if (to.getLocation().equals(withdrawBlock.getLocation())) {
 						if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(block, data, face.getModX(), face.getModY(), face.getModZ(), duration);
 						if (PasteSpell.this.displayAnimation) this.moveBlock(block, data, face.getModX(), face.getModY(), face.getModZ(), duration, false);
-
-						MagicSpells.scheduleDelayedTask(() -> {
-							this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
-							this.workingAir--;
-
-							if (this.workingAir < 1) {
-								this.reInitializeWithdraw();
-							}
-						}, duration);
-					} else {
-						MagicSpells.scheduleDelayedTask(() -> {
-							this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
-						}, duration);
 					}
+
+					MagicSpells.scheduleDelayedTask(() -> {
+						this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
+						this.workingAir--;
+
+						if (this.workingAir < 1) {
+							this.reInitializeWithdraw();
+						}
+					}, duration);
 				}
 
 				if (withdrawBlock == null) {

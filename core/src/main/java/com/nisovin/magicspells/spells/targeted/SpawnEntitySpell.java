@@ -726,7 +726,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 			if (damager != monster) return;
 
-			if (event.getEntity() instanceof LivingEntity damaged) {
+			if (attackSpell != null && event.getEntity() instanceof LivingEntity damaged) {
 				if (attackSpell.isTargetedEntityFromLocationSpell())
 					attackSpell.castAtEntityFromLocation(caster, monster.getLocation(), damaged, power);
 				else if (attackSpell.isTargetedEntitySpell())

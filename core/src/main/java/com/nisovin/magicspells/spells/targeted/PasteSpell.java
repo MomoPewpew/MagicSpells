@@ -63,7 +63,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private File file;
 	private Clipboard clipboard;
-	private Clipboard ogClipboard;
 
 	private ConfigData<Integer> yOffset;
 	private ConfigData<Integer> undoDelay;
@@ -163,6 +162,12 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 		for (Builder builder : builders) {
 			builder.stop = true;
+			if (removePaste) {
+                builder.clipboard = builder.ogClipboard;
+                builder.parseClipboard();
+                builder.undoDelay = 0;
+				builder.undoInstant();
+			}
 		}
 		sessions.clear();
 		builders.clear();
@@ -256,6 +261,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    Location target;
 
 	    Clipboard clipboard;
+		Clipboard ogClipboard;
 
 	    int workingBlocks = 0;
 	    int workingAir = 0;
@@ -306,11 +312,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 
 		private void storeStartRegion(){
-			Region region = clipboard.getRegion();
+			Region region = this.clipboard.getRegion();
 
 			BlockVector3 minPos = region.getMinimumPoint();
 			BlockVector3 maxPos = region.getMaximumPoint();
-			BlockVector3 origin = clipboard.getOrigin();
+			BlockVector3 origin = this.clipboard.getOrigin();
 
 			Block minBlock = this.target.getBlock().getRelative(minPos.getX() - origin.getX(), minPos.getY() - origin.getY(), minPos.getZ() - origin.getZ());
 			Block maxBlock = this.target.getBlock().getRelative(maxPos.getX() - origin.getX(), maxPos.getY() - origin.getY(), maxPos.getZ() - origin.getZ());
@@ -329,7 +335,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				throw new RuntimeException(e);
 			}
 			bAClipboard.setOrigin(BlockVector3.at(this.target.getX(), this.target.getY(), this.target.getZ()));
-			ogClipboard = bAClipboard;
+			this.ogClipboard = bAClipboard;
 		}
 
 		private void firstBuildInit(BlockVector3 origin) {
@@ -364,7 +370,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        BlockVector3 origin = this.clipboard.getOrigin();
 
 	        for (BlockVector3 pos : this.clipboard.getRegion()) {
-				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
+				BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos));
 
 				Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
 
@@ -385,7 +391,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	        Location loc = this.target.clone().add(x, y, z);
 			Block startingBlock = loc.getBlock();
-			BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
+			BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos));
 			Block animatorBlock = null;
 			BlockFace face = null;
 
@@ -493,7 +499,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				BlockVector3 pos = BlockVector3.at(x + face.getModX(), y + face.getModY(), z + face.getModZ());
 				if (!this.blockVectors.contains(pos)) continue;
 
-				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
+				BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos));
 
 		        this.blockVectors.remove(pos);
 
@@ -525,7 +531,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				Location loc = this.target.clone().add(_x, _y, _z);
 				Block startingBlock = loc.getBlock();
-				BlockData data = BukkitAdapter.adapt(clipboard.getBlock(pos));
+				BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos));
 
 				if(startingBlock.getType() == data.getMaterial()){
 					this.blockVectors.remove(0);
@@ -536,7 +542,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				else{
 					if(undoDelay > 0){
 						MagicSpells.scheduleDelayedTask(() ->{
-							clipboard = ogClipboard;
+							this.clipboard = this.ogClipboard;
 							this.parseClipboard();
 							undoDelay = 0;
 							if(instantUndo){
@@ -551,7 +557,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
             else if(this.blockVectors.isEmpty()) {
                 if(undoDelay > 0){
                     MagicSpells.scheduleDelayedTask(() ->{
-                        clipboard = ogClipboard;
+                        this.clipboard = this.ogClipboard;
                         this.parseClipboard();
                         undoDelay = 0;
                         if(instantUndo){
@@ -699,7 +705,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
         private boolean undoInstant() {
             try (EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(BukkitAdapter.adapt(target.getWorld()), -1)) {
-                Operation operation = new ClipboardHolder(clipboard)
+                Operation operation = new ClipboardHolder(this.clipboard)
                         .createPaste(editSession)
                         .to(BlockVector3.at(target.getX(), target.getY(), target.getZ()))
                         .ignoreAirBlocks(!pasteAir)

@@ -760,6 +760,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				if (!entity.isValid()) continue;
 				if (entity.equals(ignore)) continue;
 				if (!validTargetList.canTarget(caster, entity)) continue;
+				if (targetModifiers != null && !targetModifiers.check(monster, entity)) continue;
 			}
 
 			for (Entity e : monster.getNearbyEntities(range, range, range)) {

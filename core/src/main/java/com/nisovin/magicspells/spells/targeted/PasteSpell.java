@@ -54,6 +54,102 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
 
 public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
+
+	public class PasteSpellRecord {
+		private String spellName;
+		Map<String, List<Builder>> playerPastes;
+		Map<String, List<EditSession>> playerSessions;
+
+		public PasteSpellRecord(String spellName){
+			this.spellName = spellName;
+			this.playerPastes = new HashMap<>();
+			this.playerSessions = new HashMap<>();
+		}
+
+		public void addPlayerPaste(String uuid, Builder builder){
+			List<Builder> playerPastes = this.playerPastes.get(uuid);
+			if(playerPastes == null)
+				playerPastes = new ArrayList<>();
+			playerPastes.add(builder);
+
+			this.playerPastes.put(uuid, playerPastes);
+		}
+
+		public void addPlayerSession(String uuid, EditSession session){
+			List<EditSession> playerPastes = this.playerSessions.get(uuid);
+			if(playerPastes == null)
+				playerPastes = new ArrayList<>();
+			playerPastes.add(session);
+
+			this.playerSessions.put(uuid, playerPastes);
+		}
+
+		public void removePlayerPaste(String uuid, Builder builder){
+			List<Builder> playerPastes = this.playerPastes.get(uuid);
+			if(playerPastes == null) return;
+			playerPastes.remove(builder);
+			this.playerPastes.put(uuid, playerPastes);
+		}
+
+		public void removePlayerSession(String uuid, EditSession session){
+			List<EditSession> playerPastes = this.playerSessions.get(uuid);
+			if(playerPastes == null) return;
+			playerPastes.remove(session);
+			this.playerSessions.put(uuid, playerPastes);
+		}
+
+		public void cleanAllBuilders(){
+			playerPastes.forEach((uuid, builderList) -> {
+				for(Builder builder : builderList){
+					builder.cleanup();
+					if(PasteSpell.this.removePaste && !builder.undone){
+						builder.clipboard = builder.ogClipboard;
+						builder.parseClipboard();
+						builder.undoInstant();
+					}
+				}
+			});
+			playerPastes.clear();
+		}
+
+		public void cleanPlayerBuilders(String uuid){
+			List<Builder> playerBuilders = playerPastes.get(uuid);
+			if(playerBuilders != null){
+				for(Builder builder : playerBuilders){
+					builder.cleanup();
+					if(PasteSpell.this.removePaste && !builder.undone){
+						builder.clipboard = builder.ogClipboard;
+						builder.parseClipboard();
+						builder.undoInstant();
+					}
+				}
+			}
+			playerPastes.remove(uuid);
+		}
+
+		public void cleanAllSessions(){
+			playerSessions.forEach((uuid, sessionList) -> {
+				for(EditSession session : sessionList){
+					session.undo(session);
+				}
+			});
+			playerSessions.clear();
+		}
+
+		public void cleanPlayerSessions(String uuid){
+			List<EditSession> sessionList = playerSessions.get(uuid);
+			if(sessionList != null){
+				for(EditSession session : sessionList){
+					session.undo(session);
+				}
+			}
+			playerPastes.remove(uuid);
+		}
+	}
+
+	public static Map<String, PasteSpellRecord> spellRecords = new HashMap<>();
+
+	private String spellName;
     private List<EditSession> sessions;
 	private List<Builder> builders;
 	private List<String> buildStartOffsetStrings;
@@ -82,6 +178,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	public PasteSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
+
+		spellRecords.put(spellName, new PasteSpellRecord(spellName));
+
+		this.spellName = spellName;
 
 		File folder = new File(MagicSpells.plugin.getDataFolder(), "schematics");
 		if (!folder.exists()) folder.mkdir();
@@ -231,11 +331,13 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			int undoDelay = this.undoDelay.get(caster, null, power, args);
 
 			if (removePaste || undoDelay > 0) sessions.add(editSession);
+			spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), editSession);
 
 			if (undoDelay > 0) {
 				MagicSpells.scheduleDelayedTask(() -> {
 					editSession.undo(editSession);
 					sessions.remove(editSession);
+					spellRecords.get(this.spellName).removePlayerSession(caster.getUniqueId().toString(), editSession);
 				}, undoDelay);
 			}
 		} catch (WorldEditException e) {
@@ -248,12 +350,28 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private boolean pasteOverTime(LivingEntity caster, Location target, float power, String[] args) {
 		try {
-			builders.add(new Builder(caster, target, power, args));
+			Builder builder = new Builder(caster, target, power, args);
+			builders.add(builder);
+			spellRecords.get(this.spellName).addPlayerPaste(caster.getUniqueId().toString(), builder);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
+	}
+
+	public static void undoPastes(String spellName){
+		PasteSpellRecord record = spellRecords.get(spellName);
+		if(record == null) return;
+		record.cleanAllBuilders();
+		record.cleanAllSessions();
+	}
+
+	public static void undoPlayerPastes(String spellName, String uuid){
+		PasteSpellRecord record = spellRecords.get(spellName);
+		if(record == null) return;
+		record.cleanPlayerBuilders(uuid);
+		record.cleanPlayerSessions(uuid);
 	}
 
 	class Builder {

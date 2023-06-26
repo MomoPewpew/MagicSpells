@@ -685,17 +685,12 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					damager = (Entity) ((Projectile) damager).getShooter();
 				}
 			}
-			if (event.getEntity() instanceof LivingEntity && damager == monster) {
-				if (attackSpell.isTargetedEntityFromLocationSpell()) {
-					attackSpell.castAtEntityFromLocation(caster, monster.getLocation(), (LivingEntity) event.getEntity(), power);
-				} else if (attackSpell.isTargetedEntitySpell()) {
-					attackSpell.castAtEntity(caster, (LivingEntity) event.getEntity(), power);
-				} else if (attackSpell.isTargetedLocationSpell()) {
-					attackSpell.castAtLocation(caster, event.getEntity().getLocation(), power);
-				} else {
-					attackSpell.cast(caster, power);
-				}
-				event.setCancelled(SpawnEntitySpell.this.cancelAttack);
+
+			if (damager != monster) return;
+
+			if (attackSpell != null && event.getEntity() instanceof LivingEntity damaged) {
+				attackSpell.subcast(caster, monster.getLocation(), damaged, power, args);
+				event.setCancelled(cancelAttack);
 			}
 		}
 

@@ -106,6 +106,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private Subspell attackSpell;
 	private String attackSpellName;
 
+	private Subspell spellOnSpawn;
+	private String spellOnSpawnName;
+
 	private Subspell intervalSpell;
 	private String intervalSpellName;
 
@@ -205,6 +208,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		synchroniseIntervalSpells = getConfigBoolean("synchronise-interval-spells", false);
 
 		attackSpellName = getConfigString("attack-spell", "");
+		spellOnSpawnName = getConfigString("spell-on-spawn", "");
 		intervalSpellName = getConfigString("interval-spell", "");
 
 		// Attributes
@@ -249,19 +253,31 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			entityData = null;
 		}
 
-		attackSpell = new Subspell(attackSpellName);
-		if (!attackSpellName.isEmpty() && !attackSpell.process()) {
-			MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid attack-spell defined!");
-			attackSpell = null;
+		if (!attackSpellName.isEmpty()) {
+			attackSpell = new Subspell(attackSpellName);
+			if (!attackSpell.process()) {
+				MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid attack-spell defined!");
+				attackSpell = null;
+			}
+			attackSpellName = null;
+		}
+
+		if (spellOnSpawnName != null) {
+			spellOnSpawn = new Subspell(spellOnSpawnName);
+			if (!spellOnSpawn.process()) {
+				MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid spell-on-spawn '" + spellOnSpawnName + "' defined!");
+				spellOnSpawn = null;
+			}
+			spellOnSpawnName = null;
 		}
 
 		if (!intervalSpellName.isEmpty()) {
 			intervalSpell = new Subspell(intervalSpellName);
-
 			if (!intervalSpell.process()) {
 				MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid interval-spell defined!");
 				intervalSpell = null;
 			}
+			intervalSpellName = null;
 		}
 	}
 
@@ -465,6 +481,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			MagicSpells.registerEvents(monitor);
 
 			MagicSpells.scheduleDelayedTask(() -> HandlerList.unregisterAll(monitor), duration > 0 ? duration : 12000);
+		}
+		if (spellOnSpawn != null) {
+			spellOnSpawn.subcast(caster, entity, power, args);
 		}
 
 		if (caster != null) playSpellEffects(caster, source, entity, power, args);

@@ -767,6 +767,11 @@ public class MagicSpells extends JavaPlugin {
 				continue;
 			}
 
+			if (spells.containsKey(spellName)) {
+				error("Duplicate Spell Name: " + spellName);
+				continue;
+			}
+
 			spells.put(spellName.toLowerCase(), spell);
 			spellsOrdered.add(spell);
 

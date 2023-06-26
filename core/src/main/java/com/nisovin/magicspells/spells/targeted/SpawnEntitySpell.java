@@ -476,12 +476,12 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		if (targetInterval > 0) new Targeter(caster, entity, power, args);
 
 		int duration = this.duration.get(caster, target, power, args);
-		if (attackSpell != null) {
-			AttackMonitor monitor = new AttackMonitor(caster, entity, target, power, args);
-			MagicSpells.registerEvents(monitor);
 
-			MagicSpells.scheduleDelayedTask(() -> HandlerList.unregisterAll(monitor), duration > 0 ? duration : 12000);
-		}
+		AttackMonitor monitor = new AttackMonitor(caster, entity, target, power, args);
+		MagicSpells.registerEvents(monitor);
+
+		MagicSpells.scheduleDelayedTask(() -> HandlerList.unregisterAll(monitor), duration > 0 ? duration : 12000);
+
 		if (spellOnSpawn != null) {
 			spellOnSpawn.subcast(caster, entity, power, args);
 		}

@@ -560,6 +560,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 			BlockVector3 currPos = BlockVector3.at(x, y, z);
 			if (this.airVectors.contains(currPos)) {
+				if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 				this.workingAir++;
 
 				BlockData data = block.getBlockData();
@@ -573,14 +574,13 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				}
 
 				for (BlockFace face : CARDINAL_BLOCK_FACES) {
-					if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 					this.airVectors.remove(currPos);
 
 					Block to = block.getRelative(face);
 
 					if (to.getBlockData().getMaterial().isAir()) continue;
 
-					int duration = new Random().nextInt(8) + buildInterval;
+					int duration = new Random().nextInt(buildIntervalRandomness) + buildInterval;
 
 					if (withdrawBlock == null) {
 						withdrawBlock = to;
@@ -589,15 +589,18 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					if (to.getLocation().equals(withdrawBlock.getLocation())) {
 						if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(block, data, face.getModX(), face.getModY(), face.getModZ(), duration);
 						if (PasteSpell.this.displayAnimation) this.moveBlock(block, data, face.getModX(), face.getModY(), face.getModZ(), duration, false);
+
+						MagicSpells.scheduleDelayedTask(() -> {
+							this.workingAir--;
+
+							if (this.workingAir < 1) {
+								this.reInitializeWithdraw();
+							}
+						}, duration + 1);
 					}
 
 					MagicSpells.scheduleDelayedTask(() -> {
 						this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
-						this.workingAir--;
-
-						if (this.workingAir < 1) {
-							this.reInitializeWithdraw();
-						}
 					}, duration);
 				}
 

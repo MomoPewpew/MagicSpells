@@ -262,7 +262,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			attackSpellName = null;
 		}
 
-		if (spellOnSpawnName != null) {
+		if (!spellOnSpawnName.isEmpty()) {
 			spellOnSpawn = new Subspell(spellOnSpawnName);
 			if (!spellOnSpawn.process()) {
 				MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid spell-on-spawn '" + spellOnSpawnName + "' defined!");

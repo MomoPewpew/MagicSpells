@@ -490,12 +490,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		}
 
 		if (spellOnSpawn != null) {
-			if (spellOnSpawn.isTargetedEntitySpell())
-				spellOnSpawn.castAtEntity(caster, entity, power);
-			else if (spellOnSpawn.isTargetedLocationSpell())
-				spellOnSpawn.castAtLocation(caster, entity.getLocation(), power);
-			else
-				spellOnSpawn.cast(caster, power);
+			if (entity instanceof LivingEntity livingEntity) spellOnSpawn.subcast(caster, livingEntity, power, args);
+			else spellOnSpawn.subcast(caster, entity.getLocation(), power, args);
 		}
 
 		int targetInterval = this.targetInterval.get(data);
@@ -508,8 +504,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			if (duration > 0) MagicSpells.scheduleDelayedTask(() -> HandlerList.unregisterAll(monitor), duration);
 		}
 
-		if (caster != null) playSpellEffects(caster, source, entity, power, args);
-		else playSpellEffects(source, entity, power, args);
+		if (caster != null) playSpellEffects(caster, source, entity, data);
+		else playSpellEffects(source, entity, data);
 
 		return true;
 	}
@@ -701,15 +697,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			if (damager != monster) return;
 
 			if (attackSpell != null && event.getEntity() instanceof LivingEntity damaged) {
-				if (attackSpell.isTargetedEntityFromLocationSpell())
-					attackSpell.castAtEntityFromLocation(caster, monster.getLocation(), damaged, power);
-				else if (attackSpell.isTargetedEntitySpell())
-					attackSpell.castAtEntity(caster, damaged, power);
-				else if (attackSpell.isTargetedLocationSpell())
-					attackSpell.castAtLocation(caster, damaged.getLocation(), power);
-				else
-					attackSpell.cast(caster, power);
-
+				attackSpell.subcast(caster, monster.getLocation(), damaged, power, args);
 				event.setCancelled(cancelAttack);
 			}
 		}

@@ -22,12 +22,12 @@ public class CollisionSpell extends TargetedSpell implements TargetedEntitySpell
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args);
-			LivingEntity target = targetInfo.target();
+			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
+			if (info.noTarget()) return noTarget(caster, args, info);
+			LivingEntity target = info.target();
 
 			target.setCollidable(targetBooleanState.getBooleanState(target.isCollidable()));
-			playSpellEffects(caster, target, targetInfo.power(), args);
+			playSpellEffects(caster, target, info.power(), args);
 			sendMessages(caster, target, args);
 
 			return PostCastAction.NO_MESSAGES;

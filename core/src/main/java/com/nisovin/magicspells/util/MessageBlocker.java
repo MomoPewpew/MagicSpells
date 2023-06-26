@@ -44,7 +44,7 @@ public class MessageBlocker {
 	private class PacketListener extends PacketAdapter {
 		
 		PacketListener() {
-			super(MagicSpells.plugin, PacketType.Play.Server.CHAT);
+			super(MagicSpells.plugin, PacketType.Play.Server.SYSTEM_CHAT);
 		}
 		
 		@Override

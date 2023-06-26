@@ -2,10 +2,8 @@ package com.nisovin.magicspells.spells;
 
 import java.util.UUID;
 import java.util.List;
-import java.util.Random;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
@@ -24,8 +22,6 @@ public final class MultiSpell extends InstantSpell {
 	private static final Pattern RANGED_DELAY_PATTERN = Pattern.compile("DELAY [0-9]+ [0-9]+");
 	private static final Pattern BASIC_DELAY_PATTERN = Pattern.compile("DELAY [0-9]+");
 
-	private Random random;
-
 	private List<String> spellList;
 	private List<ActionChance> actions;
 
@@ -37,8 +33,6 @@ public final class MultiSpell extends InstantSpell {
 
 	public MultiSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-
-		random = ThreadLocalRandom.current();
 
 		actions = new ArrayList<>();
 		spellList = getConfigStringList("spells", null);
@@ -82,13 +76,13 @@ public final class MultiSpell extends InstantSpell {
 			if (!castRandomSpellInstead) {
 				int delay = 0;
 				for (ActionChance actionChance : actions) {
-					Action action = actionChance.getAction();
+					Action action = actionChance.action();
 					if (action.isDelay()) {
 						delay += action.getDelay();
 					} else if (action.isSpell()) {
 						Subspell spell = action.getSpell();
-						if (delay == 0) spell.cast(caster, power);
-						else MagicSpells.scheduleDelayedTask(new DelayedSpell(spell, caster, power), delay);
+						if (delay == 0) spell.subcast(caster, power, args);
+						else MagicSpells.scheduleDelayedTask(new DelayedSpell(spell, caster, power, args), delay);
 					}
 				}
 			} else {
@@ -96,27 +90,27 @@ public final class MultiSpell extends InstantSpell {
 				if (customSpellCastChance) {
 					int total = 0;
 					for (ActionChance actionChance : actions) {
-						total = (int) Math.round(total + actionChance.getChance());
+						total = (int) Math.round(total + actionChance.chance());
 					}
 					index = random.nextInt(total);
 					int s = 0;
 					int i = 0;
 					while (s < index) {
-						s = (int) Math.round(s + actions.get(i++).getChance());
+						s = (int) Math.round(s + actions.get(i++).chance());
 					}
-					Action action = actions.get(Math.max(0, i - 1)).getAction();
-					if (action.isSpell()) action.getSpell().cast(caster, power);
+					Action action = actions.get(Math.max(0, i - 1)).action();
+					if (action.isSpell()) action.getSpell().subcast(caster, power, args);
 				} else if (enableIndividualChances) {
 					for (ActionChance actionChance : actions) {
 						double chance = Math.random();
-						if ((actionChance.getChance() / 100.0D > chance) && actionChance.getAction().isSpell()) {
-							Action action = actionChance.getAction();
-							action.getSpell().cast(caster, power);
+						if ((actionChance.chance() / 100.0D > chance) && actionChance.action().isSpell()) {
+							Action action = actionChance.action();
+							action.getSpell().subcast(caster, power, args);
 						}
 					}
 				} else {
-					Action action = actions.get(random.nextInt(actions.size())).getAction();
-					action.getSpell().cast(caster, power);
+					Action action = actions.get(random.nextInt(actions.size())).action();
+					action.getSpell().subcast(caster, power, args);
 				}
 			}
 			playSpellEffects(EffectPosition.CASTER, caster, power, args);
@@ -129,7 +123,7 @@ public final class MultiSpell extends InstantSpell {
 		if (!castRandomSpellInstead) {
 			int delay = 0;
 			for (ActionChance actionChance : actions) {
-				Action action = actionChance.getAction();
+				Action action = actionChance.action();
 				if (action.isSpell()) {
 					if (delay == 0) action.getSpell().getSpell().castFromConsole(sender, args);
 					else {
@@ -143,25 +137,25 @@ public final class MultiSpell extends InstantSpell {
 			if (customSpellCastChance) {
 				int total = 0;
 				for (ActionChance actionChance : actions) {
-					total = (int) Math.round(total + actionChance.getChance());
+					total = (int) Math.round(total + actionChance.chance());
 				}
 				index = random.nextInt(total);
 				int s = 0;
 				int i = 0;
 				while (s < index) {
-					s = (int) Math.round(s + actions.get(i++).getChance());
+					s = (int) Math.round(s + actions.get(i++).chance());
 				}
-				Action action = actions.get(Math.max(0, i - 1)).getAction();
+				Action action = actions.get(Math.max(0, i - 1)).action();
 				if (action.isSpell()) action.getSpell().getSpell().castFromConsole(sender, args);
 			} else if (enableIndividualChances) {
 				for (ActionChance actionChance : actions) {
 					double chance = Math.random();
-					if ((actionChance.getChance() / 100.0D > chance) && actionChance.getAction().isSpell()) {
-						actionChance.getAction().getSpell().getSpell().castFromConsole(sender, args);
+					if ((actionChance.chance() / 100.0D > chance) && actionChance.action().isSpell()) {
+						actionChance.action().getSpell().getSpell().castFromConsole(sender, args);
 					}
 				}
 			} else {
-				Action action = actions.get(random.nextInt(actions.size())).getAction();
+				Action action = actions.get(random.nextInt(actions.size())).action();
 				if (action.isSpell()) action.getSpell().getSpell().castFromConsole(sender, args);
 			}
 		}
@@ -181,7 +175,7 @@ public final class MultiSpell extends InstantSpell {
 	private class Action {
 		
 		private Subspell spell;
-		private int delay; // Also gonna serve as minimum delay
+		private int delay; // Also going to serve as minimum delay
 		private boolean isRangedDelay = false;
 		private int maxDelay;
 
@@ -226,43 +220,30 @@ public final class MultiSpell extends InstantSpell {
 
 	private static class DelayedSpell implements Runnable {
 		
-		private Subspell spell;
-		private UUID casterUUID;
-		private float power;
+		private final Subspell spell;
+		private final String[] args;
+		private final float power;
+		private final UUID casterUUID;
 
-		DelayedSpell(Subspell spell, LivingEntity livingEntity, float power) {
+		DelayedSpell(Subspell spell, LivingEntity caster, float power, String[] args) {
+			this.casterUUID = caster.getUniqueId();
 			this.spell = spell;
-			this.casterUUID = livingEntity.getUniqueId();
 			this.power = power;
+			this.args = args;
 		}
 
 		@Override
 		public void run() {
 			Entity entity = Bukkit.getEntity(casterUUID);
 			if (entity == null || !entity.isValid() || !(entity instanceof LivingEntity livingEntity)) return;
-			spell.cast(livingEntity, power);
+			spell.subcast(livingEntity, power, args);
 		}
 		
 	}
 
-	private static class ActionChance {
-		
-		private Action action;
-		private double chance;
+	private record ActionChance(Action action, double chance) {
 
-		ActionChance(Action action, double chance) {
-			this.action = action;
-			this.chance = chance;
-		}
 
-		public Action getAction() {
-			return action;
-		}
-
-		public double getChance() {
-			return chance;
-		}
-		
 	}
 	
 }

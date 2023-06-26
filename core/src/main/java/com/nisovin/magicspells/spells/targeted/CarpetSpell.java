@@ -72,7 +72,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 		super.initialize();
 
 		spellOnTouch = new Subspell(spellOnTouchName);
-		if (!spellOnTouch.process() || !spellOnTouch.isTargetedEntitySpell()) {
+		if (!spellOnTouch.process()) {
 			if (!spellOnTouchName.isEmpty()) MagicSpells.error("CarpetSpell '" + internalName + "' has an invalid spell-on-touch defined!");
 			spellOnTouch = null;
 		}
@@ -218,7 +218,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 					SpellTargetEvent event = new SpellTargetEvent(CarpetSpell.this, data.caster, player, data.power, data.args);
 					if (!event.callEvent()) continue;
 
-					spellOnTouch.castAtEntity(data.caster, event.getTarget(), event.getPower());
+					spellOnTouch.subcast(data.caster, event.getTarget(), event.getPower(), data.args);
 				}
 			}
 		}

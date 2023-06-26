@@ -705,7 +705,79 @@ public class ConfigDataUtil {
 			ConfigurationSection section = config.getConfigurationSection(path);
 			if (section == null) return (caster, target, power, args) -> def;
 
-			ConfigData<Integer> alpha = getInteger(section, "alpha", 255);
+			ConfigData<Integer> red = getInteger(section, "red");
+			ConfigData<Integer> green = getInteger(section, "green");
+			ConfigData<Integer> blue = getInteger(section, "blue");
+
+			if (red.isConstant() && green.isConstant() && blue.isConstant()) {
+				Integer r = red.get(null);
+				Integer g = green.get(null);
+				Integer b = blue.get(null);
+				if (r == null || g == null || b == null || r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+					return (caster, target, power, args) -> def;
+
+				Color c = Color.fromRGB(r, g, b);
+				return (caster, target, power, args) -> c;
+			}
+
+			return new ConfigData<>() {
+
+				@Override
+				public Color get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+					Integer r = red.get(caster, target, power, args);
+					Integer g = green.get(caster, target, power, args);
+					Integer b = blue.get(caster, target, power, args);
+					if (r == null || g == null || b == null || r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+						return def;
+
+					return Color.fromRGB(r, g, b);
+				}
+
+				@Override
+				public boolean isConstant() {
+					return false;
+				}
+
+			};
+		}
+
+		return (caster, target, power, args) -> def;
+	}
+
+	public static ConfigData<Color> getARGBColor(@NotNull ConfigurationSection config, @NotNull String path, @Nullable Color def) {
+		if (config.isInt(path) || config.isString(path)) {
+			String value = config.getString(path);
+			if (value == null) return (caster, target, power, args) -> def;
+
+			ConfigData<String> supplier = getString(value);
+			if (supplier.isConstant()) {
+				Color color = ColorUtil.getColorFromARGHexString(value, false);
+				if (color == null) return (caster, target, power, args) -> def;
+
+				return (caster, target, power, args) -> color;
+			}
+
+			return new ConfigData<>() {
+
+				@Override
+				public Color get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+					Color color = ColorUtil.getColorFromARGHexString(supplier.get(caster, target, power, args), false);
+					return color == null ? def : color;
+				}
+
+				@Override
+				public boolean isConstant() {
+					return false;
+				}
+
+			};
+		}
+
+		if (config.isConfigurationSection(path)) {
+			ConfigurationSection section = config.getConfigurationSection(path);
+			if (section == null) return (caster, target, power, args) -> def;
+
+			ConfigData<Integer> alpha = getInteger(section, "alpha");
 			ConfigData<Integer> red = getInteger(section, "red");
 			ConfigData<Integer> green = getInteger(section, "green");
 			ConfigData<Integer> blue = getInteger(section, "blue");

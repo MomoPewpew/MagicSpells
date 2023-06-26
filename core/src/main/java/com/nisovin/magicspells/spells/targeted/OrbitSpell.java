@@ -104,21 +104,21 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		super.initialize();
 
 		orbitSpell = new Subspell(orbitSpellName);
-		if (!orbitSpell.process() || !orbitSpell.isTargetedLocationSpell()) {
+		if (!orbitSpell.process()) {
 			orbitSpell = null;
 			if (!orbitSpellName.isEmpty())
 				MagicSpells.error("OrbitSpell '" + internalName + "' has an invalid spell defined!");
 		}
 
 		groundSpell = new Subspell(groundSpellName);
-		if (!groundSpell.process() || !groundSpell.isTargetedLocationSpell()) {
+		if (!groundSpell.process()) {
 			groundSpell = null;
 			if (!groundSpellName.isEmpty())
 				MagicSpells.error("OrbitSpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
 		}
 
 		entitySpell = new Subspell(entitySpellName);
-		if (!entitySpell.process() || !entitySpell.isTargetedEntitySpell()) {
+		if (!entitySpell.process()) {
 			entitySpell = null;
 			if (!entitySpellName.isEmpty())
 				MagicSpells.error("OrbitSpell '" + internalName + "' has an invalid spell-on-hit-entity defined!");
@@ -335,7 +335,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			Location loc = getLocation();
 
 			if (!isTransparent(loc.getBlock())) {
-				if (groundSpell != null) groundSpell.castAtLocation(caster, loc, power);
+				if (groundSpell != null) groundSpell.subcast(caster, loc, power, args);
 				if (stopOnHitGround) {
 					stop(true);
 					return;
@@ -374,7 +374,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				}
 			}
 
-			if (orbitSpell != null) orbitSpell.castAtLocation(caster, loc, power);
+			if (orbitSpell != null) orbitSpell.subcast(caster, loc, power, args);
 
 			box.setCenter(loc);
 
@@ -390,7 +390,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				if (event.isCancelled()) continue;
 
 				immune.add(event.getTarget());
-				if (entitySpell != null) entitySpell.castAtEntity(event.getCaster(), event.getTarget(), event.getPower());
+				if (entitySpell != null) entitySpell.subcast(event.getCaster(), event.getTarget(), event.getPower(), args);
 
 				SpellData data = new SpellData(caster, event.getTarget(), event.getPower(), args);
 				playSpellEffects(EffectPosition.TARGET, event.getTarget(), data);

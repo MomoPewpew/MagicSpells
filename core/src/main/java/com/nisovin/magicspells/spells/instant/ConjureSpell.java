@@ -1,9 +1,7 @@
 package com.nisovin.magicspells.spells.instant;
 
 import java.util.List;
-import java.util.Random;
 import java.util.ArrayList;
-import java.util.concurrent.ThreadLocalRandom;
 
 import net.kyori.adventure.text.Component;
 
@@ -46,8 +44,6 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, TargetedLocationSpell {
 
 	private static ExpirationHandler expirationHandler = null;
-
-	private final Random rand = ThreadLocalRandom.current();
 
 	private int delay;
 	private int pickupDelay;
@@ -316,14 +312,14 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	
 	private void individual(List<ItemStack> items, float power) {
 		for (int i = 0; i < itemTypes.length; i++) {
-			double r = rand.nextDouble() * 100;
+			double r = random.nextDouble() * 100;
 			if (powerAffectsChance) r = r / power;
 			if (itemTypes[i] != null && r < itemChances[i]) addItem(i, items, power);
 		}
 	}
 	
 	private void together(List<ItemStack> items, float power) {
-		double r = rand.nextDouble() * 100;
+		double r = random.nextDouble() * 100;
 		double m = 0;
 		for (int i = 0; i < itemTypes.length; i++) {
 			if (itemTypes[i] != null && r < itemChances[i] + m) {
@@ -335,7 +331,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	
 	private void addItem(int i, List<ItemStack> items, float power) {
 		int quant = itemMinQuantities[i];
-		if (itemMaxQuantities[i] > itemMinQuantities[i]) quant = rand.nextInt(itemMaxQuantities[i] - itemMinQuantities[i]) + itemMinQuantities[i];
+		if (itemMaxQuantities[i] > itemMinQuantities[i]) quant = random.nextInt(itemMaxQuantities[i] - itemMinQuantities[i]) + itemMinQuantities[i];
 		if (powerAffectsQuantity) quant = Math.round(quant * power);
 		if (quant > 0) {
 			ItemStack item = itemTypes[i].clone();
@@ -364,7 +360,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			dropped.setItemStack(item);
 			dropped.setPickupDelay(pickupDelay);
 			if (randomVelocity > 0) {
-				Vector v = new Vector(rand.nextDouble() - 0.5, rand.nextDouble() / 2, rand.nextDouble() - 0.5);
+				Vector v = new Vector(random.nextDouble() - 0.5, random.nextDouble() / 2, random.nextDouble() - 0.5);
 				v.normalize().multiply(randomVelocity);
 				dropped.setVelocity(v);
 			}

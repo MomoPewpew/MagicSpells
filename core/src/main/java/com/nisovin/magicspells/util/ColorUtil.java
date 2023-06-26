@@ -16,11 +16,6 @@ public class ColorUtil {
 
 		String working = hex.replace("#", "");
 		try {
-			if (hex.length() > 6) {
-				int value = new BigInteger(working, 16).intValue();
-				return Color.fromARGB(value);
-			}
-
 			int value = Integer.parseInt(working, 16);
 			return Color.fromRGB(value);
 		} catch (IllegalArgumentException e) {
@@ -31,6 +26,20 @@ public class ColorUtil {
 
 	public static Color getColorFromHexString(String hex) {
 		return getColorFromHexString(hex, true);
+	}
+
+	public static Color getColorFromARGHexString(String hex, boolean debug) {
+		if (hex == null) return null;
+
+		if (hex.startsWith("#")) hex = hex.substring(1);
+
+		try {
+			int value = new BigInteger(hex, 16).intValue();
+			return Color.fromARGB(value);
+		} catch (IllegalArgumentException e) {
+			if (debug) DebugHandler.debugIllegalArgumentException(e);
+			return null;
+		}
 	}
 
 	public static Color getColorFromRGBString(String value) {

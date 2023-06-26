@@ -44,7 +44,7 @@ public class CastAtMarkSpell extends InstantSpell {
 		markSpell = (MarkSpell) spell;
 		
 		spellToCast = new Subspell(spellToCastName);
-		if (!spellToCast.process() || !spellToCast.isTargetedLocationSpell()) {
+		if (!spellToCast.process()) {
 			MagicSpells.error("CastAtMarkSpell '" + internalName + "' has an invalid spell defined!");
 			return;
 		}
@@ -70,7 +70,7 @@ public class CastAtMarkSpell extends InstantSpell {
 				sendMessage(caster, strNoMark);
 				return PostCastAction.HANDLE_NORMALLY;
 			}
-			spellToCast.castAtLocation(caster, effectiveMark, power);
+			spellToCast.subcast(caster, effectiveMark, power, args);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}

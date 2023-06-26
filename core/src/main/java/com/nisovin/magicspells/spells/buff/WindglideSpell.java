@@ -66,14 +66,14 @@ public class WindglideSpell extends BuffSpell {
 		super.initialize();
 
 		glideSpell = new Subspell(glideSpellName);
-		if (!glideSpell.process() || !glideSpell.isTargetedLocationSpell()) {
+		if (!glideSpell.process()) {
 			glideSpell = null;
 			if (!glideSpellName.isEmpty())
 				MagicSpells.error("WindglideSpell " + internalName + " has an invalid spell defined: " + glideSpellName);
 		}
 
 		collisionSpell = new Subspell(collisionSpellName);
-		if (!collisionSpell.process() || !collisionSpell.isTargetedLocationSpell()) {
+		if (!collisionSpell.process()) {
 			collisionSpell = null;
 			if (!collisionSpellName.isEmpty())
 				MagicSpells.error("WindglideSpell " + internalName + " has an invalid collision-spell defined: " + collisionSpellName);
@@ -106,12 +106,11 @@ public class WindglideSpell extends BuffSpell {
 
 		for (UUID id : entities.keySet()) {
 			Entity entity = Bukkit.getEntity(id);
-			if (entity == null) continue;
 			if (!(entity instanceof LivingEntity livingEntity)) continue;
 			if (!entity.isValid()) continue;
 
 			livingEntity.setGliding(false);
-			turnOffBuff(livingEntity);
+			turnOff(livingEntity);
 		}
 
 		entities.clear();
@@ -120,8 +119,7 @@ public class WindglideSpell extends BuffSpell {
 
 	@EventHandler
 	public void onEntityGlide(EntityToggleGlideEvent e) {
-		Entity entity = e.getEntity();
-		if (!(entity instanceof LivingEntity livingEntity)) return;
+		if (!(e.getEntity() instanceof LivingEntity livingEntity)) return;
 		if (!isActive(livingEntity)) return;
 		if (livingEntity.isGliding()) e.setCancelled(true);
 	}
@@ -130,10 +128,13 @@ public class WindglideSpell extends BuffSpell {
 	public void onEntityCollision(EntityDamageEvent e) {
 		if (e.getCause() != EntityDamageEvent.DamageCause.FLY_INTO_WALL) return;
 		if (!(e.getEntity() instanceof LivingEntity entity)) return;
-		if (!isActive(entity)) return;
+
+		SpellData data = entities.get(entity.getUniqueId());
+		if (data == null) return;
+
 		if (blockCollisionDmg) e.setCancelled(true);
 		if (cancelOnCollision) turnOff(entity);
-		if (collisionSpell != null) collisionSpell.castAtLocation(entity, entity.getLocation(), 1F);
+		if (collisionSpell != null) collisionSpell.subcast(entity, entity.getLocation(), data.power(), data.args());
 	}
 
 	public Subspell getGlideSpell() {
@@ -186,21 +187,30 @@ public class WindglideSpell extends BuffSpell {
 
 		@Override
 		public void run() {
+			Entity entity;
+			SpellData data;
+
+			double velocity;
+			double height;
+
+			Location eLoc;
+			Vector v;
+
 			for (UUID id : entities.keySet()) {
-				Entity entity = Bukkit.getEntity(id);
+				entity = Bukkit.getEntity(id);
 				if (entity == null || !entity.isValid()) continue;
 				if (!(entity instanceof LivingEntity caster)) continue;
 
-				SpellData data = entities.get(id);
+				data = entities.get(id);
 
-				double velocity = WindglideSpell.this.velocity.get(caster, null, data.power(), data.args()) / 10;
-				double height = WindglideSpell.this.height.get(caster, null, data.power(), data.args());
+				velocity = WindglideSpell.this.velocity.get(caster, null, data.power(), data.args()) / 10;
+				height = WindglideSpell.this.height.get(caster, null, data.power(), data.args());
 
-				Location eLoc = entity.getLocation();
-				Vector v = eLoc.getDirection().normalize().multiply(velocity).add(new Vector(0, height, 0));
+				eLoc = entity.getLocation();
+				v = eLoc.getDirection().normalize().multiply(velocity).add(new Vector(0, height, 0));
 				entity.setVelocity(v);
 
-				if (glideSpell != null) glideSpell.castAtLocation(caster, eLoc, data.power());
+				if (glideSpell != null) glideSpell.subcast(caster, eLoc, data.power(), data.args());
 				playSpellEffects(EffectPosition.SPECIAL, eLoc, data);
 				addUseAndChargeCost(caster);
 			}

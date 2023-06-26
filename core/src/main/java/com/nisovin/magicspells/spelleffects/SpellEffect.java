@@ -58,6 +58,8 @@ public abstract class SpellEffect {
 	private ConfigData<Float> vertExpandRadius;
 	private ConfigData<Float> secondsPerRevolution;
 
+	private ConfigData<Boolean> dragEntity;
+
 	private ConfigData<Integer> horizExpandDelay;
 	private ConfigData<Integer> vertExpandDelay;
 	private ConfigData<Integer> effectInterval;
@@ -105,6 +107,8 @@ public abstract class SpellEffect {
 		horizExpandDelay = ConfigDataUtil.getInteger(config, path + "horiz-expand-delay", 0);
 		vertExpandDelay = ConfigDataUtil.getInteger(config, path + "vert-expand-delay", 0);
 		effectInterval = ConfigDataUtil.getInteger(config, "effect-interval", TimeUtil.TICKS_PER_SECOND);
+
+		dragEntity = ConfigDataUtil.getBoolean(config, "drag-entity", false);
 
 		counterClockwise = config.getBoolean(path + "counter-clockwise", false);
 
@@ -605,6 +609,10 @@ public abstract class SpellEffect {
 
 	public ConfigData<Integer> getEffectInterval() {
 		return effectInterval;
+	}
+
+	public ConfigData<Boolean> isDraggingEntity() {
+		return dragEntity;
 	}
 
 	public boolean isCounterClockwise() {

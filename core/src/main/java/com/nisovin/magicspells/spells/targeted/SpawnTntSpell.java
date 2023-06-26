@@ -60,7 +60,7 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 		super.initialize();
 
 		spellToCast = new Subspell(spellToCastName);
-		if (!spellToCast.process() || !spellToCast.isTargetedLocationSpell()) {
+		if (!spellToCast.process()) {
 			if (!spellToCastName.isEmpty())
 				MagicSpells.error("SpawnTntSpell '" + internalName + "' has an invalid spell defined!");
 			spellToCast = null;
@@ -145,7 +145,7 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 		LivingEntity caster = data.caster();
 		if (caster == null || !caster.isValid()) return;
 
-		spellToCast.castAtLocation(caster, event.getEntity().getLocation(), data.power());
+		spellToCast.subcast(caster, event.getEntity().getLocation(), data.power(), data.args());
 	}
 
 }

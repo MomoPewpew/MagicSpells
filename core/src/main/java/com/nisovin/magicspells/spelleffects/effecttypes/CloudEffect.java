@@ -1,8 +1,5 @@
 package com.nisovin.magicspells.spelleffects.effecttypes;
 
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
 import org.bukkit.World;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -16,8 +13,6 @@ import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
 public class CloudEffect extends SpellEffect {
-
-	private static final Random rand = ThreadLocalRandom.current();
 
 	private ConfigData<Integer> radius;
 
@@ -60,10 +55,10 @@ public class CloudEffect extends SpellEffect {
 		if (r <= 5) {
 			for (int i = 0; i <= 8; i += 2) w.playEffect(loc, Effect.SMOKE, i);
 		} else if (r <= 8) {
-			w.playEffect(loc, Effect.SMOKE, rand.nextInt(9));
-			w.playEffect(loc, Effect.SMOKE, rand.nextInt(9));
+			w.playEffect(loc, Effect.SMOKE, random.nextInt(9));
+			w.playEffect(loc, Effect.SMOKE, random.nextInt(9));
 		} else {
-			w.playEffect(loc, Effect.SMOKE, rand.nextInt(9));
+			w.playEffect(loc, Effect.SMOKE, random.nextInt(9));
 		}
 	}
 	

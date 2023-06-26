@@ -1,8 +1,5 @@
 package com.nisovin.magicspells.spells.targeted;
 
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
 import org.bukkit.DyeColor;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.LivingEntity;
@@ -24,8 +21,6 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	private DyeColor dye;
 
-	private Random random;
-
 	private String requestedColor;
 
 	private boolean forceWoolColor;
@@ -40,7 +35,6 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 		forceWoolColor = getConfigBoolean("force-wool-color", false);
 		randomWoolColor = getConfigBoolean("random-wool-color", false);
 
-		random = ThreadLocalRandom.current();
 	}
 
 	@Override

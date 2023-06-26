@@ -60,7 +60,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		pointBlank = getConfigBoolean("point-blank", true);
 		circleShape = getConfigBoolean("circle-shape", false);
 		useProximity = getConfigBoolean("use-proximity", false);
-		passTargeting = getConfigBoolean("pass-targeting", true);
+		passTargeting = getConfigBoolean("pass-targeting", false);
 		failIfNoTargets = getConfigBoolean("fail-if-no-targets", true);
 		reverseProximity = getConfigBoolean("reverse-proximity", false);
 		spellSourceInCenter = getConfigBoolean("spell-source-in-center", false);
@@ -82,11 +82,6 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 
 			if (!spell.process()) {
 				MagicSpells.error("AreaEffectSpell '" + internalName + "' attempted to use invalid spell '" + spellName + '\'');
-				continue;
-			}
-
-			if (!spell.isTargetedLocationSpell() && !spell.isTargetedEntityFromLocationSpell() && !spell.isTargetedEntitySpell()) {
-				MagicSpells.error("AreaEffectSpell '" + internalName + "' attempted to use non-targeted spell '" + spellName + '\'');
 				continue;
 			}
 
@@ -192,7 +187,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			target = event.getTarget();
 			power = event.getPower();
 
-			castSpells(caster, location, target, power);
+			castSpells(caster, location, target, power, args);
 
 			data = new SpellData(caster, target, power, args);
 
@@ -245,7 +240,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			target = event.getTarget();
 			power = event.getPower();
 
-			castSpells(caster, location, target, power);
+			castSpells(caster, location, target, power, args);
 
 			data = new SpellData(caster, target, power, args);
 			playSpellEffects(EffectPosition.TARGET, target, data);
@@ -268,12 +263,11 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		return success;
 	}
 
-	private void castSpells(LivingEntity caster, Location location, LivingEntity target, float power) {
+	private void castSpells(LivingEntity caster, Location location, LivingEntity target, float power, String[] args) {
+		Location source = spellSourceInCenter ? location : (caster == null ? null : caster.getLocation());
 		for (Subspell spell : spells) {
-			if (spellSourceInCenter && spell.isTargetedEntityFromLocationSpell()) spell.castAtEntityFromLocation(caster, location, target, power, passTargeting);
-			else if (caster != null && spell.isTargetedEntityFromLocationSpell()) spell.castAtEntityFromLocation(caster, caster.getLocation(), target, power, passTargeting);
-			else if (spell.isTargetedEntitySpell()) spell.castAtEntity(caster, target, power, passTargeting);
-			else if (spell.isTargetedLocationSpell()) spell.castAtLocation(caster, target.getLocation(), power);
+			if (source != null) spell.subcast(caster, source, target, power, args, passTargeting);
+			else spell.subcast(caster, target, power, args, passTargeting);
 		}
 	}
 

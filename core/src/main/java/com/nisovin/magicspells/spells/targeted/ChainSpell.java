@@ -13,7 +13,6 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
-import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
@@ -174,7 +173,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				if (i == 0) from = start;
 				else from = targets.get(i - 1).getLocation();
 
-				castSpellAt(caster, from, targets.get(i), targetPowers.get(i));
+				castSpellAt(caster, from, targets.get(i), targetPowers.get(i), args);
 
 				data = new SpellData(caster, targets.get(i), targetPowers.get(i), args);
 				if (i > 0) playSpellEffectsTrail(targets.get(i - 1).getLocation(), targets.get(i).getLocation(), data);
@@ -184,12 +183,9 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		} else new ChainBouncer(caster, start, targets, targetPowers, interval, args);
 	}
 
-	private void castSpellAt(LivingEntity caster, Location from, LivingEntity target, float power) {
-		if (spellToCast.isTargetedEntityFromLocationSpell() && from != null)
-			spellToCast.castAtEntityFromLocation(caster, from, target, power);
-		if (spellToCast.isTargetedEntitySpell()) spellToCast.castAtEntity(caster, target, power);
-		if (spellToCast.isTargetedLocationSpell()) spellToCast.castAtLocation(caster, target.getLocation(), power);
-		else spellToCast.cast(caster, power);
+	private void castSpellAt(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
+		if (from != null) spellToCast.subcast(caster, from, target, power, args);
+		else spellToCast.subcast(caster, target, power, args);
 	}
 
 	private class ChainBouncer implements Runnable {
@@ -223,7 +219,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 			SpellData data = new SpellData(caster, targets.get(current), targetPowers.get(current), args);
 
-			castSpellAt(caster, from, targets.get(current), targetPowers.get(current));
+			castSpellAt(caster, from, targets.get(current), targetPowers.get(current), args);
 			if (current > 0) {
 				playSpellEffectsTrail(targets.get(current - 1).getLocation().add(0, 0.5, 0), targets.get(current).getLocation().add(0, 0.5, 0), data);
 			} else if (current == 0 && caster != null) {

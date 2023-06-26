@@ -42,7 +42,7 @@ public class LocationSpell extends InstantSpell {
 		super.initialize();
 
 		spellToCast = new Subspell(spellToCastName);
-		if (!spellToCast.process() || !spellToCast.isTargetedLocationSpell()) {
+		if (!spellToCast.process()) {
 			MagicSpells.error("LocationSpell '" + internalName + "' has an invalid spell defined!");
 			spellToCast = null;
 		}
@@ -54,7 +54,7 @@ public class LocationSpell extends InstantSpell {
 			Location loc = location.getLocation();
 			if (loc == null) return PostCastAction.ALREADY_HANDLED;
 
-			if (spellToCast != null) spellToCast.castAtLocation(caster, loc, power);
+			if (spellToCast != null) spellToCast.subcast(caster, loc, power, args);
 			playSpellEffects(caster, loc, power, args);
 		}
 		return PostCastAction.HANDLE_NORMALLY;

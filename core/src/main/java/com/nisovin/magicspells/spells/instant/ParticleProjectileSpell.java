@@ -251,7 +251,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		}
 
 		airSpell = new Subspell(airSpellName);
-		if (!airSpell.process() || !airSpell.isTargetedLocationSpell()) {
+		if (!airSpell.process()) {
 			if (!airSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-air defined!");
 			airSpell = null;
 		}
@@ -263,13 +263,13 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		}
 
 		tickSpell = new Subspell(tickSpellName);
-		if (!tickSpell.process() || !tickSpell.isTargetedLocationSpell()) {
+		if (!tickSpell.process()) {
 			if (!tickSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-tick defined!");
 			tickSpell = null;
 		}
 
 		groundSpell = new Subspell(groundSpellName);
-		if (!groundSpell.process() || !groundSpell.isTargetedLocationSpell()) {
+		if (!groundSpell.process()) {
 			if (!groundSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-ground defined!");
 			groundSpell = null;
 		}
@@ -293,7 +293,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		}
 
 		entityLocationSpell = new Subspell(entityLocationSpellName);
-		if (!entityLocationSpell.process() || !entityLocationSpell.isTargetedLocationSpell()) {
+		if (!entityLocationSpell.process()) {
 			if (!entityLocationSpellName.isEmpty()) MagicSpells.error(prefix + " has an invalid spell-on-entity-location defined!");
 			entityLocationSpell = null;
 		}
@@ -316,7 +316,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 
 				if (params[1] == null) continue;
 				Subspell collisionSpell = new Subspell(params[1]);
-				if (!collisionSpell.process() || !collisionSpell.isTargetedLocationSpell()) {
+				if (!collisionSpell.process()) {
 					MagicSpells.error(prefix + " has an interaction with '" + params[0] + "' and their spell on collision '" + params[1] + "' is not a valid spell!");
 					continue;
 				}

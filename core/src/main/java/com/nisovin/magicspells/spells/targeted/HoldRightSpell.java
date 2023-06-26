@@ -150,6 +150,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 		private final float maxDistance;
 		private final float maxDuration;
 		private final int resetTime;
+		private final String[] args;
 		private final float power;
 
 		private long start = System.currentTimeMillis();
@@ -158,6 +159,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 		private CastData(LivingEntity caster, LivingEntity target, float power, String[] args) {
 			targetEntity = target;
 			this.power = power;
+			this.args = args;
 
 			maxDistance = HoldRightSpell.this.maxDistance.get(caster, target, power, args);
 			maxDuration = HoldRightSpell.this.maxDuration.get(caster, target, power, args);
@@ -167,6 +169,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 		private CastData(LivingEntity caster, Location target, float power, String[] args) {
 			targetLocation = target;
 			this.power = power;
+			this.args = args;
 
 			maxDistance = HoldRightSpell.this.maxDistance.get(caster, null, power, args);
 			maxDuration = HoldRightSpell.this.maxDuration.get(caster, null, power, args);
@@ -175,6 +178,7 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 
 		private CastData(LivingEntity caster, float power, String[] args) {
 			this.power = power;
+			this.args = args;
 
 			maxDistance = HoldRightSpell.this.maxDistance.get(caster, null, power, args);
 			maxDuration = HoldRightSpell.this.maxDuration.get(caster, null, power, args);
@@ -197,9 +201,9 @@ public class HoldRightSpell extends TargetedSpell implements TargetedEntitySpell
 
 		private void cast(LivingEntity caster) {
 			lastCast = System.currentTimeMillis();
-			if (targetEntity != null) spellToCast.castAtEntity(caster, targetEntity, power);
-			else if (targetLocation != null) spellToCast.castAtLocation(caster, targetLocation, power);
-			else spellToCast.cast(caster, power);
+			if (targetEntity != null) spellToCast.subcast(caster, targetEntity, power, args);
+			else if (targetLocation != null) spellToCast.subcast(caster, targetLocation, power, args);
+			else spellToCast.subcast(caster, power, args);
 		}
 
 	}

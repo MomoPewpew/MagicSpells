@@ -46,10 +46,7 @@ public class CreatureTargetSpell extends InstantSpell {
 
 		playSpellEffects(caster, target, power, args);
 
-		if (targetSpell == null) return;
-		if (targetSpell.isTargetedEntityFromLocationSpell()) targetSpell.castAtEntityFromLocation(caster, caster.getLocation(), target, power);
-		else if (targetSpell.isTargetedLocationSpell()) targetSpell.castAtLocation(caster, target.getLocation(), power);
-		else if (targetSpell.isTargetedEntitySpell()) targetSpell.castAtEntity(caster, target, power);
+		if (targetSpell != null) targetSpell.subcast(caster, caster.getLocation(), target, power, args);
 	}
 
 }

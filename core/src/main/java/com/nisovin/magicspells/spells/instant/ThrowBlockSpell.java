@@ -114,7 +114,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		}
 
 		spellOnLand = new Subspell(spellOnLandName);
-		if (!spellOnLand.process() || !spellOnLand.isTargetedLocationSpell()) {
+		if (!spellOnLand.process()) {
 			if (!spellOnLandName.isEmpty()) MagicSpells.error("ThrowBlockSpell '" + internalName + "' has an invalid spell-on-land defined!");
 			spellOnLand = null;
 		}
@@ -266,8 +266,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 						if (b.getType() == Material.AIR) BlockUtils.setBlockFromFallingBlock(b, block, true);
 					}
 					if (!info.spellActivated && spellOnLand != null) {
-						if (info.caster != null) spellOnLand.castAtLocation(info.caster, block.getLocation(), info.power);
-						else spellOnLand.castAtLocation(null, block.getLocation(), info.power);
+						spellOnLand.subcast(info.caster, block.getLocation(), info.power, info.args);
 						info.spellActivated = true;
 					}
 					block.remove();
@@ -275,10 +274,9 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			}
 			if (ensureSpellCast && block.isDead()) {
 				if (!info.spellActivated && spellOnLand != null) {
-					if (info.caster != null) spellOnLand.castAtLocation(info.caster, block.getLocation(), info.power);
-					else spellOnLand.castAtLocation(null, block.getLocation(), info.power);
+					spellOnLand.subcast(info.caster, block.getLocation(), info.power, info.args);
+					info.spellActivated = true;
 				}
-				info.spellActivated = true;
 				MagicSpells.cancelTask(task);
 			}
 			if (counter++ > 1500) MagicSpells.cancelTask(task);
@@ -327,8 +325,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			event.setDamage(damage);
 
 			if (spellOnLand != null && !info.spellActivated) {
-				if (info.caster != null) spellOnLand.castAtLocation(info.caster, target.getLocation(), power);
-				else spellOnLand.castAtLocation(null, target.getLocation(), power);
+				spellOnLand.subcast(info.caster, target.getLocation(), power, info.args);
 				info.spellActivated = true;
 			}
 		}
@@ -343,8 +340,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 				event.setCancelled(true);
 			}
 			if (spellOnLand != null && !info.spellActivated) {
-				if (info.caster != null) spellOnLand.castAtLocation(info.caster, event.getBlock().getLocation().add(0.5, 0.5, 0.5), info.power);
-				else spellOnLand.castAtLocation(null, event.getBlock().getLocation().add(0.5, 0.5, 0.5), info.power);
+				spellOnLand.subcast(info.caster, event.getBlock().getLocation().add(0.5, 0.5, 0.5), info.power, info.args);
 				info.spellActivated = true;
 			}
 		}
@@ -365,8 +361,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 				event.getEntity().remove();
 			}
 			if (spellOnLand != null && !info.spellActivated) {
-				if (info.caster != null) spellOnLand.castAtLocation(info.caster, entity.getLocation(), info.power);
-				else spellOnLand.castAtLocation(null, entity.getLocation(), info.power);
+				spellOnLand.subcast(info.caster, entity.getLocation(), info.power, info.args);
 				info.spellActivated = true;
 			}
 		}

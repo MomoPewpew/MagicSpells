@@ -37,12 +37,12 @@ public class OrbitEffectlibTracker extends AsyncEffectTracker implements Runnabl
 
 	private final Effect effectlibEffect;
 
-	private final SpellData data;
+	private Location loc;
+
+	private Effect modifiedEffect;
 
 	public OrbitEffectlibTracker(Entity entity, SpellEffectActiveChecker checker, SpellEffect effect, SpellData data) {
 		super(entity, checker, effect, data);
-
-		this.data = data;
 
 		currentPosition = entity.getLocation().getDirection().setY(0);
 		Util.rotateVector(currentPosition, effect.getHorizOffset().get(data));
@@ -82,11 +82,11 @@ public class OrbitEffectlibTracker extends AsyncEffectTracker implements Runnabl
 		yAxis += orbitYAxis;
 		zAxis += orbitZAxis;
 
-		Location loc = effect.applyOffsets(getLocation(), data);
+		loc = effect.applyOffsets(getLocation(), data);
 
 		effectlibEffect.setLocation(loc);
 		if (effectlibEffect instanceof ModifiedEffect) {
-			Effect modifiedEffect = ((ModifiedEffect) effectlibEffect).getInnerEffect();
+			modifiedEffect = ((ModifiedEffect) effectlibEffect).getInnerEffect();
 			if (modifiedEffect != null) modifiedEffect.setLocation(loc);
 		}
 	}

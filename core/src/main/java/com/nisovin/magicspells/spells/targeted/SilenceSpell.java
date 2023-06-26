@@ -169,7 +169,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 			if (filter.check(spell)) return;
 			event.setCancelled(true);
 			Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> {
-				if (preventCastSpell != null) preventCastSpell.cast(event.getCaster(), 1);
+				if (preventCastSpell != null) preventCastSpell.subcast(event.getCaster(), 1, null);
 				if (spell.isHelperSpell() && !notifyHelperSpells) return;
 				if (spell instanceof PassiveSpell && !notifyPassiveSpells) return;
 				sendMessage(strSilenced, event.getCaster(), event.getSpellArgs());
@@ -184,7 +184,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		public void onChat(AsyncChatEvent event) {
 			if (!silenced.containsKey(event.getPlayer().getUniqueId())) return;
 			event.setCancelled(true);
-			if (preventChatSpell != null) preventChatSpell.cast(event.getPlayer(), 1);
+			if (preventChatSpell != null) preventChatSpell.subcast(event.getPlayer(), 1, null);
 			sendMessage(strSilenced, event.getPlayer(), MagicSpells.NULL_ARGS);
 		}
 
@@ -196,7 +196,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		public void onCommand(PlayerCommandPreprocessEvent event) {
 			if (!silenced.containsKey(event.getPlayer().getUniqueId())) return;
 			event.setCancelled(true);
-			if (preventCommandSpell != null) preventCommandSpell.cast(event.getPlayer(), 1);
+			if (preventCommandSpell != null) preventCommandSpell.subcast(event.getPlayer(), 1, null);
 			sendMessage(strSilenced, event.getPlayer(), MagicSpells.NULL_ARGS);
 		}
 

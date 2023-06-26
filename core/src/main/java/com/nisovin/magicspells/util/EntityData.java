@@ -16,7 +16,6 @@ import com.google.common.collect.MultimapBuilder;
 import net.kyori.adventure.text.Component;
 
 import org.bukkit.Color;
-import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -97,6 +96,7 @@ public class EntityData {
 
 		Multimap<Class<?>, Transformer<?, ?>> transformers = MultimapBuilder.linkedHashKeys().arrayListValues().build();
 
+		addOptBoolean(transformers, config, "glowing", Entity.class, Entity::setGlowing);
 		addOptBoolean(transformers, config, "visible-by-default", Entity.class, Entity::setVisibleByDefault);
 
 		// Ageable
@@ -206,7 +206,7 @@ public class EntityData {
 		addBoolean(transformers, config, "angry", false, Wolf.class, Wolf::setAngry);
 		addOptEnum(transformers, config, "color", Wolf.class, DyeColor.class, Wolf::setCollarColor);
 
-		if (Bukkit.getMinecraftVersion().contains("1.19.4")) {
+		if (EntityType.valueOf("BLOCK_DISPLAY") != null) {
 			// Display
 			ConfigData<Quaternionf> leftRotation = getQuaternion(config, "transformation.left-rotation");
 			ConfigData<Quaternionf> rightRotation = getQuaternion(config, "transformation.right-rotation");
@@ -250,7 +250,7 @@ public class EntityData {
 			addOptFloat(transformers, config, "height", Display.class, Display::setDisplayHeight);
 			addOptInteger(transformers, config, "interpolation-delay", Display.class, Display::setInterpolationDelay);
 			addOptEnum(transformers, config, "billboard", Display.class, Display.Billboard.class, Display::setBillboard);
-			addOptColor(transformers, config, "glow-color-override", Display.class, Display::setGlowColorOverride);
+			addOptARGBColor(transformers, config, "glow-color-override", Display.class, Display::setGlowColorOverride);
 
 			ConfigData<Integer> blockLight = ConfigDataUtil.getInteger(config, "brightness.block");
 			ConfigData<Integer> skyLight = ConfigDataUtil.getInteger(config, "brightness.sky");
@@ -293,7 +293,7 @@ public class EntityData {
 			// TextDisplay
 			addOptComponent(transformers, config, "text", TextDisplay.class, TextDisplay::text);
 			addOptInteger(transformers, config, "line-width", TextDisplay.class, TextDisplay::setLineWidth);
-			addOptColor(transformers, config, "background", TextDisplay.class, TextDisplay::setBackgroundColor);
+			addOptARGBColor(transformers, config, "background", TextDisplay.class, TextDisplay::setBackgroundColor);
 			addOptByte(transformers, config, "text-opacity", TextDisplay.class, TextDisplay::setTextOpacity);
 			addOptBoolean(transformers, config, "shadow", TextDisplay.class, TextDisplay::setShadowed);
 			addOptBoolean(transformers, config, "see-through", TextDisplay.class, TextDisplay::setSeeThrough);
@@ -369,7 +369,7 @@ public class EntityData {
 
 					if (consumer != null) consumer.accept(e);
 
-					if (Bukkit.getMinecraftVersion().contains("1.19.4") && e instanceof Display) {
+					if (EntityType.valueOf("BLOCK_DISPLAY") != null && e instanceof Display) {
 						displayHack[0] = true;
 						displayHack[1] = e.isVisibleByDefault();
 
@@ -445,11 +445,10 @@ public class EntityData {
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
 
-	private <T> void addOptColor(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Color> setter) {
-		ConfigData<Color> supplier = ConfigDataUtil.getColor(config, name, null);
+	private <T> void addOptARGBColor(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Color> setter) {
+		ConfigData<Color> supplier = ConfigDataUtil.getARGBColor(config, name, null);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
-
 
 	private <T> void addOptComponent(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Component> setter) {
 		ConfigData<Component> supplier = ConfigDataUtil.getComponent(config, name, null);
@@ -559,7 +558,7 @@ public class EntityData {
 					Float ang = angle.get(caster, target, power, args);
 					if (ang == null) return null;
 
-					Vector3f ax = axis.get(null);
+					Vector3f ax = axis.get(caster, target, power, args);
 					if (ax == null) return null;
 
 					return new Quaternionf().setAngleAxis(ang, ax.x, ax.y, ax.z);

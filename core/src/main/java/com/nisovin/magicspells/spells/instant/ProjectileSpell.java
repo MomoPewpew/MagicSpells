@@ -155,31 +155,31 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 		}
 
 		groundSpell = new Subspell(groundSpellName);
-		if (!groundSpell.process() || !groundSpell.isTargetedLocationSpell()) {
+		if (!groundSpell.process()) {
 			groundSpell = null;
 			if (!groundSpellName.isEmpty()) MagicSpells.error("ProjectileSpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
 		}
 
 		tickSpell = new Subspell(tickSpellName);
-		if (!tickSpell.process() || !tickSpell.isTargetedLocationSpell()) {
+		if (!tickSpell.process()) {
 			tickSpell = null;
 			if (!tickSpellName.isEmpty()) MagicSpells.error("ProjectileSpell '" + internalName + "' has an invalid spell-on-tick defined!");
 		}
 
 		durationSpell = new Subspell(durationSpellName);
-		if (!durationSpell.process() || !durationSpell.isTargetedLocationSpell()) {
+		if (!durationSpell.process()) {
 			durationSpell = null;
 			if (!durationSpellName.isEmpty()) MagicSpells.error("ProjectileSpell '" + internalName + "' has an invalid spell-after-duration defined!");
 		}
 
 		modifierSpell = new Subspell(modifierSpellName);
-		if (!modifierSpell.process() || !modifierSpell.isTargetedLocationSpell()) {
+		if (!modifierSpell.process()) {
 			if (!modifierSpellName.isEmpty()) MagicSpells.error("ProjectileSpell '" + internalName + "' has an invalid spell-on-modifier-fail defined!");
 			modifierSpell = null;
 		}
 
 		entityLocationSpell = new Subspell(entityLocationSpellName);
-		if (!entityLocationSpell.process() || !entityLocationSpell.isTargetedLocationSpell()) {
+		if (!entityLocationSpell.process()) {
 			if (!entityLocationSpellName.isEmpty()) MagicSpells.error("ProjectileSpell '" + internalName + "' has an invalid spell-on-entity-location defined!");
 			entityLocationSpell = null;
 		}
@@ -302,10 +302,8 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 			if (tracker.getProjectile() == null) continue;
 			if (!tracker.getProjectile().equals(projectile)) continue;
 
-			if (tracker.getHitSpell() != null) {
-				if (tracker.getHitSpell().isTargetedEntitySpell()) tracker.getHitSpell().castAtEntity(tracker.getCaster(), entity, tracker.getPower());
-				else if (tracker.getHitSpell().isTargetedLocationSpell()) tracker.getHitSpell().castAtLocation(tracker.getCaster(), entity.getLocation(), tracker.getPower());
-			}
+			if (tracker.getHitSpell() != null)
+				tracker.getHitSpell().subcast(tracker.getCaster(), entity, tracker.getPower(), tracker.getArgs());
 
 			playSpellEffects(EffectPosition.TARGET, entity, tracker.getSpellData());
 			event.setCancelled(true);
@@ -360,7 +358,7 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 			if (!tracker.getProjectile().equals(projectile)) continue;
 
 			if (tracker.getCaster() != null && tracker.getGroundSpell() != null) {
-				tracker.getGroundSpell().castAtLocation(tracker.getCaster(), projectile.getLocation(), tracker.getPower());
+				tracker.getGroundSpell().subcast(tracker.getCaster(), projectile.getLocation(), tracker.getPower(), tracker.getArgs());
 			}
 			tracker.stop(false);
 			iterator.remove();

@@ -186,13 +186,13 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		super.initialize();
 
 		projectileSpell = new Subspell(projectileSpellName);
-		if (!projectileSpell.process() || !projectileSpell.isTargetedLocationSpell()) {
+		if (!projectileSpell.process()) {
 			if (!projectileSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell defined!");
 			projectileSpell = null;
 		}
 
 		airSpell = new Subspell(airSpellName);
-		if (!airSpell.process() || !airSpell.isTargetedLocationSpell()) {
+		if (!airSpell.process()) {
 			if (!airSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-air defined!");
 			airSpell = null;
 		}
@@ -204,13 +204,13 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		}
 
 		tickSpell = new Subspell(tickSpellName);
-		if (!tickSpell.process() || !tickSpell.isTargetedLocationSpell()) {
+		if (!tickSpell.process()) {
 			if (!tickSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-tick defined!");
 			tickSpell = null;
 		}
 
 		groundSpell = new Subspell(groundSpellName);
-		if (!groundSpell.process() || !groundSpell.isTargetedLocationSpell()) {
+		if (!groundSpell.process()) {
 			if (!groundSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
 			groundSpell = null;
 		}
@@ -234,7 +234,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		}
 
 		entityLocationSpell = new Subspell(entityLocationSpellName);
-		if (!entityLocationSpell.process() || !entityLocationSpell.isTargetedLocationSpell()) {
+		if (!entityLocationSpell.process()) {
 			if (!entityLocationSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-entity-location defined!");
 			entityLocationSpell = null;
 		}
@@ -299,7 +299,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		maxDistanceSquared *= maxDistanceSquared;
 
 		Location currentLoc;
-		while(iterator.hasNext()) {
+		while (iterator.hasNext()) {
 			ParticleProjectileTracker tracker = iterator.next();
 			if (tracker == null || tracker.isStopped()) continue;
 			currentLoc = tracker.getCurrentLocation();
@@ -323,7 +323,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 				if (AccurateMath.abs(dir.angle(facing)) > cone) continue;
 			}
 
-			if (projectileSpell != null) projectileSpell.castAtLocation(caster, currentLoc, 1F);
+			if (projectileSpell != null) projectileSpell.subcast(caster, currentLoc, power, args);
 
 			if (stop.get(data)) {
 				playSpellEffects(EffectPosition.TARGET, currentLoc, data);

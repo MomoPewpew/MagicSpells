@@ -2,7 +2,6 @@ package com.nisovin.magicspells.spells.buff;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -36,8 +35,6 @@ public class MinionSpell extends BuffSpell {
 	private final Map<UUID, LivingEntity> minions;
 	private final Map<LivingEntity, UUID> players;
 	private final Map<UUID, LivingEntity> targets;
-
-	private final Random random;
 
 	private final int[] chances;
 
@@ -85,7 +82,6 @@ public class MinionSpell extends BuffSpell {
 	public MinionSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
-		random = ThreadLocalRandom.current();
 		minions = new HashMap<>();
 		players = new HashMap<>();
 		targets = new ConcurrentHashMap<>();
@@ -283,15 +279,7 @@ public class MinionSpell extends BuffSpell {
 			minion.setHealth(health);
 		}
 
-		if (spawnSpell != null) {
-			if (spawnSpell.isTargetedLocationSpell()) {
-				spawnSpell.castAtLocation(player, minion.getLocation(), power);
-			} else if (spawnSpell.isTargetedEntityFromLocationSpell()) {
-				spawnSpell.castAtEntityFromLocation(player, minion.getLocation(), minion, power);
-			} else if (spawnSpell.isTargetedEntitySpell()) {
-				spawnSpell.castAtEntity(player, minion, power);
-			}
-		}
+		if (spawnSpell != null) spawnSpell.subcast(player, minion.getLocation(), minion, power, args);
 
 		// Apply potion effects
 		if (potionEffects != null) minion.addPotionEffects(potionEffects);
@@ -426,15 +414,8 @@ public class MinionSpell extends BuffSpell {
 				return;
 			}
 
-			if (((LivingEntity) entity).getHealth() - e.getFinalDamage() <= 0 && deathSpell != null) {
-				if (deathSpell.isTargetedLocationSpell()) {
-					deathSpell.castAtLocation(owner, minion.getLocation(), 1);
-				} else if (deathSpell.isTargetedEntityFromLocationSpell()) {
-					deathSpell.castAtEntityFromLocation(owner, minion.getLocation(), minion, 1);
-				} else if (deathSpell.isTargetedEntitySpell()) {
-					deathSpell.castAtEntity(owner, minion, 1);
-				}
-			}
+			if (((LivingEntity) entity).getHealth() - e.getFinalDamage() <= 0 && deathSpell != null)
+				deathSpell.subcast(owner, minion.getLocation(), minion, 1, null);
 
 			// If the minion is far away from the owner, forget about attacking
 			if (owner.getWorld().equals(minion.getWorld()) && owner.getLocation().distanceSquared(minion.getLocation()) > maxDistance * maxDistance) return;
@@ -488,15 +469,7 @@ public class MinionSpell extends BuffSpell {
 			Player owner = Bukkit.getPlayer(players.get(minion));
 			if (owner == null || !owner.isOnline() || !owner.isValid()) return;
 
-			if (attackSpell != null) {
-				if (attackSpell.isTargetedLocationSpell()) {
-					attackSpell.castAtLocation(owner, minion.getLocation(), 1);
-				} else if (attackSpell.isTargetedEntityFromLocationSpell()) {
-					attackSpell.castAtEntityFromLocation(owner, minion.getLocation(), (LivingEntity) entity, 1);
-				} else if (attackSpell.isTargetedEntitySpell()) {
-					attackSpell.castAtEntity(owner, (LivingEntity) entity, 1);
-				}
-			}
+			if (attackSpell != null) attackSpell.subcast(owner, minion.getLocation(), (LivingEntity) entity, 1, null);
 		}
 
 		// The target died, the minion will follow his owner
@@ -547,7 +520,7 @@ public class MinionSpell extends BuffSpell {
 		}
 		Player pl = Bukkit.getPlayer(players.get(e.getEntity()));
 		if (pl == null || !pl.isValid() || !pl.isOnline()) return;
-		turnOffBuff(pl);
+		turnOff(pl);
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -559,7 +532,7 @@ public class MinionSpell extends BuffSpell {
 
 		if ((pl.getWorld().equals(minion.getWorld()) && pl.getLocation().distanceSquared(minion.getLocation()) > maxDistance * maxDistance) || targets.get(pl.getUniqueId()) == null || !targets.containsKey(pl.getUniqueId())) {
 
-			// The minion has a target but he is far away from his owner, remove his current target
+			// The minion has a target, but he is far away from his owner, remove his current target
 			if (targets.get(pl.getUniqueId()) != null) {
 				targets.remove(pl.getUniqueId());
 				MobUtil.setTarget(minion, null);
@@ -594,7 +567,6 @@ public class MinionSpell extends BuffSpell {
 			minion.teleport(owner);
 		}
 	}
-
 
 	public Map<UUID, LivingEntity> getMinions() {
 		return minions;

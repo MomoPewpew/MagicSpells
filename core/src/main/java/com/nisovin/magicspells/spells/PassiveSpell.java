@@ -1,9 +1,7 @@
 package com.nisovin.magicspells.spells;
 
 import java.util.List;
-import java.util.Random;
 import java.util.ArrayList;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -25,8 +23,6 @@ import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 
 public class PassiveSpell extends Spell {
-
-	private final Random random = ThreadLocalRandom.current();
 
 	private final List<PassiveListener> passiveListeners;
 	private final List<String> triggers;
@@ -318,7 +314,7 @@ public class PassiveSpell extends Spell {
 			if (castWithoutTarget) {
 				MagicSpells.debug(3, "    Casting without target");
 
-				spell.cast(caster, power);
+				spell.subcast(caster, power, null);
 				if (!spellEffectsDone) {
 					playSpellEffects(EffectPosition.CASTER, caster, power, null);
 					spellEffectsDone = true;
@@ -327,8 +323,10 @@ public class PassiveSpell extends Spell {
 				continue;
 			}
 
-			if (spell.isTargetedEntitySpell() && target != null && !isActuallyNonTargeted(spell.getSpell())) {
-				spell.castAtEntity(caster, target, power);
+			if (target != null && !isActuallyNonTargeted(spell.getSpell())) {
+				MagicSpells.debug(3, "    Casting with target entity");
+
+				spell.subcast(caster, target, power, null);
 				if (!spellEffectsDone) {
 					playSpellEffects(caster, target, data);
 					spellEffectsDone = true;
@@ -337,14 +335,12 @@ public class PassiveSpell extends Spell {
 				continue;
 			}
 
-			if (spell.isTargetedLocationSpell() && (location != null || target != null)) {
-				MagicSpells.debug(3, "    Casting at location");
+			if (location != null) {
+				MagicSpells.debug(3, "    Casting with target location");
 
-				Location loc = location != null ? location : target.getLocation();
-
-				spell.castAtLocation(caster, loc, power);
+				spell.subcast(caster, location, power, null);
 				if (!spellEffectsDone) {
-					playSpellEffects(caster, loc, data);
+					playSpellEffects(caster, location, data);
 					spellEffectsDone = true;
 				}
 
@@ -353,7 +349,7 @@ public class PassiveSpell extends Spell {
 
 			MagicSpells.debug(3, "    Casting normally");
 
-			spell.cast(caster, power);
+			spell.subcast(caster, power, null);
 			if (!spellEffectsDone) {
 				playSpellEffects(EffectPosition.CASTER, caster, data);
 				spellEffectsDone = true;

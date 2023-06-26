@@ -130,7 +130,7 @@ public class BuffListener extends PassiveListener {
 
 		for (Subspell s : passiveSpell.getActivatedSpells()) {
 			if (s.getSpell() instanceof BuffSpell buff && buff.isActive(entity)) continue;
-			s.cast(entity, 1F);
+			s.subcast(entity, 1F, null);
 		}
 	}
 

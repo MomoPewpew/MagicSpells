@@ -253,16 +253,7 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 				if (!caster.isOnline()) return;
 			}
 
-			if (spellOnBreak == null) return;
-			if (spellOnBreak.isTargetedEntityFromLocationSpell()) {
-				spellOnBreak.castAtEntityFromLocation(caster, block.getLocation().add(0.5, 0, 0.5), player, 1F);
-			} else if (spellOnBreak.isTargetedEntitySpell()) {
-				spellOnBreak.castAtEntity(caster, player, 1F);
-			} else if (spellOnBreak.isTargetedLocationSpell()) {
-				spellOnBreak.castAtLocation(caster, block.getLocation().add(0.5, 0, 0.5), 1F);
-			} else {
-				spellOnBreak.cast(caster, 1F);
-			}
+			if (spellOnBreak != null) spellOnBreak.subcast(caster, block.getLocation().add(0.5, 0, 0.5), player, 1f, null, false, false);
 		}
 		
 	}

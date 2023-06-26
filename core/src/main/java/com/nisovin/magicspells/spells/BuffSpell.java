@@ -61,8 +61,6 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 
 	protected boolean toggle;
 	protected boolean targeted;
-	protected boolean castWithItem;
-	protected boolean castByCommand;
 	protected boolean cancelOnJoin;
 	protected boolean cancelOnMove;
 	protected boolean cancelOnDeath;
@@ -105,11 +103,8 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		useCostInterval = getConfigInt("use-cost-interval", 0);
 
 		reagents = getConfigReagents("use-cost");
-
 		toggle = getConfigBoolean("toggle", true);
 		targeted = getConfigBoolean("targeted", false);
-		castWithItem = getConfigBoolean("can-cast-with-item", true);
-		castByCommand = getConfigBoolean("can-cast-by-command", true);
 		cancelOnJoin = getConfigBoolean("cancel-on-join", false);
 		cancelOnMove = getConfigBoolean("cancel-on-move", false);
 		cancelOnDeath = getConfigBoolean("cancel-on-death", false);
@@ -171,16 +166,6 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 			spellOnEnd = null;
 		}
 
-	}
-
-	@Override
-	public boolean canCastWithItem() {
-		return castWithItem;
-	}
-
-	@Override
-	public boolean canCastByCommand() {
-		return castByCommand;
 	}
 
 	@Override
@@ -338,7 +323,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	 */
 	protected int addUse(LivingEntity entity) {
 		// Run spell on use increment first thing in case we want to intervene
-		if (spellOnUseIncrement != null) spellOnUseIncrement.cast(entity, 1f);
+		if (spellOnUseIncrement != null) spellOnUseIncrement.subcast(entity, 1f, null);
 
 		if (numUses > 0 || (reagents != null && useCostInterval > 0)) {
 
@@ -364,7 +349,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	 */
 	protected boolean chargeUseCost(LivingEntity entity) {
 		// Run spell on cost first thing to dodge the early returns and allow intervention
-		if (spellOnCost != null) spellOnCost.cast(entity, 1f);
+		if (spellOnCost != null) spellOnCost.subcast(entity, 1f, null);
 
 		if (reagents == null) return true;
 		if (useCostInterval <= 0) return true;
@@ -417,7 +402,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		cancelEffects(EffectPosition.CASTER, entity.getUniqueId().toString());
 		stopEffects(entity);
 
-		if (spellOnEnd != null) spellOnEnd.cast(endSpellFromTarget ? entity : getLastCaster(entity), 1f);
+		if (spellOnEnd != null) spellOnEnd.subcast(endSpellFromTarget ? entity : getLastCaster(entity), 1f, null);
 		sendMessage(strFade, entity, null);
 
 		lastCaster.remove(entity.getUniqueId());
@@ -605,6 +590,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		public void onSpellCast(SpellCastEvent event) {
 			if (thisSpell == event.getSpell()) return;
 			if (event.getSpellCastState() != SpellCastState.NORMAL) return;
+
 			LivingEntity entity = getWhoToCancel(event.getCaster());
 			if (entity == null) return;
 			if (filter.check(event.getSpell())) return;
@@ -643,7 +629,6 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		public void onMove(PlayerMoveEvent event) {
 			LivingEntity player = getWhoToCancel(event.getPlayer());
 			if (player == null) return;
-
 			if (LocationUtil.distanceLessThan(event.getFrom(), event.getTo(), MOTION_TOLERANCE)) return;
 
 			turnOff(player);

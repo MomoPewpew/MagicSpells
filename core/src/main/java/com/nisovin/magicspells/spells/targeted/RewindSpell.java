@@ -186,7 +186,7 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 		private void rewind() {
 			MagicSpells.cancelTask(taskId);
 			entities.remove(entity);
-			if (rewindSpell != null) rewindSpell.cast(caster, power);
+			if (rewindSpell != null) rewindSpell.subcast(caster, power, args);
 			new ForceRewinder(caster, entity, locations, startHealth, startMana, power, args);
 		}
 

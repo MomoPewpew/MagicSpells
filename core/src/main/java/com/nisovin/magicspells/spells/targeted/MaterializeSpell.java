@@ -1,5 +1,10 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import java.util.Set;
+import java.util.List;
+import java.util.HashSet;
+import java.util.ArrayList;
+
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -9,13 +14,6 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.LivingEntity;
 
-import java.util.Set;
-import java.util.List;
-import java.util.Random;
-import java.util.HashSet;
-import java.util.ArrayList;
-import java.util.concurrent.ThreadLocalRandom;
-
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
@@ -24,16 +22,16 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.handlers.DebugHandler;
+import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
 import com.nisovin.magicspells.events.MagicSpellsBlockBreakEvent;
-import com.nisovin.magicspells.util.config.ConfigData;
 
 public class MaterializeSpell extends TargetedSpell implements TargetedLocationSpell {
 
-	/*These extra features were inspired by Shadoward12's Rune/Pattern-Tester spell
+	/*These extra features were inspired by Shadoward12's Rune/Pattern-Tester spell,
 	Thank You! Shadoward12!*/
 
 	private List<Block> blocks;
@@ -69,8 +67,6 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 	//Cuboid Checks;
 	private boolean hasMiddle;
 
-	private Random rand = ThreadLocalRandom.current();
-
 	public MaterializeSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -104,15 +100,15 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		super.initialize();
 
 		//First, lets split the "area" that was given.
-		String[] areaparts = area.split("x", 2);
+		String[] areaParts = area.split("x", 2);
 
-		//Lets define the size of the row and column to form an shape array;
-		rowSize = Integer.parseInt(areaparts[0]);
-		columnSize = Integer.parseInt(areaparts[1]);
+		//Let's define the size of the row and column to form a shape array;
+		rowSize = Integer.parseInt(areaParts[0]);
+		columnSize = Integer.parseInt(areaParts[1]);
 
 		/*For this to work smoothly, we need to see if the shape array has a middle;
 		It becomes very complicated when working with shape arrays without a block as a geometrical middle
-		So unfortunately. Shape arrays without a block as its geomtrical center cannot be accepted.
+		So unfortunately. Shape arrays without a block as its geometrical center cannot be accepted.
 		3x2, 9x8. Basically, if the product of the length and width is even. Don't use it. */
 		hasMiddle = ((rowSize * columnSize) % 2) == 1;
 
@@ -121,7 +117,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		}
 
 		//After the reset-delay passes, we need to remove all the blocks that were materialized.
-		//We store them within "materials" and "rowPatterns" aswell
+		//We store them within "materials" and "rowPatterns" as well
 		boolean ready;
 
 		materials = new HashSet<>();
@@ -316,7 +312,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 	private Material blockGenerator(boolean randomize, int patternPosition, int rowPosition) {
 		Material mat;
 
-		int randomIndex = rand.nextInt(getRowLength(patternPosition));
+		int randomIndex = random.nextInt(getRowLength(patternPosition));
 
 		if (!randomize) mat = rowPatterns[patternPosition][rowPosition];
 		else mat = rowPatterns[patternPosition][randomIndex];

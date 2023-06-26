@@ -263,7 +263,7 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 			if (current.distanceSquared(caster.getLocation().toVector()) < 4 || tick > range * 1.5) {
 				stop(true);
 				playSpellEffects(EffectPosition.DELAYED, caster, data);
-				if (spellOnAnimation != null) spellOnAnimation.cast(caster, 1F);
+				if (spellOnAnimation != null) spellOnAnimation.subcast(caster, data.power(), data.args());
 				if (!instant) giveToCaster(caster, giveAmt);
 			}
 		}

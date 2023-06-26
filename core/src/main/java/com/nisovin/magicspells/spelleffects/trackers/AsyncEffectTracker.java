@@ -17,12 +17,15 @@ public class AsyncEffectTracker implements Runnable {
 	protected SpellEffect effect;
 	protected SpellEffectActiveChecker checker;
 
+	protected SpellData data;
+
 	protected BukkitTask effectTask;
 
 	public AsyncEffectTracker(Entity entity, SpellEffectActiveChecker checker, SpellEffect effect, SpellData data) {
 		this.entity = entity;
 		this.checker = checker;
 		this.effect = effect;
+		this.data = data;
 
 		int interval = effect.getEffectInterval().get(data);
 		effectTask = Bukkit.getScheduler().runTaskTimerAsynchronously(MagicSpells.getInstance(), this, 0, interval);
@@ -46,6 +49,10 @@ public class AsyncEffectTracker implements Runnable {
 
 	public BukkitTask getEffectTrackerTask() {
 		return effectTask;
+	}
+
+	public SpellData getData() {
+		return data;
 	}
 
 	public void setBuffSpell(BuffSpell spell) {

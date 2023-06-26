@@ -2,9 +2,7 @@ package com.nisovin.magicspells.spells.instant;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.Random;
 import java.util.HashMap;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -43,8 +41,6 @@ public class SteedSpell extends InstantSpell {
 
 	private final Map<UUID, Integer> mounted;
 
-	private final Random random;
-
 	private boolean gravity;
 	private boolean hasChest;
 
@@ -67,8 +63,6 @@ public class SteedSpell extends InstantSpell {
 		super(config, spellName);
 
 		mounted = new HashMap<>();
-
-		random = ThreadLocalRandom.current();
 
 		gravity = getConfigBoolean("gravity", true);
 		hasChest = getConfigBoolean("has-chest", false);
@@ -172,11 +166,8 @@ public class SteedSpell extends InstantSpell {
 			});
 			entity.addPassenger(caster);
 
-			if (spellOnSpawn != null && entity instanceof LivingEntity le) {
-				if (spellOnSpawn.isTargetedEntitySpell()) spellOnSpawn.castAtEntity(caster, le, power);
-				else if (spellOnSpawn.isTargetedLocationSpell()) spellOnSpawn.castAtLocation(caster, le.getLocation(), power);
-				else spellOnSpawn.cast(caster, power);
-			}
+			if (entity instanceof LivingEntity le) spellOnSpawn.subcast(caster, le, power, args);
+			else spellOnSpawn.subcast(caster, entity.getLocation(), power, args);
 
 			playSpellEffects(EffectPosition.CASTER, caster, power, args);
 			mounted.put(caster.getUniqueId(), entity.getEntityId());

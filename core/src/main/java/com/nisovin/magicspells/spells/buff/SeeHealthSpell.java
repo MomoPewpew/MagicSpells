@@ -1,7 +1,6 @@
 package com.nisovin.magicspells.spells.buff;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -21,8 +20,6 @@ public class SeeHealthSpell extends BuffSpell {
 	private final static String COLORS = "01234567890abcdef";
 
 	private final Map<UUID, CastData> players;
-
-	private final Random random = ThreadLocalRandom.current();
 
 	private ConfigData<Integer> barSize;
 	private int interval;

@@ -65,7 +65,6 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 	private int taskId;
 	private BoundingBox hitBox;
 	private List<Block> nearBlocks;
-	private List<LivingEntity> inRange;
 	private Set<LivingEntity> immune;
 	private int maxHitLimit;
 	private ValidTargetChecker entitySpellChecker;
@@ -231,7 +230,6 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		currentVelocity.multiply(projectileVelocity / ticksPerSecond);
 
 		nearBlocks = new ArrayList<>();
-		if (targetList != null) inRange = new ArrayList<>();
 		immune = new HashSet<>();
 
 		maxHitLimit = 0;
@@ -266,8 +264,8 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		}
 
 		if (maxDuration > 0 && startTime + maxDuration < System.currentTimeMillis()) {
-			if (hitAirAfterDuration && durationSpell != null && durationSpell.isTargetedLocationSpell()) {
-				durationSpell.castAtLocation(caster, currentLocation, power);
+			if (hitAirAfterDuration && durationSpell != null) {
+				durationSpell.subcast(caster, currentLocation, power, args);
 				if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLocation, data);
 			}
 			stop();
@@ -278,10 +276,9 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			ModifierResult result = projectileModifiers.apply(caster, data);
 			data = result.data();
 			power = data.power();
-			args = data.args();
 
 			if (!result.check()) {
-				if (modifierSpell != null) modifierSpell.castAtLocation(caster, currentLocation, power);
+				if (modifierSpell != null) modifierSpell.subcast(caster, currentLocation, power, args);
 				if (stopOnModifierFail) stop();
 				return;
 			}
@@ -422,7 +419,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		// Cast spell mid air
 		if (hitAirDuring && counter % spellInterval == 0 && tickSpell != null) {
 			if (tickSpellLimit <= 0 || ticks < tickSpellLimit) {
-				tickSpell.castAtLocation(caster, currentLocation.clone(), power);
+				tickSpell.subcast(caster, currentLocation.clone(), power, args);
 				ticks++;
 			}
 		}
@@ -436,7 +433,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			if (!groundMaterials.contains(b.getType()) || disallowedGroundMaterials.contains(b.getType())) continue;
 			if (hitGround && groundSpell != null) {
 				Util.setLocationFacingFromVector(previousLocation, currentVelocity);
-				groundSpell.castAtLocation(caster, previousLocation, power);
+				groundSpell.subcast(caster, previousLocation, power, args);
 				if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLocation, data);
 			}
 			if (stopOnHitGround) {
@@ -447,7 +444,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 		if (currentLocation.distanceSquared(startLocation) >= maxDistanceSquared) {
 			if (hitAirAtEnd && airSpell != null) {
-				airSpell.castAtLocation(caster, currentLocation.clone(), power);
+				airSpell.subcast(caster, currentLocation.clone(), power, args);
 				if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLocation, data);
 			}
 			stop();
@@ -477,7 +474,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			double z = (tracker.currentLocation.getZ() + collisionTracker.currentLocation.getZ()) / 2D;
 
 			Location middleLoc = new Location(tracker.currentLocation.getWorld(), x, y, z);
-			collisionSpell.castAtLocation(tracker.caster, middleLoc, tracker.power);
+			collisionSpell.subcast(tracker.caster, middleLoc, tracker.power, tracker.args);
 			toRemove.add(collisionTracker);
 			toRemove.add(tracker);
 			collisionTracker.stop(false);
@@ -527,92 +524,40 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		for (int i = 0; i < intermediateHitboxes; i++) {
 			old = LocationUtil.setDirection(old.add(v), v);
 			checkHitbox(old);
+			if (stopped) return;
 		}
 	}
 
 	private void checkHitbox(Location currentLoc) {
-		if (inRange == null) return;
-		if (currentLoc == null) return;
-		if (currentLoc.getWorld() == null) return;
+		if (currentLoc == null || currentLoc.getWorld() == null) return;
 
 		hitBox.setCenter(currentLoc);
-		inRange.clear();
 
-		double x = horizontalHitRadius / 2D;
-		double y = verticalHitRadius / 2D;
-		double z = horizontalHitRadius / 2D;
+		for (LivingEntity target : currentLoc.getNearbyLivingEntities(horizontalHitRadius, verticalHitRadius)) {
+			if (!target.isValid() || immune.contains(target) || !targetList.canTarget(caster, target)) continue;
 
-		for (LivingEntity entity : currentLoc.getWorld().getNearbyLivingEntities(currentLoc, x, y, z)) {
-			if (!targetList.canTarget(caster, entity)) continue;
-			if (immune.contains(entity)) continue;
-			inRange.add(entity);
-		}
-
-		LivingEntity target;
-		ParticleProjectileHitEvent projectileEvent;
-		SpellTargetEvent event;
-
-		for (int i = 0; i < inRange.size(); i++) {
-			target = inRange.get(i);
-			if (target.isDead()) continue;
-
-			projectileEvent = new ParticleProjectileHitEvent(caster, target, tracker, spell, power);
-			EventUtil.call(projectileEvent);
+			ParticleProjectileHitEvent hitEvent = new ParticleProjectileHitEvent(caster, target, tracker, spell, power);
+			hitEvent.callEvent();
 
 			if (stopped) return;
+			if (hitEvent.isCancelled()) continue;
 
-			if (projectileEvent.isCancelled()) {
-				inRange.remove(i);
-				break;
-			}
+			target = hitEvent.getTarget();
+			float subPower = hitEvent.getPower();
 
-			float power = this.power;
+			SpellTargetEvent targetEvent = new SpellTargetEvent(spell, caster, target, subPower, args);
+			if (!targetEvent.callEvent()) continue;
 
-			event = new SpellTargetEvent(spell, caster, target, power, args);
-			EventUtil.call(event);
-			if (event.isCancelled()) {
-				inRange.remove(i);
-				break;
-			} else {
-				target = event.getTarget();
-				power = event.getPower();
-			}
+			target = targetEvent.getTarget();
+			subPower = targetEvent.getPower();
 
-			if (casterSpell != null && target.equals(caster)) {
-				if (casterSpell.isTargetedEntitySpell()) {
-					entitySpellChecker = casterSpell.getSpell().getValidTargetChecker();
-					if (entitySpellChecker != null && !entitySpellChecker.isValidTarget(target)) {
-						inRange.remove(i);
-						break;
-					}
+			if (casterSpell != null && target.equals(caster)) casterSpell.subcast(caster, target, subPower, args);
+			if (entitySpell != null && !target.equals(caster)) entitySpell.subcast(caster, target, subPower, args);
+			if (entityLocationSpell != null) entityLocationSpell.subcast(caster, currentLoc, subPower, args);
 
-					casterSpell.castAtEntity(caster, target, power);
-					if (spell != null) spell.playEffects(EffectPosition.TARGET, target, data);
-				} else if (casterSpell.isTargetedLocationSpell()) {
-					casterSpell.castAtLocation(caster, currentLoc.clone(), power);
-					if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLoc, data);
-				}
-			}
+			if (spell != null)
+				spell.playEffects(EffectPosition.TARGET, currentLoc, new SpellData(caster, target, subPower, args));
 
-			if (entitySpell != null && !target.equals(caster)) {
-				if (entitySpell.isTargetedEntitySpell()) {
-					entitySpellChecker = entitySpell.getSpell().getValidTargetChecker();
-					if (entitySpellChecker != null && !entitySpellChecker.isValidTarget(target)) {
-						inRange.remove(i);
-						break;
-					}
-
-					entitySpell.castAtEntity(caster, target, power);
-					if (spell != null) spell.playEffects(EffectPosition.TARGET, target, data);
-				} else if (entitySpell.isTargetedLocationSpell()) {
-					entitySpell.castAtLocation(caster, currentLoc.clone(), power);
-					if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLoc, data);
-				}
-			}
-
-			if (entityLocationSpell != null) entityLocationSpell.castAtLocation(caster, currentLoc, power);
-
-			inRange.remove(i);
 			immune.add(target);
 			maxHitLimit++;
 
@@ -658,10 +603,6 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		if (immune != null) {
 			immune.clear();
 			immune = null;
-		}
-		if (inRange != null) {
-			inRange.clear();
-			inRange = null;
 		}
 		stopped = true;
 	}
@@ -764,14 +705,6 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 	public void setHitBox(BoundingBox hitBox) {
 		this.hitBox = hitBox;
-	}
-
-	public List<LivingEntity> getInRange() {
-		return inRange;
-	}
-
-	public void setInRange(List<LivingEntity> inRange) {
-		this.inRange = inRange;
 	}
 
 	public int getMaxHitLimit() {

@@ -461,26 +461,9 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		private boolean cast(Subspell spell) {
 			boolean success;
 
-			if (targetEntity != null) {
-				if (spell.isTargetedEntitySpell())
-					success = spell.castAtEntity(caster, targetEntity, data.power(), passTargeting);
-				else if (spell.isTargetedLocationSpell())
-					success = spell.castAtLocation(caster, targetEntity.getLocation(), data.power());
-				else {
-					PostCastAction action = spell.cast(caster, data.power());
-					success = action == PostCastAction.HANDLE_NORMALLY || action == PostCastAction.NO_MESSAGES;
-				}
-			} else if (targetLocation != null) {
-				if (spell.isTargetedLocationSpell())
-					success = spell.castAtLocation(caster, targetLocation, data.power());
-				else {
-					PostCastAction action = spell.cast(caster, data.power());
-					success = action == PostCastAction.HANDLE_NORMALLY || action == PostCastAction.NO_MESSAGES;
-				}
-			} else {
-				PostCastAction action = spell.cast(caster, data.power());
-				success = action == PostCastAction.HANDLE_NORMALLY || action == PostCastAction.NO_MESSAGES;
-			}
+			if (targetEntity != null) success = spell.subcast(caster, targetEntity, data.power(), data.args(), passTargeting);
+			else if (targetLocation != null) success = spell.subcast(caster, targetLocation, data.power(), data.args());
+			else success = spell.subcast(caster, data.power(), data.args());
 
 			if (stopOnSuccess && success || stopOnFail && !success) {
 				cancel();
@@ -526,11 +509,9 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			}
 
 			if (spellOnEnd != null) {
-				if (spellOnEnd.isTargetedEntitySpell() && targetEntity != null)
-					spellOnEnd.castAtEntity(caster, targetEntity, data.power(), passTargeting);
-				else if (spellOnEnd.isTargetedLocationSpell() && (targetEntity != null || targetLocation != null))
-					spellOnEnd.castAtLocation(caster, targetEntity != null ? targetEntity.getLocation() : targetLocation, data.power());
-				else spellOnEnd.cast(caster, data.power());
+				if (targetEntity != null) spellOnEnd.subcast(caster, targetEntity, data.power(), data.args(), passTargeting);
+				else if (targetLocation != null) spellOnEnd.subcast(caster, targetLocation, data.power(), data.args());
+				else if (caster != null) spellOnEnd.subcast(caster, data.power(), data.args());
 			}
 		}
 

@@ -132,25 +132,25 @@ public class HomingProjectileSpell extends TargetedSpell implements TargetedEnti
 		}
 
 		groundSpell = new Subspell(groundSpellName);
-		if (!groundSpell.process() || !groundSpell.isTargetedLocationSpell()) {
+		if (!groundSpell.process()) {
 			groundSpell = null;
 			if (!groundSpellName.isEmpty()) MagicSpells.error("HomingMissileSpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
 		}
 
 		airSpell = new Subspell(airSpellName);
-		if (!airSpell.process() || !airSpell.isTargetedLocationSpell()) {
+		if (!airSpell.process()) {
 			airSpell = null;
 			if (!airSpellName.isEmpty()) MagicSpells.error("HomingMissileSpell '" + internalName + "' has an invalid spell-on-hit-air defined!");
 		}
 
 		durationSpell = new Subspell(durationSpellName);
-		if (!durationSpell.process() || !durationSpell.isTargetedLocationSpell()) {
+		if (!durationSpell.process()) {
 			durationSpell = null;
 			if (!durationSpellName.isEmpty()) MagicSpells.error("HomingMissileSpell '" + internalName + "' has an invalid spell-after-duration defined!");
 		}
 
 		modifierSpell = new Subspell(modifierSpellName);
-		if (!modifierSpell.process() || !modifierSpell.isTargetedLocationSpell()) {
+		if (!modifierSpell.process()) {
 			if (!modifierSpellName.isEmpty()) MagicSpells.error("HomingMissileSpell '" + internalName + "' has an invalid spell-on-modifier-fail defined!");
 			modifierSpell = null;
 		}
@@ -228,8 +228,7 @@ public class HomingProjectileSpell extends TargetedSpell implements TargetedEnti
 			if (monitor.target == null) continue;
 			if (!monitor.target.equals(entity)) continue;
 
-			if (hitSpell.isTargetedEntitySpell()) hitSpell.castAtEntity(monitor.caster, entity, monitor.power);
-			else if (hitSpell.isTargetedLocationSpell()) hitSpell.castAtLocation(monitor.caster, entity.getLocation(), monitor.power);
+			if (hitSpell != null) hitSpell.subcast(monitor.caster, entity, monitor.power, monitor.args);
 			playSpellEffects(EffectPosition.TARGET, entity, monitor.data);
 			event.setCancelled(true);
 
@@ -247,7 +246,7 @@ public class HomingProjectileSpell extends TargetedSpell implements TargetedEnti
 			if (monitor.projectile == null) continue;
 			if (!monitor.projectile.equals(projectile)) continue;
 			if (monitor.caster == null) continue;
-			if (groundSpell != null) groundSpell.castAtLocation(monitor.caster, projectile.getLocation(), monitor.power);
+			if (groundSpell != null) groundSpell.subcast(monitor.caster, projectile.getLocation(), monitor.power, monitor.args);
 			monitor.stop();
 		}
 
@@ -377,10 +376,7 @@ public class HomingProjectileSpell extends TargetedSpell implements TargetedEnti
 				args = data.args();
 
 				if (!result.check()) {
-					if (modifierSpell != null) {
-						if (modifierSpell.isTargetedLocationSpell()) modifierSpell.castAtLocation(caster, currentLocation, power);
-						else modifierSpell.cast(caster, power);
-					}
+					if (modifierSpell != null) modifierSpell.subcast(caster, currentLocation, power, args);
 
 					if (stopOnModifierFail) stop();
 					return;
@@ -388,7 +384,7 @@ public class HomingProjectileSpell extends TargetedSpell implements TargetedEnti
 			}
 
 			if (maxDuration > 0 && startTime + maxDuration < System.currentTimeMillis()) {
-				if (durationSpell != null) durationSpell.castAtLocation(caster, currentLocation, power);
+				if (durationSpell != null) durationSpell.subcast(caster, currentLocation, power, args);
 				stop();
 				return;
 			}
@@ -410,7 +406,7 @@ public class HomingProjectileSpell extends TargetedSpell implements TargetedEnti
 			projectile.setVelocity(currentVelocity);
 			currentLocation = projectile.getLocation();
 
-			if (counter % airSpellInterval == 0 && airSpell != null) airSpell.castAtLocation(caster, currentLocation, power);
+			if (counter % airSpellInterval == 0 && airSpell != null) airSpell.subcast(caster, currentLocation, power, args);
 
 			if (intermediateSpecialEffects > 0) playIntermediateEffectLocations(previousLocation, oldVelocity);
 
@@ -421,11 +417,13 @@ public class HomingProjectileSpell extends TargetedSpell implements TargetedEnti
 			hitBox.setCenter(currentLocation);
 			if (hitBox.contains(targetLoc)) {
 				SpellTargetEvent targetEvent = new SpellTargetEvent(thisSpell, caster, target, power, args);
-				EventUtil.call(targetEvent);
-				if (targetEvent.isCancelled()) return;
-				playSpellEffects(EffectPosition.TARGET, targetEvent.getTarget(), data);
-				if (hitSpell.isTargetedEntitySpell()) hitSpell.castAtEntity(caster, targetEvent.getTarget(), targetEvent.getPower());
-				else if (hitSpell.isTargetedLocationSpell()) hitSpell.castAtLocation(caster, targetEvent.getTarget().getLocation(), targetEvent.getPower());
+				if (!targetEvent.callEvent()) return;
+
+				LivingEntity subTarget = targetEvent.getTarget();
+				float subPower = targetEvent.getPower();
+
+				playSpellEffects(EffectPosition.TARGET, subTarget, new SpellData(caster, subTarget, subPower, args));
+				if (hitSpell != null) hitSpell.subcast(caster, subTarget, subPower, args);
 				stop();
 			}
 		}

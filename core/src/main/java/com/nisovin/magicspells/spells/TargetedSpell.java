@@ -197,7 +197,7 @@ public abstract class TargetedSpell extends InstantSpell {
 		if (info != null && info.cancelled()) return PostCastAction.ALREADY_HANDLED;
 		fizzle(livingEntity);
 		sendMessage(message, livingEntity, args);
-		if (spellOnFail != null) spellOnFail.cast(livingEntity, 1.0F);
+		if (spellOnFail != null) spellOnFail.subcast(livingEntity, info == null ? 1f : info.power(), args);
 		return alwaysActivate ? PostCastAction.NO_MESSAGES : PostCastAction.ALREADY_HANDLED;
 	}
 

@@ -4,10 +4,8 @@ import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
 import java.util.List;
-import java.util.Random;
 import java.util.HashSet;
 import java.util.HashMap;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -28,8 +26,6 @@ public class LifewalkSpell extends BuffSpell {
 
 	private final Map<Material, Integer> blocks;
 
-	private final Random random;
-
 	private Grower grower;
 
 	private int tickInterval;
@@ -38,8 +34,6 @@ public class LifewalkSpell extends BuffSpell {
 		super(config, spellName);
 
 		tickInterval = getConfigInt("tick-interval", 15);
-
-		random = ThreadLocalRandom.current();
 
 		blocks = new HashMap<>();
 

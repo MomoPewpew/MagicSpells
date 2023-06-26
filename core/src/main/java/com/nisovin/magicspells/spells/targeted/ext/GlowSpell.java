@@ -67,11 +67,13 @@ public class GlowSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(LivingEntity livingEntity, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL && livingEntity instanceof Player caster) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo == null) return noTarget(caster, args);
-			LivingEntity target = targetInfo.target();
+			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
+			if (info.noTarget()) return noTarget(caster, args, info);
 
-			glow(caster, target, targetInfo.power(), args);
+			LivingEntity target = info.target();
+			power = info.power();
+
+			glow(caster, target, power, args);
 			playSpellEffects(caster, target, power, args);
 			sendMessages(caster, target, args);
 

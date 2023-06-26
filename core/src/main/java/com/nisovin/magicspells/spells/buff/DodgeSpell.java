@@ -58,13 +58,13 @@ public class DodgeSpell extends BuffSpell {
 		super.initialize();
 
 		spellBeforeDodge = new Subspell(spellBeforeDodgeName);
-		if (!spellBeforeDodge.process() || !spellBeforeDodge.isTargetedLocationSpell()) {
+		if (!spellBeforeDodge.process()) {
 			if (!spellBeforeDodgeName.isEmpty()) MagicSpells.error("DodgeSpell '" + internalName + "' has an invalid spell-before-dodge defined!");
 			spellBeforeDodge = null;
 		}
 
 		spellAfterDodge = new Subspell(spellAfterDodgeName);
-		if (!spellAfterDodge.process() || !spellAfterDodge.isTargetedLocationSpell()) {
+		if (!spellAfterDodge.process()) {
 			if (!spellAfterDodgeName.isEmpty()) MagicSpells.error("DodgeSpell '" + internalName + "' has an invalid spell-after-dodge defined!");
 			spellAfterDodge = null;
 		}
@@ -126,7 +126,7 @@ public class DodgeSpell extends BuffSpell {
 		targetLoc.add(v);
 		targetLoc.setDirection(entity.getLocation().getDirection());
 
-		if (spellBeforeDodge != null) spellBeforeDodge.castAtLocation(entity, entityLoc, 1F);
+		if (spellBeforeDodge != null) spellBeforeDodge.subcast(entity, entityLoc, spellData.power(), spellData.args());
 
 		if (!BlockUtils.isPathable(targetLoc.getBlock().getType()) || !BlockUtils.isPathable(targetLoc.getBlock().getRelative(BlockFace.UP))) return;
 		entity.teleportAsync(targetLoc);
@@ -135,7 +135,7 @@ public class DodgeSpell extends BuffSpell {
 		playSpellEffectsTrail(entityLoc, targetLoc, spellData);
 		playSpellEffects(EffectPosition.DELAYED, targetLoc, spellData);
 
-		if (spellAfterDodge != null) spellAfterDodge.castAtLocation(entity, targetLoc, 1F);
+		if (spellAfterDodge != null) spellAfterDodge.subcast(entity, targetLoc, spellData.power(), spellData.args());
 	}
 
 	public Map<UUID, CastData> getEntities() {

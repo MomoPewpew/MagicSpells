@@ -194,13 +194,10 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		));
 	}
 
-	private void processClickSpell(Subspell subspell, Player caster, Player target, float power) {
+	private void processClickSpell(Subspell subspell, Player caster, Player target, float power, String[] args) {
 		if (subspell == null) return;
-		if (castSpellsOnTarget && subspell.isTargetedEntitySpell()) {
-			subspell.castAtEntity(caster, target, power);
-			return;
-		}
-		subspell.cast(caster, power);
+		if (castSpellsOnTarget) subspell.subcast(caster, target, power, args);
+		else subspell.subcast(caster, power, args);
 	}
 
 	private void open(Player opener, MenuData data) {
@@ -287,7 +284,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		OfflinePlayer target = skullMeta.getOwningPlayer();
 		if (target == null || !target.isOnline()) {
 			meta.displayName(translate(opener, null, skullNameOffline, args));
-			if (spellOffline != null) spellOffline.cast(opener, power);
+			if (spellOffline != null) spellOffline.subcast(opener, power, args);
 
 			if (stayOpen) item.setItemMeta(meta);
 			else {
@@ -307,7 +304,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 
 		if (radius > 0 && targetPlayer.getLocation().distance(opener.getLocation()) > radius) {
 			meta.displayName(translate(opener, targetPlayer, skullNameRadius, args));
-			if (spellRange != null) spellRange.cast(opener, power);
+			if (spellRange != null) spellRange.subcast(opener, power, args);
 
 			if (stayOpen) item.setItemMeta(meta);
 			else {
@@ -320,11 +317,11 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		}
 
 		switch (event.getClick()) {
-			case LEFT -> processClickSpell(spellOnLeft, opener, targetPlayer, power);
-			case RIGHT -> processClickSpell(spellOnRight, opener, targetPlayer, power);
-			case MIDDLE -> processClickSpell(spellOnMiddle, opener, targetPlayer, power);
-			case SHIFT_LEFT -> processClickSpell(spellOnSneakLeft, opener, targetPlayer, power);
-			case SHIFT_RIGHT -> processClickSpell(spellOnSneakRight, opener, targetPlayer, power);
+			case LEFT -> processClickSpell(spellOnLeft, opener, targetPlayer, power, args);
+			case RIGHT -> processClickSpell(spellOnRight, opener, targetPlayer, power, args);
+			case MIDDLE -> processClickSpell(spellOnMiddle, opener, targetPlayer, power, args);
+			case SHIFT_LEFT -> processClickSpell(spellOnSneakLeft, opener, targetPlayer, power, args);
+			case SHIFT_RIGHT -> processClickSpell(spellOnSneakRight, opener, targetPlayer, power, args);
 		}
 
 		if (variableTarget != null && !variableTarget.isEmpty() && MagicSpells.getVariableManager().getVariable(variableTarget) != null)

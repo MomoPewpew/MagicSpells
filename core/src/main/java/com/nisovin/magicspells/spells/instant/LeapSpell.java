@@ -102,7 +102,7 @@ public class LeapSpell extends InstantSpell {
 		if (event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
 		LivingEntity livingEntity = (LivingEntity) event.getEntity();
 		if (!jumping.remove(livingEntity.getUniqueId())) return;
-		if (landSpell != null) landSpell.cast(livingEntity, 1F);
+		if (landSpell != null) landSpell.subcast(livingEntity, 1f, null);
 		playSpellEffects(EffectPosition.TARGET, livingEntity.getLocation(), new SpellData(livingEntity));
 		if (cancelDamage) event.setCancelled(true);
 	}

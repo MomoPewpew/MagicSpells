@@ -164,8 +164,8 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 			return;
 		}
 
-		if (count % spellInterval == 0 && spellOnTick != null && spellOnTick.isTargetedLocationSpell()) {
-			spellOnTick.castAtLocation(caster, currentLocation.clone(), power);
+		if (count % spellInterval == 0 && spellOnTick != null) {
+			spellOnTick.subcast(caster, currentLocation.clone(), power, args);
 		}
 
 		for (Entity e : entity.getNearbyEntities(count > entityHitDelay ? hitRadius : 0.1, count > entityHitDelay ? vertHitRadius : 0.1, count > entityHitDelay ? hitRadius : 0.1)) {
@@ -173,18 +173,20 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 			if (!targetList.canTarget(caster, e)) continue;
 
 			SpellTargetEvent event = new SpellTargetEvent(spell, caster, target, power, args);
-			EventUtil.call(event);
-			if (!event.isCancelled()) {
-				if (spell != null) spell.playEffects(EffectPosition.TARGET, event.getTarget(), data);
-				if (spellOnHitEntity != null) spellOnHitEntity.castAtEntity(caster, event.getTarget(), event.getPower());
-				if (stopOnHitEntity) stop();
-				return;
-			}
+			if (!event.callEvent()) continue;
+
+			target = event.getTarget();
+			float subPower = event.getPower();
+
+			if (spell != null) spell.playEffects(EffectPosition.TARGET, target, new SpellData(caster, target, subPower, args));
+			if (spellOnHitEntity != null) spellOnHitEntity.subcast(caster, target, subPower, args);
+			if (stopOnHitEntity) stop();
+			return;
 		}
 
 		if (entity.isOnGround()) {
 			if (spellOnHitGround != null && !groundSpellCasted) {
-				spellOnHitGround.castAtLocation(caster, entity.getLocation(), power);
+				spellOnHitGround.subcast(caster, entity.getLocation(), power, args);
 				groundSpellCasted = true;
 			}
 			if (stopOnHitGround) {
@@ -192,7 +194,7 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 				return;
 			}
 			if (!landed) MagicSpells.scheduleDelayedTask(() -> {
-				if (spellOnDelay != null) spellOnDelay.castAtLocation(caster, entity.getLocation(), power);
+				if (spellOnDelay != null) spellOnDelay.subcast(caster, entity.getLocation(), power, args);
 				stop();
 			}, spellDelay);
 			landed = true;

@@ -13,12 +13,13 @@ import com.nisovin.magicspells.spelleffects.SpellEffect.SpellEffectActiveChecker
 public class BuffEffectlibTracker extends AsyncEffectTracker implements Runnable {
 
 	private final Effect effectlibEffect;
-	private final SpellData data;
+
+	private Location entityLoc;
+
+	private Effect modifiedEffect;
 
 	public BuffEffectlibTracker(Entity entity, SpellEffectActiveChecker checker, SpellEffect effect, SpellData data) {
 		super(entity, checker, effect, data);
-
-		this.data = data;
 
 		effectlibEffect = effect.playEffectLib(entity.getLocation(), data);
 		if (effectlibEffect != null) effectlibEffect.infinite();
@@ -31,11 +32,11 @@ public class BuffEffectlibTracker extends AsyncEffectTracker implements Runnable
 			return;
 		}
 
-		Location entityLoc = effect.applyOffsets(entity.getLocation(), data);
+		entityLoc = effect.applyOffsets(entity.getLocation(), data);
 
 		effectlibEffect.setLocation(entityLoc);
 		if (effectlibEffect instanceof ModifiedEffect) {
-			Effect modifiedEffect = ((ModifiedEffect) effectlibEffect).getInnerEffect();
+			modifiedEffect = ((ModifiedEffect) effectlibEffect).getInnerEffect();
 			if (modifiedEffect != null) modifiedEffect.setLocation(entityLoc);
 		}
 	}

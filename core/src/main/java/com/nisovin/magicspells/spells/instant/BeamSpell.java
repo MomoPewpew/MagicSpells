@@ -113,7 +113,7 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell, Ta
 		}
 
 		endSpell = new Subspell(endSpellName);
-		if (!endSpell.process() || !endSpell.isTargetedLocationSpell()) {
+		if (!endSpell.process()) {
 			if (!endSpellName.isEmpty())
 				MagicSpells.error("BeamSpell '" + internalName + "' has an invalid spell-on-end defined!");
 
@@ -121,7 +121,7 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell, Ta
 		}
 
 		travelSpell = new Subspell(travelSpellName);
-		if (!travelSpell.process() || !travelSpell.isTargetedLocationSpell()) {
+		if (!travelSpell.process()) {
 			if (!travelSpellName.isEmpty())
 				MagicSpells.error("BeamSpell '" + internalName + "' has an invalid spell-on-travel defined!");
 
@@ -129,7 +129,7 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell, Ta
 		}
 
 		groundSpell = new Subspell(groundSpellName);
-		if (!groundSpell.process() || !groundSpell.isTargetedLocationSpell()) {
+		if (!groundSpell.process()) {
 			if (!groundSpellName.isEmpty())
 				MagicSpells.error("BeamSpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
 
@@ -137,7 +137,7 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell, Ta
 		}
 
 		entityLocationSpell = new Subspell(entityLocationSpellName);
-		if (!entityLocationSpell.process() || !entityLocationSpell.isTargetedLocationSpell()) {
+		if (!entityLocationSpell.process()) {
 			if (!entityLocationSpellName.isEmpty())
 				MagicSpells.error("BeamSpell '" + internalName + "' has an invalid spell-on-entity-location defined!");
 
@@ -296,13 +296,13 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell, Ta
 			//check block collision
 			if (!isTransparent(loc.getBlock())) {
 				playSpellEffects(EffectPosition.DISABLED, loc, data);
-				if (groundSpell != null) groundSpell.castAtLocation(caster, loc, power);
+				if (groundSpell != null) groundSpell.subcast(caster, loc, power, args);
 				if (stopOnHitGround) break;
 			}
 
 			playSpellEffects(EffectPosition.SPECIAL, loc, data);
 
-			if (travelSpell != null) travelSpell.castAtLocation(caster, loc, power);
+			if (travelSpell != null) travelSpell.subcast(caster, loc, power, args);
 
 			//check entities in the beam range
 			for (LivingEntity e : loc.getNearbyLivingEntities(hitRadius, verticalHitRadius)) {
@@ -314,12 +314,8 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell, Ta
 
 				LivingEntity entity = event.getTarget();
 
-				if (hitSpell != null) {
-					if (hitSpell.isTargetedEntitySpell()) hitSpell.castAtEntity(caster, entity, event.getPower());
-					else if (hitSpell.isTargetedLocationSpell()) hitSpell.castAtLocation(caster, entity.getLocation(), event.getPower());
-				}
-
-				if (entityLocationSpell != null) entityLocationSpell.castAtLocation(caster, loc, power);
+				if (hitSpell != null) hitSpell.subcast(caster, entity, event.getPower(), args);
+				if (entityLocationSpell != null) entityLocationSpell.subcast(caster, loc, power, args);
 
 				playSpellEffects(EffectPosition.TARGET, entity, data);
 				playSpellEffectsTrail(caster.getLocation(), entity.getLocation(), data);
@@ -332,7 +328,7 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell, Ta
 		//end of the beam
 		if (!zoneManager.willFizzle(loc, this) && d >= maxDistance) {
 			playSpellEffects(EffectPosition.DELAYED, loc, data);
-			if (endSpell != null) endSpell.castAtLocation(caster, loc, power);
+			if (endSpell != null) endSpell.subcast(caster, loc, power, args);
 		}
 	}
 

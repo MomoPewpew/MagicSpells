@@ -220,11 +220,7 @@ public class RitualSpell extends InstantSpell {
 
 			if (interrupted) {
 				stop(strRitualInterrupted);
-				if (spellOnInterrupt != null && caster.isValid()) {
-					if (spellOnInterrupt.isTargetedLocationSpell())
-						spellOnInterrupt.castAtLocation(caster, caster.getLocation(), power);
-					else spellOnInterrupt.cast(caster, power);
-				}
+				if (spellOnInterrupt != null && caster.isValid()) spellOnInterrupt.subcast(caster, caster.getLocation(), power, args);
 			}
 
 			if (duration >= ritualDuration) {

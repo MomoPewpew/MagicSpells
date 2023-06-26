@@ -93,6 +93,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private boolean noAI;
 	private boolean gravity;
 	private boolean removeAI;
+	private boolean setOwner;
 	private boolean removeMob;
 	private boolean invulnerable;
 	private boolean useCasterName;
@@ -193,6 +194,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 		noAI = getConfigBoolean("no-ai", false);
 		gravity = getConfigBoolean("gravity", true);
+		setOwner = getConfigBoolean("set-owner", false);
 		removeAI = getConfigBoolean("remove-ai", false);
 		removeMob = getConfigBoolean("remove-mob", true);
 		invulnerable = getConfigBoolean("invulnerable", false);
@@ -419,7 +421,6 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private void spawnMob(LivingEntity caster, Location source, Location loc, LivingEntity target, float power, String[] args) {
 		if (entityData == null || entityData.getEntityType() == null) return;
-		if (entityData.isPlayer()) return;
 
 		loc.setYaw((float) (JdkMath.random() * 360));
 		LivingEntity entity = (LivingEntity) entityData.spawn(
@@ -499,9 +500,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private void prepMob(LivingEntity caster, LivingEntity target, Entity entity, float power, String[] args) {
 		entity.setGravity(gravity);
 
-		if (entityData.isTamed() && entity instanceof Tameable && caster != null && caster instanceof Player) {
-			((Tameable) entity).setOwner((Player) caster);
-		}
+		if (setOwner && entity instanceof Tameable tameable && tameable.isTamed() && caster instanceof AnimalTamer tamer)
+			tameable.setOwner(tamer);
 
 		if (entity instanceof Enderman) {
 			if (mainHandItem != null && !BlockUtils.isAir(mainHandItem.getType())) {

@@ -6,6 +6,8 @@ import org.bukkit.entity.LivingEntity;
 import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.variables.Variable;
+import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -19,7 +21,8 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 	private static final int HASH_LENGTH = 40;
 
 	private final String url;
-	private final String hash;
+	private String hash;
+	private final String hashVariable;
 	private final Component prompt;
 	private final boolean required;
 
@@ -28,6 +31,7 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 
 		url = getConfigString("url", null);
 		hash = getConfigString("hash", null);
+		hashVariable = getConfigString("hash-variable", null);
 		prompt = Util.getMiniMessage(getConfigString("prompt", ""));
 		required = getConfigBoolean("required", false);
 	}
@@ -36,14 +40,31 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 	public void initialize() {
 		super.initialize();
 
+		if (hash != null && hashVariable != null) {
+			MagicSpells.error("ResourcePackSpell '" + internalName + "' has both a hash and a hash-variable defined. The hash will be used.");
+		}
+
 		if (hash != null && hash.length() != HASH_LENGTH) {
 			MagicSpells.error("ResourcePackSpell '" + internalName + "' has an incorrect hash length defined: '" + hash.length() + "' / " + HASH_LENGTH + ".");
+		}
+	}
+
+	private void parseHashVariable() {
+		if (hash == null && hashVariable != null) {
+			Variable var = MagicSpells.getVariableManager().getVariable(hashVariable);
+
+			if (var != null && var instanceof GlobalStringVariable gvar) {
+				hash = gvar.getStringValue((String) null);
+			} else {
+				MagicSpells.error("ResourcePackSpell '" + internalName + "' has an incorrect hash-var defined: '" + hashVariable + "'. The defined variable must be a globalstring variable.");
+			}
 		}
 	}
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
+			this.parseHashVariable();
 			TargetInfo<Player> info = getTargetedPlayer(caster, power, args);
 			if (info.noTarget()) return noTarget(caster, args, info);
 			Player target = info.target();
@@ -67,6 +88,8 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
+		
+		this.parseHashVariable();
 
 		try {
 			player.setResourcePack(url, hash, required, prompt);
@@ -87,6 +110,8 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
+		
+		this.parseHashVariable();
 
 		try {
 			player.setResourcePack(url, hash, required, prompt);

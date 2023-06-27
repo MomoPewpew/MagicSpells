@@ -592,7 +592,7 @@ public class VariableManager {
 
 	public String processVariableMods(String var, VariableMod mod, Player playerToMod, Player caster, Player target, float power, String[] args) {
 		if (mod == null) return 0 + "";
-		if (playerToMod == null) return 0 + "";
+		//if (playerToMod == null) return 0 + "";
 
 		Variable variable = getVariable(var);
 		if (variable == null) return 0 + "";
@@ -609,7 +609,7 @@ public class VariableManager {
 					String value = mod.getStringValue(caster, target, args);
 
 					if (value.equals(variable.getDefaultStringValue())) reset(variable, playerToMod);
-					else set(variable, playerToMod.getName(), value);
+					else set(variable, playerToMod != null ? playerToMod.getName() : "", value);
 
 					return value;
 				}
@@ -617,7 +617,7 @@ public class VariableManager {
 					String value = variable.getStringValue(caster) + mod.getStringValue(caster, target, args);
 
 					if (value.equals(variable.getDefaultStringValue())) reset(variable, playerToMod);
-					else set(variable, playerToMod.getName(), value);
+					else set(variable, playerToMod != null ? playerToMod.getName() : "", value);
 
 					return value;
 				}
@@ -626,7 +626,7 @@ public class VariableManager {
 					String value = variable.getStringValue(caster).repeat(count);
 
 					if (value.equals(variable.getDefaultStringValue())) reset(variable, playerToMod);
-					else set(variable, playerToMod.getName(), value);
+					else set(variable, playerToMod != null ? playerToMod.getName() : "", value);
 
 					return value;
 				}
@@ -638,7 +638,7 @@ public class VariableManager {
 		if (value == variable.getDefaultValue() && !(variable instanceof MetaVariable)) {
 			reset(variable, playerToMod);
 		} else {
-			set(variable, playerToMod.getName(), value);
+			set(variable, playerToMod != null ? playerToMod.getName() : "", value);
 		}
 
 		return Double.toString(value);

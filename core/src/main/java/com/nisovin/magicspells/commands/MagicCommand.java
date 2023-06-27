@@ -475,17 +475,21 @@ public class MagicCommand extends BaseCommand {
 			if (!MagicSpells.isLoaded()) return;
 			if (noPermission(issuer.getIssuer(), Perm.COMMAND_VARIABLE_SHOW)) return;
 			Variable variable;
-			Player player;
+			Player player = null;
 			if (args.length == 0) throw new InvalidCommandArgument();
 
 			variable = MagicSpells.getVariableManager().getVariable(args[0]);
 			if (variable == null) throw new ConditionFailedException("No matching variable found: '" + args[0] + "'");
 
 			if (args.length == 1) player = getPlayerFromIssuer(issuer);
-			else player = ACFBukkitUtil.findPlayerSmart(issuer, args[1]);
-			if (player == null) return;
+			else if (ACFBukkitUtil.isValidName(args[1])) {
+				player = Bukkit.getPlayer(args[1]);
+				if (player == null || !player.isOnline()) throw new ConditionFailedException("No matching player found: '" + args[1] + "'");
+			}
+			
+			String playerName = player == null ? "-" : player.getName();
 
-			issuer.sendMessage(MagicSpells.getTextColor() + TxtUtil.getPossessiveName(player.getName()) + " variable value for " + args[0] + " is: " + variable.getStringValue(player));
+			issuer.sendMessage(MagicSpells.getTextColor() + TxtUtil.getPossessiveName(playerName) + " variable value for " + args[0] + " is: " + variable.getStringValue(player));
 		}
 
 		@Subcommand("modify")

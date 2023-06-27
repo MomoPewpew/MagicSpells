@@ -69,7 +69,7 @@ public abstract class Variable {
 	public abstract double getValue(String player);
 
 	public final void reset(Player player) {
-		reset(player.getName());
+		reset(player != null ? player.getName() : "");
 	}
 
 	public abstract void reset(String player);
@@ -79,7 +79,7 @@ public abstract class Variable {
 	}
 
 	public String getStringValue(Player player) {
-		return getStringValue(player.getName());
+		return getStringValue(player != null ? player.getName() : "");
 	}
 
 	public String getStringValue(String player) {

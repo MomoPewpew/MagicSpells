@@ -659,6 +659,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				if (PasteSpell.this.displayAnimation) this.moveBlock(block, data, face.getModX(), face.getModY(), face.getModZ(), duration, true);
 
 				MagicSpells.scheduleDelayedTask(() -> {
+					if(this.stop) return;
 					to.setBlockData(data);
 					this.placeBlock(to, pos.getX(), pos.getY(), pos.getZ());
 					this.workingBlocks--;
@@ -773,17 +774,19 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 			if (keepOld) {
 				MagicSpells.scheduleDelayedTask(() -> {
-		            if (this.caster instanceof Player player) {
-						BlockState previousState = b.getState();
-						MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(b, previousState, block, player.getInventory().getItemInMainHand(), player, true);
-						EventUtil.call(event);
-						if (!event.isCancelled()) {
-				            b.setBlockData(data);
-				            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
+		            if(!this.stop){
+						if (this.caster instanceof Player player) {
+							BlockState previousState = b.getState();
+							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(b, previousState, block, player.getInventory().getItemInMainHand(), player, true);
+							EventUtil.call(event);
+							if (!event.isCancelled()) {
+								b.setBlockData(data);
+								b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
+							}
+						} else {
+							b.setBlockData(data);
+							b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
 						}
-					} else {
-						b.setBlockData(data);
-			            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
 					}
 				}, duration + 2);
 			}

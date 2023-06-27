@@ -1,6 +1,9 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.entity.LivingEntity;
 
 import net.kyori.adventure.text.Component;
@@ -61,6 +64,13 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 		}
 	}
 
+	@EventHandler(ignoreCancelled = false)
+	private void onResourcePack(PlayerResourcePackStatusEvent event) {
+		if (required && event.getStatus().equals(PlayerResourcePackStatusEvent.Status.DECLINED) && !event.getPlayer().hasPermission("magicspells.bypassresourcepacks")) {
+			event.getPlayer().kick(Component.text("Please enable resource packs in your server settings"));
+		}
+	}
+
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
@@ -70,7 +80,7 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 			Player target = info.target();
 
 			try {
-				target.setResourcePack(url, hash, required, prompt);
+				target.setResourcePack(url, hash, target.hasPermission("magicspells.bypassresourcepacks") ? false : required, prompt);
 			} catch (IllegalArgumentException e) {
 				DebugHandler.debugIllegalArgumentException(e);
 				return PostCastAction.ALREADY_HANDLED;
@@ -92,7 +102,7 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 		this.parseHashVariable();
 
 		try {
-			player.setResourcePack(url, hash, required, prompt);
+			player.setResourcePack(url, hash, player.hasPermission("magicspells.bypassresourcepacks") ? false : required, prompt);
 		} catch (IllegalArgumentException e) {
 			DebugHandler.debugIllegalArgumentException(e);
 			return false;
@@ -114,7 +124,7 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 		this.parseHashVariable();
 
 		try {
-			player.setResourcePack(url, hash, required, prompt);
+			player.setResourcePack(url, hash, player.hasPermission("magicspells.bypassresourcepacks") ? false : required, prompt);
 		} catch (IllegalArgumentException e) {
 			DebugHandler.debugIllegalArgumentException(e);
 			return false;

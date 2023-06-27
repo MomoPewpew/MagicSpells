@@ -715,7 +715,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 							if (this.workingAir < 1) {
 								this.reInitializeWithdraw();
 							}
-						}, duration + 1);
+						}, buildIntervalRandomness + buildInterval);
 					}
 
 					MagicSpells.scheduleDelayedTask(() -> {

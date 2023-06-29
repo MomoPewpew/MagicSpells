@@ -3,7 +3,6 @@ package com.nisovin.magicspells.spelleffects.effecttypes;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
-import net.kyori.adventure.title.TitlePart;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -130,17 +129,17 @@ public class FontAnimationEffect extends SpellEffect {
 		public void run() {
 			if (this.iterations < this.durationTicks) {
 				if (this.reverse) {
-					if (this.nextFrame == this.floorFrame - 1) {
+					if (this.nextFrame == this.floorFrame) {
 						this.nextFrame = this.ceilingFrame;
-					} else if (this.nextFrame < 0) {
+					} else if (this.nextFrame <= 0) {
 						this.nextFrame = 999;
 					} else {
 						this.nextFrame--;
 					}
 				} else {
-					if (this.nextFrame == this.ceilingFrame + 1) {
+					if (this.nextFrame == this.ceilingFrame) {
 						this.nextFrame = this.floorFrame;
-					} else if (this.nextFrame > 999) {
+					} else if (this.nextFrame >= 999) {
 						this.nextFrame = 0;
 					} else {
 						this.nextFrame++;
@@ -154,7 +153,7 @@ public class FontAnimationEffect extends SpellEffect {
 						this.target.sendActionBar(message);
 						break;
 					default:
-						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(0), milisOfTicks(20), milisOfTicks(0))));
+						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(0), milisOfTicks(20), milisOfTicks(20))));
 				}
 
 				this.iterations++;

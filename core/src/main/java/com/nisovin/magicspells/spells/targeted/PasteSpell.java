@@ -5,14 +5,10 @@ import java.util.*;
 import java.io.IOException;
 import java.io.FileInputStream;
 
-import com.nisovin.magicspells.util.IntMap;
 import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
-import com.sk89q.worldguard.bukkit.BukkitUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -25,7 +21,6 @@ import org.bukkit.entity.Display;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.util.BlockVector;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
@@ -56,12 +51,10 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
 public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	public class PasteSpellRecord {
-		private String spellName;
 		Map<String, List<Builder>> playerPastes;
 		Map<String, List<EditSession>> playerSessions;
 
-		public PasteSpellRecord(String spellName){
-			this.spellName = spellName;
+		public PasteSpellRecord(){
 			this.playerPastes = new HashMap<>();
 			this.playerSessions = new HashMap<>();
 		}
@@ -101,11 +94,14 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		public void cleanAllBuilders(){
 			playerPastes.forEach((uuid, builderList) -> {
 				for(Builder builder : builderList){
-					builder.cleanup();
 					if(PasteSpell.this.removePaste && !builder.undone){
 						builder.clipboard = builder.ogClipboard;
 						builder.parseClipboard();
-						builder.undoInstant();
+						if (builder.instantUndo || !builder.built) {
+							builder.undoInstant();
+						} else {
+							builder.startBuilder();
+						}
 					}
 				}
 			});
@@ -116,11 +112,14 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			List<Builder> playerBuilders = playerPastes.get(uuid);
 			if(playerBuilders != null){
 				for(Builder builder : playerBuilders){
-					builder.cleanup();
 					if(PasteSpell.this.removePaste && !builder.undone){
 						builder.clipboard = builder.ogClipboard;
 						builder.parseClipboard();
-						builder.undoInstant();
+						if (builder.instantUndo || !builder.built) {
+							builder.undoInstant();
+						} else {
+							builder.startBuilder();
+						}
 					}
 				}
 			}
@@ -179,7 +178,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	public PasteSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
-		spellRecords.put(spellName, new PasteSpellRecord(spellName));
+		spellRecords.put(spellName, new PasteSpellRecord());
 
 		this.spellName = spellName;
 
@@ -198,7 +197,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		pasteAir = getConfigBoolean("paste-air", false);
 		dismantleFirst = getConfigBoolean("dismantle-first", false);
-		removePaste = getConfigBoolean("remove-paste", true);
+		removePaste = getConfigInt("undo-delay", 0) > 0 ? true : getConfigBoolean("remove-paste", true);
 		pasteAtCaster = getConfigBoolean("paste-at-caster", false);
 		displayAnimation = getConfigBoolean("display-animation", true);
 		playBlockBreakEffect = getConfigBoolean("play-block-break-effect", true);
@@ -261,7 +260,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			session.undo(session);
 		}
 		for (Builder builder : builders) {
-			builder.cleanup();
 			if (removePaste && !builder.undone) {
                 builder.clipboard = builder.ogClipboard;
                 builder.parseClipboard();
@@ -330,7 +328,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 			int undoDelay = this.undoDelay.get(caster, null, power, args);
 
-			if (removePaste || undoDelay > 0) sessions.add(editSession);
+			if (removePaste) sessions.add(editSession);
 			spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), editSession);
 
 			if (undoDelay > 0) {
@@ -595,9 +593,9 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				MagicSpells.scheduleDelayedTask(() ->{
 					this.clipboard = this.ogClipboard;
 					this.parseClipboard();
-					if(this.instantUndo){
+					if (this.instantUndo) {
 						this.undoInstant();
-					}else {
+					} else {
 						this.startBuilder();
 					}
 				}, this.undoDelay);
@@ -778,6 +776,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    }
 
         private boolean undoInstant() {
+        	this.stop = true;
+        	for (BlockDisplay ent : this.blockDisplays) {
+        		if (ent != null && ent.isValid()) ent.remove();
+        	}
             try (EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(BukkitAdapter.adapt(target.getWorld()), -1)) {
                 Operation operation = new ClipboardHolder(this.clipboard)
                         .createPaste(editSession)
@@ -791,13 +793,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
             }
 
             return true;
-        }
-
-        public void cleanup() {
-        	this.stop = true;
-        	for (BlockDisplay ent : this.blockDisplays) {
-        		if (ent != null && ent.isValid()) ent.remove();
-        	}
         }
 	}
 }

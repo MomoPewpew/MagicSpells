@@ -566,7 +566,9 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		private void reInitialize() {
 	        if (this.blockVectors.size() > 0) {
-	        	this.intialize(this.blockVectors.get(0));
+				for (int n = 0; n < Math.min(this.blockVectors.size(), 5); n++) {
+	        		this.intialize(this.blockVectors.get(n));
+				}
 	        } else if (this.airVectors.isEmpty()) {
 	        	this.finalise();
 	        }
@@ -574,7 +576,9 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		private void reInitializeWithdraw() {
 	        if (this.airVectors.size() > 0) {
-	        	this.intializeWithdraw(this.airVectors.get(0));
+				for (int n = 0; n < Math.min(this.airVectors.size(), 5); n++) {
+	        		this.intializeWithdraw(this.airVectors.get(n));
+				}
 			} else if (PasteSpell.this.dismantleFirst && !this.built) {
 	        	this.parseClipboard();
     	        if (this.blockVectors.size() > 0) this.firstBuildInit(this.clipboard.getOrigin());

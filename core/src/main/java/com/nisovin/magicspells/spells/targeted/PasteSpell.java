@@ -567,52 +567,19 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 
 		private void reInitialize() {
-	        BlockVector3 origin = this.clipboard.getOrigin();
-
-			double closestDistanceSq = 0;
-			BlockVector3 closestPos = null;
-
-	        for (BlockVector3 pos : this.blockVectors) {
-	        	double distanceX = pos.getX() - origin.getX();
-	        	double distanceY = pos.getY() - origin.getY();
-	        	double distanceZ = pos.getZ() - origin.getZ();
-	        	double distanceSq = distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
-
-	        	if (closestPos == null || distanceSq < closestDistanceSq) {
-	        		closestDistanceSq = distanceSq;
-	        		closestPos = pos;
-	        	}
-			}
-
-	        if (closestPos != null) {
-	        	this.intialize(closestPos);
+	        if (this.blockVectors.size() > 0) {
+	        	this.intialize(this.blockVectors.get(0));
 	        } else if (this.airVectors.isEmpty()) {
 	        	this.finalise();
 	        }
 		}
 
 		private void reInitializeWithdraw() {
-	        BlockVector3 origin = this.clipboard.getOrigin();
-
-			double furthestDistanceSq = 0;
-			BlockVector3 furthestPos = null;
-
-	        for (BlockVector3 pos : this.airVectors) {
-	        	double distanceX = pos.getX() - origin.getX();
-	        	double distanceY = pos.getY() - origin.getY();
-	        	double distanceZ = pos.getZ() - origin.getZ();
-	        	double distanceSq = distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
-
-	        	if (furthestPos == null || distanceSq > furthestDistanceSq) {
-	        		furthestDistanceSq = distanceSq;
-	        		furthestPos = pos;
-	        	}
-			}
-
-	        if (furthestPos != null) this.intializeWithdraw(furthestPos);
-	        else if (PasteSpell.this.dismantleFirst && !this.built) {
+	        if (this.airVectors.size() > 0) {
+	        	this.intializeWithdraw(this.airVectors.get(0));
+			} else if (PasteSpell.this.dismantleFirst && !this.built) {
 	        	this.parseClipboard();
-    	        if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
+    	        if (this.blockVectors.size() > 0) this.firstBuildInit(this.clipboard.getOrigin());
 	        } else if (this.blockVectors.isEmpty()) {
 	        	this.finalise();
 	        }

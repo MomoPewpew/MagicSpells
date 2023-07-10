@@ -43,7 +43,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 
 		pointBlank = getConfigBoolean("point-blank", false);
 		stopOnFail = getConfigBoolean("stop-on-fail", true);
-		passTargeting = getConfigBoolean("pass-targeting", false);
+		passTargeting = getConfigBoolean("pass-targeting", true);
 		requireEntityTarget = getConfigBoolean("require-entity-target", false);
 		castRandomSpellInstead = getConfigBoolean("cast-random-spell-instead", false);
 	}

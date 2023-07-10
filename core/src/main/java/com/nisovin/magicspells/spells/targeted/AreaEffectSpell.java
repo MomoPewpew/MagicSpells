@@ -60,7 +60,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		pointBlank = getConfigBoolean("point-blank", true);
 		circleShape = getConfigBoolean("circle-shape", false);
 		useProximity = getConfigBoolean("use-proximity", false);
-		passTargeting = getConfigBoolean("pass-targeting", false);
+		passTargeting = getConfigBoolean("pass-targeting", true);
 		failIfNoTargets = getConfigBoolean("fail-if-no-targets", true);
 		reverseProximity = getConfigBoolean("reverse-proximity", false);
 		spellSourceInCenter = getConfigBoolean("spell-source-in-center", false);

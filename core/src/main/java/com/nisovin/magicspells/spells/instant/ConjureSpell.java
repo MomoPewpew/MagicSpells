@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import net.kyori.adventure.text.Component;
 
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.ChatColor;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Item;
@@ -17,6 +18,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -66,6 +68,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	private boolean powerAffectsQuantity;
 	private boolean forceUpdateInventory;
 	private boolean calculateDropsIndividually;
+	private boolean saveConjurerName;
 
 	private List<String> itemList;
 
@@ -100,6 +103,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		powerAffectsQuantity = getConfigBoolean("power-affects-quantity", false);
 		forceUpdateInventory = getConfigBoolean("force-update-inventory", true);
 		calculateDropsIndividually = getConfigBoolean("calculate-drops-individually", true);
+		saveConjurerName = getConfigBoolean("save-conjurer-name", true);
 
 		itemList = getConfigStringList("items", null);
 
@@ -245,8 +249,15 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 		Location loc = player.getEyeLocation().add(player.getLocation().getDirection());
 		boolean updateInv = false;
-		for (ItemStack item : items) {
-			if (item == null) continue;
+		for (ItemStack itemOrg : items) {
+			if (itemOrg == null) continue;
+			ItemStack item = itemOrg.clone();
+
+			if (saveConjurerName) {
+				ItemMeta meta = item.getItemMeta();
+				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING, player.getName());
+				item.setItemMeta(meta);
+			}
 
 			boolean added = false;
 			PlayerInventory inv = player.getInventory();

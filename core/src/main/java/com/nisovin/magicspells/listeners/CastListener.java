@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -12,6 +13,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.EventPriority;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.player.PlayerAnimationType;
@@ -181,7 +184,7 @@ public class CastListener implements Listener {
 
 		if (spell instanceof BowSpell bowSpell) {
 			if (bowSpell.canCastWithItem() && bowSpell.isBindRequired() && checkGlobalCooldown(player, spell)) bowSpell.handleBowCast(event);
-		} else castSpell(player, spell);
+		} else castSpell(player, spell, bow);
 
 		event.getProjectile().setMetadata("bow-draw-strength", new FixedMetadataValue(plugin, event.getForce()));
 	}
@@ -193,15 +196,20 @@ public class CastListener implements Listener {
 		Spellbook spellbook = MagicSpells.getSpellbook(player);
 		Spell spell = spellbook.getActiveSpell(inHand);
 
-		castSpell(player, spell);
+		castSpell(player, spell, inHand);
 	}
 
-	private void castSpell(Player player, Spell spell) {
+	private void castSpell(Player player, Spell spell, ItemStack item) {
 		if (spell == null || !spell.canCastWithItem()) return;
 		if (!checkGlobalCooldown(player, spell)) return;
 
 		// Cast spell
-		spell.cast(player);
+		PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
+		String[] args = null;
+		if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
+			args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
+		}
+		spell.cast(player, 1.0F, args);
 	}
 
 	private boolean checkGlobalCooldown(Player player, Spell spell) {

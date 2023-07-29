@@ -204,10 +204,12 @@ public class CastListener implements Listener {
 		if (!checkGlobalCooldown(player, spell)) return;
 
 		// Cast spell
-		PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
 		String[] args = null;
-		if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
-			args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
+		if (item != null && item.hasItemMeta()) {
+			PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
+			if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
+				args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
+			}
 		}
 		spell.cast(player, 1.0F, args);
 	}

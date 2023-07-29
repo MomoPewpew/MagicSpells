@@ -492,7 +492,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		entities.add(entity);
 		if (duration > 0) {
 			MagicSpells.scheduleDelayedTask(() -> {
-				if(!mountList.isEmpty()){
+				if(mountList != null && !mountList.isEmpty()){
 					//Removing the mounts of the entity is removed
 					Entity _riding = entity.getVehicle();
 					while(_riding != null){
@@ -643,7 +643,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			return;
 		}
 		if (removeMob) {
-			if(!mountList.isEmpty()){
+			if(mountList != null && !mountList.isEmpty()){
 				//Removing the mounts of the entity is removed
 				Entity _riding = entity.getVehicle();
 				while(_riding != null){

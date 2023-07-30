@@ -813,7 +813,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				priorityTargetable.sort(Comparator.comparingDouble(e -> e.getLocation().distance(entity.getLocation())));
 
 				for (LivingEntity e : priorityTargetable) {
-					if (targeted.get(e) > SpawnEntitySpell.this.targetPriorityLimit.get(caster, null, power, args)) {
+					if (!targeted.keySet().contains(e) || targeted.get(e) > SpawnEntitySpell.this.targetPriorityLimit.get(caster, null, power, args)) {
 						target = e;
 						break;
 					}

@@ -773,6 +773,10 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			List<LivingEntity> priorityTargetable = new ArrayList<>();
 			Map<LivingEntity, Integer> targeted = new HashMap<>();
 
+			//Iterate over all living entities in the world to build 2 lists and a map:
+			//the "targetable" list which includes all valid targets within targeting range
+			//the "priorityTargetable" list which is a subset that is also within priority range. This is a separate list since for this one it's also important that it gets sorted
+			//the "targeted" map that counts how many mobs are already engaged with each of the entities
 			for (LivingEntity e : entity.getWorld().getLivingEntities()) {
 				double distanceSq = e.getLocation().distanceSquared(entity.getLocation());
 
@@ -804,6 +808,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			LivingEntity target = null;
 			EntityTargetEvent.TargetReason reason = EntityTargetEvent.TargetReason.CLOSEST_ENTITY;
 
+			//Goes through all entities on the priority list from nearest to farthest. If they are engaged by 5 or fewer entities, they will be the target
 			if (!priorityTargetable.isEmpty()) {
 				priorityTargetable.sort(Comparator.comparingDouble(e -> e.getLocation().distance(entity.getLocation())));
 
@@ -815,6 +820,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				}
 			}
 
+			//If no valid target was found on the priority list, pick a random one from the main list
 			if (target == null) {
 				target = targetable.get(random.nextInt(targetable.size()));
 				reason = EntityTargetEvent.TargetReason.RANDOM_TARGET;

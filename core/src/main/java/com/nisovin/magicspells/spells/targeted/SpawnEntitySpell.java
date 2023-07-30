@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -38,11 +39,9 @@ import org.apache.commons.math4.core.jdkmath.JdkMath;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MobUtil;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.EntityData;
-import com.nisovin.magicspells.util.LocationUtil;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -79,6 +78,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private ConfigData<Integer> duration;
 	private ConfigData<Integer> fireTicks;
+	private ConfigData<Integer> targetPriorityLimit;
 	private ConfigData<Integer> targetInterval;
 	private final int spellInterval;
 
@@ -99,7 +99,6 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private boolean useCasterName;
 	private boolean addLookAtPlayerAI;
 	private boolean allowSpawnInMidair;
-	private boolean nameplateFormatting;
 	private boolean cancelAttack;
 	private boolean synchroniseIntervalSpells;
 
@@ -187,6 +186,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		fireTicks = getConfigDataInt("fire-ticks", 0);
 		targetInterval = getConfigDataInt("target-interval", -1);
 		spellInterval = getConfigInt("spell-interval", 20);
+		targetPriorityLimit = getConfigDataInt("target-priority-limit", 5);
 
 		targetRange = getConfigDataDouble("target-range", 20);
 		targetPriorityRange = getConfigDataDouble("target-priority-range", 10);
@@ -764,29 +764,58 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				return;
 			}
 
-			double targetRange = SpawnEntitySpell.this.targetRange.get(caster, null, power, args);
-			List<Entity> list = entity.getNearbyEntities(targetRange, targetRange, targetRange);
+			double targetRangeSq = SpawnEntitySpell.this.targetRange.get(caster, null, power, args);
+			targetRangeSq *= targetRangeSq;
+			double targetPriorityRangeSq = SpawnEntitySpell.this.targetPriorityRange.get(caster, null, power, args);
+			targetPriorityRangeSq *= targetPriorityRangeSq;
+
 			List<LivingEntity> targetable = new ArrayList<>();
-			LivingEntity target = null;
-			double nearestEntityDistance = 0;
-			for (Entity e : list) {
-				if (!(e instanceof LivingEntity)) continue;
+			List<LivingEntity> priorityTargetable = new ArrayList<>();
+			Map<LivingEntity, Integer> targeted = new HashMap<>();
+
+			for (LivingEntity e : entity.getWorld().getLivingEntities()) {
+				double distanceSq = e.getLocation().distanceSquared(entity.getLocation());
+
+				if (distanceSq >= targetRangeSq) continue;
+
+				if (e instanceof Mob && ((targetPriorityRangeSq * 4) > distanceSq)) {
+					LivingEntity eTarget = ((Mob) e).getTarget();
+					if (eTarget != null && eTarget.isValid() && !eTarget.isDead()) {
+						if (targeted.keySet().contains(eTarget)) {
+							targeted.put(eTarget, targeted.get(eTarget) + 1);
+						} else {
+							targeted.put(eTarget, 1);
+						}
+					}
+				}
+
 				if (!validTargetList.canTarget(caster, e)) continue;
-				if (targetModifiers != null && !targetModifiers.check(entity, (LivingEntity) e)) continue;
+				if (targetModifiers != null && !targetModifiers.check(entity, e)) continue;
 
-				targetable.add((LivingEntity) e);
+				targetable.add(e);
 
-				if (target == null || e.getLocation().distanceSquared(entity.getLocation()) < nearestEntityDistance) {
-					target = (LivingEntity) e;
-					nearestEntityDistance = e.getLocation().distanceSquared(entity.getLocation());
+				if (distanceSq <= targetPriorityRangeSq) {
+					priorityTargetable.add(e);
 				}
 			}
 
 			if (targetable.isEmpty()) return;
 
+			LivingEntity target = null;
 			EntityTargetEvent.TargetReason reason = EntityTargetEvent.TargetReason.CLOSEST_ENTITY;
 
-			if (nearestEntityDistance > Math.pow(SpawnEntitySpell.this.targetPriorityRange.get(caster, null, power, args), 2)) {
+			if (!priorityTargetable.isEmpty()) {
+				priorityTargetable.sort(Comparator.comparingDouble(e -> e.getLocation().distance(entity.getLocation())));
+
+				for (LivingEntity e : priorityTargetable) {
+					if (targeted.get(e) > SpawnEntitySpell.this.targetPriorityLimit.get(caster, null, power, args)) {
+						target = e;
+						break;
+					}
+				}
+			}
+
+			if (target == null) {
 				target = targetable.get(random.nextInt(targetable.size()));
 				reason = EntityTargetEvent.TargetReason.RANDOM_TARGET;
 			}

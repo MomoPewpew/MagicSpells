@@ -784,7 +784,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 				if (e instanceof Mob && ((targetPriorityRangeSq * 4) > distanceSq)) {
 					LivingEntity eTarget = ((Mob) e).getTarget();
-					if (eTarget != null && eTarget.isValid() && !eTarget.isDead()) {
+					if (eTarget != null && eTarget.isValid()) {
 						if (targeted.keySet().contains(eTarget)) {
 							targeted.put(eTarget, targeted.get(eTarget) + 1);
 						} else {

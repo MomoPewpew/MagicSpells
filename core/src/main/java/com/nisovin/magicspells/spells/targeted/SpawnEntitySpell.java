@@ -768,6 +768,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			targetRangeSq *= targetRangeSq;
 			double targetPriorityRangeSq = SpawnEntitySpell.this.targetPriorityRange.get(caster, null, power, args);
 			targetPriorityRangeSq *= targetPriorityRangeSq;
+			int targetPriorityLimit = SpawnEntitySpell.this.targetPriorityLimit.get(caster, null, power, args);
 
 			List<LivingEntity> targetable = new ArrayList<>();
 			List<LivingEntity> priorityTargetable = new ArrayList<>();
@@ -782,7 +783,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 				if (distanceSq >= targetRangeSq) continue;
 
-				if (e instanceof Mob && ((targetPriorityRangeSq * 4) > distanceSq)) {
+				if (targetPriorityLimit > 0 && e instanceof Mob && ((targetPriorityRangeSq * 4) > distanceSq)) {
 					LivingEntity eTarget = ((Mob) e).getTarget();
 					if (eTarget != null && eTarget.isValid()) {
 						if (targeted.keySet().contains(eTarget)) {
@@ -813,7 +814,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				priorityTargetable.sort(Comparator.comparingDouble(e -> e.getLocation().distance(entity.getLocation())));
 
 				for (LivingEntity e : priorityTargetable) {
-					if (!targeted.keySet().contains(e) || targeted.get(e) > SpawnEntitySpell.this.targetPriorityLimit.get(caster, null, power, args)) {
+					if (!targeted.keySet().contains(e) || targeted.get(e) > targetPriorityLimit) {
 						target = e;
 						break;
 					}

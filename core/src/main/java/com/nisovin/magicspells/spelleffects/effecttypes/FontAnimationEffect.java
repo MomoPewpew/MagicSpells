@@ -14,6 +14,7 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 
@@ -22,6 +23,7 @@ public class FontAnimationEffect extends SpellEffect {
 	private String fontNameSpace;
 	private String fontName;
 	private String titlePart;
+	private String prefix;
 
 	private int interval;
 	private int durationTicks;
@@ -48,6 +50,8 @@ public class FontAnimationEffect extends SpellEffect {
 		titlePart = config.getString("title-part", "subtitle");
 		if (!titlePart.equals("actionbar")) titlePart = "subtitle";
 
+		prefix = config.getString("prefix", null);
+
 		interval = Math.max(config.getInt("interval", 1), 1);
 		durationTicks = (int) Math.floor(Math.max((config.getInt("duration", 20) / interval), 1));
 		startFrame = Math.max(Math.min(config.getInt("start-frame", 0), 999), 0);
@@ -61,7 +65,7 @@ public class FontAnimationEffect extends SpellEffect {
 
 	@Override
 	protected Runnable playEffectEntity(Entity entity, SpellData data) {
-		if ((entity instanceof Player player)) new FontAnimation(player, fontNameSpace, fontName, titlePart, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeOut, reverse);
+		if ((entity instanceof Player player)) new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeOut, reverse);
 
 		return null;
 	}
@@ -71,6 +75,7 @@ public class FontAnimationEffect extends SpellEffect {
 		private String fontNameSpace;
 		private String fontName;
 		private String titlePart;
+		private String prefix;
 
 		private int durationTicks;
 		private int floorFrame;
@@ -87,12 +92,13 @@ public class FontAnimationEffect extends SpellEffect {
 
 		private ArrayList<Character> list;
 
-		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay, boolean fadeOut, boolean reverse) {
+		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, String prefix, int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay, boolean fadeOut, boolean reverse) {
 			this.target = target;
 
 			this.fontNameSpace = fontNameSpace;
 			this.fontName = fontName;
 			this.titlePart = titlePart;
+			this.prefix = prefix;
 
 			this.durationTicks = durationTicks;
 			this.floorFrame = floorFrame;
@@ -146,7 +152,13 @@ public class FontAnimationEffect extends SpellEffect {
 					}
 				}
 
-				Component message = Component.text(this.list.get(this.nextFrame) + "").font(Key.key(this.fontNameSpace, this.fontName));
+				String strMessage = this.list.get(this.nextFrame) + "";
+
+				if (this.prefix != null) {
+					strMessage = Util.colorize(this.prefix + strMessage);
+				}
+
+				Component message = Component.text(strMessage).font(Key.key(this.fontNameSpace, this.fontName));
 
 				switch (this.titlePart) {
 					case "actionbar":
@@ -176,7 +188,7 @@ public class FontAnimationEffect extends SpellEffect {
 			return Duration.ofMillis(TimeUtil.MILLISECONDS_PER_SECOND * (ticks / TimeUtil.TICKS_PER_SECOND));
 		}
 		
-		//Functioned borrowed from AnimationCore
+		//Function borrowed from AnimationCore
 		private final static String unescapeString(String oldstr) {
 
 			/*

@@ -80,6 +80,7 @@ public class FontAnimationEffect extends SpellEffect {
 		private int durationTicks;
 		private int floorFrame;
 		private int ceilingFrame;
+		private int interval;
 
 		private boolean fadeOut;
 		private boolean reverse;
@@ -103,6 +104,7 @@ public class FontAnimationEffect extends SpellEffect {
 			this.durationTicks = durationTicks;
 			this.floorFrame = floorFrame;
 			this.ceilingFrame = ceilingFrame;
+			this.interval = interval;
 			this.iterations = 0;
 			this.nextFrame = startFrame;
 
@@ -165,10 +167,10 @@ public class FontAnimationEffect extends SpellEffect {
 						this.target.sendActionBar(message);
 						break;
 					case "title":
-						this.target.showTitle(Title.title(message, Component.text(""), Title.Times.times(milisOfTicks(0), milisOfTicks(20), milisOfTicks(20))));
+						this.target.showTitle(Title.title(message, Component.text(""), Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19), milisOfTicks(20))));
 						break;
 					default:
-						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(0), milisOfTicks(20), milisOfTicks(20))));
+						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19), milisOfTicks(20))));
 				}
 
 				this.iterations++;

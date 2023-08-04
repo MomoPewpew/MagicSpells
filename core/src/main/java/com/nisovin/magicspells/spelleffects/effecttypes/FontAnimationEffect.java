@@ -48,7 +48,7 @@ public class FontAnimationEffect extends SpellEffect {
 		}
 
 		titlePart = config.getString("title-part", "subtitle");
-		if (!titlePart.equals("actionbar")) titlePart = "subtitle";
+		if (!titlePart.equals("actionbar") && !titlePart.equals("title")) titlePart = "subtitle";
 
 		prefix = config.getString("prefix", null);
 
@@ -163,6 +163,9 @@ public class FontAnimationEffect extends SpellEffect {
 				switch (this.titlePart) {
 					case "actionbar":
 						this.target.sendActionBar(message);
+						break;
+					case "title":
+						this.target.showTitle(Title.title(message, Component.text(""), Title.Times.times(milisOfTicks(0), milisOfTicks(20), milisOfTicks(20))));
 						break;
 					default:
 						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(0), milisOfTicks(20), milisOfTicks(20))));

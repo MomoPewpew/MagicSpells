@@ -103,7 +103,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		powerAffectsQuantity = getConfigBoolean("power-affects-quantity", false);
 		forceUpdateInventory = getConfigBoolean("force-update-inventory", true);
 		calculateDropsIndividually = getConfigBoolean("calculate-drops-individually", true);
-		saveConjurerName = getConfigBoolean("save-conjurer-name", true);
+		saveConjurerName = getConfigBoolean("save-conjurer-name", false);
 
 		itemList = getConfigStringList("items", null);
 
@@ -253,7 +253,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			if (itemOrg == null) continue;
 			ItemStack item = itemOrg.clone();
 
-			if (saveConjurerName) {
+			if (saveConjurerName == true || item.getMaxStackSize() == 1) {
 				ItemMeta meta = item.getItemMeta();
 				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING, player.getName());
 				item.setItemMeta(meta);

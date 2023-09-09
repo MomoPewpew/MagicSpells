@@ -284,8 +284,25 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	@Override
 	public void turnOff() {
 		for (LivingEntity entity : entities) {
-			entity.remove();
+			List<Entity> forRemoval = new ArrayList<>();
+			Entity _ent = entity;
+			Entity _riding = entity.getVehicle();
+
+			while(!_ent.getPassengers().isEmpty()){
+				forRemoval.add(_ent);
+				_ent = _ent.getPassengers().get(0);
+			}
+			while(_riding != null){
+				forRemoval.add(_riding);
+				_riding = _riding.getVehicle();
+			}
+
+			for(Entity ent : forRemoval){
+				ent.remove();
+			}
+			_ent.remove();
 		}
+
 		ticker.stop();
 		entities.clear();
 		pulsers.clear();

@@ -108,6 +108,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private Subspell spellOnSpawn;
 	private String spellOnSpawnName;
 
+	private Subspell spellOnDeath;
+	private String spellOnDeathName;
+
 	private Subspell intervalSpell;
 	private String intervalSpellName;
 
@@ -209,6 +212,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 		attackSpellName = getConfigString("attack-spell", "");
 		spellOnSpawnName = getConfigString("spell-on-spawn", "");
+		spellOnDeathName = getConfigString("spell-on-death", "");
 		intervalSpellName = getConfigString("interval-spell", "");
 
 		// Attributes
@@ -269,6 +273,15 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				spellOnSpawn = null;
 			}
 			spellOnSpawnName = null;
+		}
+
+		if (!spellOnDeathName.isEmpty()) {
+			spellOnDeath = new Subspell(spellOnDeathName);
+			if (!spellOnDeath.process()) {
+				MagicSpells.error("SpawnEntitySpell '" + internalName + "' has an invalid spell-on-death '" + spellOnDeathName + "' defined!");
+				spellOnDeath = null;
+			}
+			spellOnDeathName = null;
 		}
 
 		if (!intervalSpellName.isEmpty()) {
@@ -501,6 +514,11 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 						_prev.remove();
 					}
 				}
+
+				if (spellOnDeath != null) {
+					spellOnDeath.subcast(entity, entity, power, args);
+				}
+
 				entity.remove();
 				entities.remove(entity);
 			}, duration);
@@ -654,6 +672,10 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 			entities.remove(entity);
 			if (pulsers.containsKey(entity)) pulsers.remove(entity);
+
+			if (spellOnDeath != null) {
+				spellOnDeath.subcast(entity, entity, 1F, new String[1]);
+			}
 		}
 	}
 

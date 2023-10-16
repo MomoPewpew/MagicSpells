@@ -14,6 +14,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -32,6 +33,8 @@ import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.jetbrains.annotations.Nullable;
 
 public class PulserSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -51,7 +54,9 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 	private final boolean cancelOnDeath;
 
 	private final List<String> spellNames;
+	private final List<String> spellNamesOnRightClick;
 	private List<Subspell> spells;
+	private List<Subspell> spellsOnRightClick;
 
 	private final String spellNameOnBreak;
 	private Subspell spellOnBreak;
@@ -83,6 +88,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		cancelOnDeath = getConfigBoolean("cancel-on-death", true);
 
 		spellNames = getConfigStringList("spells", null);
+		spellNamesOnRightClick = getConfigStringList("spells-on-right-click", null);
 		spellNameOnBreak = getConfigString("spell-on-break", "");
 
 		strAtCap = getConfigString("str-at-cap", "You have too many effects at once.");
@@ -96,11 +102,20 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		super.initialize();
 
 		spells = new ArrayList<>();
+		spellsOnRightClick = new ArrayList<>();
 		if (spellNames != null && !spellNames.isEmpty()) {
 			for (String spellName : spellNames) {
 				Subspell spell = new Subspell(spellName);
 				if (!spell.process()) continue;
 				spells.add(spell);
+			}
+		}
+		if(spellNamesOnRightClick != null && !spellNamesOnRightClick.isEmpty()){
+			for (String spellName : spellNamesOnRightClick) {
+				Subspell spell = new Subspell(spellName);
+				if (!spell.process()) continue;
+				spell.setCastMode(Subspell.CastMode.HARD);
+				spellsOnRightClick.add(spell);
 			}
 		}
 
@@ -212,6 +227,25 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		else playSpellEffects(EffectPosition.TARGET, block.getLocation().add(0.5, 0.5, 0.5), power, args);
 	}
 
+	private boolean interactionDebounce = false;
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void onBlockInteract(PlayerInteractEvent event){
+		if(interactionDebounce) return;
+		Player player = event.getPlayer();
+		if(!event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) return;
+
+		Block block = event.getClickedBlock();
+		if(block == null) return;
+
+		Pulser pulser = pulsers.get(block);
+		if(pulser == null) return;
+
+
+		interactionDebounce = true;
+		pulser.pulse(Pulser.ActivationType.CLICK, player);
+		MagicSpells.scheduleDelayedTask(() -> interactionDebounce = false, 5);
+	}
+
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onBlockBreak(BlockBreakEvent event) {
 		Pulser pulser = pulsers.get(event.getBlock());
@@ -290,6 +324,10 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		private final double maxDistanceSq;
 		private final int totalPulses;
 
+		private enum ActivationType {
+			TICK, CLICK;
+		}
+
 		private Pulser(LivingEntity caster, Block block, Location from, float power, String[] args) {
 			this.caster = caster;
 			this.block = block;
@@ -307,9 +345,9 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			maxDistanceSq = maxDistance * maxDistance;
 		}
 
-		private boolean pulse() {
+		private boolean pulse(ActivationType activationType, @Nullable LivingEntity caster) {
 			if (caster == null) {
-				if (material.equals(block.getType()) && block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) return activate();
+				if (material.equals(block.getType()) && block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) return activate(activationType, caster);
 				stop();
 				return true;
 			} else if (caster.isValid()) {
@@ -318,7 +356,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 						stop();
 						return true;
 					}
-					return activate();
+					return activate(activationType, caster);
 				}
 			} else {
 				if (!this.cancelOnDeath) {
@@ -329,10 +367,19 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			return true;
 		}
 
-		private boolean activate() {
+		public boolean activate(ActivationType activationType, @Nullable LivingEntity _caster) {
 			boolean activated = false;
-			for (Subspell spell : spells) {
-				activated = spell.subcast(caster, location, power, args) || activated;
+			LivingEntity spellCaster = caster;
+			if(_caster != null)
+				spellCaster = _caster;
+			if(activationType.equals(ActivationType.TICK)){
+				for (Subspell spell : spells) {
+					activated = spell.subcast(spellCaster, location, power, args) || activated;
+				}
+			}else{
+				for (Subspell spell : spellsOnRightClick){
+					activated = spell.subcast(spellCaster, location, power, args) || activated;
+				}
 			}
 			playSpellEffects(EffectPosition.DELAYED, location, data);
 			if (totalPulses > 0 && (activated || !onlyCountOnSuccess)) {
@@ -372,7 +419,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		@Override
 		public void run() {
 			for (Map.Entry<Block, Pulser> entry : new HashMap<>(pulsers).entrySet()) {
-				boolean remove = entry.getValue().pulse();
+				boolean remove = entry.getValue().pulse(Pulser.ActivationType.TICK, null);
 				if (remove) pulsers.remove(entry.getKey());
 			}
 			if (pulsers.isEmpty()) stop();

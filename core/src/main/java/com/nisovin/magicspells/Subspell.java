@@ -703,6 +703,10 @@ public class Subspell {
 		return success;
 	}
 
+	public void setCastMode(CastMode mode){
+		this.mode = mode;
+	}
+
 	public enum CastMode {
 
 		HARD("hard", "h"),

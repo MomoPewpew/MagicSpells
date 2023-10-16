@@ -18,7 +18,9 @@ import com.nisovin.magicspells.events.SpellCastEvent;
 import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.util.managers.VariableManager;
-
+import com.nisovin.magicspells.variables.Variable;
+import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
+import com.nisovin.magicspells.variables.variabletypes.GlobalVariable;
 import com.google.common.collect.Multimap;
 
 public class VariableListener implements Listener {
@@ -51,13 +53,24 @@ public class VariableListener implements Listener {
 		Multimap<String, VariableMod> varMods = event.getSpell().getVariableModsCast();
 		if (varMods == null || varMods.isEmpty()) return;
 		LivingEntity caster = event.getCaster();
-		if (!(caster instanceof Player player)) return;
 		for (Map.Entry<String, VariableMod> entry : varMods.entries()) {
 			VariableMod mod = entry.getValue();
 			if (mod == null) continue;
 
-			String amount = variableManager.processVariableMods(entry.getKey(), mod, player, player, null, event.getPower(), event.getSpellArgs());
-			MagicSpells.debug(3, "Variable '" + entry.getKey() + "' for player '" + player.getName() + "' modified by " + amount + " as a result of spell cast '" + event.getSpell().getName() + "'");
+			Variable variable = variableManager.getVariable(entry.getKey());
+
+			Player player = null;
+			String playerName = "-";
+
+			if (!(caster instanceof Player)) {
+				if (!(variable instanceof GlobalVariable || variable instanceof GlobalStringVariable)) continue;
+			} else {
+				player = (Player) caster;
+				playerName = player.getName();
+			}
+
+			String amount = variableManager.processVariableMods(variable, mod, player, player, null, event.getPower(), event.getSpellArgs());
+			MagicSpells.debug(3, "Variable '" + entry.getKey() + "' for player '" + playerName + "' modified by " + amount + " as a result of spell cast '" + event.getSpell().getName() + "'");
 		}
 	}
 
@@ -68,13 +81,24 @@ public class VariableListener implements Listener {
 		Multimap<String, VariableMod> varMods = event.getSpell().getVariableModsCasted();
 		if (varMods == null || varMods.isEmpty()) return;
 		LivingEntity caster = event.getCaster();
-		if (!(caster instanceof Player player)) return;
 		for (Map.Entry<String, VariableMod> entry : varMods.entries()) {
 			VariableMod mod = entry.getValue();
 			if (mod == null) continue;
 
-			String amount = variableManager.processVariableMods(entry.getKey(), mod, player, player, null, event.getPower(), event.getSpellArgs());
-			MagicSpells.debug(3, "Variable '" + entry.getKey() + "' for player '" + player.getName() + "' modified by " + amount + " as a result of spell casted '" + event.getSpell().getName() + "'");
+			Variable variable = variableManager.getVariable(entry.getKey());
+
+			Player player = null;
+			String playerName = "-";
+
+			if (!(caster instanceof Player)) {
+				if (!(variable instanceof GlobalVariable || variable instanceof GlobalStringVariable)) continue;
+			} else {
+				player = (Player) caster;
+				playerName = player.getName();
+			}
+
+			String amount = variableManager.processVariableMods(variable, mod, player, player, null, event.getPower(), event.getSpellArgs());
+			MagicSpells.debug(3, "Variable '" + entry.getKey() + "' for player '" + playerName + "' modified by " + amount + " as a result of spell casted '" + event.getSpell().getName() + "'");
 		}
 	}
 
@@ -84,7 +108,6 @@ public class VariableListener implements Listener {
 		Multimap<String, VariableMod> varMods = event.getSpell().getVariableModsTarget();
 		if (varMods == null || varMods.isEmpty()) return;
 		LivingEntity caster = event.getCaster();
-		if (!(caster instanceof Player)) return;
 		Player target = event.getTarget() instanceof Player ? (Player) event.getTarget() : null;
 		if (target == null) return;
 		for (Map.Entry<String, VariableMod> entry : varMods.entries()) {

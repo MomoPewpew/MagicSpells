@@ -532,7 +532,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					}
 				}
 
-				if (spellOnDeath != null) {
+				if (spellOnDeath != null && entity.isValid()) {
 					spellOnDeath.subcast(entity, entity, power, args);
 				}
 

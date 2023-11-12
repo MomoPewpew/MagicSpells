@@ -58,6 +58,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private List<LivingEntity> entities;
 	private final Map<LivingEntity, EntityPulser> pulsers;
+	private static int totalEntities = 0;
 
 	private EntityData entityData;
 
@@ -319,6 +320,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		ticker.stop();
 		entities.clear();
 		pulsers.clear();
+		totalEntities = 0;
 	}
 
 	@Override
@@ -522,6 +524,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		entities.add(entity);
 		if (duration > 0) {
 			MagicSpells.scheduleDelayedTask(() -> {
+				if (entity == null || !entity.isValid()) return;
+
 				if(mountList != null && !mountList.isEmpty()){
 					//Removing the mounts of the entity is removed
 					Entity _riding = entity.getVehicle();
@@ -532,12 +536,13 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					}
 				}
 
-				if (spellOnDeath != null && entity.isValid()) {
+				if (spellOnDeath != null) {
 					spellOnDeath.subcast(entity, entity, power, args);
 				}
 
 				entity.remove();
 				entities.remove(entity);
+				totalEntities--;
 			}, duration);
 		}
 		if (intervalSpell != null && spellInterval > 0) {
@@ -549,6 +554,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				}, duration);
 			}
 		}
+
+		totalEntities++;
 	}
 
 	private void prepMob(LivingEntity caster, LivingEntity target, Entity entity, float power, String[] args) {
@@ -691,8 +698,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			if (pulsers.containsKey(entity)) pulsers.remove(entity);
 
 			if (spellOnDeath != null) {
-				spellOnDeath.subcast(entity, entity, 1F, new String[1]);
+				spellOnDeath.subcast(entity, entity, 1F, new String[0]);
 			}
+			totalEntities--;
 		}
 	}
 
@@ -942,4 +950,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		}
 
 	}
+
+	public static int getTotalEntities() {
+		return totalEntities;
+	}
+
 }

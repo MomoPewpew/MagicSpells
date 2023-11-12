@@ -135,6 +135,7 @@ public class VariableManager {
 		addMetaVariableType("mana_regen", new ManaRegenVariable());
 		addMetaVariableType("world", new WorldVariable());
 		addMetaVariableType("living_entities", new LivingEntitiesVariable());
+		addMetaVariableType("spawned_entities", new SpawnedEntitiesVariable());
 
 		// meta variable attribute types
 		addMetaVariableType("attribute_generic_max_health_base", new AttributeBaseValueVariable("GENERIC_MAX_HEALTH"));

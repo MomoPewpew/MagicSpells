@@ -14,6 +14,7 @@ import com.destroystokyo.paper.entity.ai.MobGoals;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.*;
@@ -23,6 +24,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.EntityEquipment;
@@ -558,7 +560,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		totalEntities++;
 	}
 
-	private void prepMob(LivingEntity caster, LivingEntity target, Entity entity, float power, String[] args) {
+	private void prepMob(LivingEntity caster, LivingEntity target, LivingEntity entity, float power, String[] args) {
 		entity.setGravity(gravity);
 
 		if (setOwner && entity instanceof Tameable tameable && tameable.isTamed() && caster instanceof AnimalTamer tamer)
@@ -600,6 +602,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			entity.customName(nameplateText);
 			entity.setCustomNameVisible(true);
 		}
+
+    	entity.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "PersistenceRequired"), PersistentDataType.BYTE, (byte) 1);
+    	entity.setRemoveWhenFarAway(false);
 	}
 
 	private void createMounts(LivingEntity caster, LivingEntity target, float power, String[] args, LivingEntity head){

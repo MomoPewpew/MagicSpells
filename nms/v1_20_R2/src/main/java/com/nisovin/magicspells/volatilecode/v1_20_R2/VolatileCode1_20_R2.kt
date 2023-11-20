@@ -48,6 +48,9 @@ import net.minecraft.world.level.block.state.properties.BedPart
 
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
 import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
+import net.minecraft.network.Connection
+import net.minecraft.network.protocol.PacketFlow
+import net.minecraft.server.network.CommonListenerCookie
 
 private typealias nmsItemStack = net.minecraft.world.item.ItemStack
 private typealias nmsEntityPose = net.minecraft.world.entity.Pose
@@ -210,9 +213,10 @@ class VolatileCode1_20_R2(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         }
 
         Bukkit.getOnlinePlayers().forEach(action = {
-            val serverPlayer: ServerPlayer = (it as CraftPlayer).handle
+            val serverPlayer: ServerPlayer = (it as CraftPlayer).handle;
 
-            val connection: ServerGamePacketListenerImpl = serverPlayer.connection
+            val connection: ServerGamePacketListenerImpl = serverPlayer.connection;
+            clone.connection = connection;
 
             connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, clone))
             connection.send(ClientboundAddEntityPacket(clone))

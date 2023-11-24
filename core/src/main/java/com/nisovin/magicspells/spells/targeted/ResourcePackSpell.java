@@ -44,7 +44,7 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 		super.initialize();
 
 		if (hash != null && hashVariable != null) {
-			MagicSpells.error("ResourcePackSpell '" + internalName + "' has both a hash and a hash-variable defined. The hash will be used.");
+			MagicSpells.error("ResourcePackSpell '" + internalName + "' has both a hash and a hash-variable defined. The hash-variable will be used.");
 		}
 
 		if (hash != null && hash.length() != HASH_LENGTH) {
@@ -53,7 +53,7 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 	}
 
 	private void parseHashVariable() {
-		if (hash == null && hashVariable != null) {
+		if (hashVariable != null) {
 			Variable var = MagicSpells.getVariableManager().getVariable(hashVariable);
 
 			if (var != null && var instanceof GlobalStringVariable gvar) {

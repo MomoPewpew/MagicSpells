@@ -31,8 +31,9 @@ public class FontAnimationEffect extends SpellEffect {
 	private int floorFrame;
 	private int ceilingFrame;
 	private int delay;
+	private int fadeIn;
+	private int fadeOut;
 
-	private boolean fadeOut;
 	private boolean reverse;
 
 	@Override
@@ -58,14 +59,15 @@ public class FontAnimationEffect extends SpellEffect {
 		floorFrame = Math.max(Math.min(config.getInt("floor-frame", 999), 999), 0);
 		ceilingFrame = Math.max(Math.min(config.getInt("ceiling-frame", 999), 999), 0);
 		delay = Math.max(config.getInt("delay", 0), 0);
+		fadeIn = Math.max(config.getInt("fade-in", 0), 0);
+		fadeOut = Math.max(config.getInt("fade-out", 0), 0);
 
-		fadeOut = config.getBoolean("fade-out", false);
 		reverse = config.getBoolean("reverse", false);
 	}
 
 	@Override
 	protected Runnable playEffectEntity(Entity entity, SpellData data) {
-		if ((entity instanceof Player player)) new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeOut, reverse);
+		if ((entity instanceof Player player)) new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse);
 
 		return null;
 	}
@@ -81,8 +83,9 @@ public class FontAnimationEffect extends SpellEffect {
 		private int floorFrame;
 		private int ceilingFrame;
 		private int interval;
+		private int fadeIn;
+		private int fadeOut;
 
-		private boolean fadeOut;
 		private boolean reverse;
 
 		private int fontAnimationTaskId;
@@ -93,7 +96,7 @@ public class FontAnimationEffect extends SpellEffect {
 
 		private ArrayList<Character> list;
 
-		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, String prefix, int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay, boolean fadeOut, boolean reverse) {
+		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, String prefix, int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay, int fadeIn, int fadeOut, boolean reverse) {
 			this.target = target;
 
 			this.fontNameSpace = fontNameSpace;
@@ -107,8 +110,9 @@ public class FontAnimationEffect extends SpellEffect {
 			this.interval = interval;
 			this.iterations = 0;
 			this.nextFrame = startFrame;
-
+			this.fadeIn = fadeIn;
 			this.fadeOut = fadeOut;
+
 			this.reverse = reverse;
 
 			if (!this.reverse) {
@@ -130,7 +134,41 @@ public class FontAnimationEffect extends SpellEffect {
 			while (from <= until)
 				this.list.add(unescapeString(String.format("\\uE%03d", from++)).charAt(0));
 
-			this.fontAnimationTaskId = MagicSpells.scheduleRepeatingTask(this, delay, interval);
+			if (fadeIn > 0 & !this.titlePart.equals("actionbar")) {
+				int fadeFrame = this.nextFrame;
+
+				if (this.reverse) {
+					if (fadeFrame == this.floorFrame) {
+						fadeFrame = this.ceilingFrame;
+					} else if (fadeFrame <= 0) {
+						fadeFrame = 999;
+					} else {
+						fadeFrame--;
+					}
+				} else {
+					if (fadeFrame == this.ceilingFrame) {
+						fadeFrame = this.floorFrame;
+					} else if (fadeFrame >= 999) {
+						fadeFrame = 0;
+					} else {
+						fadeFrame++;
+					}
+				}
+
+				String strMessage = this.list.get(fadeFrame) + "";
+
+				Component message = Component.text(strMessage).font(Key.key(this.fontNameSpace, this.fontName));
+
+				switch (this.titlePart) {
+					case "title":
+						this.target.showTitle(Title.title(message, Component.text(""), Title.Times.times(milisOfTicks(fadeIn), milisOfTicks(this.interval + 19), milisOfTicks(20))));
+						break;
+					default:
+						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(fadeIn), milisOfTicks(this.interval + 19), milisOfTicks(20))));
+				}
+			}
+
+			this.fontAnimationTaskId = MagicSpells.scheduleRepeatingTask(this, delay + fadeIn, interval);
 		}
 
 		@Override
@@ -167,15 +205,15 @@ public class FontAnimationEffect extends SpellEffect {
 						this.target.sendActionBar(message);
 						break;
 					case "title":
-						this.target.showTitle(Title.title(message, Component.text(""), Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19), milisOfTicks(20))));
+						this.target.showTitle(Title.title(message, Component.text(""), Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19), milisOfTicks(this.iterations == this.durationTicks - 1 ? this.fadeOut : 20))));
 						break;
 					default:
-						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19), milisOfTicks(20))));
+						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19), milisOfTicks(this.iterations == this.durationTicks - 1 ? this.fadeOut : 20))));
 				}
 
 				this.iterations++;
 			} else {
-				if (!this.fadeOut) {
+				if (this.fadeOut < 1) {
 					switch (this.titlePart) {
 						case "actionbar":
 							this.target.sendActionBar(Component.text(""));

@@ -358,6 +358,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		private SpellData data;
 		private long count;
+		private boolean cancelled;
 
 		private Loop(LivingEntity caster, LivingEntity targetEntity, Location targetLocation, float power, String[] args) {
 			this.caster = caster;
@@ -366,11 +367,30 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			this.targetEntity = targetEntity;
 
 			data = new SpellData(caster, targetEntity, power, args);
-			taskId = MagicSpells.scheduleRepeatingTask(this, delay.get(caster, targetEntity, power, args), interval.get(caster, targetEntity, power, args));
 			iterations = LoopSpell.this.iterations.get(caster, targetEntity, power, args);
 
-			long dur = duration.get(caster, targetEntity, power, args);
-			if (dur > 0) MagicSpells.scheduleDelayedTask(this::cancel, dur);
+			long interval = LoopSpell.this.interval.get(data);
+			long delay = LoopSpell.this.delay.get(data);
+
+			if (interval <= 0) {
+				taskId = -1;
+
+				if (delay < 0) {
+					for (int i = 0; i < iterations && !cancelled; i++) run();
+					return;
+				}
+
+				MagicSpells.scheduleDelayedTask(() -> {
+					for (int i = 0; i < iterations && !cancelled; i++) run();
+				}, delay);
+
+				return;
+			}
+
+			taskId = MagicSpells.scheduleRepeatingTask(this, delay, interval);
+
+			long duration = LoopSpell.this.duration.get(data);
+			if (duration > 0) MagicSpells.scheduleDelayedTask(this::cancel, duration);
 		}
 
 		@Override
@@ -486,6 +506,10 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		}
 
 		private void cancel(boolean remove) {
+			if (cancelled) return;
+
+			cancelled = true;
+
 			MagicSpells.cancelTask(taskId);
 
 			if (remove) {

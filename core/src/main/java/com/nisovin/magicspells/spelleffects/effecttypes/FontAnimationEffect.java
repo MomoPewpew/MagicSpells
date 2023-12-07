@@ -100,7 +100,7 @@ public class FontAnimationEffect extends SpellEffect {
 			this.target = target;
 
 			this.fontNameSpace = fontNameSpace;
-			this.fontName = fontName;
+			this.fontName = MagicSpells.doReplacements(fontName, target);;
 			this.titlePart = titlePart;
 			this.prefix = prefix;
 

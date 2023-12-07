@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import java.time.Duration;
@@ -38,7 +39,7 @@ public class FontAnimationEffect extends SpellEffect {
 
 	@Override
 	protected void loadFromConfig(ConfigurationSection config) {
-		String[] name = config.getString("name", "").split(":");
+		String[] name = config.getString("name", "").split(":", 2);
 
 		if (name.length > 1) {
 			fontNameSpace = name[0];
@@ -67,7 +68,7 @@ public class FontAnimationEffect extends SpellEffect {
 
 	@Override
 	protected Runnable playEffectEntity(Entity entity, SpellData data) {
-		if ((entity instanceof Player player)) new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse);
+		if ((entity instanceof Player player)) new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse, data.args());
 
 		return null;
 	}
@@ -83,7 +84,6 @@ public class FontAnimationEffect extends SpellEffect {
 		private int floorFrame;
 		private int ceilingFrame;
 		private int interval;
-		private int fadeIn;
 		private int fadeOut;
 
 		private boolean reverse;
@@ -96,11 +96,12 @@ public class FontAnimationEffect extends SpellEffect {
 
 		private ArrayList<Character> list;
 
-		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, String prefix, int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay, int fadeIn, int fadeOut, boolean reverse) {
+		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, String prefix, int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay, int fadeIn, int fadeOut, boolean reverse, String[] args) {
 			this.target = target;
 
 			this.fontNameSpace = fontNameSpace;
-			this.fontName = MagicSpells.doReplacements(fontName, target);;
+			this.fontName = fontName;
+			this.fontName = MagicSpells.doReplacements(this.fontName, target, target, args);
 			this.titlePart = titlePart;
 			this.prefix = prefix;
 
@@ -110,7 +111,6 @@ public class FontAnimationEffect extends SpellEffect {
 			this.interval = interval;
 			this.iterations = 0;
 			this.nextFrame = startFrame;
-			this.fadeIn = fadeIn;
 			this.fadeOut = fadeOut;
 
 			this.reverse = reverse;

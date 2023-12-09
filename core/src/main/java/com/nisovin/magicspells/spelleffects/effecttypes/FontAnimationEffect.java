@@ -68,7 +68,7 @@ public class FontAnimationEffect extends SpellEffect {
 
 	@Override
 	protected Runnable playEffectEntity(Entity entity, SpellData data) {
-		if ((entity instanceof Player player)) new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse, data.args());
+		if ((entity instanceof Player player)) new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse);
 
 		return null;
 	}
@@ -96,12 +96,12 @@ public class FontAnimationEffect extends SpellEffect {
 
 		private ArrayList<Character> list;
 
-		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, String prefix, int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay, int fadeIn, int fadeOut, boolean reverse, String[] args) {
+		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, String prefix, int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay, int fadeIn, int fadeOut, boolean reverse) {
 			this.target = target;
 
 			this.fontNameSpace = fontNameSpace;
 			this.fontName = fontName;
-			this.fontName = MagicSpells.doReplacements(this.fontName, target, target, args);
+			this.fontName = MagicSpells.doReplacements(this.fontName, target);
 			this.titlePart = titlePart;
 			this.prefix = prefix;
 

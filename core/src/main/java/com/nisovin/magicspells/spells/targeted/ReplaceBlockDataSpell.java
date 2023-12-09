@@ -140,6 +140,9 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 				}
 			}
 		}
+		
+		if (caster != null) playSpellEffects(caster, target, spellData);
+		else playSpellEffects(EffectPosition.TARGET, target, spellData);
 
 		return replaced;
 	}

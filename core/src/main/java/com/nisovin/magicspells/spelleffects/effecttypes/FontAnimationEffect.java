@@ -5,11 +5,12 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -20,6 +21,8 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 
 public class FontAnimationEffect extends SpellEffect {
+
+	private static Map<Player, Integer> taskIdMap = new HashMap<Player, Integer>();
 
 	private String fontNameSpace;
 	private String fontName;
@@ -68,7 +71,15 @@ public class FontAnimationEffect extends SpellEffect {
 
 	@Override
 	protected Runnable playEffectEntity(Entity entity, SpellData data) {
-		if ((entity instanceof Player player)) new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse);
+		if ((entity instanceof Player player)) {
+			if (taskIdMap.containsKey(player)) {
+				MagicSpells.cancelTask(taskIdMap.get(player));
+				taskIdMap.remove(player);
+			}
+
+			FontAnimation fontAnimation = new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse);
+			taskIdMap.put(player, fontAnimation.fontAnimationTaskId);
+		}
 
 		return null;
 	}
@@ -223,6 +234,7 @@ public class FontAnimationEffect extends SpellEffect {
 					}
 				}
 				MagicSpells.cancelTask(this.fontAnimationTaskId);
+				taskIdMap.remove(this.target);
 				return;
 			}
 		}

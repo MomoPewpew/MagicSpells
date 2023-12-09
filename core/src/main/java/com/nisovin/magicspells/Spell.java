@@ -291,7 +291,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		// Cast time
 		castTime = config.getInt(path + "cast-time", 0);
 		interruptOnMove = config.getBoolean(path + "interrupt-on-move", true);
-		interruptOnCast = config.getBoolean(path + "interrupt-on-cast", true);
+		interruptOnCast = config.getBoolean(path + "interrupt-on-cast", false);
 		interruptOnDamage = config.getBoolean(path + "interrupt-on-damage", false);
 		interruptOnTeleport = config.getBoolean(path + "interrupt-on-teleport", true);
 		spellNameOnInterrupt = config.getString(path + "spell-on-interrupt", null);

@@ -57,7 +57,7 @@ public class FontAnimationEffect extends SpellEffect {
 		interval = Math.max(config.getInt("interval", 1), 1);
 		durationTicks = (int) Math.floor(Math.max((config.getInt("duration", 20) / interval), 1));
 		startFrame = Math.max(Math.min(config.getInt("start-frame", 0), 999), 0);
-		floorFrame = Math.max(Math.min(config.getInt("floor-frame", 999), 999), 0);
+		floorFrame = Math.max(Math.min(config.getInt("floor-frame", 0), 999), 0);
 		ceilingFrame = Math.max(Math.min(config.getInt("ceiling-frame", 999), 999), 0);
 		delay = Math.max(config.getInt("delay", 0), 0);
 		fadeIn = Math.max(config.getInt("fade-in", 0), 0);

@@ -23,6 +23,7 @@ import com.nisovin.magicspells.spelleffects.SpellEffect;
 public class FontAnimationEffect extends SpellEffect {
 
 	private static Map<Player, Integer> taskIdMap = new HashMap<Player, Integer>();
+	private static Map<Player, Integer> taskIdMapActionbar = new HashMap<Player, Integer>();
 
 	private String fontNameSpace;
 	private String fontName;
@@ -72,13 +73,25 @@ public class FontAnimationEffect extends SpellEffect {
 	@Override
 	protected Runnable playEffectEntity(Entity entity, SpellData data) {
 		if ((entity instanceof Player player)) {
-			if (taskIdMap.containsKey(player)) {
-				MagicSpells.cancelTask(taskIdMap.get(player));
-				taskIdMap.remove(player);
+			if (this.titlePart.equals("actionbar")) {
+				if (taskIdMapActionbar.containsKey(player)) {
+					MagicSpells.cancelTask(taskIdMapActionbar.get(player));
+					taskIdMapActionbar.remove(player);
+				}
+			} else {
+				if (taskIdMap.containsKey(player)) {
+					MagicSpells.cancelTask(taskIdMap.get(player));
+					taskIdMap.remove(player);
+				}
 			}
 
 			FontAnimation fontAnimation = new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse);
-			taskIdMap.put(player, fontAnimation.fontAnimationTaskId);
+
+			if (this.titlePart.equals("actionbar")) {
+				taskIdMapActionbar.put(player, fontAnimation.fontAnimationTaskId);
+			} else {
+				taskIdMap.put(player, fontAnimation.fontAnimationTaskId);
+			}
 		}
 
 		return null;
@@ -234,7 +247,11 @@ public class FontAnimationEffect extends SpellEffect {
 					}
 				}
 				MagicSpells.cancelTask(this.fontAnimationTaskId);
-				taskIdMap.remove(this.target);
+				if (this.titlePart.equals("actionbar")) {
+					taskIdMapActionbar.remove(this.target);
+				} else {
+					taskIdMap.remove(this.target);
+				}
 				return;
 			}
 		}

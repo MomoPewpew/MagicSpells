@@ -374,7 +374,7 @@ public class Util {
 
 	public static boolean addToInventory(Inventory inventory, ItemStack item, boolean stackExisting, boolean ignoreMaxStack) {
 		int amt = item.getAmount();
-		ItemStack[] items = Arrays.copyOf(inventory.getStorageContents(), inventory.getStorageContents().length);
+		ItemStack[] items = inventory.getStorageContents();
 		items = Arrays.copyOf(items, items.length);
 
 		if (stackExisting) {

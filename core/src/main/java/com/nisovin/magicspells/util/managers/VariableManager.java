@@ -137,6 +137,7 @@ public class VariableManager {
 		addMetaVariableType("living_entities", new LivingEntitiesVariable());
 		addMetaVariableType("spawned_entities", new SpawnedEntitiesVariable());
 		addMetaVariableType("freeze_ticks", new FreezeTicksVariable());
+		addMetaVariableType("held_block", new HeldBlockVariable());
 
 		// meta variable attribute types
 		addMetaVariableType("attribute_generic_max_health_base", new AttributeBaseValueVariable("GENERIC_MAX_HEALTH"));

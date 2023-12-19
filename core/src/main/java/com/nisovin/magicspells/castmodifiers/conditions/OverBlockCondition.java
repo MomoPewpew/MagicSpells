@@ -63,16 +63,17 @@ public class OverBlockCondition extends Condition {
 	}
 
 	private boolean overBlock(Location location) {
-		Block block = location.clone().subtract(0, 1, 0).getBlock();
+		Block block = location.clone().subtract(0, Math.abs(depth) / depth, 0).getBlock();
 
-		for (int i = 0; i < depth; i++) {
+		for (int i = 0; i < Math.abs(depth); i++) {
 			BlockData blockData = block.getBlockData();
 
 			for (BlockData data : blockDataSet) {
 				if (blockData.matches(data)) return true;
 			}
 
-			block = block.getRelative(BlockFace.DOWN);
+			if (depth > 0) block = block.getRelative(BlockFace.DOWN);
+			else block = block.getRelative(BlockFace.UP);
 		}
 
 		return false;

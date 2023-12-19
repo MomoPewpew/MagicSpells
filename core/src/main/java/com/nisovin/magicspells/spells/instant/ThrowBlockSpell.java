@@ -332,10 +332,9 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		
 		@EventHandler(ignoreCancelled=true)
 		private void onBlockLand(EntityChangeBlockEvent event) {
-			if (!preventBlocks && spellOnLand == null) return;
 			FallingBlockInfo info = fallingBlocks.get(event.getEntity());
 			if (info == null) return;
-			if (preventBlocks) {
+			if (preventBlocks || event.getEntity().getLocation().getBlock().getType() != Material.AIR) {
 				event.getEntity().remove();
 				event.setCancelled(true);
 			}

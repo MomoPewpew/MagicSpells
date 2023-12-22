@@ -211,43 +211,45 @@ public class BlockUtils {
 		}
 	}
 
-	public static void setBlockData(Block block, BlockData oldBlockData, BlockData newBlockData) {
+	public static void setBlockData(Block block, BlockData oldBlockData, BlockData newBlockData, boolean mergeBlockData) {
 		BlockData clone = newBlockData.clone();
 
-		if (oldBlockData instanceof Directional && clone instanceof Directional) {
-			if (((Directional) clone).getFaces().contains(((Directional) oldBlockData).getFacing())) {
-				((Directional) clone).setFacing(((Directional) oldBlockData).getFacing());
-			}
-		}
-
-		if (oldBlockData instanceof Stairs && clone instanceof Stairs) {
-			((Stairs) clone).setShape(((Stairs) oldBlockData).getShape());
-		}
-
-		if (oldBlockData instanceof Slab && clone instanceof Slab) {
-			((Slab) clone).setType(((Slab) oldBlockData).getType());
-		}
-
-		if (oldBlockData instanceof Hangable && clone instanceof Hangable) {
-			((Hangable) clone).setHanging(((Hangable) oldBlockData).isHanging());
-		}
-
-		if (oldBlockData instanceof Orientable && clone instanceof Orientable) {
-			if (((Orientable) clone).getAxes().contains(((Orientable) oldBlockData).getAxis())) {
-				((Orientable) clone).setAxis(((Orientable) oldBlockData).getAxis());
-			}
-		}
-
-		if (oldBlockData instanceof MultipleFacing && clone instanceof MultipleFacing) {
-			for (BlockFace blockFace : ((MultipleFacing) oldBlockData).getFaces()) {
-				if (((MultipleFacing) clone).getAllowedFaces().contains(blockFace)) {
-					((MultipleFacing) clone).setFace(blockFace, true);
+		if (mergeBlockData) {
+			if (oldBlockData instanceof Directional && clone instanceof Directional) {
+				if (((Directional) clone).getFaces().contains(((Directional) oldBlockData).getFacing())) {
+					((Directional) clone).setFacing(((Directional) oldBlockData).getFacing());
 				}
 			}
-		}
 
-		if (oldBlockData instanceof Bisected && clone instanceof Bisected) {
-			((Bisected) clone).setHalf(((Bisected) oldBlockData).getHalf());
+			if (oldBlockData instanceof Stairs && clone instanceof Stairs) {
+				((Stairs) clone).setShape(((Stairs) oldBlockData).getShape());
+			}
+
+			if (oldBlockData instanceof Slab && clone instanceof Slab) {
+				((Slab) clone).setType(((Slab) oldBlockData).getType());
+			}
+
+			if (oldBlockData instanceof Hangable && clone instanceof Hangable) {
+				((Hangable) clone).setHanging(((Hangable) oldBlockData).isHanging());
+			}
+
+			if (oldBlockData instanceof Orientable && clone instanceof Orientable) {
+				if (((Orientable) clone).getAxes().contains(((Orientable) oldBlockData).getAxis())) {
+					((Orientable) clone).setAxis(((Orientable) oldBlockData).getAxis());
+				}
+			}
+
+			if (oldBlockData instanceof MultipleFacing && clone instanceof MultipleFacing) {
+				for (BlockFace blockFace : ((MultipleFacing) oldBlockData).getFaces()) {
+					if (((MultipleFacing) clone).getAllowedFaces().contains(blockFace)) {
+						((MultipleFacing) clone).setFace(blockFace, true);
+					}
+				}
+			}
+
+			if (oldBlockData instanceof Bisected && clone instanceof Bisected) {
+				((Bisected) clone).setHalf(((Bisected) oldBlockData).getHalf());
+			}
 		}
 
 		block.setBlockData(clone);

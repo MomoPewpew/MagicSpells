@@ -49,7 +49,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	private final boolean checkPlugins;
 	private boolean resolveDurationPerBlock;
 	private boolean circleShape;
-
+	private boolean mergeBlockData;
 
 	public ReplaceSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -71,6 +71,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
 		resolveDurationPerBlock = getConfigBoolean("resolve-duration-per-block", false);
 		circleShape = getConfigBoolean("circle-shape", false);
+		mergeBlockData = getConfigBoolean("merge-block-data", true);
 
 		List<String> list = getConfigStringList("replace-blocks", null);
 		if (list != null) {
@@ -262,8 +263,8 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 						BlockState previousState = block.getState();
 
 						// Place block.
-						if (replaceRandom) BlockUtils.setBlockData(block, data, allReplaceWithBlocks.get(Util.getRandomInt(allReplaceWithBlocks.size())));
-						else BlockUtils.setBlockData(block, data, replaceWith.get(i).get(Util.getRandomInt(replaceWith.get(i).size())));
+						if (replaceRandom) BlockUtils.setBlockData(block, data, allReplaceWithBlocks.get(Util.getRandomInt(allReplaceWithBlocks.size())), mergeBlockData);
+						else BlockUtils.setBlockData(block, data, replaceWith.get(i).get(Util.getRandomInt(replaceWith.get(i).size())), mergeBlockData);
 
 						if (checkPlugins && caster instanceof Player player) {
 							Block against = target.clone().add(target.getDirection()).getBlock();

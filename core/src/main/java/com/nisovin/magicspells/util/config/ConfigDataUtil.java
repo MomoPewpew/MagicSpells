@@ -283,6 +283,19 @@ public class ConfigDataUtil {
 	}
 
 	@NotNull
+	public static ConfigData<Double> getDouble(@NotNull String string) {
+		try {
+            double value = Double.parseDouble(string);
+			return (caster, target, power, args) -> value;
+        } catch (NumberFormatException e) {
+			FunctionData<Double> data = FunctionData.build(string, Function.identity());
+			if (data == null) return (caster, target, power, args) -> null;
+
+			return data;
+        }
+	}
+
+	@NotNull
 	public static ConfigData<Float> getFloat(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
 			float value = (float) config.getDouble(path);

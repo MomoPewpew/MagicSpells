@@ -4,57 +4,39 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 
-import com.nisovin.magicspells.handlers.DebugHandler;
-import com.nisovin.magicspells.variables.Variable;
-import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.config.ConfigDataUtil;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class ChanceCondition extends Condition {
 
-	private double chance;
-	private Variable chanceVariable;
+	private ConfigData<Double> chance;
 
 	@Override
 	public boolean initialize(String var) {
-		try {
-			chance = Double.parseDouble(var) / 100D;
-			chanceVariable = null;
-			return chance >= 0D && chance <= 1D;
-		} catch (NumberFormatException e) {
-			chanceVariable = MagicSpells.getVariableManager().getVariable(var);
-			if (chanceVariable == null) {
-				DebugHandler.debugNumberFormat(e);
-				return false;
-			} else {
-				chance = 0;
-				return true;
-			}
-		}
+		chance = ConfigDataUtil.getDouble(var);
+		return chance != null;
 	}
 
 	@Override
 	public boolean check(LivingEntity caster) {
-		return chance(caster);
+		return chance(caster, null);
 	}
 
 	@Override
 	public boolean check(LivingEntity caster, LivingEntity target) {
-		return chance(caster);
+		return chance(caster, target);
 	}
 	
 	@Override
 	public boolean check(LivingEntity caster, Location location) {
-		return chance(caster);
+		return chance(caster, null);
 	}
 
-	private boolean chance(LivingEntity caster) {
-		if (chanceVariable != null) {
-			if (caster == null) chance = chanceVariable.getValue((Player) null) / 100D;
-			else if (caster instanceof Player player) chance = chanceVariable.getValue(player) / 100D;
-		}
-		return chance != 0 && (chance == 1 || ThreadLocalRandom.current().nextDouble() < chance);
+	private boolean chance(LivingEntity caster, LivingEntity target) {
+		double c = chance.get(caster, target, 1F, null) / 100;
+		return c != 0 && (c == 1 || ThreadLocalRandom.current().nextDouble() < c);
 	}
 
 }

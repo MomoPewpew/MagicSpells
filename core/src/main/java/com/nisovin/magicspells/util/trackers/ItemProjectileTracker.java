@@ -128,10 +128,12 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 
 		taskId = MagicSpells.scheduleRepeatingTask(this, tickInterval, tickInterval);
 
-		MagicSpells.scheduleDelayedTask(() -> {
-			entity.customName(itemName);
-			entity.setCustomNameVisible(true);
-		}, itemNameDelay);
+		if (itemName != null) {
+			MagicSpells.scheduleDelayedTask(() -> {
+				entity.customName(itemName);
+				entity.setCustomNameVisible(true);
+			}, itemNameDelay);
+		}
 
 		MagicSpells.scheduleDelayedTask(this::stop, removeDelay);
 	}

@@ -1,21 +1,22 @@
 package com.nisovin.magicspells.spells.passive;
 
-import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.bukkit.Material;
+import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
 
-import com.nisovin.magicspells.util.Util;
-import com.nisovin.magicspells.util.OverridePriority;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
+import com.nisovin.magicspells.util.OverridePriority;
 
 // Optional trigger variable of a comma separated list of blocks to accept
 public class BlockBreakListener extends PassiveListener {
 
-	private final EnumSet<Material> materials = EnumSet.noneOf(Material.class);
+	private final Set<BlockData> blockDatas = new HashSet<>();
 
 	@Override
 	public void initialize(String var) {
@@ -24,9 +25,9 @@ public class BlockBreakListener extends PassiveListener {
 		String[] split = var.split(",");
 		for (String s : split) {
 			s = s.trim();
-			Material m = Util.getMaterial(s);
+			BlockData m = Bukkit.createBlockData(s.toLowerCase());
 			if (m == null) continue;
-			materials.add(m);
+			blockDatas.add(m);
 		}
 	}
 
@@ -39,7 +40,19 @@ public class BlockBreakListener extends PassiveListener {
 		if (!hasSpell(player) || !canTrigger(player)) return;
 
 		Block block = event.getBlock();
-		if (!materials.isEmpty() && !materials.contains(block.getType())) return;
+
+		if (block == null) return;
+
+		BlockData blockData = block.getBlockData();
+
+		if (blockData == null) return;
+
+		boolean match = false;
+		for (BlockData matches : blockDatas) {
+			if (blockData.matches(matches)) match = true;
+		}
+
+		if (!blockDatas.isEmpty() && !match) return;
 
 		boolean casted = passiveSpell.activate(player, block.getLocation().add(0.5, 0.5, 0.5));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);

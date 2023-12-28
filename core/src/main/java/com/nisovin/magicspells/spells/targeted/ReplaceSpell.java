@@ -118,7 +118,9 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 							blockName = blockSplit[0];
 						}
 
-						BlockData data = Bukkit.createBlockData(blockName.trim().toLowerCase());
+						BlockData data = null;
+						
+						if (!blockName.equals("null")) data = Bukkit.createBlockData(blockName.trim().toLowerCase());
 
 						for (int j = 0; j < n; j++) {
 							blockList.add(data);
@@ -263,8 +265,13 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 						BlockState previousState = block.getState();
 
 						// Place block.
-						if (replaceRandom) BlockUtils.setBlockData(block, data, allReplaceWithBlocks.get(Util.getRandomInt(allReplaceWithBlocks.size())), mergeBlockData);
-						else BlockUtils.setBlockData(block, data, replaceWith.get(i).get(Util.getRandomInt(replaceWith.get(i).size())), mergeBlockData);
+						BlockData newBlockData = null;
+						if (replaceRandom) newBlockData = allReplaceWithBlocks.get(Util.getRandomInt(allReplaceWithBlocks.size()));
+						else newBlockData = replaceWith.get(i).get(Util.getRandomInt(replaceWith.get(i).size()));
+
+						if (newBlockData == null) continue;
+
+						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData);
 
 						if (checkPlugins && caster instanceof Player player) {
 							Block against = target.clone().add(target.getDirection()).getBlock();

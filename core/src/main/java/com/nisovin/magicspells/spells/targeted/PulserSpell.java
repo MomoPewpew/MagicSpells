@@ -7,10 +7,12 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 import org.bukkit.Material;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
@@ -21,7 +23,6 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 
 import com.nisovin.magicspells.Subspell;
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 public class PulserSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private final Map<Block, Pulser> pulsers;
-	private Material material;
+	private BlockData blockData;
 
 	private final int interval;
 	private final int capPerPlayer;
@@ -69,10 +70,10 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		super(config, spellName);
 
 		String materialName = getConfigString("block-type", "DIAMOND_BLOCK");
-		material = Util.getMaterial(materialName);
-		if (material == null || !material.isBlock()) {
+		blockData = Bukkit.createBlockData(materialName.toLowerCase());
+		if (blockData == null || !blockData.getMaterial().isBlock()) {
 			MagicSpells.error("PulserSpell '" + internalName + "' has an invalid block-type defined");
-			material = null;
+			blockData = null;
 		}
 
 		yOffset = getConfigDataInt("y-offset", 0);
@@ -219,8 +220,8 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 	}
 
 	private void createPulser(LivingEntity caster, Block block, Location from, float power, String[] args) {
-		if (material == null) return;
-		block.setType(material);
+		if (blockData == null) return;
+		block.setBlockData(blockData);
 		pulsers.put(block, new Pulser(caster, block, from, power, args));
 		ticker.start();
 		if (caster != null) playSpellEffects(caster, block.getLocation().add(0.5, 0.5, 0.5), power, args);
@@ -347,11 +348,11 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 		private boolean pulse(ActivationType activationType, @Nullable LivingEntity caster) {
 			if (caster == null) {
-				if (material.equals(block.getType()) && block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) return activate(activationType, caster);
+				if (blockData.equals(block.getBlockData()) && block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) return activate(activationType, caster);
 				stop();
 				return true;
 			} else if (caster.isValid()) {
-				if (material.equals(block.getType()) && block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) {
+				if (blockData.equals(block.getBlockData()) && block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) {
 					if (maxDistanceSq > 0 && (!LocationUtil.isSameWorld(location, caster) || location.distanceSquared(caster.getLocation()) > maxDistanceSq)) {
 						stop();
 						return true;

@@ -128,6 +128,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		Expression expression;
 		try {
 			expression = new ExpressionBuilder(builder.toString())
+				.functions(CustomFunctions.getFunctions())
 				.variables(variables.keySet())
 				.variable("power")
 				.build();

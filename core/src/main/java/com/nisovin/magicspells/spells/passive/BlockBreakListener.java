@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
 
+import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 import com.nisovin.magicspells.util.OverridePriority;
 
@@ -25,9 +26,12 @@ public class BlockBreakListener extends PassiveListener {
 		String[] split = var.split(",");
 		for (String s : split) {
 			s = s.trim();
-			BlockData m = Bukkit.createBlockData(s.toLowerCase());
-			if (m == null) continue;
-			blockDatas.add(m);
+			try {
+				BlockData m = Bukkit.createBlockData(s.toLowerCase());
+				blockDatas.add(m);
+			} catch (Exception e) {
+				MagicSpells.error("Invalid block type on blockbreak trigger '" + var + "' on passive spell '" + passiveSpell.getInternalName() + "'");
+			}
 		}
 	}
 

@@ -4,6 +4,10 @@ import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Objective;
+
+import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.config.ConfigDataUtil;
+
 import org.bukkit.configuration.ConfigurationSection;
 
 public abstract class Variable {
@@ -11,8 +15,8 @@ public abstract class Variable {
 	protected double defaultValue = 0;
 	protected String defaultStringValue = 0D + "";
 
-	protected double minValue = 0;
-	protected double maxValue = Double.MAX_VALUE;
+	protected ConfigData<Double> minValue = ConfigDataUtil.getDouble("0");
+	private ConfigData<Double> maxValue = ConfigDataUtil.getDouble(Double.MAX_VALUE + "");
 
 	protected boolean expBar;
 	protected boolean permanent;
@@ -28,11 +32,11 @@ public abstract class Variable {
 		// No op
 	}
 
-	public final void init(double defaultValue, double minValue, double maxValue, boolean permanent, Objective objective, boolean expBar, String bossBarTitle, BarStyle bossBarStyle, BarColor bossBarColor, String bossBarNamespacedKey) {
+	public final void init(double defaultValue, String minValue, String maxValue, boolean permanent, Objective objective, boolean expBar, String bossBarTitle, BarStyle bossBarStyle, BarColor bossBarColor, String bossBarNamespacedKey) {
 		this.defaultValue = defaultValue;
 		this.defaultStringValue = defaultValue + "";
-		this.minValue = minValue;
-		this.maxValue = maxValue;
+		this.minValue = ConfigDataUtil.getDouble(minValue);
+		this.maxValue = ConfigDataUtil.getDouble(maxValue);
 		this.permanent = permanent;
 		this.objective = objective;
 		this.expBar = expBar;
@@ -86,20 +90,12 @@ public abstract class Variable {
 		return getValue(player) + "";
 	}
 
-	public double getMaxValue() {
-		return maxValue;
+	public double getMaxValue(Player player) {
+		return maxValue.get(player, null, 1F, null);
 	}
 
-	public void setMaxValue(double maxValue) {
-		this.maxValue = maxValue;
-	}
-
-	public double getMinValue() {
-		return minValue;
-	}
-
-	public void setMinValue(double minValue) {
-		this.minValue = minValue;
+	public double getMinValue(Player player) {
+		return minValue.get(player, null, 1F, null);
 	}
 
 	public double getDefaultValue() {

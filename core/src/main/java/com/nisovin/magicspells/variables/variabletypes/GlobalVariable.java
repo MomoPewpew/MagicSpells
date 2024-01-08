@@ -13,8 +13,11 @@ public class GlobalVariable extends Variable {
 
 	@Override
 	public void set(String player, double amount) {
-		if (amount > maxValue) amount = maxValue;
-		else if (amount < minValue) amount = minValue;
+		double min = getMinValue(null);
+		double max = getMaxValue(null);
+
+		if (amount > max) amount = max;
+		else if (amount < min) amount = min;
 		value = amount;
 	}
 

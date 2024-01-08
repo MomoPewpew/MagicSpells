@@ -1,8 +1,12 @@
 package com.nisovin.magicspells.variables.variabletypes;
 
 import java.util.Map;
+
+import org.bukkit.entity.Player;
+
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.PlayerNameUtils;
 import com.nisovin.magicspells.variables.Variable;
 
 public class PlayerVariable extends Variable {
@@ -11,8 +15,13 @@ public class PlayerVariable extends Variable {
 
 	@Override
 	public void set(String player, double amount) {
-		if (amount > maxValue) amount = maxValue;
-		else if (amount < minValue) amount = minValue;
+		Player p = PlayerNameUtils.getPlayerExact(player);
+
+		double min = getMinValue(p);
+		double max = getMaxValue(p);
+
+		if (amount > max) amount = max;
+		else if (amount < min) amount = min;
 		map.put(player, amount);
 		if (objective == null) return;
 		objective.getScore(player).setScore((int) amount);

@@ -194,8 +194,8 @@ public class VariableManager {
 			String path = var + ".";
 			String type = section.getString(path + "type", "global");
 			double def = section.getDouble(path + "default", 0);
-			double min = section.getDouble(path + "min", 0);
-			double max = section.getDouble(path + "max", Double.MAX_VALUE);
+			String min = section.getString(path + "min", 0 + "");
+			String max = section.getString(path + "max", Double.MAX_VALUE + "");
 			boolean perm = section.getBoolean(path + "permanent", true);
 
 			Variable variable = getVariableType(type);
@@ -389,7 +389,7 @@ public class VariableManager {
 		if (var.getBossBarTitle() == null) return;
 		if (player == null || player.isEmpty()) return;
 		if (var instanceof GlobalVariable || var instanceof GlobalStringVariable) {
-			double pct = var.getValue("") / var.getMaxValue();
+			double pct = var.getValue("") / var.getMaxValue(null);
 			for (Player pl : Bukkit.getOnlinePlayers()) {
 				if (pl == null || !pl.isValid()) continue;
 				BossBarManager.Bar bar = MagicSpells.getBossBarManager().getBar(pl, var.getBossBarNamespacedKey());
@@ -403,7 +403,7 @@ public class VariableManager {
 			if (pl == null) return;
 			BossBarManager.Bar bar = MagicSpells.getBossBarManager().getBar(pl, var.getBossBarNamespacedKey());
 			if (bar == null) return;
-			bar.set(var.getBossBarTitle(), var.getValue(pl) / var.getMaxValue(), var.getBossBarStyle(), var.getBossBarColor());
+			bar.set(var.getBossBarTitle(), var.getValue(pl) / var.getMaxValue(pl), var.getBossBarStyle(), var.getBossBarColor());
 		}
 	}
 
@@ -412,14 +412,14 @@ public class VariableManager {
 		if (!var.isDisplayedOnExpBar()) return;
 		if (player == null || player.isEmpty()) return;
 		if (var instanceof GlobalVariable) {
-			double pct = var.getValue("") / var.getMaxValue();
+			double pct = var.getValue("") / var.getMaxValue(null);
 			Util.forEachPlayerOnline(p -> p.sendExperienceChange((float) pct, (int) var.getValue("")));
 			return;
 		}
 		if (var instanceof PlayerVariable) {
 			Player p = PlayerNameUtils.getPlayerExact(player);
 			if (p == null) return;
-			p.sendExperienceChange((float) (var.getValue(p) / var.getMaxValue()), (int) var.getValue(p));
+			p.sendExperienceChange((float) (var.getValue(p) / var.getMaxValue(p)), (int) var.getValue(p));
 		}
 	}
 
@@ -576,14 +576,14 @@ public class VariableManager {
 	public void loadBossBars(Player player) {
 		for (Variable var : variables.values()) {
 			if (var.getBossBarTitle() == null) continue;
-			MagicSpells.getBossBarManager().getBar(player, var.getBossBarNamespacedKey()).set(var.getBossBarTitle(), var.getValue(player) / var.getMaxValue(), var.getBossBarStyle(), var.getBossBarColor());
+			MagicSpells.getBossBarManager().getBar(player, var.getBossBarNamespacedKey()).set(var.getBossBarTitle(), var.getValue(player) / var.getMaxValue(player), var.getBossBarStyle(), var.getBossBarColor());
 		}
 	}
 
 	public void loadExpBar(Player player) {
 		for (Variable var : variables.values()) {
 			if (!var.isDisplayedOnExpBar()) continue;
-			player.sendExperienceChange((float) (var.getValue(player) / var.getMaxValue()), (int) var.getValue(player));
+			player.sendExperienceChange((float) (var.getValue(player) / var.getMaxValue(player)), (int) var.getValue(player));
 			break;
 		}
 	}

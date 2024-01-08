@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.variables.variabletypes;
 
+import com.nisovin.magicspells.util.config.ConfigDataUtil;
 import com.nisovin.magicspells.variables.Variable;
 
 public abstract class MetaVariable extends Variable {
@@ -9,7 +10,7 @@ public abstract class MetaVariable extends Variable {
 		expBar = false;
 		bossBarTitle = null;
 		objective = null;
-		minValue = Double.MIN_VALUE;
+		minValue = ConfigDataUtil.getDouble(Double.MIN_VALUE + "");
 	}
 	
 	@Override

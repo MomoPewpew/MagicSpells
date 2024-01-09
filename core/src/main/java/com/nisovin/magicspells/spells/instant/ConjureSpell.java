@@ -236,13 +236,15 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		if (itemTypes == null) return PostCastAction.ALREADY_HANDLED;
 		if (state == SpellCastState.NORMAL && caster instanceof Player) {
 			if (delay >= 0) MagicSpells.scheduleDelayedTask(() -> conjureItems((Player) caster, power), delay);
-			else conjureItems((Player) caster, power);
+			else if (!conjureItems((Player) caster, power)) return PostCastAction.ALREADY_HANDLED;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 		
 	}
 	
-	private void conjureItems(Player player, float power) {
+	private boolean conjureItems(Player player, float power) {
+		boolean succes = true;
+
 		List<ItemStack> items = new ArrayList<>();
 		if (calculateDropsIndividually) individual(items, power);
 		else together(items, power);
@@ -308,17 +310,32 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 					}
 				}
 				if (!added && (dropIfInventoryFull || !addToInventory)) {
-					Item i = player.getWorld().dropItem(loc, item);
-					i.setItemStack(item);
-					i.setPickupDelay(pickupDelay);
-					i.setGravity(itemHasGravity);
-					playSpellEffects(EffectPosition.SPECIAL, i);
+					int amt = item.getAmount();
+					while (amt > 0) {
+						ItemStack drop = item.clone();
+						drop.setAmount(Math.min(drop.getMaxStackSize(), amt));
+
+						Item i = player.getWorld().dropItem(loc, drop);
+
+						i.setItemStack(drop);
+						i.setPickupDelay(pickupDelay);
+						i.setGravity(itemHasGravity);
+						playSpellEffects(EffectPosition.SPECIAL, i);
+
+						amt -= drop.getMaxStackSize();
+					}
+					added = true;
 				}
 			} else updateInv = true;
+
+			if (!added) succes = false;
 		}
 
-		if (updateInv && forceUpdateInventory) player.updateInventory();
-		playSpellEffects(EffectPosition.CASTER, player);
+		if (succes) {
+			if (updateInv && forceUpdateInventory) player.updateInventory();
+			playSpellEffects(EffectPosition.CASTER, player);
+		}
+		return succes;
 	}
 	
 	private void individual(List<ItemStack> items, float power) {

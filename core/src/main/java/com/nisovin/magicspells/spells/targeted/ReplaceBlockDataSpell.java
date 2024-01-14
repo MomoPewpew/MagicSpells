@@ -137,15 +137,16 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 					String blockDataString = block.getBlockData().getAsString();
 					boolean contains = false;
 
+					//The "╚" sign is used as a temporary placeholder so that a spell that's intended to cycle will only go one step forward in the cycle.
 					for (int i = 0; i < replace.size(); i++) {
 						if (blockDataString.contains(replace.get(i)) && replaceWith.size() > i) {
-							blockDataString = blockDataString.replace(replace.get(i), replaceWith.get(i));
+							blockDataString = blockDataString.replace(replace.get(i), replaceWith.get(i).replace(":", "=").replace("=", "╚"));
 							contains = true;
 						}
 					}
 
 					if (contains) {
-						BlockData blockData = Bukkit.createBlockData(blockDataString);
+						BlockData blockData = Bukkit.createBlockData(blockDataString.replace("╚", "="));
 
 						block.setBlockData(blockData);
 

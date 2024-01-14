@@ -8,13 +8,16 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.util.NumberConversions;
 
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellData;
+import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 
@@ -23,6 +26,7 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 	private boolean pointBlank;
 	private boolean powerAffectsRadius;
 	private boolean circleShape;
+	private final boolean checkPlugins;
 
 	private ConfigData<Integer> yOffset;
 	private ConfigData<Integer> radiusUp;
@@ -46,6 +50,7 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 		pointBlank = getConfigBoolean("point-blank", false);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
 		circleShape = getConfigBoolean("circle-shape", false);
+		checkPlugins = getConfigBoolean("check-plugins", true);
 
 		replace = getConfigStringList("replace", null);
 		replaceWith = getConfigStringList("replace-with", null);
@@ -117,6 +122,17 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 					}
 
 					block = target.getWorld().getBlockAt(x, y, z);
+
+					if (checkPlugins && caster instanceof Player player) {
+						Block against = target.clone().add(target.getDirection()).getBlock();
+
+						MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, block.getState(), against, player.getInventory().getItemInMainHand(), player, true);
+
+						EventUtil.call(event);
+						if (event.isCancelled()) {
+							continue;
+						}
+					}
 
 					String blockDataString = block.getBlockData().getAsString();
 					boolean contains = false;

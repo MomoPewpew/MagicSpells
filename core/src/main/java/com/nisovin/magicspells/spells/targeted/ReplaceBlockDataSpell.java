@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.Lidded;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -64,7 +65,7 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 		if (state == SpellCastState.NORMAL) {
 			Block target = pointBlank ? caster.getLocation().getBlock() : getTargetedBlock(caster, power, args);
 			if (target == null) return noTarget(caster, args);
-			replaceBlockData(caster, target.getLocation(), power, args);
+			if (!replaceBlockData(caster, target.getLocation(), power, args)) return PostCastAction.ALREADY_HANDLED;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
@@ -123,32 +124,57 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 
 					block = target.getWorld().getBlockAt(x, y, z);
 
-					if (checkPlugins && caster instanceof Player player) {
-						Block against = target.clone().add(target.getDirection()).getBlock();
-
-						MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, block.getState(), against, player.getInventory().getItemInMainHand(), player, true);
-
-						EventUtil.call(event);
-						if (event.isCancelled()) {
-							continue;
-						}
-					}
-
 					String blockDataString = block.getBlockData().getAsString();
 					boolean contains = false;
 
 					//The "╚" sign is used as a temporary placeholder so that a spell that's intended to cycle will only go one step forward in the cycle.
 					for (int i = 0; i < replace.size(); i++) {
 						if (blockDataString.contains(replace.get(i)) && replaceWith.size() > i) {
-							blockDataString = blockDataString.replace(replace.get(i), replaceWith.get(i).replace(":", "=").replace("=", "╚"));
+							blockDataString = blockDataString.replace(replace.get(i), replaceWith.get(i).replace("=", "╚"));
 							contains = true;
 						}
 					}
 
-					if (contains) {
-						BlockData blockData = Bukkit.createBlockData(blockDataString.replace("╚", "="));
+					Lidded lidded = null;
 
-						block.setBlockData(blockData);
+					if (block.getState() instanceof Lidded) lidded = (Lidded) block.getState();
+
+					boolean shouldOpen = false;
+					boolean shouldClose = false;
+
+					if (lidded != null) {
+						if (replace.contains("open=false") && !lidded.isOpen() && replaceWith.get(replace.indexOf("open=false")).equals("open=true")) {
+							shouldOpen = true;
+						} else if (replace.contains("open=true") && lidded.isOpen() && replaceWith.get(replace.indexOf("open=true")).equals("open=false")) {
+							shouldClose = true;
+						}
+					}
+
+					if (contains || shouldOpen || shouldClose) {
+						if (checkPlugins && caster instanceof Player player) {
+							Block against = target.clone().add(target.getDirection()).getBlock();
+	
+							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, block.getState(), against, player.getInventory().getItemInMainHand(), player, true);
+	
+							EventUtil.call(event);
+							if (event.isCancelled()) {
+								continue;
+							}
+						}
+
+						if (contains) {
+							BlockData blockData = Bukkit.createBlockData(blockDataString.replace("╚", "="));
+	
+							block.setBlockData(blockData);
+						}
+
+						if (lidded != null) {
+							if (shouldOpen) {
+								lidded.open();
+							} else if (shouldClose) {
+								lidded.close();
+							} else if (!contains) continue;
+						}
 
 						playSpellEffects(EffectPosition.SPECIAL, block.getLocation(), spellData);
 

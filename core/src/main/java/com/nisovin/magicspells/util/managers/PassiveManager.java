@@ -39,6 +39,12 @@ public class PassiveManager {
 		Class<? extends PassiveListener> clazz = listeners.get(name.toLowerCase());
 		if (clazz == null) return null;
 
+		DependsOn dependsOn = clazz.getAnnotation(DependsOn.class);
+		if (dependsOn != null && !CompatBasics.pluginEnabled(dependsOn.plugin())) {
+			MagicSpells.error("Could not load passive listener '" + name + "' because plugin '" + dependsOn.plugin() + "' is not enabled.");
+			return null;
+		}
+
 		try {
 			return clazz.getDeclaredConstructor().newInstance();
 		} catch (Exception e) {

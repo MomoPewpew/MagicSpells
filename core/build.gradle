@@ -25,6 +25,7 @@ dependencies {
 
     implementation(name:'CMI-API9.5.0.8', ext:'jar')
     implementation(name:'CMILib1.2.4.5', ext:'jar')
+    implementation(name:'SneakyCharacterManager-1.0-SNAPSHOT', ext:'jar')
     implementation(group: "com.comphenix.protocol", name: "ProtocolLib", version: "5.1.0") { transitive = false }
     implementation(group: "com.github.libraryaddict", name: "LibsDisguises", version: "v10.0.25") { transitive = false }
     implementation(group: "com.github.MilkBowl", name: "vault", version: "master-SNAPSHOT") { transitive = false }

@@ -6,8 +6,11 @@ import java.util.HashMap;
 import org.bukkit.event.EventPriority;
 
 import com.nisovin.magicspells.spells.passive.*;
+import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.castmodifiers.conditions.util.DependsOn;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
+import com.nisovin.magicspells.util.compat.CompatBasics;
 
 public class PassiveManager {
 
@@ -111,6 +114,7 @@ public class PassiveManager {
 		addListener("leftclickblockcoord", LeftClickBlockCoordListener.class);
 		addListener("leftclickblocktype", LeftClickBlockTypeListener.class);
 		addListener("leftclickitem", LeftClickItemListener.class);
+		addListener("loadcharacter", LoadCharacterListener.class);
 		addListener("magicspellsloaded", MagicSpellsLoadedListener.class);
 		addListener("manachange", ManaChangeListener.class);
 		addListener("missarrow", MissArrowListener.class);

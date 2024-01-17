@@ -28,7 +28,9 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 
 import com.nisovin.magicspells.Spell;
+import com.nisovin.magicspells.events.ConjureItemEvent;
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.BlockUtils;
@@ -329,6 +331,10 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			} else updateInv = true;
 
 			if (!added) succes = false;
+			else {
+				ConjureItemEvent event = new ConjureItemEvent(player, item);
+				EventUtil.call(event);
+			}
 		}
 
 		if (succes) {

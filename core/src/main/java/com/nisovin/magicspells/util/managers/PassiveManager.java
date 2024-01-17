@@ -85,6 +85,7 @@ public class PassiveManager {
 		addListener("blockplace", BlockPlaceListener.class);
 		addListener("buff", BuffListener.class);
 		addListener("chat", ChatListener.class);
+		addListener("conjureitem", ConjureItemListener.class);
 		addListener("craft", CraftListener.class);
 		addListener("death", DeathListener.class);
 		addListener("dropitem", DropItemListener.class);

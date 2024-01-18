@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.spells.instant;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.ArrayList;
 
 import net.kyori.adventure.text.Component;
@@ -402,6 +403,13 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 				dropped.setVelocity(v);
 			}
 			dropped.setGravity(itemHasGravity);
+
+			if (player != null) {
+				UUID uuid = player.getUniqueId();
+				dropped.setThrower(uuid);
+				dropped.setOwner(uuid);
+			}
+
 			playSpellEffects(EffectPosition.SPECIAL, dropped);
 			EventUtil.call(new ConjureItemEvent(player, item));
 		}

@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Item;
@@ -48,6 +49,10 @@ public class DestroyItemListener extends PassiveListener {
         DamageCause cause = event.getCause();
         if (!(cause.equals(DamageCause.FIRE) || cause.equals(DamageCause.FIRE_TICK) || cause.equals(DamageCause.LAVA))) return;
         if (event.getDamage() < item.getHealth()) return;
+
+		UUID uuid = item.getThrower();
+
+		if (uuid == null) return;
 
         Player caster = Bukkit.getPlayer(item.getThrower());
 

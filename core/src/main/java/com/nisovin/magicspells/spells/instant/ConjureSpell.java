@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.ChatColor;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -331,10 +332,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			} else updateInv = true;
 
 			if (!added) succes = false;
-			else {
-				ConjureItemEvent event = new ConjureItemEvent(player, item);
-				EventUtil.call(event);
-			}
+			else EventUtil.call(new ConjureItemEvent(player, item));
 		}
 
 		if (succes) {
@@ -377,11 +375,16 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(target, power);
+		return conjureItemsAtLocation(target, power, caster);
 	}
 	
 	@Override
 	public boolean castAtLocation(Location target, float power) {
+		return conjureItemsAtLocation(target, power, null);
+	}
+
+
+	private boolean conjureItemsAtLocation(Location target, float power, @NotNull LivingEntity player) {
 		List<ItemStack> items = new ArrayList<>();
 		if (calculateDropsIndividually) individual(items, power);
 		else together(items, power);
@@ -400,6 +403,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			}
 			dropped.setGravity(itemHasGravity);
 			playSpellEffects(EffectPosition.SPECIAL, dropped);
+			EventUtil.call(new ConjureItemEvent(player, item));
 		}
 		return true;
 	}
@@ -409,7 +413,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		if (!validTargetList.canTarget(caster, target)) return false;
 
 		if (target instanceof Player player) conjureItems(player, power);
-		else castAtLocation(target.getLocation(), power);
+		else return conjureItemsAtLocation(target.getLocation(), power, caster);
 
 		return true;
 	}
@@ -419,7 +423,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		if (!validTargetList.canTarget(target)) return false;
 
 		if (target instanceof Player player) conjureItems(player, power);
-		else castAtLocation(target.getLocation(), power);
+		else return conjureItemsAtLocation(target.getLocation(), power, null);
 
 		return true;
 	}

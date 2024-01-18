@@ -829,7 +829,6 @@ public enum ModifierType {
 			if (!(caster instanceof Player player)) return result.check() ? new ModifierResult(result.data(), false) : result;
 			if (result.check()) {
 				modifyVariable(customData, player, null, result.data().power(), result.data().args());
-				return result;
 			}
 			return new ModifierResult(result.data(), true);
 		}
@@ -840,7 +839,6 @@ public enum ModifierType {
 			if (result.check()) {
 				modifyVariable(customData, player, target instanceof Player playerTarget ? playerTarget : null,
 					result.data().power(), result.data().args());
-				return result;
 			}
 			return new ModifierResult(result.data(), true);
 		}
@@ -850,7 +848,6 @@ public enum ModifierType {
 			if (!(caster instanceof Player player)) return result.check() ? new ModifierResult(result.data(), false) : result;
 			if (result.check()) {
 				modifyVariable(customData, player, null, result.data().power(), result.data().args());
-				return result;
 			}
 			return new ModifierResult(result.data(), true);
 		}

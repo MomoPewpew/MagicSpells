@@ -61,7 +61,7 @@ public class DestroyItemListener extends PassiveListener {
 			if (itemData == null || !contains(itemData)) return;
 		}
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(caster, item.getLocation());
         
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
     }

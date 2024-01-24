@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Item;
 import org.bukkit.util.Vector;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.configuration.ConfigurationSection;
 
 import com.nisovin.magicspells.util.SpellData;
@@ -26,6 +27,7 @@ public class ItemSprayEffect extends SpellEffect {
 
 	private ConfigData<Integer> amount;
 	private ConfigData<Integer> duration;
+	private ConfigData<Integer> customModelData;
 
 	private boolean resolveForcePerItem;
 
@@ -37,8 +39,10 @@ public class ItemSprayEffect extends SpellEffect {
 
 		amount = ConfigDataUtil.getInteger(config, "amount", 15);
 		duration = ConfigDataUtil.getInteger(config, "duration", 10);
+		customModelData = ConfigDataUtil.getInteger(config, "custom-model-data", null);
 
 		resolveForcePerItem = config.getBoolean("resolve-force-per-item", false);
+
 	}
 
 	@Override
@@ -47,6 +51,16 @@ public class ItemSprayEffect extends SpellEffect {
 		if (material == null) return null;
 
 		ItemStack item = new ItemStack(material);
+
+		if (customModelData != null) {
+
+			Integer customModelData = this.customModelData.get(data);
+
+			ItemMeta meta = item.getItemMeta();
+			meta.setCustomModelData(customModelData);
+			
+			item.setItemMeta(meta);
+		};
 
 		Random rand = ThreadLocalRandom.current();
 		Location loc = location.clone().add(0, 1, 0);

@@ -11,25 +11,32 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class GateSpell extends InstantSpell {
 
-	private String world;
-	private String coordinates;
+	private ConfigData<String> world;
+	private ConfigData<String> coordinates;
 	private String strGateFailed;
 
 	public GateSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
-		world = getConfigString("world", "CURRENT");
-		coordinates = getConfigString("coordinates", "SPAWN").replace(" ", "");
+		world = getConfigDataString("world", "CURRENT");
+		coordinates = getConfigDataString("coordinates", "SPAWN");
 		strGateFailed = getConfigString("str-gate-failed", "Unable to teleport.");
 	}
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+
+		SpellData data = new SpellData(caster, power, args);
+
+		String world = this.world.get(data);
+		String coordinates = this.coordinates.get(data);
+
 		if (state == SpellCastState.NORMAL) {
 			World effectiveWorld;
 			if (world.equals("CURRENT")) effectiveWorld = caster.getWorld();
@@ -98,26 +105,26 @@ public class GateSpell extends InstantSpell {
 			}
 			caster.teleportAsync(location);
 
-			SpellData data = new SpellData(caster, power, args);
+			data = new SpellData(caster, power, args);
 			playSpellEffects(EffectPosition.CASTER, from, data);
 			playSpellEffects(EffectPosition.TARGET, to, data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	public String getWorld() {
+	public ConfigData<String> getWorld() {
 		return world;
 	}
 
-	public void setWorld(String world) {
+	public void setWorld(ConfigData<String> world) {
 		this.world = world;
 	}
 
-	public String getCoordinates() {
+	public ConfigData<String> getCoordinates() {
 		return coordinates;
 	}
 
-	public void setCoordinates(String coordinates) {
+	public void setCoordinates(ConfigData<String> coordinates) {
 		this.coordinates = coordinates;
 	}
 

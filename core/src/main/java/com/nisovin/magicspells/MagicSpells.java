@@ -541,6 +541,10 @@ public class MagicSpells extends JavaPlugin {
 								} else {
 									spell.setCooldownManually(UUID.fromString(data[1]), cooldown);
 								}
+								
+								if (data.length > 3 && spell.getCharges() > 0) {
+									spell.setChargesConsumed(UUID.fromString(data[1]), Integer.parseInt(data[3]));
+								}
 							}
 						}
 					}
@@ -2006,8 +2010,14 @@ public class MagicSpells extends JavaPlugin {
 								.append(String.valueOf(':'))
 								.append(id.toString())
 								.append(String.valueOf(':'))
-								.append(String.valueOf(cooldown))
-								.append(String.valueOf('\n'));
+								.append(String.valueOf(cooldown));
+
+						if (spell.charges > 0) {
+							writer.append(String.valueOf(':'))
+								.append(String.valueOf(spell.getCharges(id)));
+						}
+
+						writer.append(String.valueOf('\n'));
 					}
 				}
 				writer.close();

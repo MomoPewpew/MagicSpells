@@ -1072,7 +1072,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 */
 	public boolean onCooldown(LivingEntity livingEntity) {
 		if (Perm.NO_COOLDOWN.has(livingEntity)) return false;
-		if (charges > 0) return chargesConsumed.get(livingEntity.getUniqueId()) >= charges;
+		if (charges > 0 && chargesConsumed.get(livingEntity.getUniqueId()) < charges) return false;
 		if (serverCooldown > 0 && nextCastServer > System.currentTimeMillis()) return true;
 
 		Long next = nextCast.get(livingEntity.getUniqueId());
@@ -1089,8 +1089,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @return The number of seconds remaining in the cooldown
 	 */
 	public float getCooldown(LivingEntity livingEntity) {
-		if (charges > 0) return -1;
-
 		float cd = 0;
 
 		Long next = nextCast.get(livingEntity.getUniqueId());
@@ -1128,20 +1126,16 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				else cd = minCooldown + random.nextInt((int) maxCooldown - (int) minCooldown + 1);
 			}
 
-			if (charges <= 0) {
-				nextCast.put(livingEntity.getUniqueId(), System.currentTimeMillis() + (long) (cd * TimeUtil.MILLISECONDS_PER_SECOND));
+			if (charges > 0) {
+				Long next = nextCast.get(livingEntity.getUniqueId());
+				if (next == null || next <= System.currentTimeMillis()) {
+					chargesConsumed.remove(livingEntity.getUniqueId());
+					nextCast.put(livingEntity.getUniqueId(), System.currentTimeMillis() + (long) (cd * TimeUtil.MILLISECONDS_PER_SECOND));
+				}
+				chargesConsumed.increment(livingEntity.getUniqueId());
 			} else {
-				final UUID uuid = livingEntity.getUniqueId();
-				chargesConsumed.increment(uuid);
-				MagicSpells.scheduleDelayedTask(() -> {
-					chargesConsumed.decrement(uuid);
-					playSpellEffects(EffectPosition.CHARGE_USE, livingEntity, new SpellData(livingEntity));
-					if (rechargeSound == null) return;
-					if (rechargeSound.isEmpty()) return;
-					if (livingEntity instanceof Player player) player.playSound(livingEntity.getLocation(), rechargeSound, 1.0F, 1.0F);
-				}, Math.round(TimeUtil.TICKS_PER_SECOND * cd));
+				nextCast.put(livingEntity.getUniqueId(), System.currentTimeMillis() + (long) (cd * TimeUtil.MILLISECONDS_PER_SECOND));
 			}
-
 		} else {
 			if (charges <= 0) nextCast.remove(livingEntity.getUniqueId());
 			else chargesConsumed.remove(livingEntity.getUniqueId());
@@ -1152,6 +1146,15 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				scd.getKey().setCooldown(livingEntity, scd.getValue(), false);
 			}
 		}
+	}
+
+	/**
+	 * Sets the amount of charges that the specified living entity has consumed.
+	 * @param uuid The UUID of the living entity to set the charges for
+	 */
+	public void setChargesConsumed(UUID uuid, int charges) {
+		chargesConsumed.set(uuid, charges);
+		MagicSpells.log("TEST!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	}
 
 	/**
@@ -1223,6 +1226,15 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 */
 	public int getCharges(LivingEntity livingEntity) {
 		return chargesConsumed.get(livingEntity.getUniqueId());
+	}
+
+	/**
+	 * Get how many charges the specified UUID has consumed.
+	 * @param uuid The uuid of the living entity to check
+	 * @return The number of charges consumed
+	 */
+	public int getCharges(UUID uuid) {
+		return chargesConsumed.get(uuid);
 	}
 
 	/**

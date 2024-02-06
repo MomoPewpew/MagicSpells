@@ -163,12 +163,6 @@ public abstract class SpellEffect {
 		if (data == null) return new ModifierResult(null, true);
 
 		ModifierResult result = null;
-
-		if (modifiers != null) {
-			result = modifiers.apply(data.caster(), data);
-			if (!result.check()) return result;
-		}
-
 		if (casterModifiers != null) {
 			result = casterModifiers.apply(data.caster(), data);
 			if (!result.check()) return result;

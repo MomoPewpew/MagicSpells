@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import net.kyori.adventure.text.Component;
 
@@ -352,7 +353,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	}
 	
 	private void together(List<ItemStack> items, float power) {
-		double r = random.nextDouble() * 100;
+		double r = random.nextDouble() * Arrays.stream(itemChances).sum();
 		double m = 0;
 		for (int i = 0; i < itemTypes.length; i++) {
 			if (itemTypes[i] != null && r < itemChances[i] + m) {

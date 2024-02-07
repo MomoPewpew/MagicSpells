@@ -535,7 +535,17 @@ public class MagicSpells extends JavaPlugin {
 						long cooldown = Long.parseLong(data[2]);
 						if (cooldown > System.currentTimeMillis()) {
 							Spell spell = getSpellByInternalName(data[0]);
-							if (spell != null) spell.setCooldownManually(UUID.fromString(data[1]), cooldown);
+							if (spell != null) {
+								if (data[1].equals("server")) {
+									spell.nextCastServer = cooldown;
+								} else {
+									spell.setCooldownManually(UUID.fromString(data[1]), cooldown);
+								}
+								
+								if (data.length > 3 && spell.getCharges() > 0) {
+									spell.setChargesConsumed(UUID.fromString(data[1]), Integer.parseInt(data[3]));
+								}
+							}
 						}
 					}
 				} catch (Exception e) {
@@ -1983,6 +1993,15 @@ public class MagicSpells extends JavaPlugin {
 				Map<UUID, Long> cooldowns;
 				long cooldown;
 				for (Spell spell : spells.values()) {
+					if (spell.nextCastServer > System.currentTimeMillis()) {
+						writer.append(spell.getInternalName())
+							.append(String.valueOf(':'))
+							.append("server")
+							.append(String.valueOf(':'))
+							.append(String.valueOf(spell.nextCastServer))
+							.append(String.valueOf('\n'));
+					}
+
 					cooldowns = spell.getCooldowns();
 					for (UUID id : cooldowns.keySet()) {
 						cooldown = cooldowns.get(id);
@@ -1991,8 +2010,14 @@ public class MagicSpells extends JavaPlugin {
 								.append(String.valueOf(':'))
 								.append(id.toString())
 								.append(String.valueOf(':'))
-								.append(String.valueOf(cooldown))
-								.append(String.valueOf('\n'));
+								.append(String.valueOf(cooldown));
+
+						if (spell.charges > 0) {
+							writer.append(String.valueOf(':'))
+								.append(String.valueOf(spell.getCharges(id)));
+						}
+
+						writer.append(String.valueOf('\n'));
 					}
 				}
 				writer.close();

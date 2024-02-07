@@ -161,6 +161,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private ConfigData<Integer> yOffset;
 	private ConfigData<Integer> undoDelay;
+	private ConfigData<Integer> blocksPerCast;
 
 	private final int buildInterval;
 	private final int maxWorkingBlocks;
@@ -190,6 +191,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		yOffset = getConfigDataInt("y-offset", 0);
 		undoDelay = getConfigDataInt("undo-delay", 0);
+		blocksPerCast = getConfigDataInt("blocks-per-cast", 0);
 
 		buildInterval = getConfigInt("build-interval", 0);
 		buildIntervalRandomness = Math.max(getConfigInt("build-interval-randomness", 7), 0) + 1;
@@ -380,9 +382,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    private Clipboard clipboard;
 	    private Clipboard ogClipboard;
 
+		private int changedBlocks = 0;
 		private int workingBlocks = 0;
 	    private int workingAir = 0;
 	    private int undoDelay;
+		private int blocksPerCast;
         private boolean instantUndo;
         boolean built = false;
         boolean undone = false;
@@ -394,13 +398,13 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    boolean stop = false;
 	    private LivingEntity caster;
 
-
 		public Builder(LivingEntity caster, Location target, float power, String[] args) {
 			this.target = target.clone();
 			this.clipboard = PasteSpell.this.clipboard;
 			this.caster = caster;
 
             this.undoDelay = PasteSpell.this.undoDelay.get(caster, null, power, args);
+            this.blocksPerCast = PasteSpell.this.blocksPerCast.get(caster, null, power, args);
             this.instantUndo = PasteSpell.this.instantUndo;
 
 			this.storeStartRegion();
@@ -483,7 +487,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 
 		private void parseClipboard() {
-			int changingBlocks = 0;
 		    this.blockVectors = new ArrayList<BlockVector3>();
 		    this.airVectors = new ArrayList<BlockVector3>();
 		    this.blockDisplays = new ArrayList<BlockDisplay>();
@@ -527,6 +530,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			}
 
 			if (animatorBlock == null) {
+				if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) return;
+
+				this.changedBlocks++;
+
 				if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(startingBlock, data, 0, 0, 0, 0);
 				startingBlock.setBlockData(data);
 
@@ -607,9 +614,9 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 
 		private void placeBlock(Block block, int x, int y, int z) {
-			if (this.stop) return;
-
 			for (BlockFace face : CARDINAL_BLOCK_FACES) {
+				if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) return;
+
 				if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 
 				Block to = block.getRelative(face);
@@ -623,6 +630,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				int duration = new Random().nextInt(buildIntervalRandomness) + buildInterval;
 
 				this.workingBlocks++;
+				this.changedBlocks++;
 
 				if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(block, data, face.getModX(), face.getModY(), face.getModZ(), duration);
 				if (PasteSpell.this.displayAnimation) this.moveBlock(block, data, face.getModX(), face.getModY(), face.getModZ(), duration, true);
@@ -644,12 +652,13 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    }
 
 		private void withdrawBlock(Block block, int x, int y, int z, BlockFace priorityFace) {
-			if (this.stop) return;
+			if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) return;
+			if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 
 			BlockVector3 currPos = BlockVector3.at(x, y, z);
 			if (this.airVectors.contains(currPos)) {
-				if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 				this.workingAir++;
+				this.changedBlocks++;
 
 				BlockData data = block.getBlockData();
 				Block withdrawBlock = null;
@@ -685,11 +694,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 								this.reInitializeWithdraw();
 							}
 						}, buildIntervalRandomness + buildInterval);
-					}
 
-					MagicSpells.scheduleDelayedTask(() -> {
-						this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
-					}, duration);
+						MagicSpells.scheduleDelayedTask(() -> {
+							this.withdrawBlock(to, x + face.getModX(), y + face.getModY(), z + face.getModZ(), face);
+						}, duration);
+					}
 				}
 
 				if (withdrawBlock == null) {

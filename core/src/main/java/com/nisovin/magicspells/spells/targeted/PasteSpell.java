@@ -494,15 +494,17 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        BlockVector3 origin = this.clipboard.getOrigin();
 
 	        for (BlockVector3 pos : this.clipboard.getRegion()) {
-				BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos));
+				BlockVector3 pos_ = BlockVector3.at(pos.getX(), pos.getY(), pos.getZ());
 
-				Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
+				BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos_));
+
+				Block bl = this.target.getBlock().getRelative(pos_.getX() - origin.getX(), pos_.getY() - origin.getY(), pos_.getZ() - origin.getZ());
 
 				if (!data.matches(bl.getBlockData())) {
 					if (data.getMaterial().isAir()) {
-						this.airVectors.add(pos);
+						this.airVectors.add(pos_);
 					} else {
-						this.blockVectors.add(pos);
+						this.blockVectors.add(pos_);
 					}
 				}
 	        }

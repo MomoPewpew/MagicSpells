@@ -12,6 +12,7 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityDamageEvent.DamageModifier;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.OverridePriority;
@@ -59,7 +60,7 @@ public class TakeDamageListener extends PassiveListener {
 	public void onDamage(EntityDamageEvent event) {
 		if (!(event.getEntity() instanceof LivingEntity caster)) return;
 		if (!isCancelStateOk(event.isCancelled())) return;
-		if (event.getFinalDamage() == 0D) return;
+		if (event.getFinalDamage() == 0D && event.getDamage(DamageModifier.ABSORPTION) == 0D) return;
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 		if (!damageCauses.isEmpty() && !damageCauses.contains(event.getCause())) return;
 

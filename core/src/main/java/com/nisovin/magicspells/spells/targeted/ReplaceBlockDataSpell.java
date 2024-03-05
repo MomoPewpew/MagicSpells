@@ -165,7 +165,7 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 						if (contains) {
 							BlockData blockData = Bukkit.createBlockData(blockDataString.replace("╚", "="));
 	
-							block.setBlockData(blockData);
+							block.setBlockData(blockData, false);
 						}
 
 						if (lidded != null) {

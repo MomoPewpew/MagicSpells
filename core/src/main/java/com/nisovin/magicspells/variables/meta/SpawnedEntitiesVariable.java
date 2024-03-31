@@ -6,13 +6,13 @@ import com.nisovin.magicspells.variables.variabletypes.MetaVariable;
 public class SpawnedEntitiesVariable extends MetaVariable {
 
 	@Override
-	public String getStringValue(String player) {
-		return String.valueOf(SpawnEntitySpell.getTotalEntities());
+	public double getValue(String player) {
+		return (double) SpawnEntitySpell.getTotalEntities();
 	}
 
 	@Override
-	public double getValue(String player) {
-		return (double) SpawnEntitySpell.getTotalEntities();
+	public void set(String player, double amount) {
+		SpawnEntitySpell.setTotalEntities((int) amount);
 	}
 
 }

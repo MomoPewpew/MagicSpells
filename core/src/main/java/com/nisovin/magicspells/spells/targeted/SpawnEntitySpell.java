@@ -960,4 +960,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return totalEntities;
 	}
 
+	public static void setTotalEntities(int i) {
+		totalEntities = i;
+	}
+
 }

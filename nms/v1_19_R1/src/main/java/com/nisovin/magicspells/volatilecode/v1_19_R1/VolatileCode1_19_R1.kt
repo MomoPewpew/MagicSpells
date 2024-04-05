@@ -26,6 +26,11 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
 import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
 
+import io.papermc.paper.advancement.AdvancementDisplay
+import io.papermc.paper.advancement.AdvancementDisplay.Frame
+
+import net.kyori.adventure.text.Component as KyoriComponent
+
 private typealias nmsItemStack = net.minecraft.world.item.ItemStack
 
 class VolatileCode1_19_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helper) {
@@ -150,5 +155,7 @@ class VolatileCode1_19_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
     override fun playHurtAnimation(entity: LivingEntity?, yaw: Float) {
         entity!!.playEffect(EntityEffect.HURT)
     }
+
+    override fun sendToastEffect(receiver: Player, icon: ItemStack, frameType: Frame, text: KyoriComponent) { }
 
 }

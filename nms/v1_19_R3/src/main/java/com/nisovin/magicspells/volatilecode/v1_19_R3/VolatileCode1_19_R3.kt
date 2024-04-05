@@ -45,6 +45,10 @@ import net.minecraft.world.entity.Entity
 import java.util.*
 import kotlin.collections.ArrayList
 
+import io.papermc.paper.advancement.AdvancementDisplay
+import io.papermc.paper.advancement.AdvancementDisplay.Frame
+import net.kyori.adventure.text.Component as KyoriComponent
+
 private typealias nmsItemStack = net.minecraft.world.item.ItemStack
 private typealias nmsEntityPose = net.minecraft.world.entity.Pose
 
@@ -297,5 +301,8 @@ class VolatileCode1_19_R3(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
             p.playSound(entity.location, "entity.generic.hurt", SoundCategory.PLAYERS, 1F, 1F)
         }
     }
+
+    override fun sendToastEffect(receiver: Player, icon: ItemStack, frameType: Frame, text: KyoriComponent) { }
+
 
 }

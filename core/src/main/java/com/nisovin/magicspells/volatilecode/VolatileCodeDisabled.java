@@ -3,6 +3,10 @@ package com.nisovin.magicspells.volatilecode;
 import org.bukkit.entity.*;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
+
+import io.papermc.paper.advancement.AdvancementDisplay.Frame;
+import net.kyori.adventure.text.Component;
+
 import org.bukkit.inventory.Inventory;
 import org.bukkit.EntityEffect;
 import org.bukkit.inventory.ItemStack;
@@ -78,8 +82,14 @@ public class VolatileCodeDisabled extends VolatileCodeHandle {
 
 	}
 	
+	@Override
 	public void playHurtAnimation(LivingEntity entity, float yaw) {
 		entity.playEffect(EntityEffect.HURT);
+	}
+
+	@Override
+	public void sendToastEffect(Player receiver, ItemStack icon, Frame frameType, Component text) {
+		
 	}
 
 }

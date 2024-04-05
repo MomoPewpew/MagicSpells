@@ -24,6 +24,8 @@ import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftItemStack
 
 import io.papermc.paper.adventure.PaperAdventure
 import io.papermc.paper.advancement.AdvancementDisplay
+import io.papermc.paper.advancement.AdvancementDisplay.Frame
+import net.kyori.adventure.text.Component as KyoriComponent
 
 import net.minecraft.advancements.*
 import net.minecraft.world.phys.Vec3
@@ -303,6 +305,41 @@ class VolatileCode1_20_R2(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         if (e.isSilent) return
         val sound = e.getHurtSound0(e.damageSources().generic())
         e.level().playSound(null, e.x, e.y, e.z, sound, e.soundSource, e.soundVolume, e.voicePitch)
+    }
+
+    override fun sendToastEffect(receiver: Player, icon: ItemStack, frameType: Frame, text: KyoriComponent) {
+        val iconNms = CraftItemStack.asNMSCopy(icon)
+        val textNms = PaperAdventure.asVanilla(text)
+        val description = PaperAdventure.asVanilla(KyoriComponent.empty())
+        val frame = try {
+            FrameType.valueOf(frameType.name)
+        } catch (_: IllegalArgumentException) {
+            FrameType.TASK
+        }
+
+        val id = ResourceLocation("magicspells", "toast_effect")
+        val criterionName = "impossible";
+        val advancement = Advancement.Builder.advancement()
+            .display(iconNms, textNms, description, null, frame, true, false, true)
+            .addCriterion(criterionName, Criterion(ImpossibleTrigger(), ImpossibleTrigger.TriggerInstance()))
+            .build(id)
+        val progress = AdvancementProgress()
+        progress.update(AdvancementRequirements(arrayOf(arrayOf(criterionName))))
+        progress.grantProgress(criterionName)
+
+        val player = (receiver as CraftPlayer).handle
+        player.connection.send(ClientboundUpdateAdvancementsPacket(
+            false,
+            Collections.singleton(advancement),
+            Collections.emptySet(),
+            Collections.singletonMap(id, progress)
+        ))
+        player.connection.send(ClientboundUpdateAdvancementsPacket(
+            false,
+            Collections.emptySet(),
+            Collections.singleton(id),
+            Collections.emptyMap()
+        ))
     }
 
 }

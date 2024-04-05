@@ -1,10 +1,12 @@
 package com.nisovin.magicspells.volatilecode;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.bukkit.entity.*;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
-import org.bukkit.inventory.Inventory;
+
+import io.papermc.paper.advancement.AdvancementDisplay.Frame;
+import net.kyori.adventure.text.Component;
+
 import org.bukkit.inventory.ItemStack;
 
 public abstract class VolatileCodeHandle {
@@ -43,4 +45,5 @@ public abstract class VolatileCodeHandle {
 
 	public abstract void playHurtAnimation(LivingEntity entity, float yaw);
 
+	public abstract void sendToastEffect(Player receiver, ItemStack icon, Frame frameType, Component text);
 }

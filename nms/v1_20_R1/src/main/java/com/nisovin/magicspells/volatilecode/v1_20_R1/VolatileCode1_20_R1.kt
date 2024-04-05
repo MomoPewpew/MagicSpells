@@ -38,6 +38,10 @@ import net.minecraft.world.level.block.state.properties.BedPart
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
 import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
 
+import io.papermc.paper.advancement.AdvancementDisplay
+import io.papermc.paper.advancement.AdvancementDisplay.Frame
+import net.kyori.adventure.text.Component as KyoriComponent
+
 import java.util.*
 
 private typealias nmsItemStack = net.minecraft.world.item.ItemStack
@@ -292,5 +296,7 @@ class VolatileCode1_20_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
             p.playSound(entity.location, "entity.generic.hurt", SoundCategory.PLAYERS, 1F, 1F)
         }
     }
+
+    override fun sendToastEffect(receiver: Player, icon: ItemStack, frameType: Frame, text: KyoriComponent) { }
 
 }

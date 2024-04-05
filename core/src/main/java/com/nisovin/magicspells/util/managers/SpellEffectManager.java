@@ -70,6 +70,7 @@ public class SpellEffectManager {
 		addSpellEffect("spawn", MobSpawnerEffect.class);
 		addSpellEffect("splash", SplashPotionEffect.class);
 		addSpellEffect("title", TitleEffect.class);
+		addSpellEffect("toast", ToastEffect.class);
 		addSpellEffect("effectlib", EffectLibEffect.class);
 		addSpellEffect("effectlibline", EffectLibLineEffect.class);
 		addSpellEffect("effectlibentity", EffectLibEntityEffect.class);

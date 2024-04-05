@@ -89,6 +89,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected List<String> replaces;
 	protected List<String> precludes;
 	protected List<String> incantations;
+	protected List<String> incantationsRegex;
 	protected List<String> prerequisites;
 	protected List<String> modifierStrings;
 	protected List<String> worldRestrictions;
@@ -204,6 +205,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		alwaysGranted = config.getBoolean(path + "always-granted", false);
 		permName = config.getString(path + "permission-name", spellName);
 		incantations = config.getStringList(path + "incantations", null);
+		incantationsRegex = config.getStringList(path + "incantations-regex", null);
 
 		// General options
 		description = config.getString(path + "description", "");
@@ -1980,6 +1982,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	public List<String> getIncantations() {
 		return incantations;
+	}
+
+	public List<String> getIncantationsRegex() {
+		return incantationsRegex;
 	}
 
 	public CastItem getCastItem() {

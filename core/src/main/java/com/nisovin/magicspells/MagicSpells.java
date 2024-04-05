@@ -7,7 +7,7 @@ import java.util.logging.Level;
 import java.util.stream.Stream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import java.util.regex.PatternSyntaxException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
 import java.lang.annotation.Annotation;
@@ -102,6 +102,7 @@ public class MagicSpells extends JavaPlugin {
 	private Map<String, Spell> spells; // Map internal names to spells
 	private Map<String, Spell> spellNames; // Map configured names to spells
 	private Map<String, Spell> incantations; // Map incantation strings to spells
+	private Map<Pattern, Spell> incantationsRegex; // Map incantation regex matcher to spells
 	private Map<String, Spellbook> spellbooks; // Player spellbooks
 
 	private List<Spell> spellsOrdered; // Spells ordered
@@ -231,6 +232,7 @@ public class MagicSpells extends JavaPlugin {
 		spellsOrdered = new ArrayList<>();
 		spellbooks = new HashMap<>();
 		incantations = new HashMap<>();
+		incantationsRegex = new HashMap<>();
 
 		// Make sure directories are created
 		getDataFolder().mkdir();
@@ -505,6 +507,20 @@ public class MagicSpells extends JavaPlugin {
 					incantations.put(s.toLowerCase(), spell);
 				}
 			}
+
+			incs = spell.getIncantationsRegex();
+			if (incs != null && !incs.isEmpty()) {
+				for (String s : incs) {
+					try {
+						Pattern pattern = Pattern.compile(s);
+						incantationsRegex.put(pattern, spell);
+					} catch (PatternSyntaxException e) {
+						System.err.println("Invalid regex pattern: " + s + " in spell " + spell.internalName);
+					}
+					incantations.put(s.toLowerCase(), spell);
+				}
+			}
+
 			spell.initialize();
 		}
 		log("...done");
@@ -1317,6 +1333,10 @@ public class MagicSpells extends JavaPlugin {
 
 	public static Map<String, Spell> getIncantations() {
 		return plugin.incantations;
+	}
+
+	public static Map<Pattern, Spell> getIncantationsRegex() {
+		return plugin.incantationsRegex;
 	}
 
 	public static Map<String, Long> getProfilingTotalTime() {

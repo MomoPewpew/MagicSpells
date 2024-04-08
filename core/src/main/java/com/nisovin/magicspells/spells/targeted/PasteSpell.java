@@ -168,6 +168,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	private final int buildIntervalRandomness;
 
 	private boolean pasteAir;
+	private ConfigData<Boolean> onlyReplaceAir;
 	private boolean removePaste;
 	private boolean pasteAtCaster;
 	private boolean displayAnimation;
@@ -198,6 +199,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		maxWorkingBlocks = getConfigInt("max-working-blocks", 1000);
 
 		pasteAir = getConfigBoolean("paste-air", false);
+		onlyReplaceAir = getConfigDataBoolean("only-replace-air", false);
 		dismantleFirst = getConfigBoolean("dismantle-first", false);
 		removePaste = getConfigInt("undo-delay", 0) > 0 ? true : getConfigBoolean("remove-paste", true);
 		pasteAtCaster = getConfigBoolean("paste-at-caster", false);
@@ -397,11 +399,13 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	    boolean stop = false;
 	    private LivingEntity caster;
+		private boolean onlyReplaceAir;
 
 		public Builder(LivingEntity caster, Location target, float power, String[] args) {
 			this.target = target.clone();
 			this.clipboard = PasteSpell.this.clipboard;
 			this.caster = caster;
+			this.onlyReplaceAir = PasteSpell.this.onlyReplaceAir.get(caster, null, power, args);
 
             this.undoDelay = PasteSpell.this.undoDelay.get(caster, null, power, args);
             this.blocksPerCast = PasteSpell.this.blocksPerCast.get(caster, null, power, args);
@@ -499,6 +503,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos_));
 
 				Block bl = this.target.getBlock().getRelative(pos_.getX() - origin.getX(), pos_.getY() - origin.getY(), pos_.getZ() - origin.getZ());
+
+				if (this.onlyReplaceAir && !bl.getBlockData().getMaterial().isAir()) continue;
 
 				if (!data.matches(bl.getBlockData())) {
 					if (data.getMaterial().isAir()) {

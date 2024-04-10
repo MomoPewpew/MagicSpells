@@ -16,8 +16,8 @@ public class ExpressionCondition extends OperatorCondition {
 
 	private static final Pattern EXPRESSION_MATCHER = Pattern.compile("((?:%..*%|[^%<>:=]*)*)([<>:=])((?:%..*%|[^%<>:=]*)*)");
 
-	private ConfigData<Double> expressionLeft;
-	private ConfigData<Double> expressionRight;
+	private ConfigData<Double> left;
+	private ConfigData<Double> right;
 
 	@Override
 	public boolean initialize(String var) {
@@ -32,10 +32,10 @@ public class ExpressionCondition extends OperatorCondition {
 			return false;
 		}
 
-		expressionLeft = ConfigDataUtil.getDouble(split.get(0));
-		expressionRight = ConfigDataUtil.getDouble(split.get(2));
+		left = ConfigDataUtil.getDouble(split.get(0));
+		right = ConfigDataUtil.getDouble(split.get(2));
 
-		return (super.initialize(split.get(1)) && expressionLeft != null && expressionRight != null);
+		return (super.initialize(split.get(1)) && left != null && right != null);
 	}
 
 	@Override
@@ -54,8 +54,8 @@ public class ExpressionCondition extends OperatorCondition {
 	}
 
 	private boolean compare(LivingEntity target) {
-		Double valueLeft = expressionLeft.get(target, 0, new String[0]);
-		Double valueRight = expressionRight.get(target, 0, new String[0]);
+		Double valueLeft = left.get(target, 0, new String[0]);
+		Double valueRight = right.get(target, 0, new String[0]);
 
 		if (equals) return (valueLeft == valueRight);
 		else if (moreThan) return (valueLeft > valueRight);

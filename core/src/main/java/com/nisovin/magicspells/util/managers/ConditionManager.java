@@ -180,7 +180,7 @@ public class ConditionManager {
 		addCondition("velocityactive", VelocityActiveCondition.class);
 		addCondition("charactertag", CharacterTagCondition.class);
 		addCondition("expression", ExpressionCondition.class);
-		addCondition("placeholderstringequals", PlaceholderStringEqualsCondition.class);
+		addCondition("expressionstringequals", ExpressionStringEqualsCondition.class);
 	}
 
 }

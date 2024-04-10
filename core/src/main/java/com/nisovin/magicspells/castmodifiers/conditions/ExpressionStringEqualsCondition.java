@@ -13,7 +13,7 @@ import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
-public class PlaceholderStringEqualsCondition extends Condition {
+public class ExpressionStringEqualsCondition extends Condition {
 
 	private static final Pattern PLACEHOLDER_STRING_MATCHER = Pattern.compile("(%..*%|\".*\")([:=])(%..*%|\".*\")");
 

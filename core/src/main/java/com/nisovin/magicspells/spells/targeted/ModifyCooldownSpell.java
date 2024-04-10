@@ -26,7 +26,7 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 		super(config, spellName);
 
 		seconds = getConfigDataFloat("seconds", 1F);
-		multiplier = getConfigDataFloat("multiplier", 0F);
+		multiplier = getConfigDataFloat("multiplier", 1F);
 
 		powerAffectsSeconds = getConfigBoolean("power-affects-seconds", true);
 		powerAffectsMultiplier = getConfigBoolean("power-affects-multiplier", true);
@@ -89,7 +89,7 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 			if (!filter.check(spell)) continue;
 
 			float cd = spell.getCooldown(target) - sec;
-			if (mult > 0) cd *= mult;
+			cd *= mult;
 			if (cd < 0) cd = 0;
 			spell.setCooldown(target, cd, false);
 		}

@@ -14,7 +14,7 @@ import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
 public class ExpressionCondition extends OperatorCondition {
 
-	private static final Pattern EXPRESSION_MATCHER = Pattern.compile("(%..*%|[^<>:=]*)([<>:=])(%..*%|[^<>:=]*)");
+	private static final Pattern EXPRESSION_MATCHER = Pattern.compile("((?:%..*%|[^%<>:=]*)*)([<>:=])((?:%..*%|[^%<>:=]*)*)");
 
 	private ConfigData<Double> expressionLeft;
 	private ConfigData<Double> expressionRight;

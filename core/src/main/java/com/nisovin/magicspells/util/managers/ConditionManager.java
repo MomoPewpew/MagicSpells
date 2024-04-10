@@ -179,6 +179,7 @@ public class ConditionManager {
 		addCondition("always", AlwaysCondition.class);
 		addCondition("velocityactive", VelocityActiveCondition.class);
 		addCondition("charactertag", CharacterTagCondition.class);
+		addCondition("expression", ExpressionCondition.class);
 	}
 
 }

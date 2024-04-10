@@ -202,18 +202,18 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 			return new ArgumentData(index - 1, def);
 		}
 
-		if (matcher.group(12) != null) {
-			String owner = matcher.group(13);
-			String papiPlaceholder = '%' + matcher.group(14) + '%';
+		if (matcher.group(37) != null) {
+			String owner = matcher.group(38);
+			String papiPlaceholder = '%' + matcher.group(39) + '%';
 
 			return owner.equalsIgnoreCase("targetpapi") ?
 				new TargetPAPIData(papiPlaceholder) :
 				new CasterPAPIData(papiPlaceholder);
 		}
 
-		if (matcher.group(15) != null) {
-			String player = matcher.group(16);
-			String papiPlaceholder = '%' + matcher.group(17) + '%';
+		if (matcher.group(40) != null) {
+			String player = matcher.group(41);
+			String papiPlaceholder = '%' + matcher.group(42) + '%';
 
 			return new PlayerPAPIData(papiPlaceholder, player);
 		}

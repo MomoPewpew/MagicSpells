@@ -25,9 +25,12 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 
 import com.nisovin.magicspells.Spell;
@@ -614,13 +617,13 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			MagicSpells.registerEvents(this);
 		}
 
-		private void addExpiresLine(ItemStack item, double expireHours) {
+		private void addExpiresLine(ItemStack item, double expireMilis) {
 			ItemMeta meta = item.getItemMeta();
 			List<Component> lore = null;
 			if (meta.hasLore()) lore = meta.lore();
 			if (lore == null) lore = new ArrayList<>();
 
-			long expiresAt = System.currentTimeMillis() + (long) (expireHours * TimeUtil.MILLISECONDS_PER_HOUR);
+			long expiresAt = System.currentTimeMillis() + (long) expireMilis;
 			lore.add(Util.getMiniMessage(getExpiresText(expiresAt)));
 			lore.add(Util.getMiniMessage(expPrefix + expiresAt));
 			meta.lore(lore);
@@ -663,11 +666,47 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			processItemDrop(event.getItemDrop());
 		}
 		
-		@EventHandler(priority = EventPriority.LOWEST)
+		@EventHandler(priority = EventPriority.MONITOR)
 		private void onItemSpawn(ItemSpawnEvent event) {
 			processItemDrop(event.getEntity());
+			if (event.getEntity().isDead()) event.setCancelled(true);
 		}
-		
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		private void onItemSwap(PlayerSwapHandItemsEvent event) {
+			ItemStack item = event.getMainHandItem();
+			ExpirationResult result = updateExpiresLineIfNeeded(item);
+			if (result == ExpirationResult.EXPIRED) {
+				event.getPlayer().getEquipment().setItemInMainHand(null);
+				event.setCancelled(true);
+			}
+			item = event.getOffHandItem();
+			result = updateExpiresLineIfNeeded(item);
+			if (result == ExpirationResult.EXPIRED) {
+				event.getPlayer().getEquipment().setItemInOffHand(null);
+				event.setCancelled(true);
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		private void onHotbarScroll(PlayerItemHeldEvent event) {
+			ItemStack item = event.getPlayer().getInventory().getItem(event.getNewSlot());
+			ExpirationResult result = updateExpiresLineIfNeeded(item);
+			if (result == ExpirationResult.EXPIRED) {
+				event.getPlayer().getEquipment().setItemInMainHand(null);
+				event.setCancelled(true);
+			}
+		}
+
+		@EventHandler(priority = EventPriority.MONITOR)
+		private void onInventoryClick(InventoryClickEvent event) {
+			ItemStack item = event.getCurrentItem();
+			ExpirationResult result = updateExpiresLineIfNeeded(item);
+			if (result == ExpirationResult.EXPIRED) {
+				event.getInventory().setItem(event.getRawSlot(), null);
+				event.setCancelled(true);
+			}
+		}
 		private void processInventory(Inventory inv) {
 			ItemStack[] contents = inv.getContents();
 			processInventoryContents(contents);
@@ -720,7 +759,13 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			if (hours / 24 >= 15) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + ((long) hours / TimeUtil.HOURS_PER_WEEK) + ChatColor.GRAY + " weeks";
 			if (hours / 24 >= 3) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + ((long) hours / TimeUtil.HOURS_PER_DAY) + ChatColor.GRAY + " days";
 			if (hours >= 2) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) hours + ChatColor.GRAY + " hours";
-			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " hour";
+			if (hours >= 1) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " hour";
+			double minutes = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_MINUTE);
+			if (minutes >= 2) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) minutes + ChatColor.GRAY + " minutes";
+			if (minutes >= 1) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " minute";
+			double seconds = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_SECOND);
+			if (seconds >= 2) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) seconds + ChatColor.GRAY + " seconds";
+			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " second";
 		}		
 		
 	}

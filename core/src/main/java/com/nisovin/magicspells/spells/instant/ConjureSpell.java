@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -611,8 +612,6 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	
 	private static class ExpirationHandler implements Listener {
 		
-		private final String expPrefix =  ChatColor.BLACK + ChatColor.MAGIC.toString() + "MSExp:";
-		
 		private ExpirationHandler() {
 			MagicSpells.registerEvents(this);
 		}
@@ -625,7 +624,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 			long expiresAt = System.currentTimeMillis() + (long) expireMilis;
 			lore.add(Util.getMiniMessage(getExpiresText(expiresAt)));
-			lore.add(Util.getMiniMessage(expPrefix + expiresAt));
+			meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+
 			meta.lore(lore);
 			item.setItemMeta(meta);
 		}
@@ -645,7 +645,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		}
 		
 		@EventHandler(priority = EventPriority.LOWEST)
-		private void onRightClick(PlayerInteractEvent event) {
+		private void onClick(PlayerInteractEvent event) {
 			if (!event.hasItem()) return;
 			ItemStack item = event.getItem();
 			ExpirationResult result = updateExpiresLineIfNeeded(item);
@@ -674,17 +674,10 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 		@EventHandler(priority = EventPriority.LOWEST)
 		private void onItemSwap(PlayerSwapHandItemsEvent event) {
-			ItemStack item = event.getMainHandItem();
+			ItemStack item = event.getOffHandItem();
 			ExpirationResult result = updateExpiresLineIfNeeded(item);
 			if (result == ExpirationResult.EXPIRED) {
 				event.getPlayer().getEquipment().setItemInMainHand(null);
-				event.setCancelled(true);
-			}
-			item = event.getOffHandItem();
-			result = updateExpiresLineIfNeeded(item);
-			if (result == ExpirationResult.EXPIRED) {
-				event.getPlayer().getEquipment().setItemInOffHand(null);
-				event.setCancelled(true);
 			}
 		}
 
@@ -693,8 +686,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			ItemStack item = event.getPlayer().getInventory().getItem(event.getNewSlot());
 			ExpirationResult result = updateExpiresLineIfNeeded(item);
 			if (result == ExpirationResult.EXPIRED) {
-				event.getPlayer().getEquipment().setItemInMainHand(null);
-				event.setCancelled(true);
+				event.getPlayer().getInventory().setItem(event.getNewSlot(), null);
 			}
 		}
 
@@ -703,10 +695,11 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			ItemStack item = event.getCurrentItem();
 			ExpirationResult result = updateExpiresLineIfNeeded(item);
 			if (result == ExpirationResult.EXPIRED) {
-				event.getInventory().setItem(event.getRawSlot(), null);
+				event.setCurrentItem(null);
 				event.setCancelled(true);
 			}
 		}
+
 		private void processInventory(Inventory inv) {
 			ItemStack[] contents = inv.getContents();
 			processInventoryContents(contents);
@@ -738,18 +731,18 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			ItemMeta meta = item.getItemMeta();
 			if (!meta.hasLore()) return ExpirationResult.NO_UPDATE;
 
-			List<Component> lore = meta.lore();
-			if (lore == null || lore.size() < 2) return ExpirationResult.NO_UPDATE;
+			Long expiresAt = meta.getPersistentDataContainer().get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG);
+			if (expiresAt == null) return ExpirationResult.NO_UPDATE;
 
-			String lastLine = Util.getStringFromComponent(lore.get(lore.size() -1));
-			if (!lastLine.startsWith(expPrefix)) return ExpirationResult.NO_UPDATE;
-
-			long expiresAt = Long.parseLong(lastLine.replace(expPrefix, ""));
 			if (expiresAt < System.currentTimeMillis()) return ExpirationResult.EXPIRED;
 
-			lore.set(lore.size() - 2, Util.getMiniMessage(getExpiresText(expiresAt)));
-			meta.lore(lore);
-			item.setItemMeta(meta);
+			List<Component> lore = meta.lore();
+
+			if (lore != null && lore.size() > 0 && ((TextComponent) lore.get(lore.size() - 1)).content().contains("Expires in ")) {
+				lore.set(lore.size() - 1, Util.getMiniMessage(getExpiresText(expiresAt)));
+				meta.lore(lore);
+				item.setItemMeta(meta);
+			}
 			return ExpirationResult.UPDATE;
 		}
 	

@@ -2,9 +2,9 @@ package com.nisovin.magicspells.spells.buff;
 
 import java.util.*;
 
-import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -13,10 +13,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -51,12 +51,8 @@ public class ArmorSpell extends BuffSpell {
 
 	private String strHasArmor;
 
-	private Component hiddenLore;
-
 	public ArmorSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-
-		hiddenLore = getInvisibleLore("MSArmorItem");
 
 		permanent = getConfigBoolean("permanent", false);
 		replace = getConfigBoolean("replace", false);
@@ -104,10 +100,13 @@ public class ArmorSpell extends BuffSpell {
 
 		if (!permanent) {
 			ItemMeta meta = item.getItemMeta();
-			List<Component> lore = meta.lore();
-			if (lore == null) lore = new ArrayList<>();
-			lore.add(hiddenLore);
-			meta.lore(lore);
+			meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "MSArmorItem"), PersistentDataType.BOOLEAN, true);
+
+			if (duration > 0) {
+				long expiresAt = System.currentTimeMillis() + (long) (duration * 1000L);
+				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+			}
+
 			item.setItemMeta(meta);
 		}
 
@@ -289,9 +288,10 @@ public class ArmorSpell extends BuffSpell {
 			while (drops.hasNext()) {
 				ItemStack drop = drops.next();
 				if (drop == null) continue;
-				List<Component> lore = drop.lore();
-				if (lore == null) continue;
-				if (!lore.get(lore.size() - 1).equals(hiddenLore)) continue;
+				if (!drop.hasItemMeta()) continue;
+				ItemMeta meta = drop.getItemMeta();
+				Boolean MSArmorItem = meta.getPersistentDataContainer().get(new NamespacedKey(MagicSpells.getInstance(), "MSArmorItem"), PersistentDataType.BOOLEAN);
+				if (MSArmorItem == null || !MSArmorItem) continue;
 				drops.remove();
 			}
 		}
@@ -384,14 +384,6 @@ public class ArmorSpell extends BuffSpell {
 
 	public void setHasArmorMessage(String strHasArmor) {
 		this.strHasArmor = strHasArmor;
-	}
-
-	public Component getHiddenLore() {
-		return hiddenLore;
-	}
-
-	public void setHiddenLore(Component hiddenLore) {
-		this.hiddenLore = hiddenLore;
 	}
 
 }

@@ -102,11 +102,6 @@ public class ArmorSpell extends BuffSpell {
 			ItemMeta meta = item.getItemMeta();
 			meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "MSArmorItem"), PersistentDataType.BOOLEAN, true);
 
-			if (duration > 0) {
-				long expiresAt = System.currentTimeMillis() + (long) (duration * 1000L);
-				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
-			}
-
 			item.setItemMeta(meta);
 		}
 
@@ -175,25 +170,53 @@ public class ArmorSpell extends BuffSpell {
 		if (helmet != null) {
 			eStore.helmet = inv.getHelmet();
 			if (replace) inv.setHelmet(null);
-			inv.setHelmet(helmet.clone());
+			ItemStack stack = helmet.clone();
+			if (duration > 0) {
+				ItemMeta meta = stack.getItemMeta();
+				long expiresAt = System.currentTimeMillis() + (long) (duration * 1000L);
+				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+				stack.setItemMeta(meta);
+			}
+			inv.setHelmet(stack);
 		}
 
 		if (chestplate != null) {
 			eStore.chest = inv.getChestplate();
 			if (replace) inv.setChestplate(null);
-			inv.setChestplate(chestplate.clone());
+			ItemStack stack = chestplate.clone();
+			if (duration > 0) {
+				ItemMeta meta = stack.getItemMeta();
+				long expiresAt = System.currentTimeMillis() + (long) (duration * 1000L);
+				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+				stack.setItemMeta(meta);
+			}
+			inv.setChestplate(stack);
 		}
 
 		if (leggings != null) {
 			eStore.legs = inv.getLeggings();
 			if (replace) inv.setLeggings(null);
-			inv.setLeggings(leggings.clone());
+			ItemStack stack = leggings.clone();
+			if (duration > 0) {
+				ItemMeta meta = stack.getItemMeta();
+				long expiresAt = System.currentTimeMillis() + (long) (duration * 1000L);
+				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+				stack.setItemMeta(meta);
+			}
+			inv.setLeggings(stack);
 		}
 
 		if (boots != null) {
 			eStore.boots = inv.getBoots();
 			if (replace) inv.setBoots(null);
-			inv.setBoots(boots.clone());
+			ItemStack stack = boots.clone();
+			if (duration > 0) {
+				ItemMeta meta = stack.getItemMeta();
+				long expiresAt = System.currentTimeMillis() + (long) (duration * 1000L);
+				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+				stack.setItemMeta(meta);
+			}
+			inv.setBoots(stack);
 		}
 		equipStore.put(inv.getHolder().getUniqueId(), eStore);
 	}

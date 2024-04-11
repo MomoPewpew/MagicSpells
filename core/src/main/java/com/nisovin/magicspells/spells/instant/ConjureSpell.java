@@ -37,6 +37,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.events.ConjureItemEvent;
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
@@ -51,6 +52,8 @@ import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spells.command.ScrollSpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+
+import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
 
 public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, TargetedLocationSpell {
 
@@ -611,9 +614,15 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	}
 	
 	private static class ExpirationHandler implements Listener {
+
+		private static CharacterExpirationHandler characterExpirationHandler  = null;
 		
 		private ExpirationHandler() {
 			MagicSpells.registerEvents(this);
+
+			if (CompatBasics.pluginEnabled("SneakyCharacterManager")) {
+				characterExpirationHandler = new CharacterExpirationHandler();
+			}
 		}
 
 		private void addExpiresLine(ItemStack item, double expireMilis) {
@@ -632,7 +641,11 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		
 		@EventHandler(priority = EventPriority.LOWEST)
 		private void onJoin(PlayerJoinEvent event) {
-			PlayerInventory inv = event.getPlayer().getInventory();
+			joinOrLoadCharacter(event.getPlayer());
+		}
+
+		private void joinOrLoadCharacter(Player player) {
+			PlayerInventory inv = player.getInventory();
 			processInventory(inv);
 			ItemStack[] armor = inv.getArmorContents();
 			processInventoryContents(armor);
@@ -761,6 +774,22 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " second";
 		}		
 		
+	}
+
+	private static class CharacterExpirationHandler implements Listener {
+
+		private CharacterExpirationHandler() {
+			MagicSpells.registerEvents(this);
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		private void onJoin(LoadCharacterEvent event) {
+			if (!event.isCancelled()) {
+				MagicSpells.scheduleDelayedTask(() -> {
+					expirationHandler.joinOrLoadCharacter(event.getPlayer());
+				}, 1);
+			}
+		}
 	}
 	
 	private enum ExpirationResult {

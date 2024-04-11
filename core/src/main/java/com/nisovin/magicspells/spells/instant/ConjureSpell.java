@@ -742,21 +742,22 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			if (!item.hasItemMeta()) return ExpirationResult.NO_UPDATE;
 
 			ItemMeta meta = item.getItemMeta();
-			if (!meta.hasLore()) return ExpirationResult.NO_UPDATE;
 
 			Long expiresAt = meta.getPersistentDataContainer().get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG);
 			if (expiresAt == null) return ExpirationResult.NO_UPDATE;
 
 			if (expiresAt < System.currentTimeMillis()) return ExpirationResult.EXPIRED;
 
+			if (!meta.hasLore()) return ExpirationResult.NO_UPDATE;
 			List<Component> lore = meta.lore();
 
 			if (lore != null && lore.size() > 0 && ((TextComponent) lore.get(lore.size() - 1)).content().contains("Expires in ")) {
 				lore.set(lore.size() - 1, Util.getMiniMessage(getExpiresText(expiresAt)));
 				meta.lore(lore);
 				item.setItemMeta(meta);
+				return ExpirationResult.UPDATE;
 			}
-			return ExpirationResult.UPDATE;
+			return ExpirationResult.NO_UPDATE;
 		}
 	
 		private String getExpiresText(long expiresAt) {

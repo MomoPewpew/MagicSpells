@@ -96,7 +96,12 @@ public class CastListener implements Listener {
 
 		if (isEventCastAction(event)) {
 			// Cast
-			if (!MagicSpells.isCastingOnAnimate()) castSpell(event.getPlayer());
+			MagicSpells.scheduleDelayedTask(() -> {
+				Long noCastTime = noCastUntil.get(player.getName());
+				if (noCastTime == null || System.currentTimeMillis() >= noCastTime) {
+					if (!MagicSpells.isCastingOnAnimate()) castSpell(player);
+				}
+			}, 1);
 			return;
 		}
 
@@ -162,12 +167,17 @@ public class CastListener implements Listener {
 			if (isBow(inHand.getType())) return;
 		}
 
-		castSpell(player);
+		MagicSpells.scheduleDelayedTask(() -> {
+			Long noCastTime = noCastUntil.get(player.getName());
+			if (noCastTime == null || System.currentTimeMillis() >= noCastTime) {
+				castSpell(player);
+			}
+		}, 1);
 	}
 
 	@EventHandler(priority=EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerDrop(PlayerDropItemEvent event) {
-		if (!MagicSpells.isCastingOnAnimate()) return;
+		//if (!MagicSpells.isCastingOnAnimate()) return;
 		noCastUntil.put(event.getPlayer().getName(), System.currentTimeMillis() + 150);
 	}
 

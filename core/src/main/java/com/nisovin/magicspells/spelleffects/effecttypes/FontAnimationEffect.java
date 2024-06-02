@@ -54,7 +54,8 @@ public class FontAnimationEffect extends SpellEffect {
 		}
 
 		titlePart = config.getString("title-part", "subtitle");
-		if (!titlePart.equals("actionbar") && !titlePart.equals("title")) titlePart = "subtitle";
+		if (!titlePart.equals("actionbar") && !titlePart.equals("title"))
+			titlePart = "subtitle";
 
 		prefix = config.getString("prefix", null);
 
@@ -73,25 +74,8 @@ public class FontAnimationEffect extends SpellEffect {
 	@Override
 	protected Runnable playEffectEntity(Entity entity, SpellData data) {
 		if ((entity instanceof Player player)) {
-			if (this.titlePart.equals("actionbar")) {
-				if (taskIdMapActionbar.containsKey(player)) {
-					MagicSpells.cancelTask(taskIdMapActionbar.get(player));
-					taskIdMapActionbar.remove(player);
-				}
-			} else {
-				if (taskIdMap.containsKey(player)) {
-					MagicSpells.cancelTask(taskIdMap.get(player));
-					taskIdMap.remove(player);
-				}
-			}
-
-			FontAnimation fontAnimation = new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix, interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse);
-
-			if (this.titlePart.equals("actionbar")) {
-				taskIdMapActionbar.put(player, fontAnimation.fontAnimationTaskId);
-			} else {
-				taskIdMap.put(player, fontAnimation.fontAnimationTaskId);
-			}
+			new FontAnimation(player, fontNameSpace, fontName, titlePart, prefix,
+					interval, durationTicks, startFrame, floorFrame, ceilingFrame, delay, fadeIn, fadeOut, reverse);
 		}
 
 		return null;
@@ -120,7 +104,11 @@ public class FontAnimationEffect extends SpellEffect {
 
 		private ArrayList<Character> list;
 
-		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, String prefix, int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay, int fadeIn, int fadeOut, boolean reverse) {
+		private boolean queueCleared = false;
+
+		private FontAnimation(Player target, String fontNameSpace, String fontName, String titlePart, String prefix,
+				int interval, int durationTicks, int startFrame, int floorFrame, int ceilingFrame, int delay,
+				int fadeIn, int fadeOut, boolean reverse) {
 			this.target = target;
 
 			this.fontNameSpace = fontNameSpace;
@@ -159,6 +147,7 @@ public class FontAnimationEffect extends SpellEffect {
 				this.list.add(unescapeString(String.format("\\uE%03d", from++)).charAt(0));
 
 			if (fadeIn > 0 & !this.titlePart.equals("actionbar")) {
+				this.clearQueue();
 				int fadeFrame = this.nextFrame;
 
 				if (this.reverse) {
@@ -185,10 +174,12 @@ public class FontAnimationEffect extends SpellEffect {
 
 				switch (this.titlePart) {
 					case "title":
-						this.target.showTitle(Title.title(message, Component.text(""), Title.Times.times(milisOfTicks(fadeIn), milisOfTicks(this.interval + 19), milisOfTicks(20))));
+						this.target.showTitle(Title.title(message, Component.text(""), Title.Times
+								.times(milisOfTicks(fadeIn), milisOfTicks(this.interval + 19), milisOfTicks(20))));
 						break;
 					default:
-						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(fadeIn), milisOfTicks(this.interval + 19), milisOfTicks(20))));
+						this.target.showTitle(Title.title(Component.text(""), message, Title.Times
+								.times(milisOfTicks(fadeIn), milisOfTicks(this.interval + 19), milisOfTicks(20))));
 				}
 			}
 
@@ -197,6 +188,7 @@ public class FontAnimationEffect extends SpellEffect {
 
 		@Override
 		public void run() {
+			this.clearQueue();
 			if (this.iterations < this.durationTicks) {
 				if (this.reverse) {
 					if (this.nextFrame == this.floorFrame) {
@@ -229,10 +221,14 @@ public class FontAnimationEffect extends SpellEffect {
 						this.target.sendActionBar(message);
 						break;
 					case "title":
-						this.target.showTitle(Title.title(message, Component.text(""), Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19), milisOfTicks(this.iterations == this.durationTicks - 1 ? this.fadeOut : 20))));
+						this.target.showTitle(Title.title(message, Component.text(""),
+								Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19),
+										milisOfTicks(this.iterations == this.durationTicks - 1 ? this.fadeOut : 20))));
 						break;
 					default:
-						this.target.showTitle(Title.title(Component.text(""), message, Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19), milisOfTicks(this.iterations == this.durationTicks - 1 ? this.fadeOut : 20))));
+						this.target.showTitle(Title.title(Component.text(""), message,
+								Title.Times.times(milisOfTicks(0), milisOfTicks(this.interval + 19),
+										milisOfTicks(this.iterations == this.durationTicks - 1 ? this.fadeOut : 20))));
 				}
 
 				this.iterations++;
@@ -243,7 +239,8 @@ public class FontAnimationEffect extends SpellEffect {
 							this.target.sendActionBar(Component.text(""));
 							break;
 						default:
-							this.target.showTitle(Title.title(Component.text(""), Component.text(""), Title.Times.times(milisOfTicks(0), milisOfTicks(1), milisOfTicks(0))));
+							this.target.showTitle(Title.title(Component.text(""), Component.text(""),
+									Title.Times.times(milisOfTicks(0), milisOfTicks(1), milisOfTicks(0))));
 					}
 				}
 				MagicSpells.cancelTask(this.fontAnimationTaskId);
@@ -256,18 +253,42 @@ public class FontAnimationEffect extends SpellEffect {
 			}
 		}
 
+		private void clearQueue() {
+			if (!this.queueCleared) {
+				if (this.titlePart.equals("actionbar")) {
+					if (taskIdMapActionbar.containsKey(this.target)) {
+						MagicSpells.cancelTask(taskIdMapActionbar.get(this.target));
+						taskIdMapActionbar.remove(this.target);
+					}
+				} else {
+					if (taskIdMap.containsKey(this.target)) {
+						MagicSpells.cancelTask(taskIdMap.get(this.target));
+						taskIdMap.remove(this.target);
+					}
+				}
+
+				if (this.titlePart.equals("actionbar")) {
+					taskIdMapActionbar.put(this.target, this.fontAnimationTaskId);
+				} else {
+					taskIdMap.put(this.target, this.fontAnimationTaskId);
+				}
+
+				this.queueCleared = true;
+			}
+		}
+
 		private static Duration milisOfTicks(int ticks) {
 			return Duration.ofMillis(TimeUtil.MILLISECONDS_PER_SECOND * (ticks / TimeUtil.TICKS_PER_SECOND));
 		}
-		
-		//Function borrowed from AnimationCore
+
+		// Function borrowed from AnimationCore
 		private final static String unescapeString(String oldstr) {
 
 			/*
-			* In contrast to fixing Java's broken regex charclasses, this one need be no
-			* bigger, as unescaping shrinks the string here, where in the other one, it
-			* grows it.
-			*/
+			 * In contrast to fixing Java's broken regex charclasses, this one need be no
+			 * bigger, as unescaping shrinks the string here, where in the other one, it
+			 * grows it.
+			 */
 
 			StringBuffer newstr = new StringBuffer(oldstr.length());
 
@@ -327,20 +348,20 @@ public class FontAnimationEffect extends SpellEffect {
 						break; /* switch */
 
 					/*
-					* A "control" character is what you get when you xor its codepoint with
-					* '@'==64. This only makes sense for ASCII, and may not yield a "control"
-					* character after all.
-					*
-					* Strange but true: "\c{" is ";", "\c}" is "=", etc.
-					*/
+					 * A "control" character is what you get when you xor its codepoint with
+					 * '@'==64. This only makes sense for ASCII, and may not yield a "control"
+					 * character after all.
+					 *
+					 * Strange but true: "\c{" is ";", "\c}" is "=", etc.
+					 */
 					case 'c': {
 						if (++i == oldstr.length()) {
 							die("trailing \\c");
 						}
 						cp = oldstr.codePointAt(i);
 						/*
-						* don't need to grok surrogates, as next line blows them up
-						*/
+						 * don't need to grok surrogates, as next line blows them up
+						 */
 						if (cp > 0x7f) {
 							die("expected ASCII after \\c");
 						}
@@ -354,9 +375,9 @@ public class FontAnimationEffect extends SpellEffect {
 						/* NOTREACHED */
 
 						/*
-						* may be 0 to 2 octal digits following this one so back up one for fallthrough
-						* to next case; unread this digit and fall through to next case.
-						*/
+						 * may be 0 to 2 octal digits following this one so back up one for fallthrough
+						 * to next case; unread this digit and fall through to next case.
+						 */
 					case '1':
 					case '2':
 					case '3':
@@ -368,9 +389,9 @@ public class FontAnimationEffect extends SpellEffect {
 						/* FALLTHROUGH */
 
 						/*
-						* Can have 0, 1, or 2 octal digits following a 0 this permits larger values
-						* than octal 377, up to octal 777.
-						*/
+						 * Can have 0, 1, or 2 octal digits following a 0 this permits larger values
+						 * than octal 377, up to octal 777.
+						 */
 					case '0': {
 						if (i + 1 == oldstr.length()) {
 							/* found \0 at end of string */
@@ -426,8 +447,8 @@ public class FontAnimationEffect extends SpellEffect {
 							}
 
 							/*
-							* ASCII test also catches surrogates
-							*/
+							 * ASCII test also catches surrogates
+							 */
 							int ch = oldstr.charAt(i + j);
 							if (ch > 127) {
 								die("illegal non-ASCII hex digit in \\x escape");
@@ -509,8 +530,8 @@ public class FontAnimationEffect extends SpellEffect {
 						newstr.append('\\');
 						newstr.append(Character.toChars(cp));
 						/*
-						* say(String.format( "DEFAULT unrecognized escape %c passed through", cp));
-						*/
+						 * say(String.format( "DEFAULT unrecognized escape %c passed through", cp));
+						 */
 						break; /* switch */
 
 				}

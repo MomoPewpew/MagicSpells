@@ -36,7 +36,7 @@ public class ChanceCondition extends Condition {
 
 	private boolean chance(LivingEntity caster, LivingEntity target) {
 		double c = chance.get(caster, target, 1F, null) / 100;
-		return c != 0 && (c == 1 || ThreadLocalRandom.current().nextDouble() < c);
+		return c >= 0 && (c == 1 || ThreadLocalRandom.current().nextDouble() < c);
 	}
 
 }

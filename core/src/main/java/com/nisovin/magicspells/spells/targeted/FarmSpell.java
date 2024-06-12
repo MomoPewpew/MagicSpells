@@ -147,7 +147,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 							if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
 
 							b.setType(cropType);
-							if (growth > 1) BlockUtils.setGrowthLevel(b, growth - 1);
+							if (growth > 1) BlockUtils.setGrowthLevel(b, growth - 1, requiresFarmland);
 							handledBlocks.add(b);
 						}
 					} else if ((isWheat(b) || isCarrot(b) || isPotato(b)) && BlockUtils.getGrowthLevel(b) < 7) {
@@ -155,14 +155,14 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 
 						int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
 						if (newGrowth > 7) newGrowth = 7;
-						BlockUtils.setGrowthLevel(b, newGrowth);
+						BlockUtils.setGrowthLevel(b, newGrowth, requiresFarmland);
 						handledBlocks.add(b);
 					} else if ((isBeetroot(b) || isWart(b)) && BlockUtils.getGrowthLevel(b) < 3) {
 						if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
 
 						int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
 						if (newGrowth > 3) newGrowth = 3;
-						BlockUtils.setGrowthLevel(b, newGrowth);
+						BlockUtils.setGrowthLevel(b, newGrowth, requiresFarmland);
 						handledBlocks.add(b);
 					} else if (isPitcherPod(b) && BlockUtils.getGrowthLevel(b) < 4) {
 						if (((Bisected) b.getBlockData()).getHalf() == Bisected.Half.TOP) continue;

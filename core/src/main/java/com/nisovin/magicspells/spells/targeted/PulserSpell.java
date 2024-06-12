@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PulserSpell extends TargetedSpell implements TargetedLocationSpell {
 
-	private final Map<Block, Pulser> pulsers;
+	final Map<Block, Pulser> pulsers;
 	private BlockData blockData;
 
 	private final int interval;
@@ -311,9 +311,9 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		ticker.stop();
 	}
 
-	private class Pulser {
+	public class Pulser {
 
-		private final LivingEntity caster;
+		final LivingEntity caster;
 		private final Block block;
 		private final Location location;
 		private final SpellData data;
@@ -393,7 +393,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			return false;
 		}
 
-		private void stop() {
+		public void stop() {
 			if (!block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) block.getChunk().load();
 			block.setType(Material.AIR);
 			playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, block.getLocation(), data);

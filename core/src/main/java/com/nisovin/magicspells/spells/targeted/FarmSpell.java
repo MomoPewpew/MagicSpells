@@ -4,6 +4,9 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Bisected;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.PitcherCrop;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
@@ -32,6 +35,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 	private boolean growCarrots;
 	private boolean growPotatoes;
 	private boolean growBeetroot;
+	private boolean growPitcherPlants;
 	private boolean powerAffectsRadius;
 	private boolean resolveGrowthPerCrop;
 
@@ -51,6 +55,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 		growCarrots = getConfigBoolean("grow-carrots", true);
 		growPotatoes = getConfigBoolean("grow-potatoes", true);
 		growBeetroot = getConfigBoolean("grow-beetroot", false);
+		growPitcherPlants = getConfigBoolean("grow-pitcher-plants", true);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
 		resolveGrowthPerCrop = getConfigBoolean("resolve-growth-per-crop", false);
 	}
@@ -147,6 +152,27 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 					if (newGrowth > 3) newGrowth = 3;
 					BlockUtils.setGrowthLevel(b, newGrowth);
 					count++;
+				} else if (isPitcherPod(b) && BlockUtils.getGrowthLevel(b) < 4) {
+					if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
+
+					int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
+					if (newGrowth > 4) newGrowth = 4;
+
+					if (newGrowth > 2) {
+						Block blockAbove = b.getLocation().add(0, 1, 0).getBlock();
+						if (!(blockAbove.getBlockData() instanceof PitcherCrop)) {
+							if (blockAbove.getType() == Material.AIR) {
+								BlockData aboveData = b.getBlockData().clone();
+								((Bisected) aboveData).setHalf(Bisected.Half.TOP);
+								blockAbove.setBlockData(aboveData);
+							} else {
+								continue;
+							}
+						}
+						BlockUtils.setGrowthLevel(blockAbove, newGrowth);
+					}
+					BlockUtils.setGrowthLevel(b, newGrowth);
+					count++;
 				}
 			}
 		}
@@ -172,6 +198,10 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private boolean isWart(Block b) {
 		return growWart && b.getType() == Material.NETHER_WART;
+	}
+
+	private boolean isPitcherPod(Block b) {
+		return growPitcherPlants && b.getBlockData() instanceof PitcherCrop;
 	}
 
 }

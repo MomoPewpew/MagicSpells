@@ -146,7 +146,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 						if (cropType != null) {
 							if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
 
-							b.setType(cropType);
+							b.setType(cropType, requiresFarmland);
 							if (growth > 1) BlockUtils.setGrowthLevel(b, growth - 1, requiresFarmland);
 							handledBlocks.add(b);
 						}

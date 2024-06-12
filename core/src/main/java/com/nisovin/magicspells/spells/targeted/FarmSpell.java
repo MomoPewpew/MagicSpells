@@ -1,6 +1,9 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import org.bukkit.Material;
+
+import java.util.ArrayList;
+
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -30,6 +33,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 	private ConfigData<Integer> growth;
 
 	private boolean targeted;
+	private boolean requiresFarmland;
 	private boolean growWart;
 	private boolean growWheat;
 	private boolean growCarrots;
@@ -50,6 +54,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 		growth = getConfigDataInt("growth", 1);
 
 		targeted = getConfigBoolean("targeted", false);
+		requiresFarmland = getConfigBoolean("requires-farmland", true);
 		growWart = getConfigBoolean("grow-wart", false);
 		growWheat = getConfigBoolean("grow-wheat", true);
 		growCarrots = getConfigBoolean("grow-carrots", true);
@@ -115,69 +120,80 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 		if (powerAffectsRadius) radius = Math.round(radius * power);
 
 		int cx = center.getX();
-		int y = center.getY();
+		int cy = center.getY() - (requiresFarmland ? 0 : 1);
 		int cz = center.getZ();
 
 		int growth = resolveGrowthPerCrop ? 0 : this.growth.get(caster, null, power, args);
 
-		int count = 0;
-		for (int x = cx - radius; x <= cx + radius; x++) {
-			for (int z = cz - radius; z <= cz + radius; z++) {
-				Block b = center.getWorld().getBlockAt(x, y, z);
-				if (b.getType() != Material.FARMLAND && b.getType() != Material.SOUL_SAND) {
-					b = b.getRelative(BlockFace.DOWN);
-					if (b.getType() != Material.FARMLAND && b.getType() != Material.SOUL_SAND) continue;
-				}
+		ArrayList<Block> handledBlocks = new ArrayList<>();
+		for (int y = cy - radius; y <= cy + radius; y++) {
+			for (int x = cx - radius; x <= cx + radius; x++) {
+				for (int z = cz - radius; z <= cz + radius; z++) {
+					Block b = center.getWorld().getBlockAt(x, y, z);
 
-				b = b.getRelative(BlockFace.UP);
-				if (BlockUtils.isAir(b.getType())) {
-					if (cropType != null) {
+					if (requiresFarmland) {
+						if (b.getType() != Material.FARMLAND && b.getType() != Material.SOUL_SAND) {
+							b = b.getRelative(BlockFace.DOWN);
+							if (b.getType() != Material.FARMLAND && b.getType() != Material.SOUL_SAND) continue;
+						}
+
+						b = b.getRelative(BlockFace.UP);
+					}
+
+					if (handledBlocks.contains(b)) continue;
+
+					if (BlockUtils.isAir(b.getType())) {
+						if (cropType != null) {
+							if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
+
+							b.setType(cropType);
+							if (growth > 1) BlockUtils.setGrowthLevel(b, growth - 1);
+							handledBlocks.add(b);
+						}
+					} else if ((isWheat(b) || isCarrot(b) || isPotato(b)) && BlockUtils.getGrowthLevel(b) < 7) {
 						if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
 
-						b.setType(cropType);
-						if (growth > 1) BlockUtils.setGrowthLevel(b, growth - 1);
-						count++;
-					}
-				} else if ((isWheat(b) || isCarrot(b) || isPotato(b)) && BlockUtils.getGrowthLevel(b) < 7) {
-					if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
+						int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
+						if (newGrowth > 7) newGrowth = 7;
+						BlockUtils.setGrowthLevel(b, newGrowth);
+						handledBlocks.add(b);
+					} else if ((isBeetroot(b) || isWart(b)) && BlockUtils.getGrowthLevel(b) < 3) {
+						if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
 
-					int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
-					if (newGrowth > 7) newGrowth = 7;
-					BlockUtils.setGrowthLevel(b, newGrowth);
-					count++;
-				} else if ((isBeetroot(b) || isWart(b)) && BlockUtils.getGrowthLevel(b) < 3) {
-					if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
+						int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
+						if (newGrowth > 3) newGrowth = 3;
+						BlockUtils.setGrowthLevel(b, newGrowth);
+						handledBlocks.add(b);
+					} else if (isPitcherPod(b) && BlockUtils.getGrowthLevel(b) < 4) {
+						if (((Bisected) b.getBlockData()).getHalf() == Bisected.Half.TOP) continue;
 
-					int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
-					if (newGrowth > 3) newGrowth = 3;
-					BlockUtils.setGrowthLevel(b, newGrowth);
-					count++;
-				} else if (isPitcherPod(b) && BlockUtils.getGrowthLevel(b) < 4) {
-					if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
+						if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
 
-					int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
-					if (newGrowth > 4) newGrowth = 4;
+						int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
+						if (newGrowth > 4) newGrowth = 4;
 
-					if (newGrowth > 2) {
-						Block blockAbove = b.getLocation().add(0, 1, 0).getBlock();
-						if (!(blockAbove.getBlockData() instanceof PitcherCrop)) {
-							if (blockAbove.getType() == Material.AIR) {
-								BlockData aboveData = b.getBlockData().clone();
-								((Bisected) aboveData).setHalf(Bisected.Half.TOP);
-								blockAbove.setBlockData(aboveData);
-							} else {
-								continue;
+						if (newGrowth > 2) {
+							Block blockAbove = b.getLocation().add(0, 1, 0).getBlock();
+							if (!(blockAbove.getBlockData() instanceof PitcherCrop)) {
+								if (blockAbove.getType() == Material.AIR) {
+									BlockData aboveData = b.getBlockData().clone();
+									((Bisected) aboveData).setHalf(Bisected.Half.TOP);
+									blockAbove.setBlockData(aboveData, requiresFarmland);
+								} else {
+									continue;
+								}
 							}
+							BlockUtils.setGrowthLevel(blockAbove, newGrowth, requiresFarmland);
+							handledBlocks.add(blockAbove);
 						}
-						BlockUtils.setGrowthLevel(blockAbove, newGrowth);
+						BlockUtils.setGrowthLevel(b, newGrowth, requiresFarmland);
+						handledBlocks.add(b);
 					}
-					BlockUtils.setGrowthLevel(b, newGrowth);
-					count++;
 				}
 			}
 		}
 
-		return count > 0;
+		return handledBlocks.size() > 0;
 	}
 
 	private boolean isWheat(Block b) {

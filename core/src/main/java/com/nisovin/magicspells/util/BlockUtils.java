@@ -76,10 +76,14 @@ public class BlockUtils {
 		block.setBlockData(blockData, physics);
 	}
 
-	public static void setGrowthLevel(Block block, int level) {
+	public static void setGrowthLevel(Block block, int level, boolean applyPhysics) {
 		Ageable age = ((Ageable) block.getBlockData());
 		age.setAge(level);
-		block.setBlockData(age);
+		block.setBlockData(age, applyPhysics);
+	}
+
+	public static void setGrowthLevel(Block block, int level) {
+		setGrowthLevel(block, level, false);
 	}
 
 	public static int getWaterLevel(Block block) {

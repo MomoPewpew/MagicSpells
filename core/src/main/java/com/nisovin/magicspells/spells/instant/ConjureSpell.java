@@ -415,7 +415,6 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			if (player != null) {
 				UUID uuid = player.getUniqueId();
 				dropped.setThrower(uuid);
-				dropped.setOwner(uuid);
 			}
 
 			playSpellEffects(EffectPosition.SPECIAL, dropped);

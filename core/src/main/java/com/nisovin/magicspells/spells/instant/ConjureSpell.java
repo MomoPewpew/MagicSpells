@@ -332,6 +332,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 						i.setItemStack(drop);
 						i.setPickupDelay(pickupDelay);
 						i.setGravity(itemHasGravity);
+						UUID uuid = player.getUniqueId();
+						i.setThrower(uuid);
 						playSpellEffects(EffectPosition.SPECIAL, i);
 
 						amt -= drop.getMaxStackSize();

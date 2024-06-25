@@ -3,9 +3,12 @@ package com.nisovin.magicspells.spelleffects.effecttypes;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.util.Vector;
 import org.bukkit.inventory.ItemStack;
@@ -13,7 +16,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.configuration.ConfigurationSection;
 
 import com.nisovin.magicspells.util.SpellData;
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -30,6 +32,8 @@ public class ItemSprayEffect extends SpellEffect {
 	private ConfigData<Integer> customModelData;
 
 	private boolean resolveForcePerItem;
+
+	public static final Set<Entity> entities = new HashSet<>();
 
 	@Override
 	public void loadFromConfig(ConfigurationSection config) {
@@ -76,10 +80,23 @@ public class ItemSprayEffect extends SpellEffect {
 			if (resolveForcePerItem) force = this.force.get(data);
 			items[i].setVelocity(new Vector((rand.nextDouble() - 0.5d) * force, (rand.nextDouble() - 0.5d) * force, (rand.nextDouble() - 0.5d) * force));
 			items[i].setPickupDelay(duration << 1);
+
+			entities.add(items[i]);
 		}
 
-		MagicSpells.scheduleDelayedTask(() -> Arrays.stream(items).forEach(Item::remove), duration);
+		MagicSpells.scheduleDelayedTask(() -> {
+			Arrays.stream(items).forEach(Item::remove);
+			Arrays.stream(items).forEach(it -> entities.remove(it));
+		}, duration);
 		return null;
+	}
+
+	@Override
+	public void turnOff() {
+		for (Entity entity : entities) {
+			if (entity != null) entity.remove();
+		}
+		entities.clear();
 	}
 
 }

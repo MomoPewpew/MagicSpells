@@ -120,7 +120,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 						BlockData data = null;
 						
-						if (!blockName.equals("null")) data = Bukkit.createBlockData(blockName.trim().toLowerCase());
+						if (!blockName.equals("same")) data = Bukkit.createBlockData(blockName.trim().toLowerCase());
 
 						for (int j = 0; j < n; j++) {
 							blockList.add(data);

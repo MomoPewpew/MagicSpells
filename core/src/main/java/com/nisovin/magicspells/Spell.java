@@ -1156,7 +1156,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 */
 	public void setChargesConsumed(UUID uuid, int charges) {
 		chargesConsumed.set(uuid, charges);
-		MagicSpells.log("TEST!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	}
 
 	/**

@@ -128,7 +128,12 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 
 	@Override
 	public void turnOff() {
-		if (fallingBlocks != null) fallingBlocks.clear();
+		if (fallingBlocks != null) {
+			for (Entity block : fallingBlocks.keySet()) {
+				if (block != null) block.remove();
+			}
+			fallingBlocks.clear();
+		}
 	}
 	
 	@Override

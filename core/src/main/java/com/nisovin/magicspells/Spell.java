@@ -856,8 +856,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			action = PostCastAction.DELAYED;
 			sendMessage(strCastStart, livingEntity, args);
 			playSpellEffects(EffectPosition.START_CAST, livingEntity, new SpellData(livingEntity, power, args));
-			if (MagicSpells.useExpBarAsCastTimeBar()) new DelayedSpellCastWithBar(spellCast);
-			else new DelayedSpellCast(spellCast);
+			if (MagicSpells.useExpBarAsCastTimeBar()) MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(), new DelayedSpellCastWithBar(spellCast));
+			else MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(), new DelayedSpellCast(spellCast));
 		}
 		return new SpellCastResult(spellCast.getSpellCastState(), action);
 	}
@@ -2193,21 +2193,25 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	public class DelayedSpellCast implements Runnable, Listener {
 
-		private static final double motionTolerance = 0.2;
+		protected static final double motionTolerance = 0.2;
 
-		private final SpellCastEvent spellCast;
-		private final LivingEntity caster;
-		private final Location from;
-		private final int taskId;
+		public final SpellCastEvent spellCast;
+		protected final LivingEntity caster;
+		protected final Location from;
+		protected final int taskId;
 
 		public DelayedSpellCast(SpellCastEvent spellCast) {
 			this.spellCast = spellCast;
 
-			taskId = scheduleDelayedTask(this, spellCast.getCastTime());
+			taskId = schedule();
 			caster = spellCast.getCaster();
 			from = caster.getLocation();
 
 			registerEvents(this);
+		}
+
+		protected int schedule() {
+			return scheduleDelayedTask(this, spellCast.getCastTime());
 		}
 
 		@Override
@@ -2260,45 +2264,42 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			interrupt();
 		}
 
-		private boolean inBounds(Location to) {
+		protected boolean inBounds(Location to) {
 			return Math.abs(from.getX() - to.getX()) < motionTolerance
 				&& Math.abs(from.getY() - to.getY()) < motionTolerance
 				&& Math.abs(from.getZ() - to.getZ()) < motionTolerance;
 		}
 
-		private void interrupt() {
+		protected void interrupt() {
 			MagicSpells.cancelTask(taskId);
 			unregisterEvents(this);
 
 			sendMessage(strInterrupted, caster, null);
 			if (spellOnInterrupt != null) spellOnInterrupt.subcast(caster, caster.getLocation(), spellCast.getPower(), spellCast.getSpellArgs());
+			MagicSpells.plugin.delayedSpellCasts.remove(caster.getUniqueId());
 		}
 
 	}
 
-	public class DelayedSpellCastWithBar implements Runnable, Listener {
+	public class DelayedSpellCastWithBar extends DelayedSpellCast {
 
-		private static final double motionTolerance = 0.2;
 		private static final int interval = 5;
 
-		private final SpellCastEvent spellCast;
-		private final LivingEntity caster;
-		private final Location from;
 		private final int castTime;
-		private final int taskId;
 
 		private int elapsed = 0;
 
 		public DelayedSpellCastWithBar(SpellCastEvent spellCast) {
-			this.spellCast = spellCast;
+			super(spellCast);
 
 			castTime = spellCast.getCastTime();
-			caster = spellCast.getCaster();
-			from = caster.getLocation();
 
 			if (caster instanceof Player) MagicSpells.getExpBarManager().lock((Player) caster, this);
-			taskId = scheduleRepeatingTask(this, interval, interval);
-			registerEvents(this);
+		}
+
+		@Override
+		protected int schedule() {
+			return scheduleRepeatingTask(this, interval, interval);
 		}
 
 		@Override
@@ -2319,47 +2320,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			} else end();
 		}
 
-		@EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
-		public void onMove(PlayerMoveEvent event) {
-			if (!interruptOnMove) return;
-			if (!event.getPlayer().equals(caster)) return;
-			if (inBounds(event.getTo())) return;
-
-			interrupt();
-		}
-
-		@EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
-		public void onDamage(EntityDamageEvent event) {
-			if (!interruptOnDamage) return;
-			if (!event.getEntity().equals(caster)) return;
-
-			interrupt();
-		}
-
-		@EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
-		public void onSpellCast(SpellCastEvent event) {
-			if (!interruptOnCast) return;
-			if (event.getSpell() instanceof PassiveSpell) return;
-			if (!caster.equals(event.getCaster())) return;
-
-			interrupt();
-		}
-
-		@EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
-		public void onTeleport(PlayerTeleportEvent event) {
-			if (!interruptOnTeleport) return;
-			if (!event.getPlayer().equals(caster)) return;
-
-			interrupt();
-		}
-
-		private boolean inBounds(Location to) {
-			return Math.abs(from.getX() - to.getX()) < motionTolerance
-				&& Math.abs(from.getY() - to.getY()) < motionTolerance
-				&& Math.abs(from.getZ() - to.getZ()) < motionTolerance;
-		}
-
-		private void interrupt() {
+		@Override
+		protected void interrupt() {
 			sendMessage(strInterrupted, caster, null);
 			end();
 			if (spellOnInterrupt != null) spellOnInterrupt.subcast(caster, caster.getLocation(), spellCast.getPower(), spellCast.getSpellArgs());
@@ -2375,6 +2337,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				ManaHandler mana = MagicSpells.getManaHandler();
 				if (mana != null) mana.showMana((Player) caster);
 			}
+			MagicSpells.plugin.delayedSpellCasts.remove(caster.getUniqueId());
 		}
 
 	}

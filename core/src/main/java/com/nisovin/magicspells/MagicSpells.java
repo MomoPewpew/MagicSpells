@@ -63,6 +63,7 @@ import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.zones.NoMagicZoneManager;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
+import com.nisovin.magicspells.Spell.DelayedSpellCast;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.commands.CommandHelpFilter;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
@@ -106,6 +107,9 @@ public class MagicSpells extends JavaPlugin {
 	private Map<String, Spellbook> spellbooks; // Player spellbooks
 
 	private List<Spell> spellsOrdered; // Spells ordered
+
+	// Ongoing cast times
+	public Map<UUID, DelayedSpellCast> delayedSpellCasts;
 
 	// Container vars
 	private ManaHandler manaHandler;
@@ -233,6 +237,7 @@ public class MagicSpells extends JavaPlugin {
 		spellbooks = new HashMap<>();
 		incantations = new HashMap<>();
 		incantationsRegex = new HashMap<>();
+		delayedSpellCasts = new HashMap<>();
 
 		// Make sure directories are created
 		getDataFolder().mkdir();

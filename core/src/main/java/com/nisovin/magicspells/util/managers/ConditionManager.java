@@ -120,6 +120,7 @@ public class ConditionManager {
 		addCondition("isnpc", IsNPCCondition.class);
 		addCondition("permission", PermissionCondition.class);
 		addCondition("playeronline", PlayerOnlineCondition.class);
+		addCondition("casting", CastingCondition.class);
 		addCondition("chance", ChanceCondition.class);
 		addCondition("chestcontains", ChestContainsCondition.class);
 		addCondition("entitytype", EntityTypeCondition.class);

@@ -251,8 +251,6 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		Block against = target.clone().add(target.getDirection()).getBlock();
 		if (block.equals(against)) against = block.getRelative(BlockFace.DOWN);
 		if (block.getType() == Material.AIR) return materialize(player, block, against, power, args);
-		Block block2 = block.getRelative(BlockFace.UP);
-		if (block2.getType() == Material.AIR) return materialize(null, block2, block, power, args);
 		return false;
 	}
 

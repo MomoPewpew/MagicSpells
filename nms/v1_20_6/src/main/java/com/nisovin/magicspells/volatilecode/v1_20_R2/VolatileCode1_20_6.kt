@@ -1,4 +1,6 @@
-package com.nisovin.magicspells.volatilecode.v1_20_R1
+package com.nisovin.magicspells.volatilecode.v1_20_6
+
+import java.util.*
 
 import com.mojang.authlib.GameProfile
 import com.mojang.authlib.properties.Property
@@ -8,15 +10,24 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.*
 import org.bukkit.Location
 import org.bukkit.util.Vector
-import org.bukkit.SoundCategory
+import org.bukkit.NamespacedKey
+import org.bukkit.inventory.Recipe
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.RecipeChoice
 import org.bukkit.event.entity.ExplosionPrimeEvent
+import org.bukkit.inventory.SmithingTransformRecipe
 
-import org.bukkit.craftbukkit.v1_20_R1.entity.*
-import org.bukkit.craftbukkit.v1_20_R1.CraftWorld
-import org.bukkit.craftbukkit.v1_20_R1.CraftServer
-import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack
+import org.bukkit.craftbukkit.entity.*
+import org.bukkit.craftbukkit.CraftWorld
+import org.bukkit.craftbukkit.CraftServer
+import org.bukkit.craftbukkit.inventory.CraftItemStack
 
+import io.papermc.paper.adventure.PaperAdventure
+import io.papermc.paper.advancement.AdvancementDisplay
+import io.papermc.paper.advancement.AdvancementDisplay.Frame
+import net.kyori.adventure.text.Component as KyoriComponent
+
+import net.minecraft.advancements.*
 import net.minecraft.world.phys.Vec3
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -25,40 +36,55 @@ import net.minecraft.world.entity.EntityType
 import net.minecraft.network.protocol.game.*
 import net.minecraft.server.network.ServerGamePacketListenerImpl
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.PrimedTnt
 import net.minecraft.world.entity.EquipmentSlot
-import net.minecraft.world.item.alchemy.PotionUtils
 import net.minecraft.network.syncher.EntityDataAccessor
+import net.minecraft.advancements.critereon.ImpossibleTrigger
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon
 import net.minecraft.world.level.block.BedBlock
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.properties.BedPart
+import net.minecraft.core.particles.ColorParticleOption
+import net.minecraft.core.particles.ParticleTypes
+import net.minecraft.util.FastColor
 
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
 import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
-
-import io.papermc.paper.advancement.AdvancementDisplay
-import io.papermc.paper.advancement.AdvancementDisplay.Frame
-import net.kyori.adventure.text.Component as KyoriComponent
-
-import java.util.*
+import net.minecraft.network.Connection
+import net.minecraft.network.protocol.PacketFlow
+import net.minecraft.server.network.CommonListenerCookie
+import net.minecraft.core.particles.ParticleOptions
+import java.lang.reflect.Method
 
 private typealias nmsItemStack = net.minecraft.world.item.ItemStack
 private typealias nmsEntityPose = net.minecraft.world.entity.Pose
 
-class VolatileCode1_20_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helper) {
+class VolatileCode1_20_6(helper: VolatileCodeHelper) : VolatileCodeHandle(helper) {
 
-    private var entityLivingPotionEffectColor: EntityDataAccessor<Int>? = null
+    private val toastKey = ResourceLocation("magicspells", "toast_effect")
+
+    private var DATA_EFFECT_PARTICLES: EntityDataAccessor<List<ParticleOptions>>? = null
+    private var DATA_EFFECT_AMBIENCE_ID: EntityDataAccessor<Boolean>? = null
+    private var UPDATE_EFFECT_PARTICLES: Method? = null
 
     init {
         try {
-            // CHANGE THIS TO SPIGOT MAPPING VERSION OF MOJANG'S - EntityDataAccessor<Integer> DATA_EFFECT_COLOR_ID
-            val entityLivingPotionEffectColorField = net.minecraft.world.entity.LivingEntity::class.java.getDeclaredField("bJ")
-            entityLivingPotionEffectColorField.isAccessible = true
-            entityLivingPotionEffectColor = entityLivingPotionEffectColorField.get(null) as EntityDataAccessor<Int>
+            val dataEffectParticlesField = net.minecraft.world.entity.LivingEntity::class.java.getDeclaredField("DATA_EFFECT_PARTICLES")
+            dataEffectParticlesField.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            DATA_EFFECT_PARTICLES = dataEffectParticlesField.get(null) as EntityDataAccessor<List<ParticleOptions>>
+
+            val dataEffectAmbienceIdField = net.minecraft.world.entity.LivingEntity::class.java.getDeclaredField("DATA_EFFECT_AMBIENCE_ID")
+            dataEffectAmbienceIdField.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            DATA_EFFECT_AMBIENCE_ID = dataEffectAmbienceIdField.get(null) as EntityDataAccessor<Boolean>
+
+            UPDATE_EFFECT_PARTICLES = net.minecraft.world.entity.LivingEntity::class.java.getDeclaredMethod("updateSynchronizedMobEffectParticles")
+            UPDATE_EFFECT_PARTICLES!!.isAccessible = true
         } catch (e: Exception) {
-            helper.error("THIS OCCURRED WHEN CREATING THE VOLATILE CODE HANDLE FOR 1.20, THE FOLLOWING ERROR IS MOST LIKELY USEFUL IF YOU'RE RUNNING THE LATEST VERSION OF MAGICSPELLS.")
+            helper.error("Encountered an error while creating the volatile code handler for 1.20.6.")
             e.printStackTrace()
         }
     }
@@ -66,25 +92,24 @@ class VolatileCode1_20_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
     override fun addPotionGraphicalEffect(entity: LivingEntity, color: Int, duration: Long) {
         val livingEntity = (entity as CraftLivingEntity).handle
         val entityData = livingEntity.entityData
-        entityData.set(entityLivingPotionEffectColor, color)
 
-        if (duration > 0) {
+        entityData.set(
+            DATA_EFFECT_PARTICLES!!, Collections.singletonList(
+                ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.color(255, color))
+            )
+        )
+
+        entityData.set(DATA_EFFECT_AMBIENCE_ID!!, false)
+
+        if (duration > 0)
             helper.scheduleDelayedTask({
-                var c = 0
-                if (livingEntity.getActiveEffects().isNotEmpty()) {
-                    c = PotionUtils.getColor(livingEntity.getActiveEffects())
-                }
-                entityData.set(entityLivingPotionEffectColor, c)
+                UPDATE_EFFECT_PARTICLES!!.invoke(livingEntity)
             }, duration)
-        }
     }
 
     override fun sendFakeSlotUpdate(player: Player, slot: Int, item: ItemStack?) {
-        val nmsItem: nmsItemStack?
-        if (item != null) nmsItem = CraftItemStack.asNMSCopy(item)
-        else nmsItem = null
-
-        val packet = ClientboundContainerSetSlotPacket(0, 0, slot.toShort() + 36, nmsItem!!)
+        val nmsItem = CraftItemStack.asNMSCopy(item)
+        val packet = ClientboundContainerSetSlotPacket(0, 0, slot.toShort() + 36, nmsItem)
         (player as CraftPlayer).handle.connection.send(packet)
     }
 
@@ -156,7 +181,7 @@ class VolatileCode1_20_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         val gp = GameProfile(UUID.randomUUID(), player.name)
         gp.properties.put("textures", Property("textures", property.value, property.signature))
 
-        val clone = ServerPlayer((Bukkit.getServer() as CraftServer).server, (player.world as CraftWorld).handle, gp)
+        val clone = ServerPlayer((Bukkit.getServer() as CraftServer).server, (player.world as CraftWorld).handle, gp, entityPlayer.clientInformation())
 
         var yOffset = 0.0
 
@@ -208,12 +233,13 @@ class VolatileCode1_20_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         }
 
         Bukkit.getOnlinePlayers().forEach(action = {
-            val serverPlayer: ServerPlayer = (it as CraftPlayer).handle
+            val serverPlayer: ServerPlayer = (it as CraftPlayer).handle;
 
-            val connection: ServerGamePacketListenerImpl = serverPlayer.connection
+            val connection: ServerGamePacketListenerImpl = serverPlayer.connection;
+            clone.connection = connection;
 
             connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, clone))
-            connection.send(ClientboundAddPlayerPacket(clone))
+            connection.send(ClientboundAddEntityPacket(clone))
             connection.send(ClientboundSetEntityDataPacket(clone.getId(), clone.entityData.getNonDefaultValues()))
             connection.send(ClientboundRotateHeadPacket(clone, (player.location.yaw % 360.0 * 256 / 360).toInt().toByte()))
 
@@ -287,16 +313,49 @@ class VolatileCode1_20_R1(helper: VolatileCodeHelper) : VolatileCodeHandle(helpe
         return null
     }
 
-    // KEEP IT AT 90 DEGREES (90 degrees = camera shake forward) UNTIL A PROPER MATH FUNCTION FOR THE DEGREES IS DEFINED.
-    override fun playHurtAnimation(entity: LivingEntity?, yaw: Float) {
-        val entityLiving = (entity as CraftLivingEntity).handle
+    override fun playHurtAnimation(entity: LivingEntity, yaw: Float) {
+        val e = (entity as CraftLivingEntity).handle
 
         for (p : Player in entity.location.getNearbyPlayers((entity.server.simulationDistance * 16).toDouble())) {
-            (p as CraftPlayer).handle.connection.send(ClientboundHurtAnimationPacket(entityLiving.id, 90f))
-            p.playSound(entity.location, "entity.generic.hurt", SoundCategory.PLAYERS, 1F, 1F)
+            (p as CraftPlayer).handle.connection.send(ClientboundHurtAnimationPacket(e.id, 90 + yaw))
         }
+
+        if (e.isSilent) return
+        val sound = e.getHurtSound0(e.damageSources().generic())
+        e.level().playSound(null, e.x, e.y, e.z, sound, e.soundSource, e.soundVolume, e.voicePitch)
     }
 
-    override fun sendToastEffect(receiver: Player, icon: ItemStack, frameType: Frame, text: KyoriComponent) { }
+    override fun sendToastEffect(receiver: Player, icon: ItemStack, frameType: Frame, text: KyoriComponent) {
+        val iconNms = CraftItemStack.asNMSCopy(icon)
+        val textNms = PaperAdventure.asVanilla(text)
+        val description = PaperAdventure.asVanilla(KyoriComponent.empty())
+        val frame = try {
+            AdvancementType.valueOf(frameType.name)
+        } catch (_: IllegalArgumentException) {
+            AdvancementType.TASK
+        }
+
+        val advancement = Advancement.Builder.advancement()
+            .display(iconNms, textNms, description, null, frame, true, false, true)
+            .addCriterion("impossible", Criterion(ImpossibleTrigger(), ImpossibleTrigger.TriggerInstance()))
+            .build(toastKey)
+        val progress = AdvancementProgress()
+        progress.update(AdvancementRequirements(listOf(listOf("impossible"))))
+        progress.grantProgress("impossible")
+
+        val player = (receiver as CraftPlayer).handle
+        player.connection.send(ClientboundUpdateAdvancementsPacket(
+            false,
+            Collections.singleton(advancement),
+            Collections.emptySet(),
+            Collections.singletonMap(toastKey, progress)
+        ))
+        player.connection.send(ClientboundUpdateAdvancementsPacket(
+            false,
+            Collections.emptySet(),
+            Collections.singleton(toastKey),
+            Collections.emptyMap()
+        ))
+    }
 
 }

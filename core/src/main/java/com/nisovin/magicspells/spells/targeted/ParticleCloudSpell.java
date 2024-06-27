@@ -91,32 +91,32 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		dustColor = ColorUtil.getColorFromHexString(colorHex);
 		if (dustColor != null) dustOptions = new DustOptions(dustColor, dustSize);
 
-		if ((particle == Particle.BLOCK_CRACK || particle == Particle.BLOCK_DUST || particle == Particle.FALLING_DUST) && material != null && material.isBlock()) {
+		if ((particle == Particle.BLOCK || particle == Particle.FALLING_DUST) && material != null && material.isBlock()) {
 			block = true;
 			blockData = material.createBlockData();
 			none = false;
-		} else if (particle == Particle.ITEM_CRACK && material != null && material.isItem()) {
+		} else if (particle == Particle.ITEM && material != null && material.isItem()) {
 			item = true;
 			itemStack = new ItemStack(material);
 			none = false;
-		} else if (particle == Particle.REDSTONE && dustOptions != null) {
+		} else if (particle == Particle.DUST && dustOptions != null) {
 			dust = true;
 			none = false;
 		}
 
 		if (particle == null) MagicSpells.error("ParticleCloudSpell '" + internalName + "' has a wrong particle-name defined! '" + particleName + "'");
 
-		if ((particle == Particle.BLOCK_CRACK || particle == Particle.BLOCK_DUST || particle == Particle.FALLING_DUST) && (material == null || !material.isBlock())) {
+		if ((particle == Particle.BLOCK || particle == Particle.FALLING_DUST) && (material == null || !material.isBlock())) {
 			particle = null;
 			MagicSpells.error("ParticleCloudSpell '" + internalName + "' has a wrong material defined! '" + materialName + "'");
 		}
 
-		if (particle == Particle.ITEM_CRACK && (material == null || !material.isItem())) {
+		if (particle == Particle.ITEM && (material == null || !material.isItem())) {
 			particle = null;
 			MagicSpells.error("ParticleCloudSpell '" + internalName + "' has a wrong material defined! '" + materialName + "'");
 		}
 
-		if (particle == Particle.REDSTONE && dustColor == null) {
+		if (particle == Particle.DUST && dustColor == null) {
 			particle = null;
 			MagicSpells.error("ParticleCloudSpell '" + internalName + "' has a wrong dust-color defined! '" + colorHex + "'");
 		}

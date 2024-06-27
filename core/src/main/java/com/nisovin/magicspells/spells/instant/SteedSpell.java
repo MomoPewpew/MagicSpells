@@ -22,7 +22,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.spigotmc.event.entity.EntityDismountEvent;
+import org.bukkit.event.entity.EntityDismountEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 import com.nisovin.magicspells.Subspell;

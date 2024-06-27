@@ -792,7 +792,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        {
 	            Block b = block.getRelative(x, y, z);
 	            b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getBreakSound(), 0.1f, 0.1f);
-	            block.getWorld().spawnParticle(Particle.BLOCK_CRACK, loc, 5, 0.2, 0.2, 0.2, data);
+	            block.getWorld().spawnParticle(Particle.BLOCK, loc, 5, 0.2, 0.2, 0.2, data);
 	        }, i * 6);
 	    }
 

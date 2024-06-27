@@ -7,7 +7,7 @@ import com.nisovin.magicspells.util.OverridePriority;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
-import org.spigotmc.event.entity.EntityMountEvent;
+import org.bukkit.event.entity.EntityMountEvent;
 
 import java.util.EnumSet;
 

@@ -20,4 +20,4 @@ lib/PlaceholderAPI.jar
 Lib/GriefPrevention.jar
 Build/
 .gradle/
-.vscode/settings.json
+.vscode/*

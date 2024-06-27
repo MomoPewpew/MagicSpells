@@ -333,7 +333,7 @@ public class EntityData {
 		startLoc.setY(startLoc.getY() + relativeOffset.getY());
 
 		EntityType entityType = this.entityType.get(data);
-		if (entityType == null || (!entityType.isSpawnable() && entityType != EntityType.FALLING_BLOCK && entityType != EntityType.DROPPED_ITEM))
+		if (entityType == null || (!entityType.isSpawnable() && entityType != EntityType.FALLING_BLOCK && entityType != EntityType.ITEM))
 			return null;
 
 		boolean[] displayHack = new boolean[] {false, false};
@@ -347,7 +347,7 @@ public class EntityData {
 
 				yield e;
 			}
-			case DROPPED_ITEM -> {
+			case ITEM -> {
 				Material material = dropItemMaterial.get(data);
 				if (material == null) yield null;
 

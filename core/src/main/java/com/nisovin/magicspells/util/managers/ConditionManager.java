@@ -182,6 +182,7 @@ public class ConditionManager {
 		addCondition("charactertag", CharacterTagCondition.class);
 		addCondition("expression", ExpressionCondition.class);
 		addCondition("expressionstringequals", ExpressionStringEqualsCondition.class);
+		addCondition("pathfinding", PathfinderPathfindingCondition.class);
 	}
 
 }

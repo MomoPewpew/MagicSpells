@@ -330,9 +330,26 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 						convo.begin();
 					}
 				}
+
+				LivingEntity varOwner, varTarget;
+				if (useTargetVariablesInstead) {
+					varOwner = target;
+					varTarget = sender instanceof Player player ? player : null;
+				} else {
+					varOwner = sender instanceof Player player ? player : null;
+					varTarget = target;
+				}
+
+				String[] args = data.args();
+
 				for (String comm : commandToExecuteLater) {
-					if (comm == null) continue;
-					if (comm.isEmpty()) continue;
+					if (comm == null || comm.isEmpty()) continue;
+					if (doVariableReplacement) comm = MagicSpells.doReplacements(comm, varOwner, varTarget, args);
+					if (args != null && args.length > 0) {
+						for (int i = 0; i < args.length; i++) {
+							comm = comm.replace("%" + (i + 1), args[i]);
+						}
+					}
 					if (sender != null) comm = comm.replace("%a", sender.getName());
 					if (target != null) comm = comm.replace("%t", target.getName());
 					Bukkit.dispatchCommand(actualSender, comm);

@@ -1,8 +1,8 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import de.cubbossa.pathfinder.misc.PathPlayer;
-import de.cubbossa.pathfinder.navigation.NavigationModule;
-import de.cubbossa.pathfinder.visualizer.VisualizerPath;
+import de.cubbossa.pathapi.navigation.NavigationHandler;
+import de.cubbossa.pathfinder.BukkitPathFinder;
+import de.cubbossa.pathfinder.module.BukkitNavigationHandler;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
@@ -36,7 +36,7 @@ public class PathfinderPathfindingCondition extends Condition {
 
 	private boolean pathfinding(LivingEntity entity) {
 		if (entity instanceof Player player) {
-			@Nullable VisualizerPath<Object> path = NavigationModule.get().getActivePath(PathPlayer.wrap(player));
+			@Nullable NavigationHandler.SearchInfo<Player> path = BukkitNavigationHandler.getInstance().getActivePath(BukkitPathFinder.wrap(player));
 			return path != null;
 		}
 

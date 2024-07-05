@@ -207,7 +207,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		if (radius > 0) players.removeIf(player -> opener.getLocation().distance(player.getLocation()) > radius);
 
 		int size = Math.max((int) Math.ceil(Math.min(players.size(), 54) / 9.0) * 9, 9);
-		Inventory inv = Bukkit.createInventory(opener, size, Component.text(internalName));
+		Inventory inv = Bukkit.createInventory(opener, size, Util.getMiniMessage(title));
 		SpellData spellData = data.spellData;
 		String[] args = spellData.args();
 
@@ -236,7 +236,6 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		if (players.size() > (data.page + 1) * 52) inv.setItem(53, nextPageItem);
 
 		opener.openInventory(inv);
-		Util.setInventoryTitle(opener, title);
 
 		if (spellData.caster() != null) playSpellEffects(spellData.caster(), spellData.target(), spellData);
 		else playSpellEffects(EffectPosition.TARGET, spellData.target(), spellData);

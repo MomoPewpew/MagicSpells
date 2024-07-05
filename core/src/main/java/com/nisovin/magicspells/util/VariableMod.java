@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.config.StringData;
 import com.nisovin.magicspells.util.config.FunctionData;
 
 import org.apache.commons.math4.core.jdkmath.AccurateMath;
@@ -62,6 +63,7 @@ public class VariableMod {
 	private VariableOwner variableOwner = VariableOwner.CASTER;
 	private String modifyingVariableName = null;
 	private ConfigData<Double> functionModifier;
+	private StringData stringModifier;
 	private double constantModifier;
 	private boolean negate = false;
 	private String value;
@@ -90,7 +92,10 @@ public class VariableMod {
 				if (owner != null && owner.equalsIgnoreCase("target:")) variableOwner = VariableOwner.TARGET;
 
 				modifyingVariableName = matcher.group(2);
-			} else functionModifier = FunctionData.build(data, Function.identity(), 0d, true);
+			} else {
+				functionModifier = FunctionData.build(data, Function.identity(), 0d, true);
+				stringModifier = new StringData(data);
+			}
 		}
 	}
 
@@ -120,10 +125,18 @@ public class VariableMod {
 	}
 
 	public String getStringValue(Player caster, Player target) {
+		if (stringModifier != null) {
+            return stringModifier.get(caster, target, 1f, null);
+        }
+
 		return MagicSpells.doReplacements(value, caster, target);
 	}
 
 	public String getStringValue(Player caster, Player target, String[] args) {
+		if (stringModifier != null) {
+            return stringModifier.get(caster, target, 1f, args);
+        }
+
 		return MagicSpells.doReplacements(value, caster, target, args);
 	}
 

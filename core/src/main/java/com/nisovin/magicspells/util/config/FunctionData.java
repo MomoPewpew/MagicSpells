@@ -29,7 +29,15 @@ import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;
 
 public class FunctionData<T extends Number> implements ConfigData<T> {
 
-	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("%(?:((var|castervar|targetvar):(\\w+)(?::(\\d+))?)|(playervar:([a-zA-Z0-9_]{3,16}):(\\w+)(?::(\\d+))?)|(arg:(\\d+):(" + RegexUtil.DOUBLE_PATTERN + "))|((papi|casterpapi|targetpapi):([^%]+))|(playerpapi:([a-zA-Z0-9_]{3,16}):([^%]+)))%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile(
+		"%(?:(?<var>(?<varType>var|castervar|targetvar):(?<varName>\\w+)(?::(?<varPlaces>\\d+))?)" +
+		"|(?<defaultVar>defaultvar:(?<defaultVarName>\\w+))" +
+		"|(?<playerVar>playervar:(?<playerName>[a-zA-Z0-9_]{3,16}):(?<playerVarName>\\w+)(?::(?<playerVarPlaces>\\d+))?)" +
+		"|(?<arg>arg:(?<argIndex>\\d+):(?<argDefault>" + RegexUtil.DOUBLE_PATTERN + "))" +
+		"|(?<papi>(?<papiType>papi|casterpapi|targetpapi):(?<papiPlaceholder>[^%]+))" +
+		"|(?<playerPapi>playerpapi:(?<playerPapiName>[a-zA-Z0-9_]{3,16}):(?<playerPapiPlaceholder>[^%]+)))%",
+		Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
+	);
 
 	private final Map<String, ConfigData<Double>> variables;
 	private final Function<Double, T> converter;
@@ -152,10 +160,10 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 	}
 
 	private static ConfigData<Double> createData(Matcher matcher) {
-		if (matcher.group(1) != null) {
-			String owner = matcher.group(2);
-			String variable = matcher.group(3);
-			String placesString = matcher.group(4);
+		if (matcher.group("var") != null) {
+			String owner = matcher.group("varType");
+			String variable = matcher.group("varName");
+			String placesString = matcher.group("varPlaces");
 
 			int places = -1;
 			if (placesString != null) {
@@ -171,10 +179,15 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				new CasterVariableData(variable, places);
 		}
 
-		if (matcher.group(5) != null) {
-			String player = matcher.group(6);
-			String variable = matcher.group(7);
-			String placesString = matcher.group(8);
+		if (matcher.group("defaultVar") != null) {
+			String variable = matcher.group("defaultVarName");
+			return new DefaultVariableData(variable);
+		}
+
+		if (matcher.group("playerVar") != null) {
+			String player = matcher.group("playerName");
+			String variable = matcher.group("playerVarName");
+			String placesString = matcher.group("playerVarPlaces");
 
 			int places = -1;
 			if (placesString != null) {
@@ -188,12 +201,12 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 			return new PlayerVariableData(variable, player, places);
 		}
 
-		if (matcher.group(9) != null) {
-			String def = matcher.group(11);
+		if (matcher.group("arg") != null) {
+			String def = matcher.group("argDefault");
 
 			int index;
 			try {
-				index = Integer.parseInt(matcher.group(10));
+				index = Integer.parseInt(matcher.group("argIndex"));
 			} catch (NumberFormatException e) {
 				return (caster, target, power, args) -> 0d;
 			}
@@ -202,18 +215,18 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 			return new ArgumentData(index - 1, def);
 		}
 
-		if (matcher.group(37) != null) {
-			String owner = matcher.group(38);
-			String papiPlaceholder = '%' + matcher.group(39) + '%';
+		if (matcher.group("papi") != null) {
+			String owner = matcher.group("papiType");
+			String papiPlaceholder = '%' + matcher.group("papiPlaceholder") + '%';
 
 			return owner.equalsIgnoreCase("targetpapi") ?
 				new TargetPAPIData(papiPlaceholder) :
 				new CasterPAPIData(papiPlaceholder);
 		}
 
-		if (matcher.group(40) != null) {
-			String player = matcher.group(41);
-			String papiPlaceholder = '%' + matcher.group(42) + '%';
+		if (matcher.group("playerPapi") != null) {
+			String player = matcher.group("playerPapiName");
+			String papiPlaceholder = '%' + matcher.group("playerPapiPlaceholder") + '%';
 
 			return new PlayerPAPIData(papiPlaceholder, player);
 		}
@@ -383,6 +396,30 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 	}
+
+	public static class DefaultVariableData implements ConfigData<Double> {
+
+		private final String variable;
+	
+		public DefaultVariableData(String variable) {
+			this.variable = variable;
+		}
+	
+		@Override
+		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			Variable var = MagicSpells.getVariableManager().getVariable(variable);
+			if (var == null) return 0d;
+	
+			double value = var.getDefaultValue();
+	
+			return value;
+		}
+	
+		@Override
+		public boolean isConstant() {
+			return false;
+		}
+	}	
 
 	public static class CasterPAPIData implements ConfigData<Double> {
 

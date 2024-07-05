@@ -23,6 +23,7 @@ public class StringData implements ConfigData<String> {
 	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("""
 		%(?:\
 		((var|castervar|targetvar):(\\w+)(?::(\\d+))?)|\
+		(defaultvar:(\\w+))|\
 		(playervar:([a-zA-Z0-9_]{3,16}):(\\w+)(?::(\\d+))?)|\
 		(arg:(\\d+):(\\w+))|\
 		((papi|casterpapi|targetpapi):([^%]+))|\
@@ -75,9 +76,14 @@ public class StringData implements ConfigData<String> {
 		}
 
 		if (matcher.group(5) != null) {
-			String player = matcher.group(6);
-			String variable = matcher.group(7);
-			String placesString = matcher.group(8);
+			String variable = matcher.group(6);
+			return new DefaultVariableData(matcher.group(), variable);
+		}
+
+		if (matcher.group(7) != null) {
+			String player = matcher.group(8);
+			String variable = matcher.group(9);
+			String placesString = matcher.group(10);
 
 			int places = -1;
 			if (placesString != null) {
@@ -91,12 +97,12 @@ public class StringData implements ConfigData<String> {
 			return new PlayerVariableData(matcher.group(), variable, player, places);
 		}
 
-		if (matcher.group(9) != null) {
-			String def = matcher.group(11);
+		if (matcher.group(11) != null) {
+			String def = matcher.group(13);
 
 			int index;
 			try {
-				index = Integer.parseInt(matcher.group(10));
+				index = Integer.parseInt(matcher.group(12));
 			} catch (NumberFormatException e) {
 				return null;
 			}
@@ -105,18 +111,18 @@ public class StringData implements ConfigData<String> {
 			return new ArgumentData(index - 1, def);
 		}
 
-		if (matcher.group(12) != null) {
-			String owner = matcher.group(13);
-			String papiPlaceholder = '%' + matcher.group(14) + '%';
+		if (matcher.group(14) != null) {
+			String owner = matcher.group(15);
+			String papiPlaceholder = '%' + matcher.group(16) + '%';
 
 			return owner.equalsIgnoreCase("targetpapi") ?
 				new TargetPAPIData(matcher.group(), papiPlaceholder) :
 				new CasterPAPIData(matcher.group(), papiPlaceholder);
 		}
 
-		if (matcher.group(15) != null) {
-			String player = matcher.group(16);
-			String papiPlaceholder = '%' + matcher.group(17) + '%';
+		if (matcher.group(17) != null) {
+			String player = matcher.group(18);
+			String papiPlaceholder = '%' + matcher.group(19) + '%';
 
 			return new PlayerPAPIData(matcher.group(), papiPlaceholder, player);
 		}
@@ -249,6 +255,24 @@ public class StringData implements ConfigData<String> {
 			return var.getStringValue(player);
 		}
 
+	}
+
+	public static class DefaultVariableData extends PlaceholderData {
+
+		private final String variable;
+
+		public DefaultVariableData(String placeholder, String variable) {
+			super(placeholder);
+			this.variable = variable;
+		}
+
+		@Override
+		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			Variable var = MagicSpells.getVariableManager().getVariable(variable);
+			if (var == null) return placeholder;
+
+			return var.getDefaultStringValue();
+		}
 	}
 
 	public static class PlayerVariableData extends PlaceholderData {

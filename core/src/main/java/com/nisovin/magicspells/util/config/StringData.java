@@ -25,7 +25,7 @@ public class StringData implements ConfigData<String> {
 		((var|castervar|targetvar):(\\w+)(?::(\\d+))?)|\
 		(defaultvar:(\\w+))|\
 		(playervar:([a-zA-Z0-9_]{3,16}):(\\w+)(?::(\\d+))?)|\
-		(arg:(\\d+):(\\w+))|\
+		(arg:(\\d+):([\\w-]+))|\
 		((papi|casterpapi|targetpapi):([^%]+))|\
 		(playerpapi:([a-zA-Z0-9_]{3,16}):([^%]+))\
 		)%""", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);

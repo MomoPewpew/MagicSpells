@@ -48,6 +48,11 @@ public class VolatileCodeDisabled extends VolatileCodeHandle {
 	}
 
 	@Override
+	public void setInventoryTitle(Player player, String title) {
+
+	}
+
+	@Override
 	public void startAutoSpinAttack(Player player, int ticks) {
 
 	}

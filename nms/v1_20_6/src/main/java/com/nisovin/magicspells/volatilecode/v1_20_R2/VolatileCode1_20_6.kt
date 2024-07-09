@@ -157,6 +157,15 @@ class VolatileCode1_20_6(helper: VolatileCodeHelper) : VolatileCodeHandle(helper
         (player as CraftPlayer).handle.connection.send(packet)
     }
 
+    override fun setInventoryTitle(player: Player, title: String) {
+        val entityPlayer = (player as CraftPlayer).handle
+        val container = entityPlayer.containerMenu
+        val packet = ClientboundOpenScreenPacket(container.containerId, container.type, Component.literal(title))
+
+        player.handle.connection.send(packet)
+        player.updateInventory()
+    }
+
     override fun startAutoSpinAttack(player: Player?, ticks: Int) {
         val entityPlayer = (player as CraftPlayer).handle
         entityPlayer.startAutoSpinAttack(ticks)

@@ -279,9 +279,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	private void openMenu(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power, String[] args) {
 		menuData.put(opener.getUniqueId(), new MenuData(requireEntityTarget ? entityTarget : null, requireLocationTarget ? locTarget : null, power, args));
 
-		Inventory inv = Bukkit.createInventory(opener, size, Util.getMiniMessage(title));
+		Inventory inv = Bukkit.createInventory(opener, size, Component.text(internalName));
 		applyOptionsToInventory(opener, inv, args);
 		opener.openInventory(inv);
+		Util.setInventoryTitle(opener, title);
 
 		SpellData data = new SpellData(caster, entityTarget, power, args);
 		if (entityTarget != null && caster != null) {
@@ -366,9 +367,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			return;
 		}
 		// Reopen.
-		Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(), Component.text(title));
+		Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(), Component.text(internalName));
 		applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS);
 		player.openInventory(newInv);
+		Util.setInventoryTitle(player, title);
 	}
 
 	private String castSpells(Player player, ItemStack item, ClickType click) {

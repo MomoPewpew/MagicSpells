@@ -173,7 +173,7 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 			entries.add(magicItem.getItemStack());
 		}
 
-		Inventory inv = Bukkit.createInventory(opener, 54, Util.getMiniMessage(category));
+		Inventory inv = Bukkit.createInventory(opener, 54, Component.text(internalName));
 
 		for (int i = (page * 50); i < Math.min(entries.size(), (page + 1) * 50); i++) {
 			inv.setItem(i%50, entries.get(i));
@@ -192,6 +192,7 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 		}
 
 		opener.openInventory(inv);
+		Util.setInventoryTitle(opener, category);
 
 		if (spellData.caster() != null) playSpellEffects(spellData.caster(), spellData.target(), spellData);
 		else playSpellEffects(EffectPosition.TARGET, spellData.target(), spellData);

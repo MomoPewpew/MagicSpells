@@ -775,7 +775,11 @@ public class Util {
 	public static String doVarReplacementAndColorize(Player player, String string) {
 		return colorize(MagicSpells.doReplacements(string, player));
 	}
-	
+
+	public static void setInventoryTitle(Player player, String title) {
+		MagicSpells.getVolatileCodeHandler().setInventoryTitle(player, doVarReplacementAndColorize(player, title));
+	}
+
 	public static PlayerProfile setTexture(PlayerProfile profile, String texture, String signature) {
 		if (signature == null || signature.isEmpty()) profile.setProperty(new ProfileProperty("textures", texture));
 		else profile.setProperty(new ProfileProperty("textures", texture, signature));

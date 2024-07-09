@@ -19,6 +19,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.Perm;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
@@ -32,6 +33,8 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 	private Map<UUID, ItemMenuData> itemMenuData;
 
 	private final int delay;
+	private final String title;
+	private final boolean stayOpen;
 
 	private final ItemStack backItem;
 	private final ItemStack previousPageItem;
@@ -40,6 +43,8 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 	public MagicItemMenuSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 		delay = getConfigInt("delay", 0);
+		title = getConfigString("title", "ItemMenuSpell '" + internalName + "'");
+		stayOpen = getConfigBoolean("stay-open", false);
 
 		backItem = createItem("back-item", "Back", Material.RED_WOOL);
 		previousPageItem = createItem("previous-page-item", "Previous Page", Material.GREEN_WOOL);
@@ -202,10 +207,8 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 
 	@EventHandler
 	public void onItemClick(InventoryClickEvent event) {
+		if (!Util.getStringFromComponent(event.getView().title()).equals(internalName)) return;
 		Player player = (Player) event.getWhoClicked();
-
-		if (!itemMenuData.containsKey(player.getUniqueId())) return;
-
 		event.setCancelled(true);
 		ItemStack item = event.getCurrentItem();
 		if (item == null) return;

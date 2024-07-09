@@ -248,12 +248,10 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 
 	@EventHandler
 	public void onItemClick(InventoryClickEvent event) {
-		if (!(event.getWhoClicked() instanceof Player opener)) return;
-		
-		if (!event.getView().title().equals(Util.getMiniMessage(this.title))) return;
-		if (!menuData.containsKey(opener.getUniqueId())) return;
+		if (!Util.getStringFromComponent(event.getView().title()).equals(internalName)) return;
 
 		event.setCancelled(true);
+		if (!(event.getWhoClicked() instanceof Player opener)) return;
 
 		ItemStack item = event.getCurrentItem();
 		if (item == null) return;

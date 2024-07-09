@@ -17,7 +17,7 @@ dependencies {
     shadow(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: "1.9.20")
 
     shadow(project(path: ":nms:shared", configuration: "apiElements"))
-    shadow(project(path: ":nms:v1_20_6", configuration: "reobf"))
+    shadow(project(path: ":nms:v1_20_6")) { transitive = false }
 
     implementation(name:'CMI-API9.5.0.8', ext:'jar')
     implementation(name:'CMILib1.2.4.5', ext:'jar')

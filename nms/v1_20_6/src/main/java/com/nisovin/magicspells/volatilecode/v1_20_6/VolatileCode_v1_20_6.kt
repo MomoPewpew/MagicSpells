@@ -61,7 +61,7 @@ import java.lang.reflect.Method
 private typealias nmsItemStack = net.minecraft.world.item.ItemStack
 private typealias nmsEntityPose = net.minecraft.world.entity.Pose
 
-class VolatileCode1_20_6(helper: VolatileCodeHelper) : VolatileCodeHandle(helper) {
+class VolatileCode_v1_20_6(helper: VolatileCodeHelper) : VolatileCodeHandle(helper) {
 
     private val toastKey = ResourceLocation("magicspells", "toast_effect")
 

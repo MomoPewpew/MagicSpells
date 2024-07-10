@@ -21,11 +21,15 @@ import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.MessageBlocker;
 import com.nisovin.magicspells.util.ValidTargetList;
+import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class ExternalCommandSpell extends TargetedSpell implements TargetedEntitySpell {
 	
 	private static MessageBlocker messageBlocker;
+
+	private ConfigData<List<String>> commandToExecuteData;
+	private ConfigData<List<String>> commandToExecuteLaterData;
 
 	private List<String> commandToBlock;
 	private List<String> commandToExecute;
@@ -51,8 +55,8 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		super(config, spellName);
 
 		commandToBlock = getConfigStringList("command-to-block", null);
-		commandToExecute = getConfigStringList("command-to-execute", null);
-		commandToExecuteLater = getConfigStringList("command-to-execute-later", null);
+		commandToExecuteData = getConfigDataStringList("command-to-execute", null);
+		commandToExecuteLaterData = getConfigDataStringList("command-to-execute-later", null);
 		temporaryPermissions = getConfigStringList("temporary-permissions", null);
 
 		commandDelay = getConfigInt("command-delay", 0);
@@ -105,6 +109,11 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+		SpellData data = new SpellData(caster, power, args);
+
+		commandToExecute = commandToExecuteData.get(data);
+		commandToExecuteLater = commandToExecuteLaterData.get(data);
+
 		if (state == SpellCastState.NORMAL) {
 			Player target = null;
 			if (requirePlayerTarget) {

@@ -4,7 +4,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
-import com.nisovin.magicspells.util.SpellReagents;
+import com.nisovin.magicspells.util.reagent.SpellReagents;
 import com.nisovin.magicspells.Spell.SpellCastState;
 /**
  * The event that is called whenever a player attempts to cast a spell. 

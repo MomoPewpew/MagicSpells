@@ -19,10 +19,10 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.SpellUtil;
 import com.nisovin.magicspells.util.BoundingBox;
 import com.nisovin.magicspells.util.MagicConfig;
-import com.nisovin.magicspells.util.SpellReagents;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.events.SpellTargetEvent;
+import com.nisovin.magicspells.util.reagent.SpellReagents;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class PortalSpell extends InstantSpell {
@@ -381,14 +381,14 @@ public class PortalSpell extends InstantSpell {
 			if (portal.portalCost == null) return true;
 
 			if (chargeCostToTeleporter) {
-				if (SpellUtil.hasReagents(target, portal.portalCost())) {
+				if (portal.portalCost().hasAll(target)) {
 					payer = target;
 				} else {
 					sendMessage(strTeleportNoCost, target, data.args());
 					return false;
 				}
 			} else {
-				if (SpellUtil.hasReagents(caster, portal.portalCost())) {
+				if (portal.portalCost().hasAll(caster)) {
 					payer = caster;
 				} else {
 					sendMessage(strTeleportNoCost, target, data.args());
@@ -397,7 +397,7 @@ public class PortalSpell extends InstantSpell {
 			}
 
 			if (payer == null) return false;
-			SpellUtil.removeReagents(payer, portal.portalCost());
+			portal.portalCost().removeAll(payer);
 			return true;
 		}
 

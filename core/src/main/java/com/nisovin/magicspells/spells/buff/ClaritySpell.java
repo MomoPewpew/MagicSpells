@@ -11,9 +11,9 @@ import com.nisovin.magicspells.util.CastData;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellFilter;
-import com.nisovin.magicspells.util.SpellReagents;
 import com.nisovin.magicspells.events.SpellCastEvent;
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.reagent.SpellReagents;
 
 public class ClaritySpell extends BuffSpell {
 

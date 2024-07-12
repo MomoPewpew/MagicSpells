@@ -53,6 +53,7 @@ import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.spelleffects.effecttypes.*;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.nisovin.magicspells.util.reagent.SpellReagents;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.util.magicitems.MagicItemDataParser;
 import com.nisovin.magicspells.spelleffects.trackers.EffectTracker;
@@ -158,6 +159,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected Subspell spellOnInterrupt;
 
 	protected SpellReagents reagents;
+	protected List<String> reagentsList;
+	protected ConfigData<List<String>> reagentsData;
 
 	protected ItemStack spellIcon;
 
@@ -444,59 +447,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	protected SpellReagents getConfigReagents(String option) {
 		List<String> costList = config.getStringList("spells." + internalName + '.' + option, null);
-		if (costList == null || costList.isEmpty()) return null;
 
-		SpellReagents reagents = new SpellReagents();
-		String[] data;
-
-		for (String costVal : costList) {
-			try {
-				// Parse cost data
-				data = costVal.split(" ");
-
-				switch (data[0].toLowerCase()) {
-					case "health" -> {
-						if (data.length > 1) reagents.setHealth(Double.parseDouble(data[1]));
-					}
-					case "mana" -> {
-						if (data.length > 1) reagents.setMana(Integer.parseInt(data[1]));
-					}
-					case "hunger" -> {
-						if (data.length > 1) reagents.setHunger(Integer.parseInt(data[1]));
-					}
-					case "experience" -> {
-						if (data.length > 1) reagents.setExperience(Integer.parseInt(data[1]));
-					}
-					case "levels" -> {
-						if (data.length > 1) reagents.setLevels(Integer.parseInt(data[1]));
-					}
-					case "durability" -> {
-						if (data.length > 1) reagents.setDurability(Integer.parseInt(data[1]));
-					}
-					case "money" -> {
-						if (data.length > 1) reagents.setMoney(Float.parseFloat(data[1]));
-					}
-					case "variable" -> {
-						if (data.length > 2) reagents.addVariable(data[1], Double.parseDouble(data[2]));
-					}
-
-					default -> {
-						int amount = 1;
-						if (data.length > 1) amount = Integer.parseInt(data[1]);
-						MagicItemData itemData = MagicItems.getMagicItemDataFromString(data[0]);
-						if (itemData == null) {
-							MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
-							continue;
-						}
-						reagents.addItem(new SpellReagents.ReagentItem(itemData, amount));
-					}
-				}
-			} catch (Exception e) {
-				MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
-			}
-		}
-
-		return reagents;
+        return SpellReagents.fromList(costList, internalName);
 	}
 
 	protected void initializeVariables() {
@@ -542,8 +494,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		}
 
 		// Cost
-		reagents = getConfigReagents("cost");
-		if (reagents == null) reagents = new SpellReagents();
+		reagentsData = getConfigDataStringList("cost", null);
 	}
 
 	protected void initializeSpellEffects() {
@@ -880,6 +831,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	// DEBUG INFO: level 2, spell canceled
 	// DEBUG INFO: level 2, spell cast state changed
 	protected SpellCastEvent preCast(LivingEntity livingEntity, float power, String[] args) {
+		reagentsList = this.reagentsData.get(livingEntity, power, args);
+		if (reagentsList == null) reagentsList = new ArrayList<>();
+		reagents = SpellReagents.fromList(reagentsList, internalName);
+
 		// Get spell state
 		SpellCastState state = getCastState(livingEntity);
 		debug(2, "    Spell cast state: " + state);
@@ -1168,7 +1123,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @return true if the player has the reagents, false otherwise
 	 */
 	protected boolean hasReagents(LivingEntity livingEntity) {
-		return hasReagents(livingEntity, reagents);
+		return reagents.hasAll(livingEntity);
 	}
 
 	// FIXME this doesn't seem strictly tied to Spell logic, could probably be moved
@@ -1180,7 +1135,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 */
 	protected boolean hasReagents(LivingEntity livingEntity, SpellReagents reagents) {
 		if (reagents == null) return true;
-		return SpellUtil.hasReagents(livingEntity, reagents.getItemsAsArray(), reagents.getHealth(), reagents.getMana(), reagents.getHunger(), reagents.getExperience(), reagents.getLevels(), reagents.getDurability(), reagents.getMoney(), reagents.getVariables());
+		return reagents.hasAll(livingEntity);
 	}
 
 	/**
@@ -1189,7 +1144,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @param livingEntity the living entity to remove reagents from
 	 */
 	protected void removeReagents(LivingEntity livingEntity) {
-		removeReagents(livingEntity, reagents);
+		reagents.removeAll(livingEntity);
 	}
 
 	// TODO can this safely be made varargs?
@@ -1199,12 +1154,9 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @param livingEntity the living entity to remove the reagents from
 	 * @param reagents the inventory item reagents to remove
 	 */
-	protected void removeReagents(LivingEntity livingEntity, SpellReagents.ReagentItem[] reagents) {
-		SpellUtil.removeReagents(livingEntity, reagents, 0, 0, 0, 0, 0, 0, 0, null);
-	}
 
 	protected void removeReagents(LivingEntity livingEntity, SpellReagents reagents) {
-		SpellUtil.removeReagents(livingEntity, reagents.getItemsAsArray(), reagents.getHealth(), reagents.getMana(), reagents.getHunger(), reagents.getExperience(), reagents.getLevels(), reagents.getDurability(), reagents.getMoney(), reagents.getVariables());
+		reagents.removeAll(livingEntity);
 	}
 
 	public EnumMap<EffectPosition, List<SpellEffect>> getEffects() {
@@ -2021,6 +1973,15 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	public SpellReagents getReagents() {
+		MagicSpells.error("getReagents: "+ reagents);
+		MagicSpells.error("getReagentsData:" + reagentsData.get(null));
+		return reagents;
+	}
+
+	public SpellReagents getReagentsPreCast(LivingEntity livingEntity, float power, String[] args) {
+		reagentsList = this.reagentsData.get(livingEntity, power, args);
+		if (reagentsList == null) reagentsList = new ArrayList<>();
+		reagents = SpellReagents.fromList(reagentsList, internalName);
 		return reagents;
 	}
 

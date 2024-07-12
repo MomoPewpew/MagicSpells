@@ -3,7 +3,7 @@ package com.nisovin.magicspells.events;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
-import com.nisovin.magicspells.util.SpellReagents;
+import com.nisovin.magicspells.util.reagent.SpellReagents;
 import com.nisovin.magicspells.Spell.SpellCastState;
 import com.nisovin.magicspells.Spell.PostCastAction;
 

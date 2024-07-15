@@ -822,6 +822,12 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		if (worldRestrictions != null && !worldRestrictions.contains(livingEntity.getWorld().getName())) return SpellCastState.WRONG_WORLD;
 		if (MagicSpells.getNoMagicZoneManager() != null && MagicSpells.getNoMagicZoneManager().willFizzle(livingEntity, this)) return SpellCastState.NO_MAGIC_ZONE;
 		if (onCooldown(livingEntity)) return SpellCastState.ON_COOLDOWN;
+		if (reagents == null) {
+			SpellData spellData = new SpellData(livingEntity);
+			reagentsList = this.reagentsData.get(spellData);
+			if (reagentsList == null) reagentsList = new ArrayList<>();
+			reagents = SpellReagents.fromList(reagentsList, internalName);
+		}
 		if (!hasReagents(livingEntity)) return SpellCastState.MISSING_REAGENTS;
 		return SpellCastState.NORMAL;
 	}
@@ -1123,6 +1129,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @return true if the player has the reagents, false otherwise
 	 */
 	protected boolean hasReagents(LivingEntity livingEntity) {
+		if (reagents == null) {
+			MagicSpells.error("Null reagents found:" + internalName);
+			return true;
+		}
 		return reagents.hasAll(livingEntity);
 	}
 
@@ -1134,7 +1144,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @return true if the player has the reagents, false otherwise
 	 */
 	protected boolean hasReagents(LivingEntity livingEntity, SpellReagents reagents) {
-		if (reagents == null) return true;
+		if (reagents == null) {
+			MagicSpells.error("Null reagents found:" + internalName);
+			return true;
+		}
 		return reagents.hasAll(livingEntity);
 	}
 

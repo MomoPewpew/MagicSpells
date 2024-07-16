@@ -1,8 +1,7 @@
 package com.nisovin.magicspells.util.reagent;
 
-import com.nisovin.magicspells.MagicSpells;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.ExperienceUtils;
 

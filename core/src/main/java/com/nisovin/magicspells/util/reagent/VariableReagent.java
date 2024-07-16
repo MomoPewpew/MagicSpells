@@ -1,18 +1,23 @@
 package com.nisovin.magicspells.util.reagent;
 
+import java.util.Map;
+import java.util.HashMap;
+
+import org.bukkit.entity.Player;
+import org.bukkit.entity.LivingEntity;
+
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.managers.VariableManager;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class VariableReagent extends Reagent {
     private Map<String, Double> variableMap;
 
     public VariableReagent() {
         this.variableMap = new HashMap<>();
+    }
+
+    public double get(String variableName) {
+        return variableMap.getOrDefault(variableName, 0.0);
     }
 
     public void add(String variableName, double variableVal) {
@@ -22,10 +27,6 @@ public class VariableReagent extends Reagent {
         } else {
             variableMap.put(variableName, variableVal);
         }
-    }
-
-    public double get(String variableName) {
-        return variableMap.getOrDefault(variableName, 0.0);
     }
 
     public void set(String variableName, double variableVal) {

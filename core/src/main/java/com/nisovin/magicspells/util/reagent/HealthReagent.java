@@ -15,12 +15,12 @@ public class HealthReagent extends Reagent {
         return health;
     }
 
-    public void set(double health) {
-        this.health = health;
-    }
-
     public void add(double health) {
         this.health += health;
+    }
+
+    public void set(double health) {
+        this.health = health;
     }
 
     @Override

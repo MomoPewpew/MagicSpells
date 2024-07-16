@@ -1,9 +1,7 @@
 package com.nisovin.magicspells.util.reagent;
 
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-
-import com.nisovin.magicspells.MagicSpells;
+import org.bukkit.entity.LivingEntity;
 
 public class LevelReagent extends Reagent {
     private int levels;

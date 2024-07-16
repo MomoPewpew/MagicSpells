@@ -1,11 +1,12 @@
 package com.nisovin.magicspells.util.reagent;
 
 import org.apache.commons.math4.core.jdkmath.AccurateMath;
+
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.inventory.EntityEquipment;
-import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.meta.Damageable;
 
 public class DurabilityReagent extends Reagent {
     private int durability;

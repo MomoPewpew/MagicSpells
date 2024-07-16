@@ -1,15 +1,13 @@
 package com.nisovin.magicspells.util.reagent;
 
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
+import java.util.List;
+import java.util.ArrayList;
+
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
-import java.lang.reflect.Field;
-
-
-import java.util.ArrayList;
-import java.util.List;
+import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.nisovin.magicspells.util.magicitems.MagicItemData;
 
 public class SpellReagents {
 

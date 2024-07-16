@@ -54,7 +54,6 @@ import com.nisovin.magicspells.castmodifiers.ModifierSet;
 import com.nisovin.magicspells.spelleffects.effecttypes.*;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.reagent.SpellReagents;
-import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.util.magicitems.MagicItemDataParser;
 import com.nisovin.magicspells.spelleffects.trackers.EffectTracker;
 import com.nisovin.magicspells.spelleffects.util.EffectlibSpellEffect;

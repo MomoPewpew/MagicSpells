@@ -1,20 +1,24 @@
 package com.nisovin.magicspells.util.reagent;
 
+import java.util.Map;
+import java.util.HashMap;
+
+import org.bukkit.entity.Player;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.Inventory;
+import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
-import com.nisovin.magicspells.util.Util;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class ItemReagent extends Reagent {
     private Map<MagicItemData, Integer> itemMap;
 
     public ItemReagent() {
         this.itemMap = new HashMap<>();
+    }
+
+    public int get(MagicItemData magicItem) {
+        return itemMap.getOrDefault(magicItem, 0);
     }
 
     public void add(MagicItemData magicItem, int quantity) {
@@ -24,10 +28,6 @@ public class ItemReagent extends Reagent {
         } else {
             itemMap.put(magicItem, quantity);
         }
-    }
-
-    public int get(MagicItemData magicItem) {
-        return itemMap.getOrDefault(magicItem, 0);
     }
 
     public void set(MagicItemData magicItem, int quantity) {

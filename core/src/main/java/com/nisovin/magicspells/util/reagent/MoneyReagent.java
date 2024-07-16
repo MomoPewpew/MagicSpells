@@ -1,9 +1,10 @@
 package com.nisovin.magicspells.util.reagent;
 
+import org.bukkit.entity.Player;
+import org.bukkit.entity.LivingEntity;
+
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.handlers.MoneyHandler;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 
 public class MoneyReagent extends Reagent {
     private float money;

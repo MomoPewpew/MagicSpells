@@ -766,6 +766,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return ConfigDataUtil.getStringList(config.getMainConfig(), "spells." + internalName + '.' + key);
 	}
 
+	protected ConfigData<ConfigurationSection> getConfigDataConfigurationSection(String key, List<String> defaultValue) {
+		return ConfigDataUtil.getConfigurationSection(config.getMainConfig(), "spells." + internalName + '.' + key);
+	}
+
 	/**
 	 * @param path Path for the keys to be read from. If the path is set to something like "filter", the keys will
 	 *             be read from spell config section under the "filter" section.

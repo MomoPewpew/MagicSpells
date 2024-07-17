@@ -962,5 +962,23 @@ public class ConfigDataUtil {
 			}
 		};
 	}
-	
+
+	@NotNull
+	public static ConfigData<ConfigurationSection> getConfigurationSection(@NotNull ConfigurationSection config, @NotNull String path) {
+		if (config.isConfigurationSection(path)) {
+			ConfigurationSection section = config.getConfigurationSection(path);
+			return (caster, target, power, args) -> section;
+		}
+
+		if (config.isString(path)) {
+			String sectionPath = config.getString(path);
+			if (sectionPath != null && config.isConfigurationSection(sectionPath)) {
+				ConfigurationSection section = config.getConfigurationSection(sectionPath);
+				return (caster, target, power, args) -> section;
+			}
+		}
+
+		return (caster, target, power, args) -> null;
+	}
+
 }

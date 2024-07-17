@@ -4,11 +4,13 @@ import java.util.*;
 
 import co.aikar.commands.ACFUtil;
 
+import com.nisovin.magicspells.util.config.ConfigData;
 import net.kyori.adventure.text.Component;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
@@ -65,71 +67,79 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		}
 		int maxSlot = (getConfigInt("min-rows", 1) * 9) - 1;
 		for (String optionName : optionKeys) {
-			String path = "options." + optionName + ".";
+            String path = "options." + optionName + ".";
 
-			List<Integer> slots = getConfigIntList(path + "slots", new ArrayList<>());
-			if (slots.isEmpty()) slots.add(getConfigInt(path + "slot", -1));
+            List<Integer> slots = getConfigIntList(path + "slots", new ArrayList<>());
+            if (slots.isEmpty()) slots.add(getConfigInt(path + "slot", -1));
 
-			List<Integer> validSlots = new ArrayList<>();
-			for (int slot : slots) {
-				if (slot < 0 || slot > 53) {
-					MagicSpells.error("MenuSpell '" + internalName + "' a slot defined which is out of bounds for '" + optionName + "': " + slot);
-					continue;
-				}
-				validSlots.add(slot);
-				if (slot > maxSlot) maxSlot = slot;
-			}
-			if (validSlots.isEmpty()) {
-				MagicSpells.error("MenuSpell '" + internalName + "' has no slots defined for: " + optionName);
-				continue;
-			}
+            List<Integer> validSlots = new ArrayList<>();
+            for (int slot : slots) {
+                if (slot < 0 || slot > 53) {
+                    MagicSpells.error("MenuSpell '" + internalName + "' a slot defined which is out of bounds for '" + optionName + "': " + slot);
+                    continue;
+                }
+                validSlots.add(slot);
+                if (slot > maxSlot) maxSlot = slot;
+            }
+            if (validSlots.isEmpty()) {
+                MagicSpells.error("MenuSpell '" + internalName + "' has no slots defined for: " + optionName);
+                continue;
+            }
 
-			ItemStack item = createItem(path + "item");
-			List<String> itemList = getConfigStringList(path + "items", null);
-			List<ItemStack> items = new ArrayList<>();
-			if (item == null) {
-				// If no items are defined, exit.
-				if (itemList == null) {
-					MagicSpells.error("MenuSpell '" + internalName + "' has no items defined for: " + optionName);
-					continue;
-				}
-				// Otherwise process item list.
-				for (String itemName : itemList) {
-					MagicItem magicItem = MagicItems.getMagicItemFromString(itemName);
-					if (magicItem == null) {
-						MagicSpells.error("MenuSpell '" + internalName + "' has an invalid item listed in '" + optionName + "': " + itemName);
-						continue;
-					}
-					ItemStack itemStack = magicItem.getItemStack();
-					if (itemStack == null) {
-						MagicSpells.error("MenuSpell '" + internalName + "' has an invalid item listed in '" + optionName + "': " + itemName);
-						continue;
-					}
-					items.add(itemStack);
-				}
-				// Skip if list was invalid.
-				if (items.isEmpty()) {
-					MagicSpells.error("MenuSpell '" + internalName + "' has no items defined for: " + optionName);
-					continue;
-				}
-			}
+            ConfigData<ConfigurationSection> itemSection = null;
+			ConfigData<String> itemString = null;
+            if (isConfigSection(path + "item")) {
+                itemSection = getConfigDataConfigurationSection(path + "item", null);
+            } else {
+                itemString = getConfigDataString(path + "item", null);
+            }
 
-			MenuOption option = new MenuOption();
-			option.menuOptionName = optionName;
-			option.slots = validSlots;
-			option.item = item;
-			option.items = items;
-			option.quantity = getConfigString(path + "quantity", "");
-			option.spellName = getConfigString(path + "spell", "");
-			option.spellRightName = getConfigString(path + "spell-right", "");
-			option.spellMiddleName = getConfigString(path + "spell-middle", "");
-			option.spellSneakLeftName = getConfigString(path + "spell-sneak-left", "");
-			option.spellSneakRightName = getConfigString(path + "spell-sneak-right", "");
-			option.power = getConfigFloat(path + "power", 1);
-			option.modifierList = getConfigStringList(path + "modifiers", null);
-			option.stayOpen = getConfigBoolean(path + "stay-open", false);
-			options.put(optionName, option);
-		}
+            List<String> itemList = getConfigStringList(path + "items", null);
+            List<ItemStack> items = new ArrayList<>();
+            if (itemString == null && itemSection == null) {
+                // If no items are defined, exit.
+                if (itemList == null) {
+                    MagicSpells.error("MenuSpell '" + internalName + "' has no items defined for: " + optionName);
+                    continue;
+                }
+                // Otherwise process item list.
+                for (String itemName : itemList) {
+                    MagicItem magicItem = MagicItems.getMagicItemFromString(itemName);
+                    if (magicItem == null) {
+                        MagicSpells.error("MenuSpell '" + internalName + "' has an invalid item listed in '" + optionName + "': " + itemName);
+                        continue;
+                    }
+                    ItemStack itemStack = magicItem.getItemStack();
+                    if (itemStack == null) {
+                        MagicSpells.error("MenuSpell '" + internalName + "' has an invalid item listed in '" + optionName + "': " + itemName);
+                        continue;
+                    }
+                    items.add(itemStack);
+                }
+                // Skip if list was invalid.
+                if (items.isEmpty()) {
+                    MagicSpells.error("MenuSpell '" + internalName + "' has no items defined for: " + optionName);
+                    continue;
+                }
+            }
+
+            MenuOption option = new MenuOption();
+            option.menuOptionName = optionName;
+            option.slots = validSlots;
+            option.itemSection = itemSection;
+            option.itemString = itemString;
+            option.items = items;
+            option.quantity = getConfigString(path + "quantity", "");
+            option.spellName = getConfigString(path + "spell", "");
+            option.spellRightName = getConfigString(path + "spell-right", "");
+            option.spellMiddleName = getConfigString(path + "spell-middle", "");
+            option.spellSneakLeftName = getConfigString(path + "spell-sneak-left", "");
+            option.spellSneakRightName = getConfigString(path + "spell-sneak-right", "");
+            option.power = getConfigFloat(path + "power", 1);
+            option.modifierList = getConfigStringList(path + "modifiers", null);
+            option.stayOpen = getConfigBoolean(path + "stay-open", false);
+            options.put(optionName, option);
+        }
 		size = (int) Math.ceil((maxSlot+1) / 9.0) * 9;
 		if (options.isEmpty()) MagicSpells.error("MenuSpell '" + spellName + "' has no menu options!");
 	}
@@ -304,6 +314,24 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				if (event.isCancelled()) continue;
 			}
 			// Select and finalise item to display.
+			SpellData spellData = new SpellData(opener, 0f, args);
+			ItemStack itemData = null;
+			if (option.itemSection != null) {
+				MagicItem magicItem = MagicItems.getMagicItemFromSection(option.itemSection.get(spellData));
+				if (magicItem != null) itemData = magicItem.getItemStack();
+			}
+			else if (option.itemString != null) {
+				MagicItem magicItem = MagicItems.getMagicItemFromString(option.itemString.get(spellData));
+				if (magicItem != null) itemData = magicItem.getItemStack();
+			}
+
+			option.item = itemData;
+
+			if (option.item == null && option.items.isEmpty()) {
+				MagicSpells.error("MenuSpell '" + internalName + "' has invalid items defined for: " + option.menuOptionName);
+				continue;
+			}
+
 			ItemStack item = (option.item != null ? option.item : option.items.get(Util.getRandomInt(option.items.size()))).clone();
 			DataUtil.setString(item, "menuOption", option.menuOptionName);
 			item = translateItem(opener, args, item);
@@ -428,6 +456,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		private String menuOptionName;
 		private List<Integer> slots;
+		private ConfigData<ConfigurationSection> itemSection;
+		private ConfigData<String> itemString;
 		private ItemStack item;
 		private List<ItemStack> items;
 		private String quantity;

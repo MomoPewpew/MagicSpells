@@ -49,23 +49,22 @@ public class ExpressionStringEqualsCondition extends Condition {
 
 	@Override
 	public boolean check(LivingEntity caster) {
-		return compare(caster);
+		return compare(caster, null);
 	}
 
 	@Override
 	public boolean check(LivingEntity caster, LivingEntity target) {
-		return compare(target);
+		return compare(caster, target);
 	}
 
 	@Override
 	public boolean check(LivingEntity caster, Location location) {
-		return compare(caster);
+		return compare(caster, null);
 	}
 
-	private boolean compare(LivingEntity target) {
-		String left = expressionLeft.get(target, 0, new String[0]);
-		String right = expressionRight.get(target, 0, new String[0]);
-
+	private boolean compare(LivingEntity caster, LivingEntity target) {
+		String left = expressionLeft.get(caster, target, 0, new String[0]);
+		String right = expressionRight.get(caster, target, 0, new String[0]);
 		return left.equals(right);
 	}
 }

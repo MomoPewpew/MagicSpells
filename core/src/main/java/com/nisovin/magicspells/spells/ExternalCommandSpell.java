@@ -109,11 +109,6 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		SpellData data = new SpellData(caster, power, args);
-
-		commandToExecute = commandToExecuteData.get(data);
-		commandToExecuteLater = commandToExecuteLaterData.get(data);
-
 		if (state == SpellCastState.NORMAL) {
 			Player target = null;
 			if (requirePlayerTarget) {
@@ -143,6 +138,11 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		else actualSender = sender;
 		if (actualSender == null) return;
 		
+		SpellData data = new SpellData(actualSender instanceof Player ? (Player) actualSender : null, power, args);
+
+		commandToExecute = commandToExecuteData.get(data);
+		commandToExecuteLater = commandToExecuteLaterData.get(data);
+
 		// Grant permissions and op
 		boolean opped = false;
 		if (actualSender instanceof Player) {
@@ -216,7 +216,6 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		
 		// Effects
 		if (sender instanceof Player player) {
-			SpellData data = new SpellData(player, target, power, args);
 			if (target != null) playSpellEffects(player, target, data);
 			else playSpellEffects(EffectPosition.CASTER, player, data);
 		} else if (sender instanceof BlockCommandSender commandBlock) {

@@ -118,12 +118,12 @@ public class BowSpell extends Spell {
 		cancelShotOnFail = getConfigBoolean("cancel-shot-on-fail", true);
 
 		minimumForce = getConfigFloat("minimum-force", 0F);
-		maximumForce = getConfigFloat("maximum-force", 1F);
+		maximumForce = getConfigFloat("maximum-force", 3F);
 
 		if (minimumForce < 0F) minimumForce = 0F;
-		else if (minimumForce > 1F) minimumForce = 1F;
+		else if (minimumForce > 1F) minimumForce = 3F;
 		if (maximumForce < 0F) maximumForce = 0F;
-		else if (maximumForce > 1F) maximumForce = 1F;
+		else if (maximumForce > 3F) maximumForce = 3F;
 	}
 
 	private List<MagicItemData> getFilter(String key) {

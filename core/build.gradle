@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.github.goooler.shadow") version "8.1.7"
 }
 
 repositories {
@@ -17,20 +17,16 @@ dependencies {
     shadow(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: "1.9.20")
 
     shadow(project(path: ":nms:shared", configuration: "apiElements"))
-    shadow(project(path: ":nms:v1_19_R1", configuration: "reobf"))
-    shadow(project(path: ":nms:v1_19_R2", configuration: "reobf"))
-    shadow(project(path: ":nms:v1_19_R3", configuration: "reobf"))
-    shadow(project(path: ":nms:v1_20_R1", configuration: "reobf"))
-    shadow(project(path: ":nms:v1_20_R2", configuration: "reobf"))
+    shadow(project(path: ":nms:v1_20_6")) { transitive = false }
 
-    implementation(name:'CMI-API9.5.0.8', ext:'jar')
-    implementation(name:'CMILib1.2.4.5', ext:'jar')
+    implementation(name:'CMI-9.7.4.1', ext:'jar')
+    implementation(name:'CMILib1.5.0.2', ext:'jar')
     implementation(name:'SneakyCharacterManager-1.0-SNAPSHOT', ext:'jar')
-    implementation(name:'PathFinder-5.0.0', ext:'jar')
+    implementation(name:'PathFinder-5.2.0', ext:'jar')
     implementation(group: "com.comphenix.protocol", name: "ProtocolLib", version: "5.1.0") { transitive = false }
     implementation(group: "com.github.libraryaddict", name: "LibsDisguises", version: "v10.0.25") { transitive = false }
     implementation(group: "com.github.MilkBowl", name: "vault", version: "master-SNAPSHOT") { transitive = false }
-    implementation(group: "com.github.PlaceholderAPI", name: "PlaceholderAPI", version: "master-SNAPSHOT") { transitive = false }
+    implementation(group: "me.clip", name: "placeholderapi", version: "2.11.6") { transitive = false }
     implementation(group: "com.github.TechFortress", name: "GriefPrevention", version: "master-SNAPSHOT") { transitive = false }
     implementation(group: "com.github.Xezard", name: "XGlow", version: "master-SNAPSHOT") {
         exclude(module: "XGlowPlugin")
@@ -60,6 +56,14 @@ base {
     archivesName = "MagicSpells"
 }
 
+jar {
+    manifest {
+        attributes(
+            "paperweight-mappings-namespace": "mojang"
+        )
+    }
+}
+
 shadowJar {
     configurations = [project.configurations.shadow]
 
@@ -73,14 +77,14 @@ shadowJar {
 
 compileKotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
         javaParameters.set(true)
     }
 }
 
 compileTestKotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 

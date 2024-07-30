@@ -290,11 +290,11 @@ public class Util {
 		return splitParams(arrayJoin(split, ' '), 0);
 	}
 
-	public static boolean removeFromInventory(Inventory inventory, SpellReagents.ReagentItem item) {
-		MagicItemData itemData = item.getMagicItemData();
+	public static boolean removeFromInventory(Inventory inventory, Map.Entry<MagicItemData, Integer> item) {
+		MagicItemData itemData = item.getKey();
 		if (itemData == null) return false;
 
-		int amt = item.getAmount();
+		int amt = item.getValue();
 		MagicItemData magicData;
 		ItemStack[] items = inventory.getContents();
 		for (int i = 0; i < items.length; i++) {
@@ -327,11 +327,11 @@ public class Util {
 		return false;
 	}
 
-	public static boolean removeFromInventory(EntityEquipment entityEquipment, SpellReagents.ReagentItem item) {
-		MagicItemData itemData = item.getMagicItemData();
+	public static boolean removeFromInventory(EntityEquipment entityEquipment, Map.Entry<MagicItemData, Integer> item) {
+		MagicItemData itemData = item.getKey();
 		if (itemData == null) return false;
 
-		int amt = item.getAmount();
+		int amt = item.getValue();
 		MagicItemData magicData;
 		ItemStack[] armorContents = entityEquipment.getArmorContents();
 		ItemStack[] items = new ItemStack[6];

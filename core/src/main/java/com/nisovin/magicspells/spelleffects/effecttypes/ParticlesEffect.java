@@ -54,7 +54,7 @@ public class ParticlesEffect extends SpellEffect {
 
 	@Override
 	public void loadFromConfig(ConfigurationSection config) {
-		particle = ConfigDataUtil.getParticle(config, "particle-name", Particle.EXPLOSION_NORMAL);
+		particle = ConfigDataUtil.getParticle(config, "particle-name", Particle.EXPLOSION);
 
 		material = ConfigDataUtil.getMaterial(config, "material", null);
 		blockData = ConfigDataUtil.getBlockData(config, "material", null);

@@ -24,6 +24,7 @@ import com.nisovin.magicspells.util.*;
 import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.CommandSpell;
+import com.nisovin.magicspells.util.reagent.SpellReagents;
 
 public class ScrollSpell extends CommandSpell {
 

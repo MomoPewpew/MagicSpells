@@ -3,6 +3,7 @@ package com.nisovin.magicspells.util.config;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -918,6 +919,66 @@ public class ConfigDataUtil {
 			}
 
 		};
+	}
+
+    @NotNull
+    public static ConfigData<List<String>> getStringList(@NotNull ConfigurationSection config, @NotNull String path) {
+        List<String> value = config.getStringList(path);
+        if (value.isEmpty()) return (caster, target, power, args) -> null;
+
+        return getStringList(value);
+    }
+
+	@NotNull
+	public static ConfigData<List<String>> getStringList(@Nullable List<String> value) {
+		if (value == null || value.isEmpty()) {
+			return (caster, target, power, args) -> null;
+		}
+	
+		List<ConfigData<String>> configDataList = new ArrayList<>();
+		for (String str : value) {
+			configDataList.add(getString(str));
+		}
+	
+		return new ConfigData<>() {
+	
+			@Override
+			public List<String> get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+				List<String> results = new ArrayList<>();
+				for (ConfigData<String> configData : configDataList) {
+					results.add(configData.get(caster, target, power, args));
+				}
+				return results;
+			}
+	
+			@Override
+			public boolean isConstant() {
+				for (ConfigData<String> configData : configDataList) {
+					if (!configData.isConstant()) {
+						return false;
+					}
+				}
+				return true;
+			}
+		};
+	}
+
+	@NotNull
+	public static ConfigData<ConfigurationSection> getConfigurationSection(@NotNull ConfigurationSection config, @NotNull String path) {
+		if (config.isConfigurationSection(path)) {
+			ConfigurationSection section = config.getConfigurationSection(path);
+			return (caster, target, power, args) -> section;
+		}
+
+		if (config.isString(path)) {
+			String sectionPath = config.getString(path);
+			if (sectionPath != null && config.isConfigurationSection(sectionPath)) {
+				ConfigurationSection section = config.getConfigurationSection(sectionPath);
+				return (caster, target, power, args) -> section;
+			}
+		}
+
+		return (caster, target, power, args) -> null;
 	}
 
 }

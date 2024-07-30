@@ -20,6 +20,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.util.*;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.CommandSpell;
+import com.nisovin.magicspells.util.reagent.SpellReagents;
 
 // Advanced perm is for specifying the number of uses if it isn't normally allowed
 
@@ -138,7 +139,7 @@ public class ImbueSpell extends CommandSpell {
 			}
 			
 			if (chargeReagentsForSpellPerUse && !Perm.NO_REAGENTS.has(player)) {
-				SpellReagents reagents = spell.getReagents().multiply(uses);
+				SpellReagents reagents = spell.getReagentsPreCast(player, power, args).multiply(uses);
 				if (!hasReagents(player, reagents)) {
 					sendMessage(strMissingReagents, player, args);
 					return PostCastAction.ALREADY_HANDLED;

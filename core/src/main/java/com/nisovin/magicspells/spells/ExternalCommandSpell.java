@@ -21,11 +21,15 @@ import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.MessageBlocker;
 import com.nisovin.magicspells.util.ValidTargetList;
+import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class ExternalCommandSpell extends TargetedSpell implements TargetedEntitySpell {
 	
 	private static MessageBlocker messageBlocker;
+
+	private ConfigData<List<String>> commandToExecuteData;
+	private ConfigData<List<String>> commandToExecuteLaterData;
 
 	private List<String> commandToBlock;
 	private List<String> commandToExecute;
@@ -51,8 +55,8 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		super(config, spellName);
 
 		commandToBlock = getConfigStringList("command-to-block", null);
-		commandToExecute = getConfigStringList("command-to-execute", null);
-		commandToExecuteLater = getConfigStringList("command-to-execute-later", null);
+		commandToExecuteData = getConfigDataStringList("command-to-execute", null);
+		commandToExecuteLaterData = getConfigDataStringList("command-to-execute-later", null);
 		temporaryPermissions = getConfigStringList("temporary-permissions", null);
 
 		commandDelay = getConfigInt("command-delay", 0);
@@ -134,6 +138,11 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		else actualSender = sender;
 		if (actualSender == null) return;
 		
+		SpellData data = new SpellData(actualSender instanceof Player ? (Player) actualSender : null, power, args);
+
+		commandToExecute = commandToExecuteData.get(data);
+		commandToExecuteLater = commandToExecuteLaterData.get(data);
+
 		// Grant permissions and op
 		boolean opped = false;
 		if (actualSender instanceof Player) {
@@ -207,7 +216,6 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		
 		// Effects
 		if (sender instanceof Player player) {
-			SpellData data = new SpellData(player, target, power, args);
 			if (target != null) playSpellEffects(player, target, data);
 			else playSpellEffects(EffectPosition.CASTER, player, data);
 		} else if (sender instanceof BlockCommandSender commandBlock) {
@@ -330,9 +338,26 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 						convo.begin();
 					}
 				}
+
+				LivingEntity varOwner, varTarget;
+				if (useTargetVariablesInstead) {
+					varOwner = target;
+					varTarget = sender instanceof Player player ? player : null;
+				} else {
+					varOwner = sender instanceof Player player ? player : null;
+					varTarget = target;
+				}
+
+				String[] args = data.args();
+
 				for (String comm : commandToExecuteLater) {
-					if (comm == null) continue;
-					if (comm.isEmpty()) continue;
+					if (comm == null || comm.isEmpty()) continue;
+					if (doVariableReplacement) comm = MagicSpells.doReplacements(comm, varOwner, varTarget, args);
+					if (args != null && args.length > 0) {
+						for (int i = 0; i < args.length; i++) {
+							comm = comm.replace("%" + (i + 1), args[i]);
+						}
+					}
 					if (sender != null) comm = comm.replace("%a", sender.getName());
 					if (target != null) comm = comm.replace("%t", target.getName());
 					Bukkit.dispatchCommand(actualSender, comm);

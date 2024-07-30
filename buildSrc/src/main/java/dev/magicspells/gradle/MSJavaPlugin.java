@@ -17,7 +17,7 @@ public class MSJavaPlugin implements Plugin<Project> {
         target.getPlugins().apply(MavenPublishPlugin.class);
         target.getExtensions().configure(JavaPluginExtension.class, (JavaPluginExtension ext) -> {
             ext.toolchain((javaToolchainSpec -> {
-                javaToolchainSpec.getLanguageVersion().set(JavaLanguageVersion.of(17));
+                javaToolchainSpec.getLanguageVersion().set(JavaLanguageVersion.of(21));
             }));
         });
         RepositoryHandler repositories = target.getRepositories();
@@ -34,7 +34,8 @@ public class MSJavaPlugin implements Plugin<Project> {
                 "https://jitpack.io",
                 "https://repo.codemc.org/repository/maven-public",
                 "https://cdn.rawgit.com/Rayzr522/maven-repo/master/",
-                "https://maven.enginehub.org/repo/"
+                "https://maven.enginehub.org/repo/",
+				"https://repo.extendedclip.com/content/repositories/placeholderapi"
         };
         for (String url : mavenUrls) {
             repositories.maven(mavenArtifactRepository -> mavenArtifactRepository.setUrl(url));

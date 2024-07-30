@@ -1,5 +1,5 @@
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.9.20"
+  id("org.jetbrains.kotlin.jvm") version "1.9.23"
   id("dev.magicspells.msjava")
 }
 
@@ -13,7 +13,7 @@ subprojects {
   apply plugin: "org.jetbrains.kotlin.jvm"
 
   dependencies {
-    implementation(group: "io.papermc.paper", name: "paper-api", version: "1.20.2-R0.1-SNAPSHOT")
+    implementation(group: "io.papermc.paper", name: "paper-api", version: "1.20.6-R0.1-SNAPSHOT")
   }
 
   processResources {

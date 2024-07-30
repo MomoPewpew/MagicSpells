@@ -127,6 +127,7 @@ public class ConditionManager {
 		addCondition("distance", DistanceCondition.class);
 		addCondition("name", NameCondition.class);
 		addCondition("namepattern", NamePatternCondition.class);
+		addCondition("underwater", UnderWaterCondition.class);
 		addCondition("uptime", UpTimeCondition.class);
 		addCondition("variable", VariableCondition.class);
 		addCondition("variablematches", VariableMatchesCondition.class);

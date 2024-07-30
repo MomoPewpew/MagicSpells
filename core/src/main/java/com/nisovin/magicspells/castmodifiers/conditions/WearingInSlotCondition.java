@@ -23,10 +23,10 @@ public class WearingInSlotCondition extends Condition {
 			String[] data = var.split("=");
 			String s = data[0].toLowerCase();
 
-			if (s.startsWith("helm") || s.startsWith("hat") || s.startsWith("head")) slot = 0;
-			else if (s.startsWith("chest") || s.startsWith("tunic")) slot = 1;
-			else if (s.startsWith("leg") || s.startsWith("pant")) slot = 2;
-			else if (s.startsWith("boot") || s.startsWith("shoe") || s.startsWith("feet")) slot = 3;
+			if (s.startsWith("helm") || s.startsWith("hat") || s.startsWith("head")) slot = 3;
+			else if (s.startsWith("chest") || s.startsWith("tunic")) slot = 2;
+			else if (s.startsWith("leg") || s.startsWith("pant")) slot = 1;
+			else if (s.startsWith("boot") || s.startsWith("shoe") || s.startsWith("feet")) slot = 0;
 
 			if (slot == -1) return false;
 			if (data[1].equals("0") || data[1].equals("air") || data[1].equals("empty")) {

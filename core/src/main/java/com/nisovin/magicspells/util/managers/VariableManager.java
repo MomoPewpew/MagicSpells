@@ -140,29 +140,11 @@ public class VariableManager {
 		addMetaVariableType("held_block", new HeldBlockVariable());
 
 		// meta variable attribute types
-		addMetaVariableType("attribute_generic_max_health_base", new AttributeBaseValueVariable("GENERIC_MAX_HEALTH"));
-		addMetaVariableType("attribute_generic_follow_range_base", new AttributeBaseValueVariable("GENERIC_FOLLOW_RANGE"));
-		addMetaVariableType("attribute_generic_knockback_resistance_base", new AttributeBaseValueVariable("GENERIC_KNOCKBACK_RESISTANCE"));
-		addMetaVariableType("attribute_generic_movement_speed_base", new AttributeBaseValueVariable("GENERIC_MOVEMENT_SPEED"));
-		addMetaVariableType("attribute_generic_flying_speed_base", new AttributeBaseValueVariable("GENERIC_FLYING_SPEED"));
-		addMetaVariableType("attribute_generic_attack_damage_base", new AttributeBaseValueVariable("GENERIC_ATTACK_DAMAGE"));
-		addMetaVariableType("attribute_generic_attack_knockback_base", new AttributeBaseValueVariable("GENERIC_ATTACK_KNOCKBACK"));
-		addMetaVariableType("attribute_generic_attack_speed_base", new AttributeBaseValueVariable("GENERIC_ATTACK_SPEED"));
-		addMetaVariableType("attribute_generic_armor_base", new AttributeBaseValueVariable("GENERIC_ARMOR"));
-		addMetaVariableType("attribute_generic_armor_toughness_base", new AttributeBaseValueVariable("GENERIC_ARMOR_TOUGHNESS"));
-		addMetaVariableType("attribute_generic_luck_base", new AttributeBaseValueVariable("GENERIC_LUCK"));
-
-		addMetaVariableType("attribute_generic_max_health", new AttributeVariable(Attribute.GENERIC_MAX_HEALTH));
-		addMetaVariableType("attribute_generic_follow_range", new AttributeVariable(Attribute.GENERIC_FOLLOW_RANGE));
-		addMetaVariableType("attribute_generic_knockback_resistance", new AttributeVariable(Attribute.GENERIC_KNOCKBACK_RESISTANCE));
-		addMetaVariableType("attribute_generic_movement_speed", new AttributeVariable(Attribute.GENERIC_MOVEMENT_SPEED));
-		addMetaVariableType("attribute_generic_flying_speed", new AttributeVariable(Attribute.GENERIC_FLYING_SPEED));
-		addMetaVariableType("attribute_generic_attack_damage", new AttributeVariable(Attribute.GENERIC_ATTACK_DAMAGE));
-		addMetaVariableType("attribute_generic_attack_knockback", new AttributeVariable(Attribute.GENERIC_ATTACK_KNOCKBACK));
-		addMetaVariableType("attribute_generic_attack_speed", new AttributeVariable(Attribute.GENERIC_ATTACK_SPEED));
-		addMetaVariableType("attribute_generic_armor", new AttributeVariable(Attribute.GENERIC_ARMOR));
-		addMetaVariableType("attribute_generic_armor_toughness", new AttributeVariable(Attribute.GENERIC_ARMOR_TOUGHNESS));
-		addMetaVariableType("attribute_generic_luck", new AttributeVariable(Attribute.GENERIC_LUCK));
+		for (Attribute attribute : Attribute.values()) {
+			String name = attribute.name().toLowerCase();
+			addMetaVariableType("attribute_" + name, new AttributeVariable(attribute));
+			addMetaVariableType("attribute_" + name + "_base", new AttributeBaseValueVariable(attribute));
+		}
 	}
 
 	// DEBUG INFO: level 2, loaded variable (name)

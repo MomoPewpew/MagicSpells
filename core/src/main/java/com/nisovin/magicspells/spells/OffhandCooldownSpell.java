@@ -12,6 +12,7 @@ import org.bukkit.inventory.PlayerInventory;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
@@ -63,7 +64,7 @@ public class OffhandCooldownSpell extends InstantSpell {
 				PlayerInventory inventory = pl.getInventory();
 				ItemStack off = inventory.getItemInOffHand();
 
-				if (!off.isSimilar(item)) {
+				if (!Util.isSimilarNoFlags(off, item)) {
 					off = item.clone();
 					inventory.setItemInOffHand(off);
 				}

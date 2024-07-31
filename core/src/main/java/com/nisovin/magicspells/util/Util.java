@@ -28,6 +28,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import org.jetbrains.annotations.Nullable;
@@ -383,7 +384,7 @@ public class Util {
 
 		if (stackExisting) {
 			for (ItemStack itemStack : items) {
-				if (itemStack == null || !itemStack.isSimilar(item)) continue;
+				if (itemStack == null || !isSimilarNoFlags(itemStack, item)) continue;
 
 				if (itemStack.getAmount() + amt <= itemStack.getMaxStackSize()) {
 					itemStack.setAmount(itemStack.getAmount() + amt);
@@ -420,6 +421,24 @@ public class Util {
 		}
 
 		return false;
+	}
+
+	public static boolean isSimilarNoFlags(ItemStack left_, ItemStack right_) {
+		ItemStack left = left_.clone();
+		ItemMeta leftMeta = left.getItemMeta();
+		ItemStack right = right_.clone();
+		ItemMeta rightMeta = right.getItemMeta();
+
+		for (ItemFlag itemFlag : ItemFlag.values()) {
+			for (ItemMeta meta : Arrays.asList(leftMeta, rightMeta)) {
+				if (meta.hasItemFlag(itemFlag)) meta.removeItemFlags(itemFlag);
+			}
+		}
+
+		left.setItemMeta(leftMeta);
+		right.setItemMeta(rightMeta);
+
+		return left.isSimilar(right);
 	}
 
 	public static void rotateVector(Vector v, double degrees) {

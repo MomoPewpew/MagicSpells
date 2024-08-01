@@ -3,7 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
-import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 
@@ -30,7 +30,25 @@ public class InventoryOpenListener extends PassiveListener {
 	@EventHandler
 	public void onInventoryOpen(InventoryOpenEvent event) {
 		if (!isCancelStateOk(event.isCancelled())) return;
-		if (!inventoryNames.contains(Util.getStringFromComponent(event.getView().title()))) return;
+
+		boolean inventoryMatches = false;
+
+		if (event.getInventory().getHolder() instanceof ChestedHorse chestedHorse) {
+			if (chestedHorse instanceof Donkey) {
+				inventoryMatches = inventoryNames.contains("DONKEY");
+			}
+			if (chestedHorse instanceof Llama) {
+				inventoryMatches = inventoryNames.contains("LLAMA");
+			}
+			if (chestedHorse instanceof Mule) {
+				inventoryMatches = inventoryNames.contains("MULE");
+			}
+			if (chestedHorse instanceof TraderLlama) {
+				inventoryMatches = inventoryNames.contains("TRADER_LLAMA");
+			}
+		}
+
+		if (!inventoryNames.contains(Util.getStringFromComponent(event.getView().title())) && !inventoryMatches) return;
 
 		HumanEntity caster = event.getPlayer();
 		if (!hasSpell(caster) || !canTrigger(caster)) return;

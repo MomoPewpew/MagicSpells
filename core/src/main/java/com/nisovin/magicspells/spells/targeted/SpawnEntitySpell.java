@@ -314,9 +314,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 
 			for(Entity ent : forRemoval){
-				ent.remove();
+				if (!(ent instanceof Player)) ent.remove();
 			}
-			_ent.remove();
+			if (!(_ent instanceof Player)) _ent.remove();
 		}
 
 		ticker.stop();
@@ -534,7 +534,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					while(_riding != null){
 						Entity _prev = _riding;
 						_riding = _riding.getVehicle();
-						_prev.remove();
+						if (!(_prev instanceof Player)) _prev.remove();
 					}
 				}
 
@@ -681,9 +681,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 			if(_ent instanceof LivingEntity && entities.contains(_ent)){
 				for(Entity ent : forRemoval){
-					ent.remove();
+					if (!(ent instanceof Player)) ent.remove();
 				}
-				_ent.remove();
+				if (!(_ent instanceof Player)) _ent.remove();
 			}
 
 
@@ -696,7 +696,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				while(_riding != null){
 					Entity _prev = _riding;
 					_riding = _riding.getVehicle();
-					_prev.remove();
+					if (!(_prev instanceof Player)) _prev.remove();
 				}
 			}
 			entities.remove(entity);

@@ -4,21 +4,17 @@ import org.bukkit.Material;
 import org.bukkit.inventory.*;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.meta.Damageable;
 
 public class ItemUtil {
 
 	public static void addFakeEnchantment(ItemMeta meta) {
 		if (meta == null) return;
-		meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-		meta.addEnchant(Enchantment.FROST_WALKER, -1, true);
+		meta.setEnchantmentGlintOverride(true);
 	}
 
 	public static boolean hasFakeEnchantment(ItemMeta meta) {
-		return meta.hasItemFlag(ItemFlag.HIDE_ENCHANTS)
-			&& meta.hasEnchant(Enchantment.FROST_WALKER)
-			&& meta.getEnchantLevel(Enchantment.FROST_WALKER) == 65535;
+		return meta.hasEnchantmentGlintOverride();
 	}
 
 	public static boolean hasDurability(Material type) {

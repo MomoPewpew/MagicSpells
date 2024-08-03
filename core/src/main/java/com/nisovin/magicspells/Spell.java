@@ -181,6 +181,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	protected float cooldown;
 	protected float serverCooldown;
+	protected long intervalCooldownInterval = 0;
+	protected long intervalCooldownOffset = 0;
 
 	protected float minCooldown = -1F;
 	protected float maxCooldown = -1F;
@@ -334,10 +336,20 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 		// Cooldowns
 		String cooldownRange = config.getString(path + "cooldown", "0");
-		try {
-			cooldown = Float.parseFloat(cooldownRange);
-		} catch (NumberFormatException e) {
 
+		try {
+			// Check if the cooldown is in the format of two long values separated by a semicolon
+			if (cooldownRange.contains(";")) {
+				String[] intervalParts = cooldownRange.split(";");
+				if (intervalParts.length == 2) {
+					intervalCooldownInterval = Long.parseLong(intervalParts[0]);
+					intervalCooldownOffset = Long.parseLong(intervalParts[1]);
+				}
+			} else {
+				// Parse as float cooldown
+				cooldown = Float.parseFloat(cooldownRange);
+			}
+		} catch (NumberFormatException e) {
 			// parse min max cooldowns
 			String[] cdRange = cooldownRange.split("-");
 
@@ -1105,6 +1117,15 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				chargesConsumed.increment(livingEntity.getUniqueId());
 			} else {
 				nextCast.put(livingEntity.getUniqueId(), System.currentTimeMillis() + (long) (cd * TimeUtil.MILLISECONDS_PER_SECOND));
+			}
+		} else if (intervalCooldownInterval > 0) {
+			Long time = System.currentTimeMillis();
+			Long modulo = time % intervalCooldownInterval;
+
+			if (modulo > intervalCooldownOffset) {
+				nextCast.put(livingEntity.getUniqueId(), time - modulo + intervalCooldownInterval + intervalCooldownOffset);
+			} else {
+				nextCast.put(livingEntity.getUniqueId(), time - modulo + intervalCooldownOffset);
 			}
 		} else {
 			if (charges <= 0) nextCast.remove(livingEntity.getUniqueId());

@@ -2,7 +2,10 @@ package com.nisovin.magicspells.util.managers;
 
 import java.util.*;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.nio.charset.StandardCharsets;
 
@@ -506,43 +509,59 @@ public class VariableManager {
 
 	public void savePlayerVariables(String player, String uniqueId) {
 		File file = new File(folder, "PLAYER_" + player + ".txt");
-		if (file.exists()) file.delete();
-		file = new File(folder, "PLAYER_" + uniqueId + ".txt");
-		if (file.exists()) file.delete();
+		if (!file.exists()) {
+			file = new File(folder, "PLAYER_" + uniqueId + ".txt");
+		}
 
-		List<String> lines = new ArrayList<>();
+		Map<String, String> existingVariables = new LinkedHashMap<>();
+		if (file.exists()) {
+			// Read the existing file
+			try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					int index = line.indexOf('=');
+					if (index > 0) {
+						String key = line.substring(0, index);
+						String value = line.substring(index + 1);
+						existingVariables.put(key, value);
+					}
+				}
+			} catch (IOException e) {
+				MagicSpells.error("ERROR READING PLAYER VARIABLES FOR " + player);
+				MagicSpells.handleException(e);
+			}
+		}
+
+		// Update the variables
 		for (String variableName : variables.keySet()) {
 			Variable variable = variables.get(variableName);
 			if (variable instanceof PlayerVariable && variable.isPermanent()) {
 				String val = variable.getStringValue(player);
-				if (!val.equals(variable.getDefaultStringValue())) lines.add(variableName + '=' + Util.flattenLineBreaks(val));
+				if (val.equals(variable.getDefaultStringValue())) {
+					// Remove the variable if it's the default value
+					existingVariables.remove(variableName);
+				} else {
+					// Update the variable if it's a non-default value
+					existingVariables.put(variableName, Util.flattenLineBreaks(val));
+				}
 			}
 		}
 
-		if (lines.isEmpty()) {
+		// Write the updated variables back to the file
+		if (existingVariables.isEmpty()) {
 			dirtyPlayerVars.remove(player);
 			return;
 		}
 
-		BufferedWriter writer = null;
-		try {
-			writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8, false));
-			for (String line : lines) {
-				writer.write(line);
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8, false))) {
+			for (Map.Entry<String, String> entry : existingVariables.entrySet()) {
+				writer.write(entry.getKey() + '=' + entry.getValue());
 				writer.newLine();
 			}
 			writer.flush();
-		} catch (Exception e) {
+		} catch (IOException e) {
 			MagicSpells.error("ERROR SAVING PLAYER VARIABLES FOR " + player);
 			MagicSpells.handleException(e);
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-				} catch (Exception e) {
-					DebugHandler.debugGeneral(e);
-				}
-			}
 		}
 
 		dirtyPlayerVars.remove(player);

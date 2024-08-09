@@ -33,7 +33,7 @@ public class VariableManager {
 
 	private static final Map<String, Class<? extends Variable>> variableTypes = new HashMap<>();
 	private static final Map<String, Variable> metaVariables = new HashMap<>();
-	private static final Map<String, Variable> variables = new HashMap<>();
+	private static final Map<String, Variable> variables = new LinkedHashMap<>();
 	private static final Set<String> dirtyPlayerVars = new HashSet<>();
 
 	private static boolean dirtyGlobalVars = false;
@@ -513,7 +513,7 @@ public class VariableManager {
 			file = new File(folder, "PLAYER_" + uniqueId + ".txt");
 		}
 
-		Map<String, String> existingVariables = new LinkedHashMap<>();
+		Map<String, String> existingVariables = new TreeMap<>();
 		if (file.exists()) {
 			// Read the existing file
 			try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {

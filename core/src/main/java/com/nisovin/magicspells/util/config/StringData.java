@@ -28,7 +28,8 @@ public class StringData implements ConfigData<String> {
 		(arg:(\\d+):([\\w-]+))|\
 		((papi|casterpapi|targetpapi):([^%]+))|\
 		(playerpapi:([a-zA-Z0-9_]{3,16}):([^%]+))\
-		)%""", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+		)%|\
+		%([at])""", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
 	private final List<ConfigData<String>> values;
 	private final List<String> fragments;
@@ -127,6 +128,14 @@ public class StringData implements ConfigData<String> {
 			return new PlayerPAPIData(matcher.group(), papiPlaceholder, player);
 		}
 
+		if (matcher.group(20) != null) {
+			if ("a".equalsIgnoreCase(matcher.group(20))) {
+				return new CasterNameData(matcher.group());
+			}
+			if ("t".equalsIgnoreCase(matcher.group(20))) {
+				return new TargetNameData(matcher.group());
+			}
+		}
 		return null;
 	}
 
@@ -364,6 +373,30 @@ public class StringData implements ConfigData<String> {
 			return PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(player), papiPlaceholder);
 		}
 
+	}
+
+	public static class CasterNameData extends PlaceholderData {
+
+		public CasterNameData(String placeholder) {
+			super(placeholder);
+		}
+
+		@Override
+		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			return caster != null ? caster.getName() : placeholder;
+		}
+	}
+
+	public static class TargetNameData extends PlaceholderData {
+
+		public TargetNameData(String placeholder) {
+			super(placeholder);
+		}
+
+		@Override
+		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			return target != null ? target.getName() : placeholder;
+		}
 	}
 
 }

@@ -60,6 +60,8 @@ import com.nisovin.magicspells.spelleffects.util.EffectlibSpellEffect;
 import com.nisovin.magicspells.spelleffects.trackers.AsyncEffectTracker;
 import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
 
+import static com.nisovin.magicspells.MagicSpells.log;
+
 public abstract class Spell implements Comparable<Spell>, Listener {
 
 	protected static final Random random = ThreadLocalRandom.current();
@@ -142,6 +144,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected String strCantBind;
 	protected String strCastStart;
 	protected String strCastOthers;
+	protected ConfigData<String> strCastConsole;
 	protected String strOnTeach;
 	protected String strOnCooldown;
 	protected String strWrongWorld;
@@ -429,6 +432,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		strCastSelf = config.getString(path + "str-cast-self", null);
 		strCastStart = config.getString(path + "str-cast-start", null);
 		strCastOthers = config.getString(path + "str-cast-others", null);
+		strCastConsole = getConfigDataString("str-cast-console", null);
 		strOnTeach = config.getString(path + "str-on-teach", null);
 		strOnCooldown = config.getString(path + "str-on-cooldown", MagicSpells.getOnCooldownMessage());
 		strWrongWorld = config.getString(path + "str-wrong-world", MagicSpells.getWrongWorldMessage());
@@ -922,6 +926,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				if (action.setCooldown()) setCooldown(caster, spellCast.getCooldown());
 				if (action.chargeReagents()) removeReagents(caster, spellCast.getReagents());
 				if (action.sendMessages()) sendMessages(caster, spellCast.getSpellArgs());
+				if (action.sendMessages()) sendLog(caster, spellCast.getSpellArgs());
 				if (experience > 0 && caster instanceof Player player) player.giveExp(experience);
 			} else if (state == SpellCastState.ON_COOLDOWN) {
 				MagicSpells.sendMessageAndFormat(strOnCooldown, caster, spellCast.getSpellArgs(),
@@ -950,6 +955,12 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		sendMessage(strCastSelf, caster, args, "%a", caster.getName());
 		sendMessageNear(caster, strCastOthers, args, "%a", caster.getName());
 	}
+
+	public void sendLog(LivingEntity caster, String[] args) {
+		if (this.strCastConsole.get(caster, 0f, args) == null) return;
+		log("Spell " + internalName + ": " + this.strCastConsole.get(caster, 0f, args));
+	}
+
 
 	// TODO can this safely be made varargs?
 	protected boolean preCastTimeCheck(LivingEntity livingEntity, String[] args) {

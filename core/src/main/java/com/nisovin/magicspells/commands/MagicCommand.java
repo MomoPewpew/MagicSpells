@@ -6,6 +6,8 @@ import java.io.Writer;
 import java.io.FileWriter;
 import java.util.regex.Pattern;
 
+import com.nisovin.magicspells.util.managers.OfflineVariableManager;
+import com.nisovin.magicspells.util.managers.VariableManager;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -476,6 +478,7 @@ public class MagicCommand extends BaseCommand {
 			if (noPermission(issuer.getIssuer(), Perm.COMMAND_VARIABLE_SHOW)) return;
 			Variable variable;
 			Player player = null;
+			String offlineVariable = null;
 			if (args.length == 0) throw new InvalidCommandArgument();
 
 			variable = MagicSpells.getVariableManager().getVariable(args[0]);
@@ -484,12 +487,20 @@ public class MagicCommand extends BaseCommand {
 			if (args.length == 1) player = getPlayerFromIssuer(issuer);
 			else if (ACFBukkitUtil.isValidName(args[1])) {
 				player = Bukkit.getPlayer(args[1]);
-				if (player == null || !player.isOnline()) throw new ConditionFailedException("No matching player found: '" + args[1] + "'");
-			}
-			
-			String playerName = player == null ? "-" : player.getName();
 
-			issuer.sendMessage(MagicSpells.getTextColor() + TxtUtil.getPossessiveName(playerName) + " variable value for " + args[0] + " is: " + variable.getStringValue(player));
+				if (player == null || !player.isOnline()) {
+					OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayerIfCached(args[1]);
+					if (offlinePlayer != null) offlineVariable = new OfflineVariableManager().getOfflineVariableString(args[0], offlinePlayer.getUniqueId().toString());
+				}
+			}
+
+			if (offlineVariable != null) {
+				issuer.sendMessage(MagicSpells.getTextColor() + "Offline player " + TxtUtil.getPossessiveName(args[1]) + " variable value for " + args[0] + " is: " + offlineVariable);
+			} else {
+				String playerName = player == null ? "-" : player.getName();
+
+				issuer.sendMessage(MagicSpells.getTextColor() + TxtUtil.getPossessiveName(playerName) + " variable value for " + args[0] + " is: " + variable.getStringValue(player));
+			}
 		}
 
 		@Subcommand("modify")

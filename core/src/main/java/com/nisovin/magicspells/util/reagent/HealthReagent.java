@@ -1,8 +1,8 @@
 package com.nisovin.magicspells.util.reagent;
 
 import org.bukkit.entity.LivingEntity;
-
 import com.nisovin.magicspells.util.Util;
+import org.bukkit.attribute.Attribute;
 
 public class HealthReagent extends Reagent {
     private double health;
@@ -25,17 +25,32 @@ public class HealthReagent extends Reagent {
 
     @Override
     public boolean has(LivingEntity livingEntity) {
-        if (health > 0 && livingEntity.getHealth() <= health) return false;
-        else return true;
+        double totalHealth = livingEntity.getHealth() + livingEntity.getAbsorptionAmount();
+        return totalHealth > health;
     }
 
     @Override
     public void remove(LivingEntity livingEntity) {
         if (health != 0) {
-            double h = livingEntity.getHealth() - health;
-            if (h < 0) h = 0;
-            if (h > Util.getMaxHealth(livingEntity)) h = Util.getMaxHealth(livingEntity);
-            livingEntity.setHealth(h);
+            double absorption = livingEntity.getAbsorptionAmount();
+            double healthToRemove = health;
+
+            if (absorption > 0) {
+                if (absorption >= healthToRemove) {
+                    livingEntity.setAbsorptionAmount(absorption - healthToRemove);
+                    healthToRemove = 0;
+                } else {
+                    healthToRemove -= absorption;
+                    livingEntity.setAbsorptionAmount(0);
+                }
+            }
+
+            if (healthToRemove > 0) {
+                double currentHealth = livingEntity.getHealth();
+                double newHealth = currentHealth - healthToRemove;
+                if (newHealth < 0) newHealth = 0;
+                livingEntity.setHealth(newHealth);
+            }
         }
     }
 

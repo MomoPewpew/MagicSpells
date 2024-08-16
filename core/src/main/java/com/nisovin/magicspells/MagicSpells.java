@@ -573,7 +573,7 @@ public class MagicSpells extends JavaPlugin {
 					e.printStackTrace();
 				} finally {
 					if (scanner != null) scanner.close();
-					file.delete();
+//					file.delete();
 				}
 			}
 			log("Restored cooldowns");

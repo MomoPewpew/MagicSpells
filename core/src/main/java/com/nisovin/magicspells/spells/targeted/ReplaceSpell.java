@@ -30,7 +30,7 @@ import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
 
 public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell {
 
-	private Map<Block, BlockData> blocks;
+	Map<Block, BlockData> blocks;
 
 	private boolean replaceAll;
 	private List<List<BlockData>> replace;

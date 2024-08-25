@@ -65,7 +65,7 @@ public class UndoReplaceSpell extends TargetedSpell implements TargetedLocationS
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			Location loc = pointBlank ? caster.getLocation() : getTargetedBlock(caster, power, args).getLocation();
-			if (loc == null || BlockUtils.isAir(loc.getBlock().getType())) {
+			if (loc == null) {
 				return noTarget(caster, args);
 			}
 			undoReplaces(caster, loc, power, args);
@@ -136,6 +136,7 @@ public class UndoReplaceSpell extends TargetedSpell implements TargetedLocationS
 
 		if (caster != null)
 			playSpellEffects(EffectPosition.CASTER, caster.getLocation(), power, args);
+
 		playSpellEffects(EffectPosition.SPECIAL, loc, power, args);
 	}
 }

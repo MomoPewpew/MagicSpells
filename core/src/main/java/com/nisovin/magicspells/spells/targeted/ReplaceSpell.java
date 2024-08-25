@@ -47,6 +47,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean replaceRandom;
 	private boolean powerAffectsRadius;
 	private final boolean checkPlugins;
+	private final boolean applyPhysics;
 	private boolean resolveDurationPerBlock;
 	private boolean circleShape;
 	private boolean mergeBlockData;
@@ -67,6 +68,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 		pointBlank = getConfigBoolean("point-blank", false);
 		checkPlugins = getConfigBoolean("check-plugins", true);
+		applyPhysics = getConfigBoolean("apply-physics", true);
 		replaceRandom = getConfigBoolean("replace-random", true);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
 		resolveDurationPerBlock = getConfigBoolean("resolve-duration-per-block", false);
@@ -156,7 +158,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 	@Override
 	public void turnOff() {
-		for (Block b : blocks.keySet()) b.setBlockData(blocks.get(b));
+		for (Block b : blocks.keySet()) b.setBlockData(blocks.get(b), applyPhysics);
 		blocks.clear();
 	}
 
@@ -271,7 +273,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 						if (newBlockData == null) continue;
 
-						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData);
+						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData, applyPhysics);
 
 						if (checkPlugins && caster instanceof Player player) {
 							Block against = target.clone().add(target.getDirection()).getBlock();
@@ -298,7 +300,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 									EventUtil.call(event);
 									if (event.isCancelled()) return;
 								}
-								finalBlock.setBlockData(previous);
+								finalBlock.setBlockData(previous, applyPhysics);
 								playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, finalBlock.getLocation(), spellData);
 							}, replaceDuration);
 						}

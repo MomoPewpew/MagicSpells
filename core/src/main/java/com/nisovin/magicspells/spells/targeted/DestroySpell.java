@@ -130,7 +130,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			b.undo(destroyedBlocks);
 
 			destroyedBlocks.values().forEach(destroyedBlock -> {
-				if (destroyedBlock.targetBlock != null
+				if (destroyedBlock.targetBlock != null && b.sourceBlock != null
 						&& destroyedBlock.targetBlock.getLocation().equals(b.sourceBlock.getLocation()))
 					destroyedBlock.targetBlock = null;
 			});
@@ -289,7 +289,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 				}, duration);
 			}
 
-			b.setType(Material.AIR);
+			b.setType(Material.AIR, false);
 		}
 
 		double velocity = resolveVelocityPerBlock ? 0 : this.velocity.get(caster, target, power, args);
@@ -309,6 +309,14 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			BlockData blockData = b.getBlockData();
 
 			DestroyedBlock db = new DestroyedBlock(b, blockData);
+
+			destroyedBlocks.values().forEach(destroyedBlock -> {
+				if (destroyedBlock.targetBlock != null
+						&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation())) {
+					destroyedBlock.targetBlock = null;
+					db.sourceBlock = null;
+				}
+			});
 
 			if (duration > 0) {
 				destroyedBlocks.put(b, db);
@@ -372,7 +380,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 				MagicSpells.getVolatileCodeHandler().setFallingBlockHurtEntities(fb, fallingBlockDamage,
 						fallingBlockHeight);
 			}
-			b.setType(Material.AIR);
+			b.setType(Material.AIR, false);
 		}
 
 	}
@@ -385,7 +393,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			boolean removed = fallingDestroyedBlocks.keySet().remove(event.getEntity());
 
 			if (removed) {
-				if (preventLandingBlocks) {
+				if (preventLandingBlocks || event.getBlock().getType() != Material.AIR) {
 					event.setCancelled(true);
 				} else if (db != null) {
 					db.targetBlock = event.getBlock();
@@ -410,7 +418,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 	private class DestroyedBlock {
 
-		public final Block sourceBlock;
+		public Block sourceBlock;
 		public final BlockData blockData;
 		public Block targetBlock;
 
@@ -420,19 +428,20 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		}
 
 		public boolean undo(Map<Block, DestroyedBlock> destroyedBlocks) {
-			List<Block> targetBlocks = destroyedBlocks.values().stream()
-					.map(destroyedBlock -> destroyedBlock.targetBlock)
+			List<Location> targetBlocksLocations = destroyedBlocks.values().stream()
+					.filter(destroyedBlock -> destroyedBlock.targetBlock != null)
+					.map(destroyedBlock -> destroyedBlock.targetBlock.getLocation())
 					.filter(Objects::nonNull)
+					.filter(location -> sourceBlock != null && location.equals(sourceBlock.getLocation()))
 					.collect(Collectors.toList());
 
 			if (sourceBlock != null
 					&& ((sourceBlock.getBlockData() != null && sourceBlock.getBlockData().getMaterial().isAir())
-							|| targetBlocks.contains(sourceBlock))) {
+							|| targetBlocksLocations.size() > 0)) {
 				sourceBlock.setBlockData(blockData, false);
 			}
 
-			if (targetBlock != null && !destroyedBlocks.keySet().contains(targetBlock)
-					&& targetBlock.getBlockData() != null
+			if (targetBlock != null && targetBlock.getBlockData() != null
 					&& targetBlock.getBlockData().equals(blockData)) {
 				targetBlock.setType(Material.AIR, false);
 				return true;

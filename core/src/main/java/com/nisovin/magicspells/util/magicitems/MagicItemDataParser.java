@@ -140,6 +140,11 @@ public class MagicItemDataParser {
 						case "custom_model_data":
 							data.setAttribute(CUSTOM_MODEL_DATA, value.getAsInt());
 							break;
+						case "maxstacksize":
+						case "max-stack-size":
+						case "max_stack_size":
+							data.setAttribute(MAX_STACK_SIZE, value.getAsInt());
+							break;
 						case "power":
 							data.setAttribute(POWER, value.getAsInt());
 							break;

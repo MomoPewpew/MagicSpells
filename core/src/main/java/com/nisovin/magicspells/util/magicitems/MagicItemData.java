@@ -263,6 +263,7 @@ public class MagicItemData {
 		DURABILITY(Integer.class),
 		REPAIR_COST(Integer.class),
 		CUSTOM_MODEL_DATA(Integer.class),
+		MAX_STACK_SIZE(Integer.class),
 		POWER(Integer.class),
 		UNBREAKABLE(Boolean.class),
 		HIDE_TOOLTIP(Boolean.class),
@@ -363,6 +364,17 @@ public class MagicItemData {
 			output
 				.append("\"custom-model-data\":")
 				.append((int) getAttribute(MagicItemAttribute.CUSTOM_MODEL_DATA));
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.MAX_STACK_SIZE)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+					.append("\"max-stack-size\":")
+					.append((int) getAttribute(MagicItemAttribute.MAX_STACK_SIZE));
 
 			previous = true;
 		}

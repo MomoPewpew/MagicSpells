@@ -104,6 +104,9 @@ public class MagicItems {
 		// customModelData
 		CustomModelDataHandler.processMagicItemData(meta, data);
 
+		// maxStackSize
+		MaxStackSizeHandler.processMagicItemData(meta, data);
+
 		// power, fireworkEffects
 		FireworkHandler.processMagicItemData(meta, data);
 
@@ -211,6 +214,9 @@ public class MagicItems {
 
 		// Custom Model Data
 		CustomModelDataHandler.processItemMeta(meta, data);
+
+		// Max Stack Size
+		MaxStackSizeHandler.processItemMeta(meta, data);
 
 		// Enchantments
 		if (data.hasAttribute(ENCHANTS)) {
@@ -377,6 +383,9 @@ public class MagicItems {
 
 			// CustomModelData
 			CustomModelDataHandler.process(section, meta, itemData);
+
+			// MaxStackSize
+			MaxStackSizeHandler.process(section, meta, itemData);
 
 			// Enchants
 			// <enchantmentName> <level>

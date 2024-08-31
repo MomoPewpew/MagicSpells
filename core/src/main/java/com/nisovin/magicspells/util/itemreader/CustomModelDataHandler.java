@@ -11,9 +11,15 @@ public class CustomModelDataHandler {
 	private static final String CONFIG_NAME = CUSTOM_MODEL_DATA.toString();
 
 	public static void process(ConfigurationSection config, ItemMeta meta, MagicItemData data) {
-		if (!config.isInt(CONFIG_NAME)) return;
+		Integer customModelData = null;
+		if (config.isInt(CONFIG_NAME)) {
+			customModelData = config.getInt(CONFIG_NAME);
+		} else if (config.isString(CONFIG_NAME)) {
+			try {
+				customModelData = Integer.valueOf(config.getString(CONFIG_NAME));
+			} catch (NumberFormatException ignored) {}
+		} else return;
 
-		int customModelData = config.getInt(CONFIG_NAME);
 
 		meta.setCustomModelData(customModelData);
 		data.setAttribute(CUSTOM_MODEL_DATA, customModelData);

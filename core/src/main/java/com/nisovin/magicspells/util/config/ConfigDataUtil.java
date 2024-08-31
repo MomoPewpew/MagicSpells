@@ -19,6 +19,7 @@ import org.bukkit.Particle.DustOptions;
 import org.bukkit.Particle.DustTransition;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import net.kyori.adventure.text.Component;
 
@@ -965,20 +966,66 @@ public class ConfigDataUtil {
 
 	@NotNull
 	public static ConfigData<ConfigurationSection> getConfigurationSection(@NotNull ConfigurationSection config, @NotNull String path) {
-		if (config.isConfigurationSection(path)) {
-			ConfigurationSection section = config.getConfigurationSection(path);
-			return (caster, target, power, args) -> section;
-		}
+		if (!config.isConfigurationSection(path)) return (caster, target, power, args) -> null;
 
-		if (config.isString(path)) {
-			String sectionPath = config.getString(path);
-			if (sectionPath != null && config.isConfigurationSection(sectionPath)) {
-				ConfigurationSection section = config.getConfigurationSection(sectionPath);
-				return (caster, target, power, args) -> section;
+		ConfigurationSection section = config.getConfigurationSection(path);
+		if (section == null) return (caster, target, power, args) -> null;
+
+		ConfigurationSection sectionData = new YamlConfiguration();
+
+
+		for (String key : section.getKeys(false)) {
+			if (section.isConfigurationSection(key)) {
+				ConfigData<ConfigurationSection> configData = getConfigurationSection(section, key);
+				sectionData.set(key, configData);
+			}
+
+			if (section.isBoolean(key)) {
+				ConfigData<Boolean> configData = getBoolean(section, key);
+				sectionData.set(key, configData);
+			}
+
+			if (section.isInt(key)) {
+				ConfigData<Integer> configData = getInteger(section, key);
+				sectionData.set(key, configData);
+			}
+
+			if (section.isDouble(key)) {
+				ConfigData<Double> configData = getDouble(section, key);
+				sectionData.set(key, configData);
+			}
+
+			if (section.isList(key)) {
+				ConfigData<List<String>> configData = getStringList(section, key);
+				sectionData.set(key, configData);
+			}
+
+			else {
+				ConfigData<String> configData = getString(section, key, null);
+				sectionData.set(key, configData);
 			}
 		}
 
-		return (caster, target, power, args) -> null;
+		return new ConfigData<>() {
+
+			@Override
+			public ConfigurationSection get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+				ConfigurationSection results = new YamlConfiguration();
+
+				for (String key : sectionData.getKeys(false)) {
+					ConfigData<?> data = (ConfigData<?>) sectionData.get(key);
+					results.set(key, data.get(caster, target, power, args));
+				}
+
+				return results;
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+		};
+
 	}
 
 }

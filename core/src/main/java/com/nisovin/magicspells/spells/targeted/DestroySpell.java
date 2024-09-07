@@ -274,10 +274,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 				destroyedBlocks.put(b, db);
 
 				MagicSpells.scheduleDelayedTask(() -> {
-					if (destroyedBlocks.values().contains(db) && db.undo(destroyedBlocks)
-							&& db.targetBlock != null)
-						playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, db.targetBlock.getLocation(), power,
-								args);
+					if (destroyedBlocks.values().contains(db)) db.undo(destroyedBlocks);
 
 					destroyedBlocks.remove(b);
 
@@ -416,7 +413,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 	}
 
-	private class DestroyedBlock {
+	public class DestroyedBlock {
 
 		public Block sourceBlock;
 		public final BlockData blockData;

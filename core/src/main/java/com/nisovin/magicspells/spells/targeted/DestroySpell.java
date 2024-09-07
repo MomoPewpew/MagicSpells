@@ -434,7 +434,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			if (sourceBlock != null
 					&& ((sourceBlock.getBlockData() != null && sourceBlock.getBlockData().getMaterial().isAir())
-							|| targetBlocksLocations.size() > 0)) {
+							|| !targetBlocksLocations.isEmpty())) {
 				sourceBlock.setBlockData(blockData, false);
 			}
 

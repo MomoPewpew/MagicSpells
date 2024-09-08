@@ -413,7 +413,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 				event.setCancelled(true);
 				if (!preventLandingBlocks && event.getBlock().getType() == Material.AIR) {
 					event.getBlock().setBlockData(event.getBlockData(), false);
-					if (db != null) db.targetBlock = event.getBlock();
+					if (db != null)
+						db.targetBlock = event.getBlock();
 				}
 			}
 
@@ -454,7 +455,9 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 					.collect(Collectors.toList());
 
 			if (sourceBlock != null
-					&& ((sourceBlock.getBlockData() != null && sourceBlock.getBlockData().getMaterial().isAir())
+					&& ((sourceBlock.getBlockData() != null && (sourceBlock.getBlockData().getMaterial().isAir()
+							|| sourceBlock.getBlockData().getMaterial().equals(Material.WATER)
+							|| sourceBlock.getBlockData().getMaterial().equals(Material.LAVA)))
 							|| !destroyedBlocksLandedOnSource.isEmpty())) {
 				sourceBlock.setBlockData(blockData, false);
 

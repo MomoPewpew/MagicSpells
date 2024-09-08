@@ -32,7 +32,7 @@ import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
 
 public class DestroySpell extends TargetedSpell implements TargetedLocationSpell, TargetedEntityFromLocationSpell {
 
-	public List<DestroyedBlock> destroyedBlocks;
+	public static List<DestroyedBlock> destroyedBlocks;
 	public Map<FallingBlock, DestroyedBlock> fallingDestroyedBlocks;
 
 	private final Random random = ThreadLocalRandom.current();
@@ -126,6 +126,12 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 	@Override
 	public void turnOff() {
+		for (FallingBlock fb : fallingDestroyedBlocks.keySet()) {
+			fb.remove();
+		}
+
+		fallingDestroyedBlocks.clear();
+
 		for (DestroyedBlock b : destroyedBlocks) {
 			b.undo(destroyedBlocks);
 
@@ -270,7 +276,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 					continue;
 			}
 
-			DestroyedBlock db = new DestroyedBlock(b, b.getBlockData());
+			DestroyedBlock db = new DestroyedBlock(internalName, b, b.getBlockData());
 
 			destroyedBlocks.forEach(destroyedBlock -> {
 				if (destroyedBlock.targetBlock != null
@@ -317,7 +323,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			BlockData blockData = b.getBlockData();
 
-			DestroyedBlock db = new DestroyedBlock(b, blockData);
+			DestroyedBlock db = new DestroyedBlock(internalName, b, blockData);
 
 			destroyedBlocks.forEach(destroyedBlock -> {
 				if (destroyedBlock.targetBlock != null
@@ -429,11 +435,13 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 	public class DestroyedBlock {
 
+		public final String spellInternalName;
 		public Block sourceBlock;
 		public final BlockData blockData;
 		public Block targetBlock;
 
-		public DestroyedBlock(Block sourceBlock, BlockData blockData) {
+		public DestroyedBlock(String spellInternalName, Block sourceBlock, BlockData blockData) {
+			this.spellInternalName = spellInternalName;
 			this.sourceBlock = sourceBlock;
 			this.blockData = blockData;
 		}

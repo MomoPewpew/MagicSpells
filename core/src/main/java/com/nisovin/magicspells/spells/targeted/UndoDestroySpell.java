@@ -1,8 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
-import java.util.stream.Collectors;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.bukkit.World;
@@ -30,7 +28,6 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 	private SearchMode searchMode;
 
 	private List<String> destroySpellNames;
-	private List<DestroySpell> destroySpells;
 
 	public UndoDestroySpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -40,7 +37,6 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
 		searchModeName = getConfigString("search-mode", "both").toUpperCase();
 		destroySpellNames = getConfigStringList("destroy-spells", null);
-		destroySpells = new ArrayList<>();
 	}
 
 	@Override
@@ -48,13 +44,14 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 		super.initialize();
 
 		if (destroySpellNames != null) {
-			for (String DestroySpellName : destroySpellNames) {
-				Spell spell = MagicSpells.getSpellByInternalName(DestroySpellName);
-				if (spell instanceof DestroySpell) {
-					destroySpells.add((DestroySpell) spell);
-				} else {
+			Iterator<String> iterator = destroySpellNames.iterator();
+			while (iterator.hasNext()) {
+				String destroySpellName = iterator.next();
+				Spell spell = MagicSpells.getSpellByInternalName(destroySpellName);
+				if (!(spell instanceof DestroySpell)) {
 					MagicSpells.error(
 							"UndoDestroySpell '" + internalName + "' has an invalid spell defined in Destroy-spells!");
+					iterator.remove();
 				}
 			}
 		}
@@ -118,42 +115,41 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 			return;
 		}
 
-		List<DestroySpell> DestroySpellsTemp = destroySpells.isEmpty()
-				? MagicSpells.spells().stream()
-						.filter(DestroySpell.class::isInstance)
-						.map(DestroySpell.class::cast)
-						.collect(Collectors.toList())
-				: new ArrayList<>(destroySpells);
+		Iterator<DestroyedBlock> iterator = DestroySpell.destroyedBlocks.iterator();
+		while (iterator.hasNext()) {
+			DestroyedBlock db = iterator.next();
 
-		for (DestroySpell destroySpell : DestroySpellsTemp) {
-			Iterator<DestroyedBlock> iterator = destroySpell.destroyedBlocks.iterator();
-			while (iterator.hasNext()) {
-				DestroyedBlock db = iterator.next();
-				Block source = db.sourceBlock;
-				Block target = db.targetBlock;
+			if (destroySpellNames != null && !destroySpellNames.isEmpty()
+					&& !destroySpellNames.contains(db.spellInternalName))
+				continue;
 
-				if (!source.getWorld().equals(locWorld))
-					continue;
-				if ((searchMode == SearchMode.BOTH
-						&& ((source != null && source.getLocation().distanceSquared(loc) < radSq)
-								|| (target != null && target.getLocation().distanceSquared(loc) < radSq)))
-						|| (searchMode == SearchMode.SOURCE
-								&& (source != null && source.getLocation().distanceSquared(loc) < radSq))
-						|| (searchMode == SearchMode.TARGET
-								&& (target != null && target.getLocation().distanceSquared(loc) < radSq))) {
+			Block source = db.sourceBlock;
+			Block target = db.targetBlock;
 
-					if (db.undo(destroySpell.destroyedBlocks) && db.targetBlock != null)
-						playSpellEffects(EffectPosition.TARGET, db.targetBlock.getLocation(), power,
-								args);
+			if ((source == null && target == null) ||
+					((source != null && !source.getWorld().equals(locWorld))
+							&& (target != null && !target.getWorld().equals(locWorld)))) {
+				continue;
+			}
+			if ((searchMode == SearchMode.BOTH
+					&& ((source != null && source.getLocation().distanceSquared(loc) < radSq)
+							|| (target != null && target.getLocation().distanceSquared(loc) < radSq)))
+					|| (searchMode == SearchMode.SOURCE
+							&& (source != null && source.getLocation().distanceSquared(loc) < radSq))
+					|| (searchMode == SearchMode.TARGET
+							&& (target != null && target.getLocation().distanceSquared(loc) < radSq))) {
 
-					iterator.remove();
+				if (db.undo(DestroySpell.destroyedBlocks) && db.targetBlock != null)
+					playSpellEffects(EffectPosition.TARGET, db.targetBlock.getLocation(), power,
+							args);
 
-					destroySpell.destroyedBlocks.forEach(destroyedBlock -> {
-						if (destroyedBlock.targetBlock != null
-								&& destroyedBlock.targetBlock.getLocation().equals(source.getLocation()))
-							destroyedBlock.targetBlock = null;
-					});
-				}
+				iterator.remove();
+
+				DestroySpell.destroyedBlocks.forEach(destroyedBlock -> {
+					if (source != null && destroyedBlock.targetBlock != null
+							&& destroyedBlock.targetBlock.getLocation().equals(source.getLocation()))
+						destroyedBlock.targetBlock = null;
+				});
 			}
 		}
 

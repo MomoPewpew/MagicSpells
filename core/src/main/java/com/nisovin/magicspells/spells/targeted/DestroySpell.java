@@ -32,7 +32,7 @@ import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
 
 public class DestroySpell extends TargetedSpell implements TargetedLocationSpell, TargetedEntityFromLocationSpell {
 
-	public Map<Block, DestroyedBlock> destroyedBlocks;
+	public List<DestroyedBlock> destroyedBlocks;
 	public Map<FallingBlock, DestroyedBlock> fallingDestroyedBlocks;
 
 	private final Random random = ThreadLocalRandom.current();
@@ -62,7 +62,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	public DestroySpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
-		destroyedBlocks = new HashMap<>();
+		destroyedBlocks = new ArrayList<>();
 		fallingDestroyedBlocks = new HashMap<>();
 
 		vertRadius = getConfigDataInt("vert-radius", 3);
@@ -126,10 +126,10 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 	@Override
 	public void turnOff() {
-		for (DestroyedBlock b : destroyedBlocks.values()) {
+		for (DestroyedBlock b : destroyedBlocks) {
 			b.undo(destroyedBlocks);
 
-			destroyedBlocks.values().forEach(destroyedBlock -> {
+			destroyedBlocks.forEach(destroyedBlock -> {
 				if (destroyedBlock.targetBlock != null && b.sourceBlock != null
 						&& destroyedBlock.targetBlock.getLocation().equals(b.sourceBlock.getLocation()))
 					destroyedBlock.targetBlock = null;
@@ -260,6 +260,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			}
 		}
 
+		Map<Block, DestroyedBlock> destroyedBlocksByThis = new HashMap<>();
+
 		for (Block b : blocksToRemove) {
 			if (checkPlugins && caster instanceof Player) {
 				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster);
@@ -270,7 +272,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			DestroyedBlock db = new DestroyedBlock(b, b.getBlockData());
 
-			destroyedBlocks.values().forEach(destroyedBlock -> {
+			destroyedBlocks.forEach(destroyedBlock -> {
 				if (destroyedBlock.targetBlock != null
 						&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation())) {
 					destroyedBlock.targetBlock = null;
@@ -279,15 +281,16 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			});
 
 			if (duration > 0) {
-				destroyedBlocks.put(b, db);
+				destroyedBlocks.add(db);
+				destroyedBlocksByThis.put(b, db);
 
 				MagicSpells.scheduleDelayedTask(() -> {
-					if (destroyedBlocks.values().contains(db))
+					if (destroyedBlocks.contains(db))
 						db.undo(destroyedBlocks);
 
 					destroyedBlocks.remove(b);
 
-					destroyedBlocks.values().forEach(destroyedBlock -> {
+					destroyedBlocks.forEach(destroyedBlock -> {
 						if (destroyedBlock.targetBlock != null
 								&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation()))
 							destroyedBlock.targetBlock = null;
@@ -316,7 +319,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			DestroyedBlock db = new DestroyedBlock(b, blockData);
 
-			destroyedBlocks.values().forEach(destroyedBlock -> {
+			destroyedBlocks.forEach(destroyedBlock -> {
 				if (destroyedBlock.targetBlock != null
 						&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation())) {
 					destroyedBlock.targetBlock = null;
@@ -325,17 +328,18 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			});
 
 			if (duration > 0) {
-				destroyedBlocks.put(b, db);
+				destroyedBlocks.add(db);
+				destroyedBlocksByThis.put(b, db);
 
 				MagicSpells.scheduleDelayedTask(() -> {
-					if (destroyedBlocks.values().contains(db)) {
+					if (destroyedBlocks.contains(db)) {
 						if (db.undo(destroyedBlocks) && db.targetBlock != null)
 							playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, db.targetBlock.getLocation(), power,
 									args);
 
 						destroyedBlocks.remove(b);
 
-						destroyedBlocks.values().forEach(destroyedBlock -> {
+						destroyedBlocks.forEach(destroyedBlock -> {
 							if (destroyedBlock.targetBlock != null
 									&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation()))
 								destroyedBlock.targetBlock = null;
@@ -348,7 +352,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			FallingBlock fb = b.getWorld().spawn(l, FallingBlock.class);
 			fb.setBlockData(blockData);
 
-			fallingDestroyedBlocks.put(fb, destroyedBlocks.get(b));
+			fallingDestroyedBlocks.put(fb, destroyedBlocksByThis.get(b));
 
 			fb.setDropItem(false);
 			playSpellEffects(EffectPosition.PROJECTILE, fb, data);
@@ -434,8 +438,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			this.blockData = blockData;
 		}
 
-		public boolean undo(Map<Block, DestroyedBlock> destroyedBlocks) {
-			List<DestroyedBlock> destroyedBlocksLandedOnSource = destroyedBlocks.values().stream()
+		public boolean undo(List<DestroyedBlock> destroyedBlocks) {
+			List<DestroyedBlock> destroyedBlocksLandedOnSource = destroyedBlocks.stream()
 					.filter(Objects::nonNull)
 					.filter(destroyedBlock -> this.sourceBlock != null && destroyedBlock.targetBlock != null
 							&& destroyedBlock.targetBlock.getLocation().equals(this.sourceBlock.getLocation()))

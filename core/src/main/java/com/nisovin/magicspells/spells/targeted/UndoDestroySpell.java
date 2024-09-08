@@ -1,6 +1,5 @@
 package com.nisovin.magicspells.spells.targeted;
 
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.List;
 import java.util.ArrayList;
@@ -127,10 +126,9 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 				: new ArrayList<>(destroySpells);
 
 		for (DestroySpell destroySpell : DestroySpellsTemp) {
-			Iterator<Entry<Block, DestroyedBlock>> iterator = destroySpell.destroyedBlocks.entrySet().iterator();
+			Iterator<DestroyedBlock> iterator = destroySpell.destroyedBlocks.iterator();
 			while (iterator.hasNext()) {
-				Entry<Block, DestroyedBlock> entry = iterator.next();
-				DestroyedBlock db = entry.getValue();
+				DestroyedBlock db = iterator.next();
 				Block source = db.sourceBlock;
 				Block target = db.targetBlock;
 
@@ -150,7 +148,7 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 
 					iterator.remove();
 
-					destroySpell.destroyedBlocks.values().forEach(destroyedBlock -> {
+					destroySpell.destroyedBlocks.forEach(destroyedBlock -> {
 						if (destroyedBlock.targetBlock != null
 								&& destroyedBlock.targetBlock.getLocation().equals(source.getLocation()))
 							destroyedBlock.targetBlock = null;

@@ -411,9 +411,9 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			if (removed) {
 				event.setCancelled(true);
-				if (!preventLandingBlocks && event.getBlock().getType() == Material.AIR && db != null) {
+				if (!preventLandingBlocks && event.getBlock().getType() == Material.AIR) {
 					event.getBlock().setBlockData(event.getBlockData(), false);
-					db.targetBlock = event.getBlock();
+					if (db != null) db.targetBlock = event.getBlock();
 				}
 			}
 

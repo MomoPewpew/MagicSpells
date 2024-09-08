@@ -427,17 +427,18 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		}
 
 		public boolean undo(Map<Block, DestroyedBlock> destroyedBlocks) {
-			List<Location> targetBlocksLocations = destroyedBlocks.values().stream()
-					.filter(destroyedBlock -> destroyedBlock.targetBlock != null)
-					.map(destroyedBlock -> destroyedBlock.targetBlock.getLocation())
+			List<DestroyedBlock> destroyedBlocksLandedOnSource = destroyedBlocks.values().stream()
 					.filter(Objects::nonNull)
-					.filter(location -> sourceBlock != null && location.equals(sourceBlock.getLocation()))
+					.filter(destroyedBlock -> this.sourceBlock != null && destroyedBlock.targetBlock != null
+							&& destroyedBlock.targetBlock.getLocation().equals(this.sourceBlock.getLocation()))
 					.collect(Collectors.toList());
 
 			if (sourceBlock != null
 					&& ((sourceBlock.getBlockData() != null && sourceBlock.getBlockData().getMaterial().isAir())
-							|| !targetBlocksLocations.isEmpty())) {
+							|| !destroyedBlocksLandedOnSource.isEmpty())) {
 				sourceBlock.setBlockData(blockData, false);
+
+				destroyedBlocksLandedOnSource.forEach(destroyedBlock -> destroyedBlock.targetBlock = null);
 			}
 
 			if (targetBlock != null && targetBlock.getBlockData() != null

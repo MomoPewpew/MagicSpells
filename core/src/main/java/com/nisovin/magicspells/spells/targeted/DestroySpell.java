@@ -270,6 +270,14 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			DestroyedBlock db = new DestroyedBlock(b, b.getBlockData());
 
+			destroyedBlocks.values().forEach(destroyedBlock -> {
+				if (destroyedBlock.targetBlock != null
+						&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation())) {
+					destroyedBlock.targetBlock = null;
+					db.sourceBlock = null;
+				}
+			});
+
 			if (duration > 0) {
 				destroyedBlocks.put(b, db);
 

@@ -274,7 +274,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 				destroyedBlocks.put(b, db);
 
 				MagicSpells.scheduleDelayedTask(() -> {
-					if (destroyedBlocks.values().contains(db)) db.undo(destroyedBlocks);
+					if (destroyedBlocks.values().contains(db))
+						db.undo(destroyedBlocks);
 
 					destroyedBlocks.remove(b);
 
@@ -319,18 +320,19 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 				destroyedBlocks.put(b, db);
 
 				MagicSpells.scheduleDelayedTask(() -> {
-					if (destroyedBlocks.values().contains(db) && db.undo(destroyedBlocks)
-							&& db.targetBlock != null)
-						playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, db.targetBlock.getLocation(), power,
-								args);
+					if (destroyedBlocks.values().contains(db)) {
+						if (db.undo(destroyedBlocks) && db.targetBlock != null)
+							playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, db.targetBlock.getLocation(), power,
+									args);
 
-					destroyedBlocks.remove(b);
+						destroyedBlocks.remove(b);
 
-					destroyedBlocks.values().forEach(destroyedBlock -> {
-						if (destroyedBlock.targetBlock != null
-								&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation()))
-							destroyedBlock.targetBlock = null;
-					});
+						destroyedBlocks.values().forEach(destroyedBlock -> {
+							if (destroyedBlock.targetBlock != null
+									&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation()))
+								destroyedBlock.targetBlock = null;
+						});
+					}
 				}, duration);
 			}
 

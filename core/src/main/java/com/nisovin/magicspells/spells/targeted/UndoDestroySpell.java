@@ -143,8 +143,8 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 								&& (source != null && source.getLocation().distanceSquared(loc) < radSq))
 						|| (searchMode == SearchMode.TARGET
 								&& (target != null && target.getLocation().distanceSquared(loc) < radSq))) {
-					if (destroySpell.destroyedBlocks.values().contains(db) && db.undo(destroySpell.destroyedBlocks)
-							&& db.targetBlock != null)
+
+					if (db.undo(destroySpell.destroyedBlocks) && db.targetBlock != null)
 						playSpellEffects(EffectPosition.TARGET, db.targetBlock.getLocation(), power,
 								args);
 

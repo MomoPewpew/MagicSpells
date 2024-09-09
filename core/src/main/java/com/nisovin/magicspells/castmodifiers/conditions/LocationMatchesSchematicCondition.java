@@ -32,7 +32,7 @@ public class LocationMatchesSchematicCondition extends Condition {
 		if (!folder.exists())
 			folder.mkdir();
 
-		file = new File(folder, var.replace(";true", ""));
+		file = new File(folder, var.replace(";true", "").replace(";false", ""));
 		if (!file.exists())
 			return false;
 

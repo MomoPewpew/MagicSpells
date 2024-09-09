@@ -184,6 +184,7 @@ public class ConditionManager {
 		addCondition("expression", ExpressionCondition.class);
 		addCondition("expressionstringequals", ExpressionStringEqualsCondition.class);
 		addCondition("pathfinding", PathfinderPathfindingCondition.class);
+		addCondition("locationmatchesschematic", LocationMatchesSchematicCondition.class);
 	}
 
 }

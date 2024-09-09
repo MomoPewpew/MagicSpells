@@ -22,14 +22,17 @@ public class LocationMatchesSchematicCondition extends Condition {
 
 	private File file;
 	private Clipboard clipboard;
+	private boolean matchAir = false;
 
 	@Override
 	public boolean initialize(String var) {
+		matchAir = var.endsWith(";true");
+
 		File folder = new File(MagicSpells.plugin.getDataFolder(), "schematics");
 		if (!folder.exists())
 			folder.mkdir();
 
-		file = new File(folder, var);
+		file = new File(folder, var.replace(";true", ""));
 		if (!file.exists())
 			return false;
 
@@ -69,7 +72,7 @@ public class LocationMatchesSchematicCondition extends Condition {
 			Block bl = location.getBlock().getRelative(pos_.getX() - origin.getX(), pos_.getY() - origin.getY(),
 					pos_.getZ() - origin.getZ());
 
-			if (bl.getBlockData().getMaterial().isAir())
+			if (!matchAir && data.getMaterial().isAir())
 				continue;
 
 			if (!data.matches(bl.getBlockData())) {

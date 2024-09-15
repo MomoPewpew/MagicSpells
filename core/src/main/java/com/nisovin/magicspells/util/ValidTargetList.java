@@ -14,6 +14,7 @@ public class ValidTargetList {
 		
 		TARGET_SELF,
 		TARGET_PLAYERS,
+		TARGET_CITIZENS,
 		TARGET_INVISIBLES,
 		TARGET_NONPLAYERS,
 		TARGET_MONSTERS,
@@ -36,6 +37,7 @@ public class ValidTargetList {
 	private boolean targetSelf = false;
 	private boolean targetAnimals = false;
 	private boolean targetPlayers = false;
+	private boolean targetCitizens = false;
 	private boolean targetMonsters = false;
 	private boolean targetInvisibles = false;
 	private boolean targetNonPlayers = false;
@@ -72,6 +74,7 @@ public class ValidTargetList {
 			case TARGET_NONLIVING_ENTITIES -> targetNonLivingEntities = value;
 			case TARGET_NONPLAYERS -> targetNonPlayers = value;
 			case TARGET_PLAYERS -> targetPlayers = value;
+			case TARGET_CITIZENS -> targetCitizens = value;
 			case TARGET_MOUNTS -> targetMounts = value;
 			case TARGET_PASSENGERS -> targetPassengers = value;
 			case TARGET_CASTER_MOUNT -> targetCasterMount = value;
@@ -93,6 +96,7 @@ public class ValidTargetList {
 			switch (s.toLowerCase()) {
 				case "self", "caster" -> targetSelf = true;
 				case "player", "players" -> targetPlayers = true;
+				case "citizen", "citizens" -> targetCitizens = true;
 				case "invisible", "invisibles" -> targetInvisibles = true;
 				case "nonplayer", "nonplayers" -> targetNonPlayers = true;
 				case "monster", "monsters" -> targetMonsters = true;
@@ -123,6 +127,9 @@ public class ValidTargetList {
 	
 	public boolean canTarget(LivingEntity caster, Entity target, boolean targetPlayers) {
 		if (!(target instanceof LivingEntity) && !targetNonLivingEntities) return false;
+
+		if (target.getClass().getCanonicalName().toString().contains(".entity.EntityHumanNPC.PlayerNPC")) return targetCitizens;
+
 		boolean targetIsPlayer = target instanceof Player;
 
 		// Todo, Make it optional for both CREATIVE and SPECTATOR to be no target
@@ -153,6 +160,9 @@ public class ValidTargetList {
 	
 	public boolean canTarget(Entity target) {
 		if (!(target instanceof LivingEntity) && !targetNonLivingEntities) return false;
+
+		if (target.getClass().getCanonicalName().toString().contains(".entity.EntityHumanNPC.PlayerNPC")) return targetCitizens;
+
 		boolean targetIsPlayer = target instanceof Player;
 		// Todo, Make it optional for both CREATIVE and SPECTATOR to be no target
 		if (targetIsPlayer && ((Player) target).getGameMode() == GameMode.CREATIVE) return false;
@@ -173,6 +183,9 @@ public class ValidTargetList {
 
 	public boolean canTarget(Entity target, boolean ignoreGameMode) {
 		if (!(target instanceof LivingEntity) && !targetNonLivingEntities) return false;
+
+		if (target.getClass().getCanonicalName().toString().contains(".entity.EntityHumanNPC.PlayerNPC")) return targetCitizens;
+
 		boolean targetIsPlayer = target instanceof Player;
 		if (!ignoreGameMode) {
 			if (targetIsPlayer && ((Player) target).getGameMode() == GameMode.CREATIVE) return false;
@@ -279,6 +292,7 @@ public class ValidTargetList {
 	public boolean canTargetOnlyCaster() {
 		if (targetAnimals) return false;
 		if (targetPlayers) return false;
+		if (targetCitizens) return false;
 		if (targetMonsters) return false;
 		if (targetInvisibles) return false;
 		if (targetNonPlayers) return false;
@@ -296,6 +310,7 @@ public class ValidTargetList {
 		return "ValidTargetList:["
 			+ "targetSelf=" + targetSelf
 			+ ",targetPlayers=" + targetPlayers
+			+ ",targetCitizens=" + targetCitizens
 			+ ",targetInvisibles=" + targetInvisibles
 			+ ",targetNonPlayers=" + targetNonPlayers
 			+ ",targetMonsters=" + targetMonsters

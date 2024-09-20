@@ -155,7 +155,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			int yOffset = this.yOffset.get(caster, null, power, args);
 			if (yOffset > 0) target = target.getRelative(BlockFace.UP, yOffset);
 			else if (yOffset < 0) target = target.getRelative(BlockFace.DOWN, yOffset);
-			if (!BlockUtils.isPathable(target)) return noTarget(caster, args);
+			if (!BlockUtils.isAir(target.getType())) return noTarget(caster, args);
 
 			if (target != null) {
 				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power, args);
@@ -189,14 +189,14 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		if (yOffset > 0) block = block.getRelative(BlockFace.UP, yOffset);
 		else if (yOffset < 0) block = block.getRelative(BlockFace.DOWN, yOffset);
 
-		if (BlockUtils.isPathable(block)) {
+		if (BlockUtils.isAir(block.getType())) {
 			createPulser(caster, block, target, power, args);
 			return true;
 		}
 
 		if (checkFace) {
 			block = block.getRelative(BlockFace.UP);
-			if (BlockUtils.isPathable(block)) {
+			if (BlockUtils.isAir(block.getType())) {
 				createPulser(caster, block, target, power, args);
 				return true;
 			}

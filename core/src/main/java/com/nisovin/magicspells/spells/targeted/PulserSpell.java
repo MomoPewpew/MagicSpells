@@ -332,7 +332,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		private Pulser(LivingEntity caster, Block block, Location from, float power, String[] args) {
 			this.caster = caster;
 			this.block = block;
-			this.location = block.getLocation().add(0.5, 0.5, 0.5).setDirection(from.getDirection());
+			this.location = block.getLocation().add(0.5, 0.5, 0.5);
 			this.power = power;
 			this.args = args;
 			this.pulseCount = 0;

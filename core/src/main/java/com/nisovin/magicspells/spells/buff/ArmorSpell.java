@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.spells.buff;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -29,6 +30,7 @@ import org.bukkit.event.inventory.InventoryType.SlotType;
 import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -38,16 +40,16 @@ import com.nisovin.magicspells.util.magicitems.MagicItems;
 
 public class ArmorSpell extends BuffSpell {
 
-	private final Set<UUID> entities;
+	private final Map<UUID, ArmorSet> entities;
 
 	private boolean permanent;
 	private boolean replace;
 	private boolean revert;
 
-	private ItemStack helmet;
-	private ItemStack chestplate;
-	private ItemStack leggings;
-	private ItemStack boots;
+	private ConfigData<String> helmetData;
+	private ConfigData<String> chestplateData;
+	private ConfigData<String> leggingsData;
+	private ConfigData<String> bootsData;
 
 	private String strHasArmor;
 
@@ -58,14 +60,14 @@ public class ArmorSpell extends BuffSpell {
 		replace = getConfigBoolean("replace", false);
 		revert = getConfigBoolean("revert", false);
 
-		helmet = getItem(getConfigString("helmet", ""));
-		chestplate = getItem(getConfigString("chestplate", ""));
-		leggings = getItem(getConfigString("leggings", ""));
-		boots = getItem(getConfigString("boots", ""));
+		helmetData = getConfigDataString("helmet", "");
+		chestplateData = getConfigDataString("chestplate", "");
+		leggingsData = getConfigDataString("leggings", "");
+		bootsData = getConfigDataString("boots", "");
 
 		strHasArmor = getConfigString("str-has-armor", "You cannot cast this spell if you are wearing armor.");
 
-		entities = new HashSet<>();
+		entities = new HashMap<>();
 	}
 
 	@Override
@@ -113,15 +115,22 @@ public class ArmorSpell extends BuffSpell {
 		EntityEquipment inv = entity.getEquipment();
 		if (inv == null) return false;
 
-		if (!replace && ((helmet != null && inv.getHelmet() != null) || (chestplate != null && inv.getChestplate() != null) || (leggings != null && inv.getLeggings() != null) || (boots != null && inv.getBoots() != null))) {
+		ItemStack helmet = getItem(helmetData.get(entity, power, args));
+		ItemStack chestplate = getItem(chestplateData.get(entity, power, args));
+		ItemStack leggings = getItem(leggingsData.get(entity, power, args));
+		ItemStack boots = getItem(bootsData.get(entity, power, args));
+
+		ArmorSet armorSet = new ArmorSet(helmet, chestplate, leggings, boots);
+
+		if (!replace && ((armorSet.helmet() != null && inv.getHelmet() != null) || (armorSet.chestplate() != null && inv.getChestplate() != null) || (armorSet.leggings() != null && inv.getLeggings() != null) || (armorSet.boots() != null && inv.getBoots() != null))) {
 			// error
 			if (entity instanceof Player) sendMessage(strHasArmor, entity, args);
 			return false;
 		}
 
-		setArmor(inv);
+		setArmor(inv, armorSet);
 
-		if (!permanent) entities.add(entity.getUniqueId());
+		if (!permanent) entities.put(entity.getUniqueId(), armorSet);
 		return true;
 	}
 
@@ -132,27 +141,28 @@ public class ArmorSpell extends BuffSpell {
 
 	@Override
 	public boolean isActive(LivingEntity entity) {
-		return entities.contains(entity.getUniqueId());
+		return entities.containsKey(entity.getUniqueId());
 	}
 
 	@Override
 	public void turnOffBuff(LivingEntity entity) {
-		if (!entities.remove(entity.getUniqueId())) return;
+		ArmorSet armorSet = entities.remove(entity.getUniqueId());
+		if (armorSet == null) return;
 		if (!entity.isValid()) return;
 		EntityEquipment inv = entity.getEquipment();
 		if(revert) revertArmor(inv, entity.getUniqueId());
-		else removeArmor(inv);
+		else removeArmor(inv, armorSet);
 	}
 
 	@Override
 	protected void turnOff() {
-		for (UUID id : entities) {
-			Entity entity = Bukkit.getEntity(id);
+		for (Entry<UUID, ArmorSet> entry : entities.entrySet()) {
+			Entity entity = Bukkit.getEntity(entry.getKey());
 			if (entity == null) continue;
 			if (!entity.isValid()) continue;
 			EntityEquipment inv = ((LivingEntity) entity).getEquipment();
 			if(revert) revertArmor(inv, entity.getUniqueId());
-			else removeArmor(inv);
+			else removeArmor(inv, entry.getValue());
 		}
 		entities.clear();
 	}
@@ -165,7 +175,12 @@ public class ArmorSpell extends BuffSpell {
 	}
 	private final Map<UUID, EquipStore> equipStore = new HashMap<>();
 
-	private void setArmor(EntityEquipment inv) {
+	private void setArmor(EntityEquipment inv, ArmorSet armorSet) {
+		ItemStack helmet = armorSet.helmet();
+		ItemStack chestplate = armorSet.chestplate();
+		ItemStack leggings = armorSet.leggings();
+		ItemStack boots = armorSet.boots();
+
 		EquipStore eStore = new EquipStore();
 		if (helmet != null) {
 			eStore.helmet = inv.getHelmet();
@@ -221,7 +236,12 @@ public class ArmorSpell extends BuffSpell {
 		equipStore.put(inv.getHolder().getUniqueId(), eStore);
 	}
 
-	private void removeArmor(EntityEquipment inv) {
+	private void removeArmor(EntityEquipment inv, ArmorSet armorSet) {
+		ItemStack helmet = armorSet.helmet();
+		ItemStack chestplate = armorSet.chestplate();
+		ItemStack leggings = armorSet.leggings();
+		ItemStack boots = armorSet.boots();
+
 		ItemStack invHelmet = inv.getHelmet();
 		if (helmet != null && invHelmet != null && invHelmet.getType() == helmet.getType()) {
 			inv.setHelmet(null);
@@ -263,7 +283,9 @@ public class ArmorSpell extends BuffSpell {
 				inv.setBoots(eStore.boots);
 			}
 		}
-		removeArmor(inv);
+		ArmorSet armorSet = entities.remove(id);
+
+		if (armorSet != null) removeArmor(inv, armorSet);
 	}
 
 	private class ArmorListener implements Listener {
@@ -326,7 +348,8 @@ public class ArmorSpell extends BuffSpell {
 			if (isExpired(player)) return;
 
 			final EntityEquipment inv = player.getEquipment();
-			Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> setArmor(inv));
+			ArmorSet armorSet = entities.get(player.getUniqueId());
+			if (armorSet != null) Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> setArmor(inv, armorSet));
 		}
 
 		@EventHandler
@@ -335,7 +358,7 @@ public class ArmorSpell extends BuffSpell {
 			if (!isActive(player)) return;
 
 			if (cancelOnLogout) turnOff(player);
-			else removeArmor(player.getEquipment());
+			else if (entities.containsKey(player.getUniqueId())) removeArmor(player.getEquipment(), entities.get(player.getUniqueId()));
 		}
 
 		@EventHandler
@@ -343,71 +366,18 @@ public class ArmorSpell extends BuffSpell {
 			Player player = event.getPlayer();
 			if (!isActive(player)) return;
 
-			if (!isExpired(player)) setArmor(player.getEquipment());
+			ArmorSet armorSet = entities.get(player.getUniqueId());
+			if (!isExpired(player) && armorSet != null) setArmor(player.getEquipment(), armorSet);
 			else turnOff(player);
 		}
 
 	}
 
-	public Set<UUID> getEntities() {
-		return entities;
-	}
-
-	public boolean isPermanent() {
-		return permanent;
-	}
-
-	public void setPermanent(boolean permanent) {
-		this.permanent = permanent;
-	}
-
-	public boolean shouldReplace() {
-		return replace;
-	}
-
-	public void setReplace(boolean replace) {
-		this.replace = replace;
-	}
-
-	public ItemStack getHelmet() {
-		return helmet;
-	}
-
-	public void setHelmet(ItemStack helmet) {
-		this.helmet = helmet;
-	}
-
-	public ItemStack getChestplate() {
-		return chestplate;
-	}
-
-	public void setChestplate(ItemStack chestplate) {
-		this.chestplate = chestplate;
-	}
-
-	public ItemStack getLeggings() {
-		return leggings;
-	}
-
-	public void setLeggings(ItemStack leggings) {
-		this.leggings = leggings;
-	}
-
-	public ItemStack getBoots() {
-		return boots;
-	}
-
-	public void setBoots(ItemStack boots) {
-		this.boots = boots;
-	}
-
-	public String getHasArmorMessage() {
-		return strHasArmor;
-	}
-
-	public void setHasArmorMessage(String strHasArmor) {
-		this.strHasArmor = strHasArmor;
-	}
-
 }
 
+record ArmorSet(
+	ItemStack helmet,
+	ItemStack chestplate,
+	ItemStack leggings,
+	ItemStack boots
+) {}

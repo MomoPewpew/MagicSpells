@@ -410,6 +410,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			boolean removed = fallingDestroyedBlocks.keySet().remove(event.getEntity());
 
 			if (removed) {
+				event.getEntity().remove();
 				event.setCancelled(true);
 				if (!preventLandingBlocks && event.getBlock().getType() == Material.AIR) {
 					event.getBlock().setBlockData(event.getBlockData(), false);

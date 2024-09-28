@@ -305,6 +305,18 @@ public class ArmorSpell extends BuffSpell {
 			HumanEntity entity = event.getWhoClicked();
 			if (!(entity instanceof Player p)) return;
 			if (!isActive(p)) return;
+
+			ArmorSet armorSet = entities.get(p.getUniqueId());
+
+			if (armorSet == null ||
+				!(
+					(event.getSlot() == 39 && armorSet.helmet() != null) ||
+					(event.getSlot() == 38 && armorSet.chestplate() != null) ||
+					(event.getSlot() == 37 && armorSet.leggings() != null) ||
+					(event.getSlot() == 36 && armorSet.boots() != null)
+				)
+			) return;
+
 			event.setCancelled(true);
 		}
 
@@ -312,18 +324,21 @@ public class ArmorSpell extends BuffSpell {
 		public void onArmorSwap(PlayerInteractEvent event){
 			Player player = event.getPlayer();
 			PlayerInventory inventory = player.getInventory();
-			//Messy but it works!
-			if(!(inventory.getItemInMainHand().getType().toString().toLowerCase().contains("chestplate")
-			|| inventory.getItemInMainHand().getType().toString().toLowerCase().contains("boots")
-			|| inventory.getItemInMainHand().getType().toString().toLowerCase().contains("helmet")
-			|| inventory.getItemInMainHand().getType().toString().toLowerCase().contains("legging")
-			|| inventory.getItemInOffHand().getType().toString().toLowerCase().contains("chestplate")
-					|| inventory.getItemInOffHand().getType().toString().toLowerCase().contains("boots")
-					|| inventory.getItemInOffHand().getType().toString().toLowerCase().contains("helmet")
-					|| inventory.getItemInOffHand().getType().toString().toLowerCase().contains("legging"))) return;
-			if(!isActive(player)) return;
-			event.setCancelled(true);
 
+			if(!isActive(player)) return;
+
+			ArmorSet armorSet = entities.get(player.getUniqueId());
+
+			if (armorSet == null ||
+				!(
+					(armorSet.helmet() != null && (inventory.getItemInMainHand().getType().toString().toLowerCase().contains("helmet") || inventory.getItemInOffHand().getType().toString().toLowerCase().contains("helmet"))) || 
+					(armorSet.chestplate() != null && (inventory.getItemInMainHand().getType().toString().toLowerCase().contains("chestplate") || inventory.getItemInOffHand().getType().toString().toLowerCase().contains("chestplate"))) || 
+					(armorSet.leggings() != null && (inventory.getItemInMainHand().getType().toString().toLowerCase().contains("legging") || inventory.getItemInOffHand().getType().toString().toLowerCase().contains("legging"))) || 
+					(armorSet.boots() != null && (inventory.getItemInMainHand().getType().toString().toLowerCase().contains("boots") || inventory.getItemInOffHand().getType().toString().toLowerCase().contains("boots")))
+				)
+			) return;
+
+			event.setCancelled(true);
 		}
 
 		@EventHandler

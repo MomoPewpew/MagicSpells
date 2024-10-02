@@ -20,16 +20,24 @@ import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 public class RightClickEntityListener extends PassiveListener {
 
 	private final EnumSet<EntityType> entities = EnumSet.noneOf(EntityType.class);
+	private boolean targetCitizens = false;
 
 	@Override
 	public void initialize(String var) {
-		if (var == null || var.isEmpty()) return;
+		if (var == null || var.isEmpty())
+			return;
 
 		String[] split = var.replace(" ", "").toUpperCase().split(",");
 		for (String s : split) {
+			if (s.toLowerCase().equals("citizen") || s.toLowerCase().equals("citizens")) {
+				targetCitizens = true;
+				continue;
+			}
+
 			EntityType type = MobUtil.getEntityType(s);
 			if (type == null) {
-				MagicSpells.error("Invalid entity type '" + s + "' in rightclickentity trigger on passive spell '" + passiveSpell.getInternalName() + "'");
+				MagicSpells.error("Invalid entity type '" + s + "' in rightclickentity trigger on passive spell '"
+						+ passiveSpell.getInternalName() + "'");
 				continue;
 			}
 
@@ -40,17 +48,27 @@ public class RightClickEntityListener extends PassiveListener {
 	@OverridePriority
 	@EventHandler
 	public void onRightClickEntity(PlayerInteractAtEntityEvent event) {
-		if (!isCancelStateOk(event.isCancelled())) return;
+		if (!isCancelStateOk(event.isCancelled()))
+			return;
 
 		Entity entity = event.getRightClicked();
-		if (!entities.isEmpty() && !entities.contains(entity.getType())) return;
+
+		String entityClassName = entity.getClass().getCanonicalName();
+		boolean isNPC = entityClassName.contains(".entity.EntityHumanNPC.PlayerNPC");
+
+		if ((targetCitizens && (entities.isEmpty() ? !isNPC : (!entities.contains(entity.getType()) && !isNPC))) ||
+				(!targetCitizens && ((!entities.isEmpty() && !entities.contains(entity.getType())) || isNPC))) {
+			return;
+		}
 
 		Player caster = event.getPlayer();
-		if (!hasSpell(caster) || !canTrigger(caster)) return;
+		if (!hasSpell(caster) || !canTrigger(caster))
+			return;
 
 		boolean casted = entity instanceof LivingEntity ? passiveSpell.activate(caster, (LivingEntity) entity)
 				: passiveSpell.activate(caster, entity.getLocation());
-		if (cancelDefaultAction(casted)) event.setCancelled(true);
+		if (cancelDefaultAction(casted))
+			event.setCancelled(true);
 	}
 
 }

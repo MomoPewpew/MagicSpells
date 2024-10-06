@@ -13,18 +13,29 @@ import net.sneakycharactermanager.paper.handlers.character.Character;
 @DependsOn(plugin = "SneakyCharacterManager")
 public class CharacterTagCondition extends Condition {
 
-	private String tag;
+	private String key;
+	private String value;
 
 	@Override
 	public boolean initialize(String var) {
-		if (var == null || var.isEmpty()) return false;
+		if (var == null || var.isEmpty())
+			return false;
 
-		if (!var.matches("^[a-zA-Z0-9_]+$")) {
-			MagicSpells.error("Modifier 'charactertag " + var + "' has invalid formatting. Character tags may only include alphanumerical characters and underscores.");
-            return false;
-        }
-		
-		this.tag = var;
+		String[] split = var.split(";");
+
+		if (!split[0].matches("^[a-zA-Z0-9_]+$")) {
+			MagicSpells.error("Modifier 'charactertag " + split[0]
+					+ "' has invalid formatting. Character tags may only include alphanumerical characters and underscores.");
+			return false;
+		}
+
+		key = var;
+
+		if (split.length > 1)
+			value = split[1];
+		else
+			value = "true";
+
 		return true;
 	}
 
@@ -47,7 +58,7 @@ public class CharacterTagCondition extends Condition {
 		Character character = Character.get(player);
 
 		if (character != null) {
-			return character.hasTag(tag);
+			return character.tagValue(key).equals(value);
 		}
 
 		return false;

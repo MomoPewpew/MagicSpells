@@ -49,6 +49,12 @@ public class EntityEffect extends SpellEffect {
 			entity.setSilent(silent);
 
 			if (entity instanceof LivingEntity livingEntity) livingEntity.setAI(enableAI);
+
+			if (positionRiding && data != null && data.caster() != null){
+				MagicSpells.scheduleDelayedTask(() -> {
+					data.caster().addPassenger(entity);
+				}, 1);
+			}
 		});
 	}
 

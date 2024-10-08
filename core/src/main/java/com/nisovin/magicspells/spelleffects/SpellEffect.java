@@ -65,6 +65,7 @@ public abstract class SpellEffect {
 	private ConfigData<Integer> effectInterval;
 
 	private boolean counterClockwise;
+	public boolean positionRiding;
 
 	private List<String> modifiersList;
 	private List<String> casterModifiersList;
@@ -357,6 +358,12 @@ public abstract class SpellEffect {
 	private Runnable playEffectLocationReal(Location location, SpellData data) {
 		if (location == null) return playEffectLocation(null, data);
 		Location loc = location.clone();
+
+		if (positionRiding && data != null && data.caster() != null) {
+			loc.add(0, data.caster().getHeight(), 0);
+			loc.setPitch(0);
+		}
+
 		applyOffsets(loc, data);
 		return playEffectLocation(loc, data);
 	}

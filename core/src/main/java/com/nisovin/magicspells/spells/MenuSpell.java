@@ -24,6 +24,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 
 import com.nisovin.magicspells.util.*;
 import com.nisovin.magicspells.Subspell;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.variables.Variable;
 import com.nisovin.magicspells.castmodifiers.ModifierSet;
@@ -138,6 +140,9 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
             option.power = getConfigFloat(path + "power", 1);
             option.modifierList = getConfigStringList(path + "modifiers", null);
             option.stayOpen = getConfigBoolean(path + "stay-open", false);
+			option.varModsClick = getConfigStringList(path + "variable-mods-click", null);
+			option.varModsClicked = getConfigStringList(path + "variable-mods-clicked", null);
+
             options.put(optionName, option);
         }
 		size = (int) Math.ceil((maxSlot+1) / 9.0) * 9;
@@ -150,6 +155,41 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		for (MenuOption option : options.values()) {
 			if (option.modifierList != null) option.menuOptionModifiers = new ModifierSet(option.modifierList, this);
+		}
+	}
+
+	@Override
+	public void initializeVariables() {
+		super.initializeVariables();
+
+		for (MenuOption option : options.values()) {
+			if (option.varModsClick != null && !option.varModsClick.isEmpty()) {
+				option.variableModsClick = LinkedListMultimap.create();
+				for (String s : option.varModsClick) {
+					try {
+						String[] data = s.split(" ", 2);
+						String var = data[0];
+						VariableMod varMod = new VariableMod(data[1]);
+						option.variableModsClick.put(var, varMod);
+					} catch (Exception e) {
+						MagicSpells.error("Invalid variable-mods-click option for MenuSpell '" + internalName + "': " + s);
+					}
+				}
+			}
+			
+			if (option.varModsClicked != null && !option.varModsClicked.isEmpty()) {
+				option.variableModsClicked = LinkedListMultimap.create();
+				for (String s : option.varModsClicked) {
+					try {
+						String[] data = s.split(" ", 2);
+						String var = data[0];
+						VariableMod varMod = new VariableMod(data[1]);
+						option.variableModsClicked.put(var, varMod);
+					} catch (Exception e) {
+						MagicSpells.error("Invalid variable-mods-clicked option for MenuSpell '" + internalName + "': " + s);
+					}
+				}
+			}
 		}
 	}
 
@@ -387,10 +427,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		String closeState = castSpells(player, event.getCurrentItem(), event.getClick());
 
 		UUID id = player.getUniqueId();
-		menuData.remove(id);
 
 		if (closeState.equals("ignore")) return;
 		if (closeState.equals("close")) {
+			menuData.remove(id);
 			MagicSpells.scheduleDelayedTask(player::closeInventory, 0);
 			return;
 		}
@@ -408,6 +448,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		// Probably a filler or air.
 		if (key == null || key.isEmpty() || !options.containsKey(key)) return stayOpenNonOption ? "ignore" : "close";
 		MenuOption option = options.get(key);
+		if (option == null) return "close";
 		return switch (click) {
 			case LEFT -> processClickSpell(player, option.spell, option);
 			case RIGHT -> processClickSpell(player, option.spellRight, option);
@@ -419,8 +460,6 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	private String processClickSpell(Player player, Subspell spell, MenuOption option) {
-		if (spell == null) return option.stayOpen ? "ignore" : "close";
-
 		LivingEntity entityTarget = null;
 		Location locationTarget = null;
 		float power = option.power;
@@ -435,12 +474,37 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			args = data.args;
 		}
 
-		if (entityTarget != null) spell.subcast(player, entityTarget, power, args);
-		else if (locationTarget != null) spell.subcast(player, locationTarget, power, args);
-		else if (bypassNormalCast) spell.subcast(player, power, args);
-		else spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
+		processVariables(option.variableModsClick, player, data);
+
+		if (spell == null) return option.stayOpen ? "ignore" : "close";
+
+		boolean success;
+
+		if (entityTarget != null) success = spell.subcast(player, entityTarget, power, args);
+		else if (locationTarget != null) success = spell.subcast(player, locationTarget, power, args);
+		else if (bypassNormalCast) success = spell.subcast(player, power, args);
+		else {
+			SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
+			success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
+		}
+
+		if (success) processVariables(option.variableModsClicked, player, data);
 
 		return option.stayOpen ? "reopen" : "close";
+	}
+
+	private void processVariables(Multimap<String, VariableMod> varMods, Player player, MenuData data) {
+		if (varMods == null || varMods.isEmpty()) return;
+
+		for (Map.Entry<String, VariableMod> entry : varMods.entries()) {
+			VariableMod mod = entry.getValue();
+			if (mod == null) continue;
+
+			Variable variable = MagicSpells.getVariableManager().getVariable(entry.getKey());
+
+			String amount = MagicSpells.getVariableManager().processVariableMods(variable, mod, player, player, null, data.power(), data.args());
+			MagicSpells.debug(3, "Variable '" + entry.getKey() + "' for player '" + player.getName() + "' modified by " + amount + " as a result of spell cast '" + internalName + "'");
+		}
 	}
 
 	@EventHandler
@@ -453,7 +517,6 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	private static class MenuOption {
-
 		private String menuOptionName;
 		private List<Integer> slots;
 		private ConfigData<ConfigurationSection> itemSection;
@@ -475,7 +538,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		private List<String> modifierList;
 		private ModifierSet menuOptionModifiers;
 		private boolean stayOpen;
-
+		private List<String> varModsClick;
+		private List<String> varModsClicked;
+		protected Multimap<String, VariableMod> variableModsClick;
+		protected Multimap<String, VariableMod> variableModsClicked;
 	}
 
 }

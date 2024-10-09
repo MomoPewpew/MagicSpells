@@ -45,6 +45,24 @@ public class EntityEffect extends SpellEffect {
 
 	@Override
 	protected Entity playEntityEffectLocation(Location location, SpellData data) {
+		Entity entity = spawnEntity(location, data);
+		entities.add(entity);
+
+		if (duration > 0) MagicSpells.scheduleDelayedTask(() -> {
+			entities.remove(entity);
+			entity.remove();
+		}, duration);
+
+		return entity;
+	}
+
+	@Override
+	public Runnable playEffectLocation(Location location, SpellData data) {
+		playEntityEffectLocation(location, data);
+		return null;
+	}
+
+	protected Entity spawnEntity(Location location, SpellData data) {
 		Location loc = location.clone();
 		if (riding && data != null && data.caster() != null) {
 			loc.add(0, data.caster().getHeight(), 0);
@@ -64,18 +82,6 @@ public class EntityEffect extends SpellEffect {
 				}, 1);
 			}
 		});
-	}
-
-	@Override
-	public Runnable playEffectLocation(Location location, SpellData data) {
-		Entity entity = playEntityEffectLocation(location, data);
-		entities.add(entity);
-
-		if (duration > 0) MagicSpells.scheduleDelayedTask(() -> {
-			entities.remove(entity);
-			entity.remove();
-		}, duration);
-		return null;
 	}
 
 	@Override

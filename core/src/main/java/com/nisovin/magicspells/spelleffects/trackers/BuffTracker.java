@@ -40,7 +40,7 @@ public class BuffTracker extends EffectTracker implements Runnable {
 		}
 
 		if (!effect.isDraggingEntity().get(data)) {
-			effect.playEffect(entity, data);
+			effectEntity = effect.playEntityEffect(entity.getLocation(), data);
 			return;
 		}
 

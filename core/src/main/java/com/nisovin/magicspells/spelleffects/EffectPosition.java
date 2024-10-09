@@ -6,7 +6,7 @@ import java.util.HashMap;
 public enum EffectPosition {
 
 	START_CAST("start", "startcast"),
-	CASTER("caster", "actor", "riding"),
+	CASTER("caster", "actor"),
 	TARGET("target"),
 	START_POSITION("startposition", "startpos", "pos1", "position1"),
 	END_POSITION( "endposition", "endpos", "pos2", "position2"),

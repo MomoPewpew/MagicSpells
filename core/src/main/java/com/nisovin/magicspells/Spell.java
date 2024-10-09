@@ -553,8 +553,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				continue;
 			}
 
-			effect.positionRiding = positionName.equalsIgnoreCase("riding");
-
 			effect.loadFromConfiguration(section);
 
 			List<SpellEffect> effectList = effects.computeIfAbsent(position, p -> new ArrayList<>());

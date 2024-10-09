@@ -26,6 +26,7 @@ public class EntityEffect extends SpellEffect {
 	private boolean silent;
 	private boolean gravity;
 	private boolean enableAI;
+	private boolean riding;
 
 	@Override
 	protected void loadFromConfig(ConfigurationSection config) {
@@ -39,18 +40,25 @@ public class EntityEffect extends SpellEffect {
 		silent = section.getBoolean("silent", false);
 		gravity = section.getBoolean("gravity", false);
 		enableAI = section.getBoolean("ai", true);
+		riding = section.getBoolean("riding", false);
 	}
 
 	@Override
 	protected Entity playEntityEffectLocation(Location location, SpellData data) {
-		return entityData.spawn(location, data, entity -> {
+		Location loc = location.clone();
+		if (riding && data != null && data.caster() != null) {
+			loc.add(0, data.caster().getHeight(), 0);
+			loc.setPitch(0);
+		}
+
+		return entityData.spawn(loc, data, entity -> {
 			entity.addScoreboardTag(ENTITY_TAG);
 			entity.setGravity(gravity);
 			entity.setSilent(silent);
 
 			if (entity instanceof LivingEntity livingEntity) livingEntity.setAI(enableAI);
 
-			if (positionRiding && data != null && data.caster() != null){
+			if (riding && data != null && data.caster() != null){
 				MagicSpells.scheduleDelayedTask(() -> {
 					data.caster().addPassenger(entity);
 				}, 1);

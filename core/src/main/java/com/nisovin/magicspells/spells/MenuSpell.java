@@ -6,9 +6,12 @@ import co.aikar.commands.ACFUtil;
 
 import com.nisovin.magicspells.util.config.ConfigData;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -49,6 +52,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	private final boolean requireEntityTarget;
 	private final boolean requireLocationTarget;
 	private final boolean targetOpensMenuInstead;
+	private final boolean autoArrange;
+
+	private final ItemStack previousPageItem;
+	private final ItemStack nextPageItem;
 
 	public MenuSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -61,6 +68,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		requireEntityTarget = getConfigBoolean("require-entity-target", false);
 		requireLocationTarget = getConfigBoolean("require-location-target", false);
 		targetOpensMenuInstead = getConfigBoolean("target-opens-menu-instead", false);
+
+		autoArrange = getConfigBoolean("auto-arrange", false);
+		previousPageItem = createItem("previous-page-item", "Previous Page");
+		nextPageItem = createItem("next-page-item", "Next Page");
 
 		Set<String> optionKeys = getConfigKeys("options");
 		if (optionKeys == null) {
@@ -75,18 +86,20 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
             if (slots.isEmpty()) slots.add(getConfigInt(path + "slot", -1));
 
             List<Integer> validSlots = new ArrayList<>();
-            for (int slot : slots) {
-                if (slot < 0 || slot > 53) {
-                    MagicSpells.error("MenuSpell '" + internalName + "' a slot defined which is out of bounds for '" + optionName + "': " + slot);
-                    continue;
-                }
-                validSlots.add(slot);
-                if (slot > maxSlot) maxSlot = slot;
-            }
-            if (validSlots.isEmpty()) {
-                MagicSpells.error("MenuSpell '" + internalName + "' has no slots defined for: " + optionName);
-                continue;
-            }
+			if (!autoArrange) {
+				for (int slot : slots) {
+					if (slot < 0 || slot > 53) {
+						MagicSpells.error("MenuSpell '" + internalName + "' a slot defined which is out of bounds for '" + optionName + "': " + slot);
+						continue;
+					}
+					validSlots.add(slot);
+					if (slot > maxSlot) maxSlot = slot;
+				}
+				if (validSlots.isEmpty()) {
+					MagicSpells.error("MenuSpell '" + internalName + "' has no slots defined for: " + optionName);
+					continue;
+				}
+			}
 
             ConfigData<ConfigurationSection> itemSection = null;
 			ConfigData<String> itemString = null;
@@ -145,7 +158,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
             options.put(optionName, option);
         }
-		size = (int) Math.ceil((maxSlot+1) / 9.0) * 9;
+		size = autoArrange ? 54 : (int) Math.ceil((maxSlot+1) / 9.0) * 9;
 		if (options.isEmpty()) MagicSpells.error("MenuSpell '" + spellName + "' has no menu options!");
 	}
 
@@ -306,6 +319,19 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return false;
 	}
 
+	private ItemStack createItem(String path, String defaultName) {
+		ItemStack magicItem = createItem(path);
+		if (magicItem != null) return magicItem.clone();
+
+		ItemStack item = new ItemStack(Material.GREEN_WOOL);
+		ItemMeta meta = item.getItemMeta();
+
+		meta.displayName(Component.text(defaultName).color(NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
+		item.setItemMeta(meta);
+
+		return item;
+	}
+
 	private ItemStack createItem(String path) {
 		ItemStack item = null;
 		if (isConfigSection(path)) {
@@ -327,10 +353,11 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	private void openMenu(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power, String[] args) {
-		menuData.put(opener.getUniqueId(), new MenuData(requireEntityTarget ? entityTarget : null, requireLocationTarget ? locTarget : null, power, args));
+		MenuData mData = new MenuData(requireEntityTarget ? entityTarget : null, requireLocationTarget ? locTarget : null, power, args, 0);
+		menuData.put(opener.getUniqueId(), mData);
 
 		Inventory inv = Bukkit.createInventory(opener, size, Component.text(internalName));
-		applyOptionsToInventory(opener, inv, args);
+		applyOptionsToInventory(opener, inv, args, mData);
 		opener.openInventory(inv);
 		Util.setInventoryTitle(opener, title);
 
@@ -344,7 +371,9 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		if (locTarget != null) playSpellEffects(EffectPosition.TARGET, locTarget, data);
 	}
 
-	private void applyOptionsToInventory(Player opener, Inventory inv, String[] args) {
+	private void applyOptionsToInventory(Player opener, Inventory inv, String[] args, MenuData mData) {
+		Map<Integer, ItemStack> itemStacks = new HashMap<>();
+
 		// Setup option items.
 		for (MenuOption option : options.values()) {
 			// Check modifiers.
@@ -383,16 +412,26 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			item.setAmount(quantity);
 
 			// Set item for all defined slots.
-			for (int slot : option.slots) {
-				if (inv.getItem(slot) == null) inv.setItem(slot, item);
+			if (autoArrange) itemStacks.put(itemStacks.keySet().size(), item);
+			else {
+				for (int slot : option.slots) {
+					itemStacks.put(slot, item);
+				}
 			}
 		}
 		// Fill inventory.
-		if (filler == null) return;
-		ItemStack item = translateItem(opener, args, filler);
+		ItemStack fillerItem = (filler == null) ? null : translateItem(opener, args, filler);
 		for (int i = 0; i < inv.getSize(); i++) {
 			if (inv.getItem(i) != null) continue;
-			inv.setItem(i, item);
+
+			if (autoArrange && i >= 50) {
+				ItemStack item = (i == 52 && mData.page() > 0) ? previousPageItem : (i == 53 && itemStacks.size() > 50 * (mData.page() + 1)) ? nextPageItem : null;
+				if (item != null) inv.setItem(i, item);
+			} else {
+				ItemStack item = itemStacks.get(i + mData.page() * 50);
+				if (item != null) inv.setItem(i, item);
+				else if (fillerItem != null) inv.setItem(i, fillerItem);
+			}
 		}
 	}
 
@@ -424,9 +463,18 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		if (!Util.getStringFromComponent(event.getView().title()).equals(internalName)) return;
 		event.setCancelled(true);
 
-		String closeState = castSpells(player, event.getCurrentItem(), event.getClick());
+		String closeState = "reopen";
 
 		UUID id = player.getUniqueId();
+		MenuData mData = menuData.get(id);
+
+		if (autoArrange && event.getSlot() == 52) {
+			if (event.getCurrentItem() != null && event.getCurrentItem().equals(previousPageItem)) mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(), mData.page() - 1);
+		} else if (autoArrange && event.getSlot() == 53) {
+			if (event.getCurrentItem() != null && event.getCurrentItem().equals(nextPageItem)) mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(), mData.page() + 1);
+		} else {
+			closeState = castSpells(player, event.getCurrentItem(), event.getClick());
+		}
 
 		if (closeState.equals("ignore")) return;
 		if (closeState.equals("close")) {
@@ -435,8 +483,9 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			return;
 		}
 		// Reopen.
+		menuData.put(id, mData);
 		Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(), Component.text(internalName));
-		applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS);
+		applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS, mData);
 		player.openInventory(newInv);
 		Util.setInventoryTitle(player, title);
 	}
@@ -513,7 +562,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		menuData.remove(id);
 	}
 
-	private record MenuData(LivingEntity targetEntity, Location targetLocation, float power, String[] args) {
+	private record MenuData(LivingEntity targetEntity, Location targetLocation, float power, String[] args, int page) {
 	}
 
 	private static class MenuOption {

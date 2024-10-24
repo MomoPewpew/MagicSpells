@@ -543,7 +543,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				this.changedBlocks++;
 
 				if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(startingBlock, data, 0, 0, 0, 0);
-				startingBlock.setBlockData(data);
+				startingBlock.setBlockData(data, false);
 
 	            if (this.caster instanceof Player player) {
 					BlockState previousState = startingBlock.getState();
@@ -645,7 +645,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				MagicSpells.scheduleDelayedTask(() -> {
 					if(this.stop) return;
-					to.setBlockData(data);
+					to.setBlockData(data, false);
 					this.placeBlock(to, pos.getX(), pos.getY(), pos.getZ());
 					this.workingBlocks--;
 
@@ -766,11 +766,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(b, previousState, block, player.getInventory().getItemInMainHand(), player, true);
 							EventUtil.call(event);
 							if (!event.isCancelled()) {
-								b.setBlockData(data);
+								b.setBlockData(data, false);
 								b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
 							}
 						} else {
-							b.setBlockData(data);
+							b.setBlockData(data, false);
 							b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
 						}
 					}

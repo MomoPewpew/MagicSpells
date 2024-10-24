@@ -221,7 +221,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 	private void createPulser(LivingEntity caster, Block block, Location from, float power, String[] args) {
 		if (blockData == null) return;
-		block.setBlockData(blockData);
+		block.setBlockData(blockData, false);
 		pulsers.put(block, new Pulser(caster, block, from, power, args));
 		ticker.start();
 		if (caster != null) playSpellEffects(caster, block.getLocation().add(0.5, 0.5, 0.5), power, args);

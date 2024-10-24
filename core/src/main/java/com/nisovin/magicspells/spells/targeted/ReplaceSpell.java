@@ -68,7 +68,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 		pointBlank = getConfigBoolean("point-blank", false);
 		checkPlugins = getConfigBoolean("check-plugins", true);
-		applyPhysics = getConfigBoolean("apply-physics", true);
+		applyPhysics = getConfigBoolean("apply-physics", false);
 		replaceRandom = getConfigBoolean("replace-random", true);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
 		resolveDurationPerBlock = getConfigBoolean("resolve-duration-per-block", false);

@@ -125,7 +125,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		
 	}
 
-	private Object[] processItemList(List<String> itemList) {
+	private Object[] processItemList(List<String> itemList, SpellData spellData) {
 
 		ItemStack[] itemTypes = null;
 		int[] itemMinQuantities = null;
@@ -199,7 +199,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 						int uses = scrollData.length > 3 ? Integer.parseInt(scrollData[3].trim()) : -1;
 						itemTypes[i] = scrollSpell.createScroll(spell, uses, null);
 					} else {
-						MagicItem magicItem = MagicItems.getMagicItemFromString(strItemData);
+						MagicItem magicItem = MagicItems.getMagicItemFromString(strItemData, spellData);
 						if (magicItem == null) continue;
 						itemTypes[i] = magicItem.getItemStack();
 					}
@@ -266,7 +266,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		SpellData spellData = new SpellData(player, power, args);
 		List<String> itemList = this.itemListData.get(spellData);
 		
-		Object[] itemResults = processItemList(itemList);
+		Object[] itemResults = processItemList(itemList, spellData);
 
 		ItemStack[] itemTypes = (ItemStack[]) itemResults[0];
 		int[] itemMinQuantities = (int[]) itemResults[1];
@@ -415,7 +415,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		SpellData spellData = new SpellData(player, null, power, null);
 		List<String> itemList = this.itemListData.get(spellData);
 
-		Object[] itemResults = processItemList(itemList);
+		Object[] itemResults = processItemList(itemList, spellData);
 		ItemStack[] itemTypes = (ItemStack[]) itemResults[0];
 		int[] itemMinQuantities = (int[]) itemResults[1];
 		int[] itemMaxQuantities = (int[]) itemResults[2];

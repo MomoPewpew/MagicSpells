@@ -50,9 +50,7 @@ public class LeftClickListener implements Listener {
 		ItemStack item = event.getItem();
 		if (item == null) return;
 
-		CastItem castItem = new CastItem(item);
-
-		final Spell spell = leftClickCastItems.get(castItem);
+		final Spell spell = leftClickCastItems.get(new CastItem(item));
 		if (spell == null) return;
 
 		Player player = event.getPlayer();
@@ -69,9 +67,9 @@ public class LeftClickListener implements Listener {
 		PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
 		if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
 			final String[] args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
-			MagicSpells.scheduleDelayedTask(() -> spell.cast(player, args, castItem), 0);
+			MagicSpells.scheduleDelayedTask(() -> spell.cast(player, args, item), 0);
 		} else {
-			MagicSpells.scheduleDelayedTask(() -> spell.cast(player, castItem), 0);
+			MagicSpells.scheduleDelayedTask(() -> spell.cast(player, item), 0);
 		}
 	}
 

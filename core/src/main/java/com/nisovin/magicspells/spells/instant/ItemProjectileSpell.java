@@ -15,6 +15,7 @@ import net.kyori.adventure.text.Component;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -35,7 +36,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	private final String spellOnHitEntityName;
 	private final String spellOnHitGroundName;
 
-	private ItemStack item;
+	private ConfigData<String> magicItemName;
 
 	private Component itemName;
 
@@ -74,8 +75,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 		trackerSet = new HashSet<>();
 
-		MagicItem magicItem = MagicItems.getMagicItemFromString(getConfigString("item", "iron_sword"));
-		if (magicItem != null) item = magicItem.getItemStack();
+		magicItemName = getConfigDataString("item", "iron_sword");
 
 		spellDelay = getConfigDataInt("spell-delay", 40);
 		pickupDelay = getConfigDataInt("pickup-delay", 100);
@@ -150,6 +150,9 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			ItemProjectileTracker tracker = new ItemProjectileTracker(caster, caster.getLocation(), power, args);
+
+			ItemStack itemStack = MagicItems.getMagicItemFromString(magicItemName.get(null), null);
+
 			setupTracker(tracker, caster, power, args);
 			tracker.start();
 		}
@@ -174,7 +177,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 		return false;
 	}
 
-	private void setupTracker(ItemProjectileTracker tracker, LivingEntity caster, float power, String[] args) {
+	private void setupTracker(ItemProjectileTracker tracker, ItemStack item, LivingEntity caster, float power, String[] args) {
 		tracker.setSpell(this);
 
 		tracker.setItemName(itemName);
@@ -220,14 +223,6 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 	public static Set<ItemProjectileTracker> getProjectileTrackers() {
 		return trackerSet;
-	}
-
-	public ItemStack getItem() {
-		return item;
-	}
-
-	public void setItem(ItemStack item) {
-		this.item = item;
 	}
 
 	public Component getItemName() {

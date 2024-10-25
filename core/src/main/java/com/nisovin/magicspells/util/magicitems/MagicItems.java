@@ -21,6 +21,7 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.ItemUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.itemreader.*;
 import com.nisovin.magicspells.util.AttributeUtil;
 import com.nisovin.magicspells.handlers.DebugHandler;
@@ -176,8 +177,11 @@ public class MagicItems {
 		return MagicItemDataParser.parseMagicItemData(str);
 	}
 
-	public static MagicItem getMagicItemFromString(String str) {
+	public static MagicItem getMagicItemFromString(String str, SpellData spellData) {
 		if (str == null) return null;
+
+		if (str.equals("cast-item") && spellData != null && spellData.castItem() != null) return new MagicItem(spellData.castItem(), new MagicItemData());
+
 		if (magicItems.containsKey(str)) return magicItems.get(str);
 
 		MagicItem magicItem;

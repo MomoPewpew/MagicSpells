@@ -813,7 +813,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return cast(livingEntity, 1.0F, null);
 	}
 
-	public final SpellCastResult cast(LivingEntity livingEntity, CastItem castItem) {
+	public final SpellCastResult cast(LivingEntity livingEntity, ItemStack castItem) {
 		return cast(livingEntity, 1.0F, null, castItem);
 	}
 
@@ -822,7 +822,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return cast(livingEntity, 1.0F, args);
 	}
 
-	public final SpellCastResult cast(LivingEntity livingEntity, String[] args, CastItem castItem) {
+	public final SpellCastResult cast(LivingEntity livingEntity, String[] args, ItemStack castItem) {
 		return cast(livingEntity, 1.0F, args, castItem);
 	}
 
@@ -831,7 +831,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	// TODO can this safely be made varargs?
-	public final SpellCastResult cast(LivingEntity livingEntity, float power, String[] args, CastItem castItem) {
+	public final SpellCastResult cast(LivingEntity livingEntity, float power, String[] args, ItemStack castItem) {
 		SpellCastEvent spellCast = preCast(livingEntity, power, args);
 		if (spellCast == null) return new SpellCastResult(SpellCastState.CANT_CAST, PostCastAction.HANDLE_NORMALLY);
 		PostCastAction action;

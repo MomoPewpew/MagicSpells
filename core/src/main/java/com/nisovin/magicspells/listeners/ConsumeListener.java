@@ -58,7 +58,7 @@ public class ConsumeListener implements Listener {
 				args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
 			}
 
-			SpellCastResult result = spell.cast(player, 1.0F, args, castItem);
+			SpellCastResult result = spell.cast(player, 1.0F, args, item);
 			if (result.state != SpellCastState.NORMAL) event.setCancelled(true);
 		}
 	}

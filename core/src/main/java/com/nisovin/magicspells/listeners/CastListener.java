@@ -222,7 +222,7 @@ public class CastListener implements Listener {
 				args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
 			}
 		}
-		spell.cast(player, 1.0F, args, new CastItem(item));
+		spell.cast(player, 1.0F, args, item);
 	}
 
 	private boolean checkGlobalCooldown(Player player, Spell spell) {

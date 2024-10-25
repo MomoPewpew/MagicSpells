@@ -813,13 +813,25 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return cast(livingEntity, 1.0F, null);
 	}
 
+	public final SpellCastResult cast(LivingEntity livingEntity, CastItem castItem) {
+		return cast(livingEntity, 1.0F, null, castItem);
+	}
+
 	// TODO can this safely be made varargs?
 	public final SpellCastResult cast(LivingEntity livingEntity, String[] args) {
 		return cast(livingEntity, 1.0F, args);
 	}
 
-	// TODO can this safely be made varargs?
+	public final SpellCastResult cast(LivingEntity livingEntity, String[] args, CastItem castItem) {
+		return cast(livingEntity, 1.0F, args, castItem);
+	}
+
 	public final SpellCastResult cast(LivingEntity livingEntity, float power, String[] args) {
+		return cast(livingEntity, power, args, null);
+	}
+
+	// TODO can this safely be made varargs?
+	public final SpellCastResult cast(LivingEntity livingEntity, float power, String[] args, CastItem castItem) {
 		SpellCastEvent spellCast = preCast(livingEntity, power, args);
 		if (spellCast == null) return new SpellCastResult(SpellCastState.CANT_CAST, PostCastAction.HANDLE_NORMALLY);
 		PostCastAction action;
@@ -829,7 +841,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		else {
 			action = PostCastAction.DELAYED;
 			sendMessage(strCastStart, livingEntity, args);
-			playSpellEffects(EffectPosition.START_CAST, livingEntity, new SpellData(livingEntity, power, args));
+			playSpellEffects(EffectPosition.START_CAST, livingEntity, new SpellData(livingEntity, power, args, castItem));
 			if (MagicSpells.useExpBarAsCastTimeBar()) MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(), new DelayedSpellCastWithBar(spellCast));
 			else MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(), new DelayedSpellCast(spellCast));
 		}

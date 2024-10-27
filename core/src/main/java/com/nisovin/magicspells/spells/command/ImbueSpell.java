@@ -85,7 +85,8 @@ public class ImbueSpell extends CommandSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			String[] args = data.args();
 			if (args == null || args.length == 0) {
 				sendMessage(strUsage, player, args);
 				return PostCastAction.ALREADY_HANDLED;
@@ -139,7 +140,7 @@ public class ImbueSpell extends CommandSpell {
 			}
 			
 			if (chargeReagentsForSpellPerUse && !Perm.NO_REAGENTS.has(player)) {
-				SpellReagents reagents = spell.getReagentsPreCast(player, power, args).multiply(uses);
+				SpellReagents reagents = spell.getReagentsPreCast(player, data.power(), args).multiply(uses);
 				if (!hasReagents(player, reagents)) {
 					sendMessage(strMissingReagents, player, args);
 					return PostCastAction.ALREADY_HANDLED;
@@ -189,7 +190,7 @@ public class ImbueSpell extends CommandSpell {
 			return;
 		}
 
-		spell.castSpell(event.getPlayer(), SpellCastState.NORMAL, 1.0F, new String[0]);
+		spell.castSpell(SpellCastState.NORMAL, new SpellData(event.getPlayer()));
 		uses--;
 		if (uses <= 0) {
 			if (consumeItem) event.getPlayer().getInventory().setItemInMainHand(null);

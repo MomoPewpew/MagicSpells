@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.io.IOException;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -92,7 +93,8 @@ public class KeybindSpell extends CommandSpell {
 	
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			String[] args = data.args();
 			if (args.length != 1) {
 				player.sendMessage("Invalid args.");
 				return PostCastAction.ALREADY_HANDLED;
@@ -224,7 +226,7 @@ public class KeybindSpell extends CommandSpell {
 		private boolean castKeybind(int slot) {
 			Spell spell = keybinds[slot];
 			if (spell == null) return false;
-			spell.cast(player);
+			spell.cast(new SpellData(player));
 			return true;
 		}
 

@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.command;
 import java.util.List;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
@@ -51,7 +52,8 @@ public class ForgetSpell extends CommandSpell {
 	
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			String[] args = data.args();
 			if (args == null || args.length == 0 || args.length > 2) {
 				sendMessage(strUsage, player, args);
 				return PostCastAction.ALREADY_HANDLED;
@@ -95,7 +97,7 @@ public class ForgetSpell extends CommandSpell {
 				return PostCastAction.ALREADY_HANDLED;
 			}
 
-
+			float power = data.power();
 			String playerDisplayName = Util.getStringFromComponent(player.displayName());
 			String targetDisplayName = Util.getStringFromComponent(target.displayName());
 			// Remove spell(s)

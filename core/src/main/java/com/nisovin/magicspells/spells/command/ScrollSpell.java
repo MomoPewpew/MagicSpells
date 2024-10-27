@@ -121,7 +121,8 @@ public class ScrollSpell extends CommandSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			String[] args = data.args();
 			if (args == null || args.length == 0) {
 				sendMessage(strUsage, player, args);
 				return PostCastAction.ALREADY_HANDLED;
@@ -269,9 +270,9 @@ public class ScrollSpell extends CommandSpell {
 		PostCastAction action;
 		if (bypassNormalChecks) {
 			state = SpellCastState.NORMAL;
-			action = spell.castSpell(player, SpellCastState.NORMAL, 1.0F, null);
+			action = spell.castSpell(SpellCastState.NORMAL, new SpellData(player));
 		} else {
-			SpellCastResult result = spell.cast(player);
+			SpellCastResult result = spell.cast(new SpellData(player));
 			state = result.state;
 			action = result.action;
 		}

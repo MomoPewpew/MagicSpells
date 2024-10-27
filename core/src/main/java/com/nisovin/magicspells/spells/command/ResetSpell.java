@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.command;
 
 import java.util.List;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
 

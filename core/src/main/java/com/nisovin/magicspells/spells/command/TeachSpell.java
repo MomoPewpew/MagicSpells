@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.command;
 
 import java.util.List;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
@@ -44,7 +45,8 @@ public class TeachSpell extends CommandSpell {
 	
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			String[] args = data.args();
 			if (args == null || args.length != 2) {
 				sendMessage(strUsage, player, args);
 				return PostCastAction.ALREADY_HANDLED;
@@ -92,7 +94,7 @@ public class TeachSpell extends CommandSpell {
 			sendMessage(spell.getStrOnTeach() == null ? strCastTarget : spell.getStrOnTeach(), target, args, "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
 			sendMessage(strCastSelf, player, args, "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
 
-			playSpellEffects(player, target, power, args);
+			playSpellEffects(player, target, data.power(), args);
 			return PostCastAction.NO_MESSAGES;
 		}
 		return PostCastAction.HANDLE_NORMALLY;

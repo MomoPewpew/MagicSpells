@@ -98,7 +98,8 @@ public class SpellbookSpell extends CommandSpell {
 	
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			String[] args = data.args();
 			if (args == null || args.length < 1 || args.length > 2 || (args.length == 2 && !RegexUtil.matches(PATTERN_CAST_ARG_USAGE, args[1]))) {
 				sendMessage(strUsage, player, args);
 				return PostCastAction.HANDLE_NORMALLY;
@@ -139,7 +140,7 @@ public class SpellbookSpell extends CommandSpell {
 
 			saveSpellbooks();
 			sendMessage(strCastSelf, player, args, "%s", spell.getName());
-			playSpellEffects(player, target.getLocation(), power, args);
+			playSpellEffects(player, target.getLocation(), data.power(), args);
 			return PostCastAction.NO_MESSAGES;
 		}
 		return PostCastAction.HANDLE_NORMALLY;

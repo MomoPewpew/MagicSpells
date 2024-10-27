@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.command;
 import java.util.List;
 import java.util.Collection;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
@@ -46,7 +47,8 @@ public class SublistSpell extends CommandSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			String[] args = data.args();
 			Spellbook spellbook = MagicSpells.getSpellbook(player);
 			String extra = "";
 			if (args != null && args.length > 0 && spellbook.hasAdvancedPerm("list")) {

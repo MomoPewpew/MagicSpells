@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.command;
 import java.util.List;
 import java.util.Collection;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
@@ -10,13 +11,9 @@ import org.bukkit.command.ConsoleCommandSender;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Spellbook;
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.MagicConfig;
-import com.nisovin.magicspells.util.SpellFilter;
 import com.nisovin.magicspells.spells.PassiveSpell;
 import com.nisovin.magicspells.spells.CommandSpell;
-import com.nisovin.magicspells.util.PlayerNameUtils;
 
 // Advanced perm is for listing other player's spells
 
@@ -50,7 +47,8 @@ public class ListSpell extends CommandSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			String[] args = data.args();
 			Spellbook spellbook = MagicSpells.getSpellbook(player);
 			String extra = "";
 			if (args != null && args.length > 0 && spellbook.hasAdvancedPerm("list")) {

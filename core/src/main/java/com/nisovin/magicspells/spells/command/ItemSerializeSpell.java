@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 import java.io.IOException;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.LivingEntity;
@@ -57,7 +58,7 @@ public class ItemSerializeSpell extends CommandSpell {
 	
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
 			ItemStack heldItem = player.getInventory().getItemInMainHand();
 			if (InventoryUtil.isNothing(heldItem)) {
 				player.sendMessage("You must be holding an item in your hand");

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
@@ -52,7 +53,8 @@ public class UnbindSpell extends CommandSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			String[] args = data.args();
 			if (args == null || args.length == 0) {
 				sendMessage(strUsage, player, args);
 				return PostCastAction.ALREADY_HANDLED;
@@ -76,7 +78,7 @@ public class UnbindSpell extends CommandSpell {
 				spellbook.save();
 				spellbook.reload();
 				sendMessage(strUnbindAll, player, args);
-				playSpellEffects(EffectPosition.CASTER, player, power, args);
+				playSpellEffects(EffectPosition.CASTER, player, data.power(), args);
 				return PostCastAction.NO_MESSAGES;
 			}
 
@@ -109,7 +111,7 @@ public class UnbindSpell extends CommandSpell {
 
 			spellbook.save();
 			sendMessage(strCastSelf, player, args, "%s", spell.getName());
-			playSpellEffects(EffectPosition.CASTER, player, power, args);
+			playSpellEffects(EffectPosition.CASTER, player, data.power(), args);
 			return PostCastAction.NO_MESSAGES;
 		}
 		return PostCastAction.HANDLE_NORMALLY;

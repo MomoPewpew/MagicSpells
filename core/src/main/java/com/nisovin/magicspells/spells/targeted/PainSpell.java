@@ -55,7 +55,7 @@ public class PainSpell extends TargetedSpell implements TargetedEntitySpell, Dam
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
 			if (target.noTarget()) return noTarget(caster, args, target);

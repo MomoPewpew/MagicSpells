@@ -3,6 +3,7 @@ package com.nisovin.magicspells.listeners;
 import java.util.Map;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -67,9 +68,9 @@ public class LeftClickListener implements Listener {
 		PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
 		if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
 			final String[] args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
-			MagicSpells.scheduleDelayedTask(() -> spell.cast(player, args, item), 0);
+			MagicSpells.scheduleDelayedTask(() -> spell.cast(new SpellData(player, args, item)), 0);
 		} else {
-			MagicSpells.scheduleDelayedTask(() -> spell.cast(player, item), 0);
+			MagicSpells.scheduleDelayedTask(() -> spell.cast(new SpellData(player, item)), 0);
 		}
 	}
 

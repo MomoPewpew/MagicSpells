@@ -121,40 +121,23 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			TargetInfo<Player> targetInfo = getTargetedPlayer(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
+			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
+			if (targetInfo.noTarget()) return noTarget(data.caster(), data.args(), targetInfo);
 			Player target = targetInfo.target();
 
-			openDelay(caster, target, power, args);
+			openDelay(data.caster(), target, data.power(), data.args());
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
-		openDelay(caster, player, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), data.target())) return false;
+		openDelay(data.caster(), player, data.power(), data.args());
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
-		openDelay(null, player, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	@Override
@@ -194,10 +177,10 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		));
 	}
 
-	private void processClickSpell(Subspell subspell, Player caster, Player target, float power, String[] args) {
+	private void processClickSpell(Subspell subspell, SpellData data) {
 		if (subspell == null) return;
-		if (castSpellsOnTarget) subspell.subcast(caster, target, power, args);
-		else subspell.subcast(caster, power, args);
+		if (castSpellsOnTarget) subspell.subcast(data);
+		else subspell.subcast(data);
 	}
 
 	private void open(Player opener, MenuData data) {
@@ -284,7 +267,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		OfflinePlayer target = skullMeta.getOwningPlayer();
 		if (target == null || !target.isOnline()) {
 			meta.displayName(translate(opener, null, skullNameOffline, args));
-			if (spellOffline != null) spellOffline.subcast(opener, power, args);
+			if (spellOffline != null) spellOffline.subcast(spellData);
 
 			if (stayOpen) item.setItemMeta(meta);
 			else {
@@ -304,7 +287,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 
 		if (radius > 0 && targetPlayer.getLocation().distance(opener.getLocation()) > radius) {
 			meta.displayName(translate(opener, targetPlayer, skullNameRadius, args));
-			if (spellRange != null) spellRange.subcast(opener, power, args);
+			if (spellRange != null) spellRange.subcast(spellData);
 
 			if (stayOpen) item.setItemMeta(meta);
 			else {
@@ -317,11 +300,11 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		}
 
 		switch (event.getClick()) {
-			case LEFT -> processClickSpell(spellOnLeft, opener, targetPlayer, power, args);
-			case RIGHT -> processClickSpell(spellOnRight, opener, targetPlayer, power, args);
-			case MIDDLE -> processClickSpell(spellOnMiddle, opener, targetPlayer, power, args);
-			case SHIFT_LEFT -> processClickSpell(spellOnSneakLeft, opener, targetPlayer, power, args);
-			case SHIFT_RIGHT -> processClickSpell(spellOnSneakRight, opener, targetPlayer, power, args);
+			case LEFT -> processClickSpell(spellOnLeft, spellData);
+			case RIGHT -> processClickSpell(spellOnRight, spellData);
+			case MIDDLE -> processClickSpell(spellOnMiddle, spellData);
+			case SHIFT_LEFT -> processClickSpell(spellOnSneakLeft, spellData);
+			case SHIFT_RIGHT -> processClickSpell(spellOnSneakRight, spellData);
 		}
 
 		if (variableTarget != null && !variableTarget.isEmpty() && MagicSpells.getVariableManager().getVariable(variableTarget) != null)

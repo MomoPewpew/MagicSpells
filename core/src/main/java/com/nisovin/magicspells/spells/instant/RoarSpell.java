@@ -33,7 +33,7 @@ public class RoarSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			double radius = Math.min(this.radius.get(caster, null, power, args), MagicSpells.getGlobalRadius());
 			List<Entity> entities = caster.getNearbyEntities(radius, radius, radius);

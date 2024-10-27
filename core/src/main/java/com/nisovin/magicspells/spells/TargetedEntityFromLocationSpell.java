@@ -1,22 +1,9 @@
 package com.nisovin.magicspells.spells;
 
-import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
+import com.nisovin.magicspells.util.SpellData;
 
 public interface TargetedEntityFromLocationSpell {
 
-	default boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		return castAtEntityFromLocation(caster, from, target, power);
-	}
-
-	default boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		return castAtEntityFromLocation(from, target, power);
-	}
-
-	@Deprecated
-	boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power);
-
-	@Deprecated
-	boolean castAtEntityFromLocation(Location from, LivingEntity target, float power);
+	boolean castAtEntityFromLocation(SpellData data);
 
 }

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,12 +19,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerMoveEvent;
 
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.spells.BuffSpell;
-import com.nisovin.magicspells.util.MagicConfig;
-import com.nisovin.magicspells.util.PlayerNameUtils;
 import com.nisovin.magicspells.util.config.ConfigData;
 
 public class StonevisionSpell extends BuffSpell {
@@ -68,13 +65,13 @@ public class StonevisionSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player player)) return false;
+	public boolean castBuff(SpellData data) {
+		if (!(data.caster() instanceof Player player)) return false;
 
-		int radius = this.radius.get(entity, null, power, args);
+		int radius = this.radius.get(data);
 		radius = Math.min(radius, MagicSpells.getGlobalRadius());
 
-		players.put(entity.getUniqueId(), new TransparentBlockSet(player, radius, transparentTypes));
+		players.put(player.getUniqueId(), new TransparentBlockSet(player, radius, transparentTypes));
 		return true;
 	}
 

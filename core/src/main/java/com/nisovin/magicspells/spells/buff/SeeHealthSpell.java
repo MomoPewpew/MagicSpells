@@ -2,17 +2,14 @@ package com.nisovin.magicspells.spells.buff;
 
 import java.util.*;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.CastData;
-import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.spells.BuffSpell;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.config.ConfigData;
 
 public class SeeHealthSpell extends BuffSpell {
@@ -39,9 +36,9 @@ public class SeeHealthSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player)) return false;
-		players.put(entity.getUniqueId(), new CastData(power, args));
+	public boolean castBuff(SpellData data) {
+		if (!(data.caster() instanceof Player)) return false;
+		players.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
 
 		if (updater == null) updater = new Updater();
 		return true;

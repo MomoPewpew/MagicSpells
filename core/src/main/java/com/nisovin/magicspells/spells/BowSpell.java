@@ -174,7 +174,7 @@ public class BowSpell extends Spell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		return PostCastAction.ALREADY_HANDLED;
 	}
 
@@ -223,7 +223,7 @@ public class BowSpell extends Spell {
 		if (ammoItems != null && !check(ammo, ammoItems)) return;
 		if (disallowedAmmoItems != null && check(ammo, disallowedAmmoItems)) return;
 
-		SpellCastEvent castEvent = preCast(caster, useBowForce ? force : 1f, null);
+		SpellCastEvent castEvent = preCast(new SpellData(caster, useBowForce ? force : 1f));
 		if (castEvent == null) {
 			if (cancelShotOnFail) event.setCancelled(true);
 			return;
@@ -234,7 +234,7 @@ public class BowSpell extends Spell {
 			if (!event.isCancelled()) {
 				Entity projectile = event.getProjectile();
 
-				ArrowData arrowData = new ArrowData(this, new SpellData(caster, null, castEvent.getPower(), null));
+				ArrowData arrowData = new ArrowData(this, new SpellData(caster, castEvent.getPower()));
 				List<ArrowData> arrowDataList = null;
 				if (projectile.hasMetadata(METADATA_KEY)) {
 					List<MetadataValue> metas = projectile.getMetadata(METADATA_KEY);
@@ -258,7 +258,7 @@ public class BowSpell extends Spell {
 				playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, caster.getLocation(), projectile.getLocation(), caster, projectile, arrowData.spellData);
 			}
 
-			if (spellOnShoot != null) spellOnShoot.subcast(caster, castEvent.getPower(), null);
+			if (spellOnShoot != null) spellOnShoot.subcast(new SpellData(caster, castEvent.getPower()));
 		} else if (cancelShotOnFail) event.setCancelled(true);
 
 		postCast(castEvent, PostCastAction.HANDLE_NORMALLY);
@@ -306,10 +306,10 @@ public class BowSpell extends Spell {
 					Subspell groundSpell = data.bowSpell.spellOnHitGround;
 					if (groundSpell == null) continue;
 
-					SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(data.bowSpell, caster, proj.getLocation(), data.spellData.power());
+					SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(data.bowSpell, new SpellData(caster, proj.getLocation(), data.spellData.power()));
 					if (!targetEvent.callEvent()) continue;
 
-					groundSpell.subcast(caster, targetEvent.getTargetLocation(), targetEvent.getPower(), null);
+					groundSpell.subcast(new SpellData(caster, targetEvent.getTargetLocation(), targetEvent.getPower()));
 
 					if (data.bowSpell.removeArrow) remove = true;
 				}
@@ -345,14 +345,14 @@ public class BowSpell extends Spell {
 					Subspell entitySpell = data.bowSpell.spellOnHitEntity;
 					Subspell entityLocationSpell = data.bowSpell.spellOnEntityLocation;
 
-					SpellTargetEvent targetEvent = new SpellTargetEvent(data.bowSpell, caster, target, data.spellData.power());
+					SpellTargetEvent targetEvent = new SpellTargetEvent(data.bowSpell, new SpellData(caster, target, data.spellData.power()));
 					if (!targetEvent.callEvent()) continue;
 
 					LivingEntity subTarget = targetEvent.getTarget();
 					float subPower = targetEvent.getPower();
 
-					if (entitySpell != null) entitySpell.subcast(caster, caster.getLocation(), subTarget, subPower, null);
-					if (entityLocationSpell != null) entityLocationSpell.subcast(caster, arrow.getLocation(), subPower, null);
+					if (entitySpell != null) entitySpell.subcast(new SpellData(caster, subTarget, caster.getLocation(), subPower));
+					if (entityLocationSpell != null) entityLocationSpell.subcast(new SpellData(caster, arrow.getLocation(), subPower));
 
 					if (data.bowSpell.removeArrow) remove = true;
 				}

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -15,11 +16,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 
 import io.papermc.paper.event.entity.EntityMoveEvent;
 
-import com.nisovin.magicspells.util.Util;
-import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.spells.BuffSpell;
-import com.nisovin.magicspells.util.MagicConfig;
-import com.nisovin.magicspells.util.BlockPlatform;
 import com.nisovin.magicspells.util.config.ConfigData;
 
 public class FrostwalkSpell extends BuffSpell {
@@ -41,8 +38,9 @@ public class FrostwalkSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.put(entity.getUniqueId(), new BlockPlatform(Material.ICE, Material.WATER, entity.getLocation().getBlock().getRelative(0, -1, 0), size.get(entity, null, power, args), !leaveFrozen, "square"));
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        entities.put(data.caster().getUniqueId(), new BlockPlatform(Material.ICE, Material.WATER, data.caster().getLocation().getBlock().getRelative(0, -1, 0), size.get(data), !leaveFrozen, "square"));
 		return true;
 	}
 

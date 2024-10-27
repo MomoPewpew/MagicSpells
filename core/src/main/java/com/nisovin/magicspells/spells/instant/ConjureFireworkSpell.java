@@ -116,7 +116,7 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			boolean added = false;
 			ItemStack item = firework.clone();

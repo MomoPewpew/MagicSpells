@@ -3,7 +3,6 @@ package com.nisovin.magicspells.util;
 import java.util.Map;
 import java.util.HashMap;
 
-import com.nisovin.magicspells.MagicSpells;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -11,7 +10,6 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.event.inventory.InventoryType;
 
-import com.nisovin.magicspells.util.reagent.ItemReagent;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 

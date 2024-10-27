@@ -1,8 +1,6 @@
 package com.nisovin.magicspells.util;
 
-import org.bukkit.entity.Entity;
-
-public record TargetInfo<E extends Entity>(E target, float power, boolean cancelled) {
+public record TargetInfo<T>(T target, SpellData spellData, boolean cancelled) {
 
 	public boolean empty() {
 		return target == null;
@@ -13,13 +11,13 @@ public record TargetInfo<E extends Entity>(E target, float power, boolean cancel
 	}
 
 	@Deprecated
-	public E getTarget() {
+	public T getTarget() {
 		return target;
 	}
 
 	@Deprecated
 	public float getPower() {
-		return power;
+		return spellData.power();
 	}
 
 }

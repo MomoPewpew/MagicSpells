@@ -71,7 +71,7 @@ public class TomeSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			Spell spell;
 			if (args == null || args.length == 0) {
@@ -150,22 +150,22 @@ public class TomeSpell extends CommandSpell {
 		if (spell == null) return;
 
 		if (spellbook.hasSpell(spell)) {
-			sendMessage(strAlreadyKnown, event.getPlayer(), MagicSpells.NULL_ARGS, "%s", spell.getName());
+			sendMessage(strAlreadyKnown, event.getPlayer(), new String[0], "%s", spell.getName());
 			return;
 		}
 		if (!spellbook.canLearn(spell)) {
-			sendMessage(strCantLearn, event.getPlayer(), MagicSpells.NULL_ARGS, "%s", spell.getName());
+			sendMessage(strCantLearn, event.getPlayer(), new String[0], "%s", spell.getName());
 			return;
 		}
 		SpellLearnEvent learnEvent = new SpellLearnEvent(spell, event.getPlayer(), LearnSource.TOME, event.getPlayer().getInventory().getItemInMainHand());
 		EventUtil.call(learnEvent);
 		if (learnEvent.isCancelled()) {
-			sendMessage(strCantLearn, event.getPlayer(), MagicSpells.NULL_ARGS, "%s", spell.getName());
+			sendMessage(strCantLearn, event.getPlayer(), new String[0], "%s", spell.getName());
 			return;
 		}
 		spellbook.addSpell(spell);
 		spellbook.save();
-		sendMessage(strLearned, event.getPlayer(), MagicSpells.NULL_ARGS, "%s", spell.getName());
+		sendMessage(strLearned, event.getPlayer(), new String[0], "%s", spell.getName());
 		if (cancelReadOnLearn) event.setCancelled(true);
 
 		if (uses > 0) {

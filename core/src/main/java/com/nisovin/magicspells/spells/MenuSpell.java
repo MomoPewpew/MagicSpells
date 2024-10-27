@@ -220,29 +220,31 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
 			LivingEntity target = null;
 			Location locTarget = null;
 			Player opener = player;
+			float power = data.power();
+			String[] args = data.args();
 
 			if (requireEntityTarget) {
 				if (targetOpensMenuInstead) {
-					TargetInfo<Player> info = getTargetedPlayer(player, power, args);
-					if (info.noTarget()) return noTarget(caster, args, info);
+					TargetInfo<Player> info = getTargetedPlayer(data);
+					if (info.noTarget()) return noTarget(player, args, info);
 
 					opener = info.target();
-					power = info.power();
+					power = info.getPower();
 				} else {
-					TargetInfo<LivingEntity> info = getTargetedEntity(player, power, args);
-					if (info.noTarget()) return noTarget(caster, args, info);
+					TargetInfo<LivingEntity> info = getTargetedEntity(data);
+					if (info.noTarget()) return noTarget(player, args, info);
 
 					target = info.target();
-					power = info.power();
+					power = info.getPower();
 				}
 			} else if (requireLocationTarget) {
 				Block block = getTargetedBlock(player, power, args);
-				if (block == null || BlockUtils.isAir(block.getType())) return noTarget(caster, args);
+				if (block == null || BlockUtils.isAir(block.getType())) return noTarget(data.caster(), args);
 
 				locTarget = block.getLocation();
 			}
@@ -250,7 +252,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			open(player, opener, target, locTarget, power, args);
 
 			if (requireEntityTarget) {
-				sendMessages(caster, targetOpensMenuInstead ? opener : target, args);
+				sendMessages(player, targetOpensMenuInstead ? opener : target, args);
 				return PostCastAction.NO_MESSAGES;
 			}
 		}
@@ -259,52 +261,24 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		if (!(caster instanceof Player opener)) return false;
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		if (!(data.caster() instanceof Player opener)) return false;
+		Player target = (Player) data.target();
 		if (targetOpensMenuInstead) {
-			if (!(target instanceof Player player)) return false;
+			if (!(data.target() instanceof Player player)) return false;
 			opener = player;
 			target = null;
 		}
-		open((Player) caster, opener, target, null, power, args);
+		open((Player) data.caster(), opener, target, null, data.power(), data.args());
 		return true;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!targetOpensMenuInstead) return false;
-		if (!validTargetList.canTarget(target)) return false;
-		if (!(target instanceof Player player)) return false;
-		open(null, player, null, null, power, args);
+	public boolean castAtLocation(SpellData data) {
+		if (!(data.caster() instanceof Player player)) return false;
+		open(player, player, null, data.location(), data.power(), data.args());
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player player)) return false;
-		open(player, player, null, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
 	}
 
 	@Override
@@ -485,7 +459,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		// Reopen.
 		menuData.put(id, mData);
 		Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(), Component.text(internalName));
-		applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS, mData);
+		applyOptionsToInventory(player, newInv, new String[0], mData);
 		player.openInventory(newInv);
 		Util.setInventoryTitle(player, title);
 	}
@@ -512,7 +486,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		LivingEntity entityTarget = null;
 		Location locationTarget = null;
 		float power = option.power;
-		String[] args = null;
+		String[] args = new String[0];
 
 		UUID id = player.getUniqueId();
 		MenuData data = menuData.get(id);
@@ -529,11 +503,11 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		boolean success;
 
-		if (entityTarget != null) success = spell.subcast(player, entityTarget, power, args);
-		else if (locationTarget != null) success = spell.subcast(player, locationTarget, power, args);
-		else if (bypassNormalCast) success = spell.subcast(player, power, args);
+		if (entityTarget != null) success = spell.subcast(new SpellData(player, entityTarget, power, args));
+		else if (locationTarget != null) success = spell.subcast(new SpellData(player, locationTarget, power, args));
+		else if (bypassNormalCast) success = spell.subcast(new SpellData(player, power, args));
 		else {
-			SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
+			SpellCastResult result = spell.getSpell().cast(new SpellData(player, power, new String[0]));
 			success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
 		}
 

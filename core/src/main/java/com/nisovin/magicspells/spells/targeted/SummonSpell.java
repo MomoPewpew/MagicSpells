@@ -58,7 +58,7 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			// Get target name and landing location
 			String targetName = "";
@@ -151,10 +151,10 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 
 		Player player = event.getPlayer();
 		if (maxAcceptDelay > 0 && pendingTimes.get(player) + maxAcceptDelay * TimeUtil.MILLISECONDS_PER_SECOND < System.currentTimeMillis()) {
-			sendMessage(strSummonExpired, player, MagicSpells.NULL_ARGS);
+			sendMessage(strSummonExpired, player, new String[0]);
 		} else {
 			player.teleportAsync(pendingSummons.get(player));
-			sendMessage(strSummonAccepted, player, MagicSpells.NULL_ARGS);
+			sendMessage(strSummonAccepted, player, new String[0]);
 		}
 		pendingSummons.remove(player);
 		pendingTimes.remove(player);

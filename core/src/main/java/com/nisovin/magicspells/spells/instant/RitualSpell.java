@@ -82,7 +82,7 @@ public class RitualSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (spellToCast == null || !(caster instanceof Player player)) return PostCastAction.ALREADY_HANDLED;
 		if (activeRituals.containsKey(player)) {
 			ActiveRitual channel = activeRituals.remove(player);
@@ -206,7 +206,7 @@ public class RitualSpell extends InstantSpell {
 						iter.remove();
 						count--;
 						resetManaBar(player);
-						if (!strRitualLeft.isEmpty()) sendMessage(strRitualLeft, player, MagicSpells.NULL_ARGS);
+						if (!strRitualLeft.isEmpty()) sendMessage(strRitualLeft, player, new String[0]);
 						continue;
 					}
 				}

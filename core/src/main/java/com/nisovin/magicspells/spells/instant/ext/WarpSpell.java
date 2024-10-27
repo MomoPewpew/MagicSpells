@@ -26,7 +26,7 @@ public class WarpSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		CmiWarp targetWarp = CMI.getInstance().getWarpManager().getWarp(targetWarpName);
 
 		if (targetWarp == null) {

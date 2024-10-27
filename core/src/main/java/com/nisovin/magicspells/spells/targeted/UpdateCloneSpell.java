@@ -31,7 +31,7 @@ public class UpdateCloneSpell extends TargetedSpell implements TargetedLocationS
     }
 
     @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+    public PostCastAction castSpell(SpellCastState state, SpellData data) {
 
         Block block = getTargetedBlock(caster, power, args);
 

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -37,9 +38,9 @@ public class WaterwalkSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player)) return false;
-		entities.put(entity.getUniqueId(), new CastData(power, args));
+	public boolean castBuff(SpellData data) {
+		if (!(data.caster() instanceof Player)) return false;
+		entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
 		startTicker();
 		return true;
 	}

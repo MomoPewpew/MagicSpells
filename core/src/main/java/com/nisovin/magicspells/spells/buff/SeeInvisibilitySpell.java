@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -52,10 +53,10 @@ public class SeeInvisibilitySpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player player)) return false;
+	public boolean castBuff(SpellData data) {
+		if (!(data.caster() instanceof Player player)) return false;
 
-		entities.add(entity.getUniqueId());
+		entities.add(player.getUniqueId());
 		addSeeInvisibilitySpell(player, this);
 
 		for (LivingEntity e : InvisibilitySpell.getInvisibleEntities()) {

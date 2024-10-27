@@ -90,7 +90,7 @@ public class RepairSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			boolean repaired = false;
 			for (String s : toRepair) {

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -36,11 +37,12 @@ public class LilywalkSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
+	public boolean castBuff(SpellData data) {
 		Lilies lilies = new Lilies();
-		lilies.move(entity.getLocation().getBlock());
+        assert data.caster() != null;
+        lilies.move(data.caster().getLocation().getBlock());
 
-		entities.put(entity.getUniqueId(), lilies);
+		entities.put(data.caster().getUniqueId(), lilies);
 		return true;
 	}
 

@@ -47,8 +47,9 @@ public class FlamewalkSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.put(entity.getUniqueId(), new CastData(power, args));
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
 		if (burner == null) burner = new Burner();
 		return true;
 	}

@@ -302,7 +302,7 @@ public class Spellbook {
 				if (MagicSpells.canCycleToNoSpell()) {
 					activeSpells.put(castItem, -1);
 					EventUtil.call(new SpellSelectionChangedEvent(null, player, castItem, this));
-					MagicSpells.sendMessage(MagicSpells.getSpellChangeEmptyMessage(), player, MagicSpells.NULL_ARGS);
+					MagicSpells.sendMessage(MagicSpells.getSpellChangeEmptyMessage(), player, new String[0]);
 					return null;
 				} else {
 					i = 0;
@@ -336,7 +336,7 @@ public class Spellbook {
 					if (MagicSpells.canCycleToNoSpell() && i == -1) {
 						activeSpells.put(castItem, -1);
 						EventUtil.call(new SpellSelectionChangedEvent(null, player, castItem, this));
-						MagicSpells.sendMessage(MagicSpells.getSpellChangeEmptyMessage(), player, MagicSpells.NULL_ARGS);
+						MagicSpells.sendMessage(MagicSpells.getSpellChangeEmptyMessage(), player, new String[0]);
 						return null;
 					} else {
 						i = spells.size() - 1;

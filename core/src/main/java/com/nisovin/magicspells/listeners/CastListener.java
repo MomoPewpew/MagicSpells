@@ -3,6 +3,7 @@ package com.nisovin.magicspells.listeners;
 import java.util.Map;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -215,14 +216,14 @@ public class CastListener implements Listener {
 		if (!checkGlobalCooldown(player, spell)) return;
 
 		// Cast spell
-		String[] args = null;
+		String[] args = new String[0];
 		if (item != null && item.hasItemMeta()) {
 			PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
 			if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
 				args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
 			}
 		}
-		spell.cast(player, 1.0F, args, item);
+		spell.cast(new SpellData(player, args, item));
 	}
 
 	private boolean checkGlobalCooldown(Player player, Spell spell) {

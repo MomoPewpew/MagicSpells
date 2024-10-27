@@ -76,17 +76,17 @@ public class MagicXpHandler implements Listener {
 	}
 	
 	public void showXpInfo(Player player) {
-		MagicSpells.sendMessage(strXpHeader, player, MagicSpells.NULL_ARGS);
+		MagicSpells.sendMessage(strXpHeader, player, new String[0]);
 		IntMap<String> playerXp = xp.get(player.getName());
 		if (playerXp == null || playerXp.isEmpty()) {
-			MagicSpells.sendMessage(strNoXp, player, MagicSpells.NULL_ARGS);
+			MagicSpells.sendMessage(strNoXp, player, new String[0]);
 			return;
 		}
 		for (String school : playerXp.keySet()) {
 			String schoolName = schools.get(school);
 			if (schoolName == null) continue;
 			String amt = NumberFormat.getInstance().format(playerXp.get(school));
-			MagicSpells.sendMessage(schoolName + ": " + amt, player, MagicSpells.NULL_ARGS);
+			MagicSpells.sendMessage(schoolName + ": " + amt, player, new String[0]);
 		}
 	}
 	
@@ -139,7 +139,7 @@ public class MagicXpHandler implements Listener {
 					EventUtil.call(evt);
 					if (!evt.isCancelled()) {
 						spellbook.addSpell(spell);
-						MagicSpells.sendMessage(spell.getStrXpLearned(), player, MagicSpells.NULL_ARGS);
+						MagicSpells.sendMessage(spell.getStrXpLearned(), player, new String[0]);
 						learned = true;
 					}
 				}

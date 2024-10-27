@@ -4,6 +4,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.reagent.SpellReagents;
 import com.nisovin.magicspells.Spell.SpellCastState;
 /**
@@ -15,23 +16,21 @@ import com.nisovin.magicspells.Spell.SpellCastState;
 public class SpellCastEvent extends SpellEvent implements Cancellable {
 
 	private SpellCastState state;
+	private SpellData data;
 	private boolean stateChanged;
 	private float cooldown;
 	private SpellReagents reagents;
 	private boolean reagentsChanged;
-	private float power;
 	private int castTime;
-	private String[] args;
 	private boolean cancelled = false;
 	
-	public SpellCastEvent(Spell spell, LivingEntity caster, SpellCastState state, float power, String[] args, float cooldown, SpellReagents reagents, int castTime) {
-		super(spell, caster);
+	public SpellCastEvent(Spell spell, SpellCastState state, SpellData data, float cooldown, SpellReagents reagents, int castTime) {
+		super(spell, data);
 		this.state = state;
+		this.data = data;
 		this.cooldown = cooldown;
 		this.reagents = reagents;
-		this.power = power;
 		this.castTime = castTime;
-		this.args = args;
 		stateChanged = false;
 		reagentsChanged = false;
 	}
@@ -116,7 +115,7 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 	 * @return the power level
 	 */
 	public float getPower() {
-		return power;
+		return data.power();
 	}
 	
 	/**
@@ -124,7 +123,7 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 	 * @param power the power level
 	 */
 	public void setPower(float power) {
-		this.power = power;
+		data.power(power);
 	}
 	
 	/**
@@ -132,7 +131,7 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 	 * @param power the power level multiplier
 	 */
 	public void increasePower(float power) {
-		this.power *= power;
+		data.power(this.data.power() * power);
 	}
 	
 	/**
@@ -156,7 +155,7 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 	 * @return the args, or null if there were none
 	 */
 	public String[] getSpellArgs() {
-		return args;
+		return data.args();
 	}
 	
 	@Override

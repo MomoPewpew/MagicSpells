@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.buff;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.*;
@@ -17,14 +18,9 @@ import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import com.nisovin.magicspells.Subspell;
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.MobUtil;
-import com.nisovin.magicspells.util.BlockUtils;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.spells.DamageSpell;
-import com.nisovin.magicspells.util.ValidTargetList;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
@@ -229,8 +225,8 @@ public class MinionSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player player)) return false;
+	public boolean castBuff(SpellData data) {
+		if (!(data.caster() instanceof Player player)) return false;
 		// Selecting the mob
 		EntityType creatureType = null;
 		int num = random.nextInt(100);
@@ -272,14 +268,14 @@ public class MinionSpell extends BuffSpell {
 		minion.setCustomNameVisible(true);
 
 		if (powerAffectsHealth) {
-			Util.setMaxHealth(minion, maxHealth * power * powerHealthFactor);
-			minion.setHealth(health * power * powerHealthFactor);
+			Util.setMaxHealth(minion, maxHealth * data.power() * powerHealthFactor);
+			minion.setHealth(health * data.power() * powerHealthFactor);
 		} else {
 			Util.setMaxHealth(minion, maxHealth);
 			minion.setHealth(health);
 		}
 
-		if (spawnSpell != null) spawnSpell.subcast(player, minion.getLocation(), minion, power, args);
+		if (spawnSpell != null) spawnSpell.subcast(data.builder().target(minion).location(minion.getLocation()).build());
 
 		// Apply potion effects
 		if (potionEffects != null) minion.addPotionEffects(potionEffects);
@@ -415,7 +411,7 @@ public class MinionSpell extends BuffSpell {
 			}
 
 			if (((LivingEntity) entity).getHealth() - e.getFinalDamage() <= 0 && deathSpell != null)
-				deathSpell.subcast(owner, minion.getLocation(), minion, 1, null);
+				deathSpell.subcast(new SpellData(owner, minion, minion.getLocation()));
 
 			// If the minion is far away from the owner, forget about attacking
 			if (owner.getWorld().equals(minion.getWorld()) && owner.getLocation().distanceSquared(minion.getLocation()) > maxDistance * maxDistance) return;
@@ -469,7 +465,7 @@ public class MinionSpell extends BuffSpell {
 			Player owner = Bukkit.getPlayer(players.get(minion));
 			if (owner == null || !owner.isOnline() || !owner.isValid()) return;
 
-			if (attackSpell != null) attackSpell.subcast(owner, minion.getLocation(), (LivingEntity) entity, 1, null);
+			if (attackSpell != null) attackSpell.subcast(new SpellData(owner, (LivingEntity) entity, minion.getLocation()));
 		}
 
 		// The target died, the minion will follow his owner

@@ -54,9 +54,9 @@ public class HasteSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player)) return false;
-		players.put(entity.getUniqueId(), new HasteData(entity, power, args));
+	public boolean castBuff(SpellData data) {
+		if (!(data.caster() instanceof Player)) return false;
+		players.put(data.caster().getUniqueId(), new HasteData(data.caster(), data.power(), data.args()));
 		return true;
 	}
 

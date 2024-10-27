@@ -57,7 +57,7 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			boolean added = false;
 			ItemStack item = createBook(player, args);

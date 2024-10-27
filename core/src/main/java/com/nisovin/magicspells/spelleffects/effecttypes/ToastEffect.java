@@ -38,7 +38,7 @@ public class ToastEffect extends SpellEffect {
 	@Override
 	protected Runnable playEffectEntity(Entity entity, SpellData data) {
         ItemStack icon = null;
-		MagicItem magicItem = MagicItems.getMagicItemFromString(magicItemString.get(data));
+		MagicItem magicItem = MagicItems.getMagicItemFromString(magicItemString.get(data), data);
 		if (magicItem == null) MagicSpells.error("Invalid toast effect icon specified: '" + magicItemString + "'");
 		else icon = magicItem.getItemStack();
 

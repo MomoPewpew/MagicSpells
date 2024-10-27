@@ -249,7 +249,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 
 		if (itemListData == null) return PostCastAction.ALREADY_HANDLED;
 		if (state == SpellCastState.NORMAL && caster instanceof Player) {

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -14,12 +15,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 
 import com.nisovin.magicspells.Spell;
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.CastItem;
-import com.nisovin.magicspells.util.RegexUtil;
-import com.nisovin.magicspells.util.MagicConfig;
-import com.nisovin.magicspells.util.PlayerNameUtils;
 import com.nisovin.magicspells.Spell.PostCastAction;
 import com.nisovin.magicspells.Spell.SpellCastState;
 import com.nisovin.magicspells.Spell.SpellCastResult;
@@ -94,11 +90,11 @@ public class DanceCastListener implements Listener {
 		boolean casted = false;
 		Spell spell = spells.get(castSequence);
 		if (spell != null) {
-			MagicSpells.sendMessage(strDanceComplete, player, MagicSpells.NULL_ARGS);
-			SpellCastResult result = spell.cast(player);
+			MagicSpells.sendMessage(strDanceComplete, player, new String[0]);
+			SpellCastResult result = spell.cast(new SpellData(player));
 			casted = result.state == SpellCastState.NORMAL && result.action != PostCastAction.ALREADY_HANDLED;
 		} else if (forceEnd) {
-			MagicSpells.sendMessage(strDanceFail, player, MagicSpells.NULL_ARGS);
+			MagicSpells.sendMessage(strDanceFail, player, new String[0]);
 		}
 		if (casted || forceEnd) {
 			String playerName = player.getName();
@@ -140,7 +136,7 @@ public class DanceCastListener implements Listener {
 					player.setAllowFlight(true);
 					player.setFlying(false);
 				}
-				MagicSpells.sendMessage(strDanceStart, player, MagicSpells.NULL_ARGS);
+				MagicSpells.sendMessage(strDanceStart, player, new String[0]);
 				if (startSound != null) player.playSound(player.getLocation(), startSound, startSoundVolume, startSoundPitch);
 				if (duration > 0) playerTasks.put(playerName, MagicSpells.scheduleDelayedTask(new DanceCastDuration(playerName), duration));
 			}
@@ -221,7 +217,7 @@ public class DanceCastListener implements Listener {
 			playerTasks.remove(playerName);
 			if (cast == null) return;
 			Player player = PlayerNameUtils.getPlayerExact(playerName);
-			if (player != null) MagicSpells.sendMessage(strDanceFail, player, MagicSpells.NULL_ARGS);
+			if (player != null) MagicSpells.sendMessage(strDanceFail, player, new String[0]);
 		}
 	}
 	

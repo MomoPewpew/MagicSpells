@@ -108,15 +108,20 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Player target = null;
+			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
+
+			LivingEntity caster = data.caster();
+			String[] args = data.args();
+			if (data.target() == null || !(data.target() instanceof Player target)) return noTarget(caster, args, targetInfo);
+			Float power = data.power();
+
 			if (requirePlayerTarget) {
-				TargetInfo<Player> targetInfo = getTargetedPlayer(caster, power, args);
 				if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
 
 				target = targetInfo.target();
-				power = targetInfo.power();
+				power = targetInfo.getPower();
 			}
 
 			process(caster, target, power, args);
@@ -228,37 +233,15 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
 
-		if (requirePlayerTarget && target instanceof Player player) {
-			process(caster, player, power, args);
+		if (requirePlayerTarget && data.target() instanceof Player player) {
+			process(data.caster(), player, data.power(), data.args());
 			return true;
 		}
 
 		return false;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-
-		if (requirePlayerTarget && target instanceof Player player) {
-			process(null, player, power, args);
-			return true;
-		}
-
-		return false;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	@Override
@@ -282,7 +265,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 			if (!msg.startsWith("/" + commandToBlock)) continue;
 
 			event.setCancelled(true);
-			sendMessage(strCantUseCommand, event.getPlayer(), MagicSpells.NULL_ARGS);
+			sendMessage(strCantUseCommand, event.getPlayer(), new String[0]);
 			return;
 		}
 	}

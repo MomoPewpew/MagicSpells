@@ -84,7 +84,7 @@ public class ImbueSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			if (args == null || args.length == 0) {
 				sendMessage(strUsage, player, args);
@@ -189,7 +189,7 @@ public class ImbueSpell extends CommandSpell {
 			return;
 		}
 
-		spell.castSpell(event.getPlayer(), SpellCastState.NORMAL, 1.0F, MagicSpells.NULL_ARGS);
+		spell.castSpell(event.getPlayer(), SpellCastState.NORMAL, 1.0F, new String[0]);
 		uses--;
 		if (uses <= 0) {
 			if (consumeItem) event.getPlayer().getInventory().setItemInMainHand(null);

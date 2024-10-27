@@ -3,6 +3,7 @@ package com.nisovin.magicspells.listeners;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Spellbook;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 
@@ -38,7 +39,7 @@ public class MagicChatListener implements Listener {
 				if (spell != null) {
 					Spellbook spellbook = MagicSpells.getSpellbook(player);
 					if (spellbook.hasSpell(spell)) {
-						MagicSpells.scheduleDelayedTask(() -> spell.cast(player, new String[0]), 0);
+						MagicSpells.scheduleDelayedTask(() -> spell.cast(new SpellData(player)), 0);
 						return true;
 					}
 					return false;
@@ -54,7 +55,7 @@ public class MagicChatListener implements Listener {
 				if (spellbook.hasSpell(spell)) {
 					String[] args = new String[split.length - 1];
 					System.arraycopy(split, 1, args, 0, args.length);
-					MagicSpells.scheduleDelayedTask(() -> spell.cast(player, args), 0);
+					MagicSpells.scheduleDelayedTask(() -> spell.cast(new SpellData(player, args)), 0);
 					return true;
 				}
 				return false;
@@ -64,7 +65,7 @@ public class MagicChatListener implements Listener {
 		if (spell != null) {
 			Spellbook spellbook = MagicSpells.getSpellbook(player);
 			if (spellbook.hasSpell(spell)) {
-				MagicSpells.scheduleDelayedTask(() -> spell.cast(player), 0);
+				MagicSpells.scheduleDelayedTask(() -> spell.cast(new SpellData(player)), 0);
 				return true;
 			}
 		}

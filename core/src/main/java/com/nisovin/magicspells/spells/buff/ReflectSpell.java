@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 
@@ -48,8 +49,9 @@ public class ReflectSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		reflectors.put(entity.getUniqueId(), new CastData(power, args));
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        reflectors.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
 		return true;
 	}
 

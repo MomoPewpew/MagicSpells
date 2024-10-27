@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -20,11 +21,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.player.PlayerInteractEvent;
 
-import com.nisovin.magicspells.util.Util;
-import com.nisovin.magicspells.util.CastData;
-import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.spells.BuffSpell;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.events.MagicSpellsBlockBreakEvent;
 import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
@@ -71,9 +68,9 @@ public class ReachSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player)) return false;
-		players.put(entity.getUniqueId(), new CastData(power, args));
+	public boolean castBuff(SpellData data) {
+		if (!(data.caster() instanceof Player)) return false;
+		players.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
 		return true;
 	}
 

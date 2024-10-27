@@ -147,7 +147,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			ItemProjectileTracker tracker = new ItemProjectileTracker(caster, caster.getLocation(), power, args);
 

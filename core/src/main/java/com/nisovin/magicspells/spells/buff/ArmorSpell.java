@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.buff;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -111,32 +112,32 @@ public class ArmorSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		EntityEquipment inv = entity.getEquipment();
+	public boolean castBuff(SpellData data) {
+		EntityEquipment inv = data.caster().getEquipment();
 		if (inv == null) return false;
 
-		ItemStack helmet = getItem(helmetData.get(entity, power, args));
-		ItemStack chestplate = getItem(chestplateData.get(entity, power, args));
-		ItemStack leggings = getItem(leggingsData.get(entity, power, args));
-		ItemStack boots = getItem(bootsData.get(entity, power, args));
+		ItemStack helmet = getItem(helmetData.get(data));
+		ItemStack chestplate = getItem(chestplateData.get(data));
+		ItemStack leggings = getItem(leggingsData.get(data));
+		ItemStack boots = getItem(bootsData.get(data));
 
 		ArmorSet armorSet = new ArmorSet(helmet, chestplate, leggings, boots);
 
 		if (!replace && ((armorSet.helmet() != null && inv.getHelmet() != null) || (armorSet.chestplate() != null && inv.getChestplate() != null) || (armorSet.leggings() != null && inv.getLeggings() != null) || (armorSet.boots() != null && inv.getBoots() != null))) {
 			// error
-			if (entity instanceof Player) sendMessage(strHasArmor, entity, args);
+			if (data.caster() instanceof Player) sendMessage(strHasArmor, data.caster(), data.args());
 			return false;
 		}
 
 		setArmor(inv, armorSet);
 
-		if (!permanent) entities.put(entity.getUniqueId(), armorSet);
+		if (!permanent) entities.put(data.caster().getUniqueId(), armorSet);
 		return true;
 	}
 
 	@Override
-	public boolean recastBuff(LivingEntity entity, float power, String[] args) {
-		return castBuff(entity, power, args);
+	public boolean recastBuff(SpellData data) {
+		return castBuff(data);
 	}
 
 	@Override

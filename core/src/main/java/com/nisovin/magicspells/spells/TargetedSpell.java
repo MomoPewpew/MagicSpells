@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -89,115 +90,62 @@ public abstract class TargetedSpell extends InstantSpell {
 		if (!playFizzleSound || !(livingEntity instanceof Player player)) return;
 		player.playEffect(livingEntity.getLocation(), Effect.EXTINGUISH, null);
 	}
-	
-	@Override
-	protected TargetInfo<LivingEntity> getTargetedEntity(LivingEntity caster, float power, boolean forceTargetPlayers, ValidTargetChecker checker) {
-		return getTargetedEntity(caster, power, forceTargetPlayers, checker, null);
-	}
 
 	@Override
-	protected TargetInfo<LivingEntity> getTargetedEntity(LivingEntity caster, float power, boolean forceTargetPlayers, ValidTargetChecker checker, String[] args) {
+	protected TargetInfo<LivingEntity> getTargetedEntity(SpellData data, boolean forceTargetPlayers, ValidTargetChecker checker) {
 		if (targetSelf || validTargetList.canTargetSelf()) {
-			SpellTargetEvent event = new SpellTargetEvent(this, caster, caster, power, args);
-			return new TargetInfo<>(event.callEvent() ? event.getTarget() : null, event.getPower(), event.isCastCancelled());
+			SpellTargetEvent event = new SpellTargetEvent(this, data);
+			return new TargetInfo<>(event.callEvent() ? event.getTarget() : null, event.getSpellData(), event.isCastCancelled());
 		}
 
-		return super.getTargetedEntity(caster, power, forceTargetPlayers, checker, args);
-	}
-
-	/**
-	 * This should be called if a target should not be found. It sends the no target message
-	 * and returns the appropriate return value.
-	 * @param livingEntity the casting living entity
-	 * @return the appropriate PostCastAction value
-	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity) {
-		return noTarget(livingEntity, strNoTarget, null, null);
-	}
-
-	/**
-	 * This should be called if a target should not be found. It sends the no target message
-	 * and returns the appropriate return value.
-	 * @param livingEntity the casting living entity
-	 * @param args arguments of spell
-	 * @return the appropriate PostCastAction value
-	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String[] args) {
-		return noTarget(livingEntity, strNoTarget, args, null);
-	}
-
-	/**
-	 * This should be called if a target should not be found. It sends the no target message
-	 * and returns the appropriate return value.
-	 * @param livingEntity the casting living entity
-	 * @param info targeting info
-	 * @return the appropriate PostCastAction value
-	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, TargetInfo<?> info) {
-		return noTarget(livingEntity, strNoTarget, null, info);
-	}
-
-	/**
-	 * This should be called if a target should not be found. It sends the no target message
-	 * and returns the appropriate return value.
-	 * @param livingEntity the casting living entity
-	 * @param args arguments of spell
-	 * @param info targeting info
-	 * @return the appropriate PostCastAction value
-	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String[] args, TargetInfo<?> info) {
-		return noTarget(livingEntity, strNoTarget, args, info);
+		return super.getTargetedEntity(data, forceTargetPlayers, checker);
 	}
 
 	/**
 	 * This should be called if a target should not be found. It sends the provided message
 	 * and returns the appropriate return value.
-	 * @param livingEntity the casting living entity
-	 * @param message the message to send
+	 * @param data SpellData of spell
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String message) {
-		return noTarget(livingEntity, message, null, null);
+	protected PostCastAction noTarget(SpellData data) {
+		return noTarget(data, strNoTarget, null);
 	}
 
 	/**
 	 * This should be called if a target should not be found. It sends the provided message
 	 * and returns the appropriate return value.
-	 * @param livingEntity the casting living entity
+	 * @param data SpellData of spell
 	 * @param message the message to send
-	 * @param args arguments of spell
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String message, String[] args) {
-		return noTarget(livingEntity, message, args, null);
+	protected PostCastAction noTarget(SpellData data, String message) {
+		return noTarget(data, message, null);
 	}
 
 	/**
 	 * This should be called if a target should not be found. It sends the provided message
 	 * and returns the appropriate return value.
-	 * @param livingEntity the casting living entity
+	 * @param data SpellData of spell
+	 * @param info targeting info
+	 * @return the appropriate PostCastAction value
+	 */
+	protected PostCastAction noTarget(SpellData data, TargetInfo<?> info) {
+		return noTarget(data, strNoTarget, info);
+	}
+
+	/**
+	 * This should be called if a target should not be found. It sends the provided message
+	 * and returns the appropriate return value.
+	 * @param data SpellData of spell
 	 * @param message the message to send
 	 * @param info targeting info
 	 * @return the appropriate PostCastAction value
 	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String message, TargetInfo<?> info) {
-		return noTarget(livingEntity, message, null, info);
-	}
-
-	/**
-	 * This should be called if a target should not be found. It sends the provided message
-	 * and returns the appropriate return value.
-	 * @param livingEntity the casting living entity
-	 * @param message the message to send
-	 * @param args arguments of spell
-	 * @param info targeting info
-	 * @return the appropriate PostCastAction value
-	 */
-	protected PostCastAction noTarget(LivingEntity livingEntity, String message, String[] args, TargetInfo<?> info) {
+	protected PostCastAction noTarget(SpellData data, String message, TargetInfo<?> info) {
 		if (info != null && info.cancelled()) return PostCastAction.ALREADY_HANDLED;
-		fizzle(livingEntity);
-		sendMessage(message, livingEntity, args);
-		if (spellOnFail != null) spellOnFail.subcast(livingEntity, info == null ? 1f : info.power(), args);
+		fizzle(data.caster());
+		sendMessage(message, data.caster(), data.args());
+		if (spellOnFail != null) spellOnFail.subcast(data.builder().power(info == null ? data.power() : info.getPower()).build());
 		return alwaysActivate ? PostCastAction.NO_MESSAGES : PostCastAction.ALREADY_HANDLED;
 	}
 

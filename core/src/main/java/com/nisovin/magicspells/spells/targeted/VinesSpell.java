@@ -33,7 +33,7 @@ public class VinesSpell extends TargetedSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			List<Block> target = getLastTwoTargetedBlocks(caster, power, args);
 			if (target == null || target.size() != 2) return noTarget(caster, args);

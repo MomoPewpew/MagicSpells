@@ -97,7 +97,7 @@ public class SpellbookSpell extends CommandSpell {
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			if (args == null || args.length < 1 || args.length > 2 || (args.length == 2 && !RegexUtil.matches(PATTERN_CAST_ARG_USAGE, args[1]))) {
 				sendMessage(strUsage, player, args);
@@ -183,26 +183,26 @@ public class SpellbookSpell extends CommandSpell {
 		Spellbook spellbook = MagicSpells.getSpellbook(player);
 		Spell spell = MagicSpells.getSpellByInternalName(bookSpells.get(i));
 		if (spell == null) {
-			sendMessage(strLearnError, player, MagicSpells.NULL_ARGS);
+			sendMessage(strLearnError, player, new String[0]);
 			return;
 		}
 		if (!spellbook.canLearn(spell)) {
-			sendMessage(strCantLearn, player, MagicSpells.NULL_ARGS, "%s", spell.getName());
+			sendMessage(strCantLearn, player, new String[0], "%s", spell.getName());
 			return;
 		}
 		if (spellbook.hasSpell(spell)) {
-			sendMessage(strAlreadyKnown, player, MagicSpells.NULL_ARGS, "%s", spell.getName());
+			sendMessage(strAlreadyKnown, player, new String[0], "%s", spell.getName());
 			return;
 		}
 		SpellLearnEvent learnEvent = new SpellLearnEvent(spell, player, LearnSource.SPELLBOOK, event.getClickedBlock());
 		EventUtil.call(learnEvent);
 		if (learnEvent.isCancelled()) {
-			sendMessage(strCantLearn, player, MagicSpells.NULL_ARGS, "%s", spell.getName());
+			sendMessage(strCantLearn, player, new String[0], "%s", spell.getName());
 			return;
 		}
 		spellbook.addSpell(spell);
 		spellbook.save();
-		sendMessage(strLearned, player, MagicSpells.NULL_ARGS, "%s", spell.getName());
+		sendMessage(strLearned, player, new String[0], "%s", spell.getName());
 		playSpellEffects(EffectPosition.DELAYED, player, new SpellData(player));
 
 		int uses = bookUses.get(i);
@@ -228,7 +228,7 @@ public class SpellbookSpell extends CommandSpell {
 		}
 
 		event.setCancelled(true);
-		sendMessage(strCantDestroy, pl, MagicSpells.NULL_ARGS);
+		sendMessage(strCantDestroy, pl, new String[0]);
 	}
 	
 	@Override

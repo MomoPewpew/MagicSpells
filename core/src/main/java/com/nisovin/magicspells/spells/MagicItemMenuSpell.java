@@ -59,40 +59,23 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			TargetInfo<Player> targetInfo = getTargetedPlayer(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player caster) {
+			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
+			if (targetInfo.noTarget()) return noTarget(caster, data.args(), targetInfo);
 			Player target = targetInfo.target();
 
-			openDelay(caster, target, power, args);
+			openDelay(caster, target, data.power(), data.args());
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
-		openDelay(caster, player, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), player)) return false;
+		openDelay(data.caster(), player, data.power(), data.args());
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
-		openDelay(null, player, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	@Override

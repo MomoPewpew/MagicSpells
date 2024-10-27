@@ -145,7 +145,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			Block b = getTargetedBlock(caster, power, args);
 			if (b != null && !BlockUtils.isAir(b.getType())) {

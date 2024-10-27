@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
@@ -51,8 +52,9 @@ public class WalkwaySpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.put(entity.getUniqueId(), new Platform(entity, material, size.get(entity, null, power, args)));
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        entities.put(data.caster().getUniqueId(), new Platform(data.caster(), material, size.get(data)));
 		registerListener();
 		return true;
 	}

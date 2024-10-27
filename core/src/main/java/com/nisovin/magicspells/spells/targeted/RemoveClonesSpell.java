@@ -59,7 +59,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 	}
 
     @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+    public PostCastAction castSpell(SpellCastState state, SpellData data) {
         if(!(caster instanceof Player)) return PostCastAction.NO_MESSAGES;
 
         if(state == SpellCastState.NORMAL) {

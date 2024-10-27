@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.events;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.Cancellable;
 import org.bukkit.entity.LivingEntity;
 
@@ -16,12 +17,11 @@ public class ParticleProjectileHitEvent extends SpellEvent implements Cancellabl
 
 	private boolean cancelled = false;
 
-	public ParticleProjectileHitEvent(LivingEntity caster, LivingEntity target, ParticleProjectileTracker tracker, Spell spell, float power) {
-		super(spell, caster);
+	public ParticleProjectileHitEvent(ParticleProjectileTracker tracker, Spell spell, SpellData data) {
+		super(spell, data);
 
-		this.target = target;
+		this.data = data;
 		this.tracker = tracker;
-		this.power = power;
 	}
 
 	public ParticleProjectileTracker getTracker() {

@@ -7,7 +7,6 @@ import java.io.FileWriter;
 import java.util.regex.Pattern;
 
 import com.nisovin.magicspells.util.managers.OfflineVariableManager;
-import com.nisovin.magicspells.util.managers.VariableManager;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -739,7 +738,7 @@ public class MagicCommand extends BaseCommand {
 					MagicSpells.sendMessage(spell.getStrWrongCastItem(), player, null);
 					return;
 				}
-				spell.cast(player, power, spellArgs);
+				spell.cast(new SpellData(player, power, spellArgs));
 				return;
 			}
 			// LivingEntity
@@ -748,7 +747,7 @@ public class MagicCommand extends BaseCommand {
 				EntityEquipment equipment = livingEntity.getEquipment();
 				if (equipment == null) return;
 				if (!spell.isValidItemForCastCommand(equipment.getItemInMainHand())) return;
-				spell.cast(livingEntity, power, spellArgs);
+				spell.cast(new SpellData(livingEntity, power, spellArgs));
 			}
 		}
 
@@ -774,7 +773,7 @@ public class MagicCommand extends BaseCommand {
 			}
 			float power = getPowerFromArgs(args);
 			String[] spellArgs = getCustomArgs(args, 2);
-			spell.cast(target, power, spellArgs);
+			spell.cast(new SpellData(target, power, spellArgs));
 		}
 
 		@Subcommand("on")
@@ -797,8 +796,8 @@ public class MagicCommand extends BaseCommand {
 
 			boolean casted;
 			// Handle with or without caster.
-			if (issuer.getIssuer() instanceof LivingEntity) casted = newSpell.castAtEntity(issuer.getIssuer(), target, 1F);
-			else casted = newSpell.castAtEntity(target, 1F);
+			if (issuer.getIssuer() instanceof LivingEntity) casted = newSpell.castAtEntity(new SpellData((LivingEntity) issuer.getIssuer(), target));
+			else casted = newSpell.castAtEntity(new SpellData(target));
 			if (!casted) throw new ConditionFailedException("Spell probably cannot be cast from console.");
 		}
 
@@ -859,8 +858,8 @@ public class MagicCommand extends BaseCommand {
 
 			boolean casted;
 			// Handle with or without caster.
-			if (issuer.getIssuer() instanceof LivingEntity) casted = newSpell.castAtLocation(issuer.getIssuer(), location, 1F, null);
-			else casted = newSpell.castAtLocation(location, 1F, null);
+			if (issuer.getIssuer() instanceof LivingEntity) casted = newSpell.castAtLocation(new SpellData((LivingEntity) issuer.getIssuer(), location));
+			else casted = newSpell.castAtLocation(new SpellData(null, location));
 			if (!casted) throw new ConditionFailedException("Spell probably cannot be cast from console.");
 		}
 

@@ -81,9 +81,10 @@ public class WindglideSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.put(entity.getUniqueId(), new SpellData(entity, power, args));
-		entity.setGliding(true);
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        entities.put(data.caster().getUniqueId(), data);
+		data.caster().setGliding(true);
 		return true;
 	}
 

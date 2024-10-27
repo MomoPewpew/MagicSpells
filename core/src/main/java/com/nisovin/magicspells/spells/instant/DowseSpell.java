@@ -72,7 +72,7 @@ public class DowseSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			double radius = this.radius.get(caster, null, power, args);
 			if (powerAffectsRadius) radius *= power;

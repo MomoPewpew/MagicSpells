@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
@@ -62,8 +63,9 @@ public class ResistSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.put(entity.getUniqueId(), new CastData(power, args));
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
 		return true;
 	}
 

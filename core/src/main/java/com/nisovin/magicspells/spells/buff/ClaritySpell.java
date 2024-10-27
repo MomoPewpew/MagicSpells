@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 
@@ -36,8 +37,9 @@ public class ClaritySpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.put(entity.getUniqueId(), new CastData(power, args));
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
 		return true;
 	}
 

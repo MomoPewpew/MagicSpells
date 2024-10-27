@@ -8,6 +8,7 @@ import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.BufferedWriter;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -67,7 +68,7 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			marks.put(getKey(caster), new MagicLocation(caster.getLocation()));
 			if (permanentMarks) saveMarks();

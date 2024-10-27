@@ -62,7 +62,7 @@ public class CastAtMarkSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (!initialized) return PostCastAction.HANDLE_NORMALLY;
 		if (state == SpellCastState.NORMAL) {
 			Location effectiveMark = markSpell.getEffectiveMark(caster);

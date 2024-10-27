@@ -3,6 +3,7 @@ package com.nisovin.magicspells.listeners;
 import java.util.Map;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -53,12 +54,12 @@ public class ConsumeListener implements Listener {
 
 		if (MagicSpells.getSpellbook(player).canCast(spell)) {
 			PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
-			String[] args = null;
+			String[] args = new String[0];
 			if (container.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
 				args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
 			}
 
-			SpellCastResult result = spell.cast(player, 1.0F, args, item);
+			SpellCastResult result = spell.cast(new SpellData(player, args, item));
 			if (result.state != SpellCastState.NORMAL) event.setCancelled(true);
 		}
 	}

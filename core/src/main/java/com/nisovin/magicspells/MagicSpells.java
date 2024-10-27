@@ -89,9 +89,6 @@ public class MagicSpells extends JavaPlugin {
 	// Change this when you want to start tweaking the source and fixing bugs
 	public static Level DEVELOPER_DEBUG_LEVEL = Level.OFF;
 
-	// Pass this to methods that want spell arguments passed but doesn't have any to be passed
-	public static final String[] NULL_ARGS = null;
-
 	private Set<Material> losTransparentBlocks;
 	private List<Material> ignoreCastItemDurability;
 	private Map<EntityType, String> entityNames;

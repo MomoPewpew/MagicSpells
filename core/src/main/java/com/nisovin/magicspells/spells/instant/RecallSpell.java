@@ -56,7 +56,7 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			Location markLocation = null;
 			if (args != null && args.length == 1 && caster.hasPermission("magicspells.advanced." + internalName)) {

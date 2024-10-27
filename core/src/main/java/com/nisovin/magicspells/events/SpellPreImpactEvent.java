@@ -2,6 +2,7 @@ package com.nisovin.magicspells.events;
 
 import java.util.Arrays;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.Cancellable;
 import org.bukkit.entity.LivingEntity;
 
@@ -11,16 +12,13 @@ import com.nisovin.magicspells.handlers.DebugHandler;
 
 public class SpellPreImpactEvent extends SpellEvent implements Cancellable {
 
-	private LivingEntity target;
-	private float power;
 	private Spell deliverySpell;
 	private boolean redirect;
 	private boolean cancelled;
 
-	public SpellPreImpactEvent(Spell spellPayload, Spell deliverySpell, LivingEntity caster, LivingEntity target, float power) {
-		super(spellPayload, caster);
-		this.target = target;
-		this.power = power;
+	public SpellPreImpactEvent(Spell spellPayload, Spell deliverySpell, SpellData data) {
+		super(spellPayload, data);
+		this.data = data;
 		this.deliverySpell = deliverySpell;
 		redirect = false;
 		cancelled = false;
@@ -28,7 +26,7 @@ public class SpellPreImpactEvent extends SpellEvent implements Cancellable {
 	}
 	
 	public LivingEntity getTarget() {
-		return target;
+		return data.target();
 	}
 	
 	public boolean getRedirected() {
@@ -40,15 +38,11 @@ public class SpellPreImpactEvent extends SpellEvent implements Cancellable {
 	}
 	
 	public float getPower() {
-		return power;
+		return data.power();
 	}
 	
 	public void setPower(float power) {
-		this.power = power;
-	}
-	
-	public Spell getDeliverySpell() {
-		return deliverySpell;
+		data.power(power);
 	}
 
 	@Override
@@ -63,8 +57,8 @@ public class SpellPreImpactEvent extends SpellEvent implements Cancellable {
 	
 	@Override
 	public String toString() {
-		String casterLabel = "Caster: " + (caster == null ? "null" : caster.toString());
-		String targetLabel = "Target: " + (target == null ? "null" : target.toString());
+		String casterLabel = "Caster: " + (data.caster() == null ? "null" : data.caster().toString());
+		String targetLabel = "Target: " + (data.target() == null ? "null" : data.target().toString());
 		String spellLabel = "SpellPayload: " + (spell == null ? "null" : spell.toString());
 		String payloadSpellLabel = "Delivery Spell: " + (deliverySpell == null ? "null" : deliverySpell.toString());
 		return Arrays.deepToString(new String[]{ casterLabel, targetLabel, spellLabel, payloadSpellLabel });

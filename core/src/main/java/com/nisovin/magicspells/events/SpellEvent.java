@@ -5,6 +5,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
+import com.nisovin.magicspells.util.SpellData;
 
 public abstract class SpellEvent extends Event implements IMagicSpellsCompatEvent {
 
@@ -12,11 +13,11 @@ public abstract class SpellEvent extends Event implements IMagicSpellsCompatEven
 
 	protected Spell spell;
 
-	protected LivingEntity caster;
+	protected SpellData data;
 	
-	public SpellEvent(Spell spell, LivingEntity caster) {
+	public SpellEvent(Spell spell, SpellData data) {
 		this.spell = spell;
-		this.caster = caster;
+		this.data = data;
 	}
 	
 	/**
@@ -32,7 +33,7 @@ public abstract class SpellEvent extends Event implements IMagicSpellsCompatEven
 	 * @return the casting player
 	 */
 	public LivingEntity getCaster() {
-		return caster;
+		return data.caster();
 	}
 
 	@Override

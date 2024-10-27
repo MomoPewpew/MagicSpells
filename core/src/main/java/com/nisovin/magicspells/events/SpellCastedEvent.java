@@ -3,6 +3,7 @@ package com.nisovin.magicspells.events;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.reagent.SpellReagents;
 import com.nisovin.magicspells.Spell.SpellCastState;
 import com.nisovin.magicspells.Spell.PostCastAction;
@@ -15,20 +16,18 @@ import com.nisovin.magicspells.Spell.PostCastAction;
 public class SpellCastedEvent extends SpellEvent {
 
 	private final SpellCastState state;
+	private final SpellData data;
 	private final float cooldown;
 	private final SpellReagents reagents;
-	private final float power;
-	private final String[] args;
 	private final PostCastAction action;
 	
-	public SpellCastedEvent(Spell spell, LivingEntity caster, SpellCastState state, float power, String[] args, float cooldown, SpellReagents reagents, PostCastAction action) {
-		super(spell, caster);
+	public SpellCastedEvent(Spell spell, SpellCastState state, SpellData data, float cooldown, SpellReagents reagents, PostCastAction action) {
+		super(spell, data);
 
 		this.state = state;
+		this.data = data;
 		this.cooldown = cooldown;
 		this.reagents = reagents;
-		this.power = power;
-		this.args = args;
 		this.action = action;
 	}
 	
@@ -61,7 +60,7 @@ public class SpellCastedEvent extends SpellEvent {
 	 * @return the power level
 	 */
 	public float getPower() {
-		return power;
+		return data.power();
 	}
 	
 	/**
@@ -69,7 +68,7 @@ public class SpellCastedEvent extends SpellEvent {
 	 * @return the args, or null if there were none
 	 */
 	public String[] getSpellArgs() {
-		return args;
+		return data.args();
 	}
 	
 	/**

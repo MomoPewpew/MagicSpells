@@ -56,7 +56,7 @@ public class ItemSerializeSpell extends CommandSpell {
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			ItemStack heldItem = player.getInventory().getItemInMainHand();
 			if (InventoryUtil.isNothing(heldItem)) {

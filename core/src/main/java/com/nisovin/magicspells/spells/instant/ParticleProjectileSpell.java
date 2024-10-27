@@ -334,7 +334,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			ParticleProjectileTracker tracker = new ParticleProjectileTracker(caster, power, args);
 			setupTracker(tracker, caster, null, power, args);

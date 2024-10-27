@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.buff;
 
 import java.util.*;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -57,9 +58,9 @@ public class LightwalkSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player)) return false;
-		players.put(entity.getUniqueId(), getBlockToChange(entity));
+	public boolean castBuff(SpellData data) {
+		if (!(data.caster() instanceof Player)) return false;
+		players.put(data.caster().getUniqueId(), getBlockToChange(data.caster()));
 		return true;
 	}
 

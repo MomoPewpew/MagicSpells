@@ -143,7 +143,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			List<Block> lastTwo;
 			try {

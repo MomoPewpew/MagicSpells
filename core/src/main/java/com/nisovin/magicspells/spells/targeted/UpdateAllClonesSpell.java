@@ -15,7 +15,7 @@ public class UpdateAllClonesSpell extends TargetedSpell {
     }
 
     @Override
-    public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+    public PostCastAction castSpell(SpellCastState state, SpellData data) {
         MagicSpells.getVolatileCodeHandler().updateAllFalsePlayers();
         return PostCastAction.HANDLE_NORMALLY;
     }

@@ -85,7 +85,7 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (toggle && isLevitating(caster)) {
 			levitating.remove(caster.getUniqueId()).stop();
 			return PostCastAction.ALREADY_HANDLED;

@@ -4,16 +4,13 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.RegexUtil;
-import com.nisovin.magicspells.util.BlockUtils;
-import com.nisovin.magicspells.util.TargetInfo;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -70,16 +67,20 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			Location locTarget = null;
 			LivingEntity entTarget = null;
+			LivingEntity caster = data.caster();
+			float power = data.power();
+			String[] args = data.args();
+
 			if (requireEntityTarget) {
-				TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-				if (info.noTarget()) return noTarget(caster, args, info);
+				TargetInfo<LivingEntity> info = getTargetedEntity(data);
+				if (info.noTarget()) return noTarget(data, info);
 
 				entTarget = info.target();
-				power = info.power();
+				power = info.getPower();
 			} else if (pointBlank) {
 				locTarget = caster.getLocation();
 			} else {
@@ -94,14 +95,14 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 					DebugHandler.debugIllegalState(e);
 				}
 			}
-			if (locTarget == null && entTarget == null) return noTarget(caster, args);
+			if (locTarget == null && entTarget == null) return noTarget(data);
 			if (locTarget != null) {
 				locTarget.setY(locTarget.getY() + yOffset.get(caster, null, power, args));
 				locTarget.setDirection(caster.getLocation().getDirection());
 			}
 
-			boolean somethingWasDone = runSpells(caster, null, entTarget, locTarget, power, args);
-			if (!somethingWasDone) return noTarget(caster, args);
+			boolean somethingWasDone = runSpells(data, null);
+			if (!somethingWasDone) return noTarget(data);
 
 			if (entTarget != null) {
 				sendMessages(caster, entTarget, args);
@@ -113,50 +114,25 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return runSpells(caster, null, null, target.clone().add(0, yOffset.get(caster, null, power, args), 0), power, null);
+	public boolean castAtLocation(SpellData data) {
+        assert data.location() != null;
+        return runSpells(data.builder().location(data.location().clone().add(0, yOffset.get(data), 0)).build(), null);
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return runSpells(caster, null, null, target.clone().add(0, yOffset.get(caster, null, power, null), 0), power, null);
+	public boolean castAtEntity(SpellData data) {
+		return runSpells(data, null);
 	}
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return runSpells(null, null, null, target.clone().add(0, yOffset.get(null, null, power, args), 0), power, null);
-	}
+	private boolean runSpells(SpellData data, Location center) {
+		LivingEntity caster = data.caster();
+		LivingEntity targetEnt = data.target();
 
-	@Override
-	public boolean castAtLocation(Location location, float power) {
-		return runSpells(null, null, null, location.clone().add(0, yOffset.get(null, null, power, null), 0), power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return runSpells(caster, null, target, null, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return runSpells(caster, null, target, null, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return runSpells(null, null, target, null, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return runSpells(null, null, target, null, power, null);
-	}
-
-	private boolean runSpells(LivingEntity caster, Location center, LivingEntity targetEnt, Location targetLoc, float power, String[] args) {
 		if (targetEnt != null && (caster == null ? !validTargetList.canTarget(targetEnt) : !validTargetList.canTarget(caster, targetEnt)))
 			return false;
 
 		boolean somethingWasDone = false;
+		if (data.target() != null && center != null) data = data.builder().location(center).build();
 		if (!castRandomSpellInstead) {
 			int delay = 0;
 			Subspell spell;
@@ -170,13 +146,13 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 				if (action.isSpell()) {
 					spell = action.getSpell();
 					if (delay == 0) {
-						boolean ok = castTargetedSpells(spell, caster, center, targetEnt, targetLoc, power, args);
+						boolean ok = castTargetedSpells(spell, data);
 						if (ok) somethingWasDone = true;
 						else if (stopOnFail) break;
 						continue;
 					}
 
-					DelayedSpell ds = new DelayedSpell(spell, caster, center, targetEnt, targetLoc, power, args, delayedSpells);
+					DelayedSpell ds = new DelayedSpell(spell, data, delayedSpells);
 					delayedSpells.add(ds);
 					MagicSpells.scheduleDelayedTask(ds, delay);
 					somethingWasDone = true;
@@ -184,45 +160,26 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 			}
 		} else {
 			Action action = actions.get(random.nextInt(actions.size()));
-			if (action.isSpell()) somethingWasDone = castTargetedSpells(action.getSpell(), caster, center, targetEnt, targetLoc, power, args);
+			if (action.isSpell()) somethingWasDone = castTargetedSpells(action.getSpell(), data);
 		}
 		if (somethingWasDone) {
 			if (caster != null) {
-				if (targetEnt != null) playSpellEffects(caster, targetEnt, power, args);
-				else if (targetLoc != null) playSpellEffects(caster, targetLoc, power, args);
+				if (targetEnt != null || data.location() != null) playSpellEffects(data);
 			} else {
-				if (targetEnt != null) playSpellEffects(EffectPosition.TARGET, targetEnt, power, args);
-				else if (targetLoc != null) playSpellEffects(EffectPosition.TARGET, targetLoc, power, args);
+				if (targetEnt != null || data.location() != null) playSpellEffects(EffectPosition.TARGET, data.caster(), data);
 			}
 		}
 		return somethingWasDone;
 	}
 
-	private boolean castTargetedSpells(Subspell spell, LivingEntity caster, Location center, LivingEntity targetEnt, Location targetLoc, float power, String[] args) {
-		if (targetEnt != null && center != null) return spell.subcast(caster, center, targetEnt, power, args, passTargeting);
-		if (targetEnt != null) return spell.subcast(caster, targetEnt, power, args, passTargeting);
-		if (targetLoc != null) return spell.subcast(caster, targetLoc, power, args);
-		return spell.subcast(caster, power, args);
+	private boolean castTargetedSpells(Subspell spell, SpellData data) {
+		if (data.target() != null) return spell.subcast(data, passTargeting);
+		return spell.subcast(data);
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		return runSpells(caster, from, target, null, power, args);
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		return runSpells(null, from, target, null, power, args);
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		return runSpells(caster, from, target, null, power, null);
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		return runSpells(null, from, target, null, power, null);
+	public boolean castAtEntityFromLocation(SpellData data) {
+		return runSpells(data, null);
 	}
 
 	private static class Action {
@@ -261,24 +218,14 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 	private class DelayedSpell implements Runnable {
 
 		private final Subspell spell;
-		private final LivingEntity caster;
-		private final Location center;
-		private final LivingEntity targetEnt;
-		private final Location targetLoc;
-		private final String[] args;
-		private final float power;
+		private final SpellData data;
 
 		private List<DelayedSpell> delayedSpells;
 		private boolean cancelled;
 
-		private DelayedSpell(Subspell spell, LivingEntity caster, Location center, LivingEntity targetEnt, Location targetLoc, float power, String[] args, List<DelayedSpell> delayedSpells) {
+		private DelayedSpell(Subspell spell, SpellData data, List<DelayedSpell> delayedSpells) {
 			this.spell = spell;
-			this.caster = caster;
-			this.center = center;
-			this.targetEnt = targetEnt;
-			this.targetLoc = targetLoc;
-			this.args = args;
-			this.power = power;
+			this.data = data;
 			this.delayedSpells = delayedSpells;
 
 			cancelled = false;
@@ -305,8 +252,8 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 				return;
 			}
 
-			if (caster == null || caster.isValid()) {
-				boolean ok = castTargetedSpells(spell, caster, center, targetEnt, targetLoc, power, args);
+			if (data.caster() == null || data.caster().isValid()) {
+				boolean ok = castTargetedSpells(spell, data);
 				delayedSpells.remove(this);
 				if (!ok && stopOnFail) cancelAll();
 			} else cancelAll();

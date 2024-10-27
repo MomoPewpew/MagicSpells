@@ -97,7 +97,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
 			if (target.noTarget()) return noTarget(caster, args, target);
@@ -185,7 +185,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 			if (!silenced.containsKey(event.getPlayer().getUniqueId())) return;
 			event.setCancelled(true);
 			if (preventChatSpell != null) preventChatSpell.subcast(event.getPlayer(), 1, null);
-			sendMessage(strSilenced, event.getPlayer(), MagicSpells.NULL_ARGS);
+			sendMessage(strSilenced, event.getPlayer(), new String[0]);
 		}
 
 	}
@@ -197,7 +197,7 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 			if (!silenced.containsKey(event.getPlayer().getUniqueId())) return;
 			event.setCancelled(true);
 			if (preventCommandSpell != null) preventCommandSpell.subcast(event.getPlayer(), 1, null);
-			sendMessage(strSilenced, event.getPlayer(), MagicSpells.NULL_ARGS);
+			sendMessage(strSilenced, event.getPlayer(), new String[0]);
 		}
 
 	}

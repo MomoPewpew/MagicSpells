@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.HashSet;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -55,8 +56,9 @@ public class CarpetSpell extends BuffSpell {
 	}
 	
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.put(entity.getUniqueId(), new BlockPlatform(platformMaterial, Material.AIR, entity.getLocation().getBlock().getRelative(0, -1, 0), platformSize.get(entity, null, power, args), true, "square"));
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        entities.put(data.caster().getUniqueId(), new BlockPlatform(platformMaterial, Material.AIR, data.caster().getLocation().getBlock().getRelative(0, -1, 0), platformSize.get(data), true, "square"));
 		return true;
 	}
 

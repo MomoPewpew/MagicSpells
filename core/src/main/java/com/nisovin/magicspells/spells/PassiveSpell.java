@@ -191,34 +191,14 @@ public class PassiveSpell extends Spell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		return PostCastAction.ALREADY_HANDLED;
 	}
 	
-	public boolean activate(LivingEntity caster) {
-		return activate(caster, null, null);
-	}
-	
-	public boolean activate(LivingEntity caster, float power) {
-		return activate(caster, null, null, power);
-	}
-	
-	public boolean activate(LivingEntity caster, LivingEntity target) {
-		return activate(caster, target, null, 1F);
-	}
-	
-	public boolean activate(LivingEntity caster, Location location) {
-		return activate(caster, null, location, 1F);
-	}
-	
-	public boolean activate(final LivingEntity caster, final LivingEntity target, final Location location) {
-		return activate(caster, target, location, 1F);
-	}
-	
-	public boolean activate(final LivingEntity caster, final LivingEntity target, final Location location, final float power) {
-		int delay = this.delay.get(caster, target, power, null);
-		if (delay < 0) return activateSpells(caster, target, location, power);
-		MagicSpells.scheduleDelayedTask(() -> activateSpells(caster, target, location, power), delay);
+	public boolean activate(SpellData data) {
+		int delay = this.delay.get(data);
+		if (delay < 0) return activateSpells(data);
+		MagicSpells.scheduleDelayedTask(() -> activateSpells(data), delay);
 		return false;
 	}
 	
@@ -233,7 +213,12 @@ public class PassiveSpell extends Spell {
 	// DEBUG INFO: level 3, target cancelled (UE)
 	// DEBUG INFO: level 3, target cancelled (UL)
 	// DEBUG INFO: level 3, passive spell cancelled
-	private boolean activateSpells(LivingEntity caster, LivingEntity target, Location location, float power) {
+	private boolean activateSpells(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+		Location location = data.location();
+		float power = data.power();
+
 		if (!triggerList.canTarget(caster, true)) return false;
 		SpellCastState state = getCastState(caster);
 		if (caster instanceof Player) {
@@ -249,9 +234,9 @@ public class PassiveSpell extends Spell {
 			}
 
 			if (state == SpellCastState.MISSING_REAGENTS) {
-				MagicSpells.sendMessage(strMissingReagents, caster, MagicSpells.NULL_ARGS);
+				MagicSpells.sendMessage(strMissingReagents, caster, new String[0]);
 				if (MagicSpells.showStrCostOnMissingReagents() && strCost != null && !strCost.isEmpty()) {
-					MagicSpells.sendMessage("    (" + strCost + ')', caster, MagicSpells.NULL_ARGS);
+					MagicSpells.sendMessage("    (" + strCost + ')', caster, new String[0]);
 				}
 			}
 			return false;
@@ -263,7 +248,7 @@ public class PassiveSpell extends Spell {
 		if (chance < 1 && random.nextFloat() > chance) return false;
 
 		disabled = true;
-		SpellCastEvent castEvent = new SpellCastEvent(this, caster, SpellCastState.NORMAL, power, null, cooldown, reagents.clone(), 0);
+		SpellCastEvent castEvent = new SpellCastEvent(this, SpellCastState.NORMAL, data, cooldown, reagents.clone(), 0);
 		EventUtil.call(castEvent);
 
 		if (castEvent.isCancelled() || castEvent.getSpellCastState() != SpellCastState.NORMAL) {
@@ -280,7 +265,7 @@ public class PassiveSpell extends Spell {
 		power = castEvent.getPower();
 
 		if (target != null) {
-			SpellTargetEvent targetEvent = new SpellTargetEvent(this, caster, target, power);
+			SpellTargetEvent targetEvent = new SpellTargetEvent(this, data);
 			if (!targetEvent.callEvent()) {
 				MagicSpells.debug(3, "    Target cancelled (TE)");
 
@@ -293,7 +278,7 @@ public class PassiveSpell extends Spell {
 		}
 
 		if (location != null) {
-			SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(this, caster, location, power);
+			SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(this, data);
 			if (!targetEvent.callEvent()) {
 				MagicSpells.debug(3, "    Target cancelled (TL)");
 
@@ -305,7 +290,6 @@ public class PassiveSpell extends Spell {
 			location = targetEvent.getTargetLocation();
 		}
 
-		SpellData data = new SpellData(caster, target, power, null);
 		setCooldown(caster, castEvent.getCooldown());
 		boolean spellEffectsDone = false;
 
@@ -314,7 +298,7 @@ public class PassiveSpell extends Spell {
 			if (castWithoutTarget) {
 				MagicSpells.debug(3, "    Casting without target");
 
-				spell.subcast(caster, power, null);
+				spell.subcast(data);
 				if (!spellEffectsDone) {
 					playSpellEffects(EffectPosition.CASTER, caster, power, null);
 					spellEffectsDone = true;
@@ -326,7 +310,7 @@ public class PassiveSpell extends Spell {
 			if (target != null && !isActuallyNonTargeted(spell.getSpell())) {
 				MagicSpells.debug(3, "    Casting with target entity");
 
-				spell.subcast(caster, target, power, null);
+				spell.subcast(data);
 				if (!spellEffectsDone) {
 					playSpellEffects(caster, target, data);
 					spellEffectsDone = true;
@@ -338,7 +322,7 @@ public class PassiveSpell extends Spell {
 			if (location != null) {
 				MagicSpells.debug(3, "    Casting with target location");
 
-				spell.subcast(caster, location, power, null);
+				spell.subcast(data);
 				if (!spellEffectsDone) {
 					playSpellEffects(caster, location, data);
 					spellEffectsDone = true;
@@ -349,7 +333,7 @@ public class PassiveSpell extends Spell {
 
 			MagicSpells.debug(3, "    Casting normally");
 
-			spell.subcast(caster, power, null);
+			spell.subcast(data);
 			if (!spellEffectsDone) {
 				playSpellEffects(EffectPosition.CASTER, caster, data);
 				spellEffectsDone = true;
@@ -357,8 +341,8 @@ public class PassiveSpell extends Spell {
 		}
 
 		removeReagents(caster, castEvent.getReagents());
-		sendMessage(strCastSelf, caster, MagicSpells.NULL_ARGS);
-		SpellCastedEvent castedEvent = new SpellCastedEvent(this, caster, SpellCastState.NORMAL, power, null, castEvent.getCooldown(), castEvent.getReagents(), PostCastAction.HANDLE_NORMALLY);
+		sendMessage(strCastSelf, caster, new String[0]);
+		SpellCastedEvent castedEvent = new SpellCastedEvent(this, SpellCastState.NORMAL, data, castEvent.getCooldown(), castEvent.getReagents(), PostCastAction.HANDLE_NORMALLY);
 		EventUtil.call(castedEvent);
 		disabled = false;
 		return true;

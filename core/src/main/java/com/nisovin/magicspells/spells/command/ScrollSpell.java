@@ -120,7 +120,7 @@ public class ScrollSpell extends CommandSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
 			if (args == null || args.length == 0) {
 				sendMessage(strUsage, player, args);
@@ -258,7 +258,7 @@ public class ScrollSpell extends CommandSpell {
 		if (scrollData.length > 1 && RegexUtil.matches(SCROLL_DATA_USES_PATTERN, scrollData[1])) uses = Integer.parseInt(scrollData[1]);
 
 		if (requireScrollCastPermOnUse && !MagicSpells.getSpellbook(player).canCast(this)) {
-			sendMessage(strUseFail, player, MagicSpells.NULL_ARGS);
+			sendMessage(strUseFail, player, new String[0]);
 			return;
 		}
 
@@ -291,7 +291,7 @@ public class ScrollSpell extends CommandSpell {
 			}
 		}
 
-		sendMessage(strOnUse, player, MagicSpells.NULL_ARGS, "%s", spell.getName(), "%u", uses >= 0 ? uses + "" : "many");
+		sendMessage(strOnUse, player, new String[0], "%s", spell.getName(), "%u", uses >= 0 ? uses + "" : "many");
 	}
 	
 	@EventHandler

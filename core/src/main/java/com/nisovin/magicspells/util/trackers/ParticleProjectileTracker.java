@@ -47,11 +47,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 	private Map<SpellEffect, Entity> entityMap;
 	private Set<ArmorStand> armorStandSet;
 
-	private LivingEntity caster;
-
 	private SpellData data;
-	private String[] args;
-	private float power;
 	private long startTime;
 	private Location startLocation;
 	private Location previousLocation;
@@ -142,12 +138,8 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 	private static final double ANGLE_Y = AccurateMath.toRadians(-90);
 
-	public ParticleProjectileTracker(LivingEntity caster, float power, String[] args) {
-		this.caster = caster;
-		this.power = power;
-		this.args = args;
-
-		data = new SpellData(caster, power, args);
+	public ParticleProjectileTracker(SpellData data) {
+		this.data = data.builder().build();
 	}
 
 	public void start(Location from) {
@@ -226,7 +218,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			currentLocation.setPitch(0);
 		}
 
-		if (powerAffectsVelocity) currentVelocity.multiply(power);
+		if (powerAffectsVelocity) currentVelocity.multiply(data.power());
 		currentVelocity.multiply(projectileVelocity / ticksPerSecond);
 
 		nearBlocks = new ArrayList<>();
@@ -253,7 +245,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		currentLocation = Util.makeFinite(currentLocation);
 		previousLocation = Util.makeFinite(previousLocation);
 
-		if (caster != null && !caster.isValid()) {
+		if (data.caster() != null && !data.caster().isValid()) {
 			stop();
 			return;
 		}
@@ -265,7 +257,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 		if (maxDuration > 0 && startTime + maxDuration < System.currentTimeMillis()) {
 			if (hitAirAfterDuration && durationSpell != null) {
-				durationSpell.subcast(caster, currentLocation, power, args);
+				durationSpell.subcast(data.builder().build());
 				if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLocation, data);
 			}
 			stop();
@@ -273,19 +265,19 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		}
 
 		if (projectileModifiers != null) {
-			ModifierResult result = projectileModifiers.apply(caster, data);
+			ModifierResult result = projectileModifiers.apply(data.caster(), data);
 			data = result.data();
-			power = data.power();
 
 			if (!result.check()) {
-				if (modifierSpell != null) modifierSpell.subcast(caster, currentLocation, power, args);
+				if (modifierSpell != null) modifierSpell.subcast(data.builder().build());
 				if (stopOnModifierFail) stop();
 				return;
 			}
 		}
 
 		if (controllable) {
-			currentVelocity = caster.getLocation().getDirection();
+            assert data.caster() != null;
+            currentVelocity = data.caster().getLocation().getDirection();
 			if (hugSurface) currentVelocity.setY(0).normalize();
 			currentVelocity.multiply(projectileVelocity / ticksPerSecond);
 			LocationUtil.setDirection(currentLocation, currentVelocity);
@@ -419,7 +411,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		// Cast spell mid air
 		if (hitAirDuring && counter % spellInterval == 0 && tickSpell != null) {
 			if (tickSpellLimit <= 0 || ticks < tickSpellLimit) {
-				tickSpell.subcast(caster, currentLocation.clone(), power, args);
+				tickSpell.subcast(new SpellData(caster, currentLocation.clone(), power, args));
 				ticks++;
 			}
 		}
@@ -489,13 +481,16 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 	private boolean canInteractWith(ParticleProjectileTracker collisionTracker) {
 		if (collisionTracker == null) return false;
 		if (tracker == null) return false;
-		if (tracker.caster == null) return false;
-		if (collisionTracker.caster == null) return false;
+		if (tracker.data.caster() == null) return false;
+		if (collisionTracker.data.caster() == null) return false;
 		if (collisionTracker.equals(tracker)) return false;
 		if (!interactionSpells.containsKey(collisionTracker.spell.getInternalName())) return false;
 		if (!collisionTracker.currentLocation.getWorld().equals(tracker.currentLocation.getWorld())) return false;
 		if (!collisionTracker.hitBox.contains(tracker.currentLocation) && !tracker.hitBox.contains(collisionTracker.currentLocation)) return false;
-		if (!allowCasterInteract && collisionTracker.caster.equals(tracker.caster)) return false;
+		if (!allowCasterInteract) {
+            assert collisionTracker.data.caster() != null;
+            return !collisionTracker.data.caster().equals(tracker.data.caster());
+        }
 		return true;
 	}
 
@@ -534,9 +529,9 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		hitBox.setCenter(currentLoc);
 
 		for (LivingEntity target : currentLoc.getNearbyLivingEntities(horizontalHitRadius, verticalHitRadius)) {
-			if (!target.isValid() || immune.contains(target) || !targetList.canTarget(caster, target)) continue;
+			if (!target.isValid() || immune.contains(target) || !targetList.canTarget(data.caster(), target)) continue;
 
-			ParticleProjectileHitEvent hitEvent = new ParticleProjectileHitEvent(caster, target, tracker, spell, power);
+			ParticleProjectileHitEvent hitEvent = new ParticleProjectileHitEvent(data.caster(), data.target(), tracker, spell, data.power());
 			hitEvent.callEvent();
 
 			if (stopped) return;
@@ -545,18 +540,18 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			target = hitEvent.getTarget();
 			float subPower = hitEvent.getPower();
 
-			SpellTargetEvent targetEvent = new SpellTargetEvent(spell, caster, target, subPower, args);
+			SpellTargetEvent targetEvent = new SpellTargetEvent(spell, data.builder().target(target).power(subPower).build());
 			if (!targetEvent.callEvent()) continue;
 
 			target = targetEvent.getTarget();
 			subPower = targetEvent.getPower();
 
-			if (casterSpell != null && target.equals(caster)) casterSpell.subcast(caster, target, subPower, args);
-			if (entitySpell != null && !target.equals(caster)) entitySpell.subcast(caster, target, subPower, args);
-			if (entityLocationSpell != null) entityLocationSpell.subcast(caster, currentLoc, subPower, args);
+			if (casterSpell != null && target.equals(data.caster())) casterSpell.subcast(data.builder().target(target).power(subPower).build());
+			if (entitySpell != null && !target.equals(data.caster())) entitySpell.subcast(data.builder().target(target).power(subPower).build());
+			if (entityLocationSpell != null) entityLocationSpell.subcast(data.builder().target(target).power(subPower).build());
 
 			if (spell != null)
-				spell.playEffects(EffectPosition.TARGET, currentLoc, new SpellData(caster, target, subPower, args));
+				spell.playEffects(EffectPosition.TARGET, currentLoc, data.builder().target(target).power(subPower).build());
 
 			immune.add(target);
 			maxHitLimit++;
@@ -595,7 +590,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			}
 			entityMap.clear();
 		}
-		caster = null;
+		data.caster(null);
 		startLocation = null;
 		previousLocation = null;
 		currentLocation = null;
@@ -612,83 +607,27 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 	}
 
 	public LivingEntity getCaster() {
-		return caster;
+		return data.caster();
 	}
 
 	public void setCaster(LivingEntity caster) {
-		this.caster = caster;
+		data.caster(caster);
 	}
 
 	public float getPower() {
-		return power;
+		return data.power();
 	}
 
 	public void setPower(float power) {
-		this.power = power;
-	}
-
-	public long getStartTime() {
-		return startTime;
-	}
-
-	public void setStartTime(long startTime) {
-		this.startTime = startTime;
-	}
-
-	public Location getStartLocation() {
-		return startLocation;
-	}
-
-	public void setStartLocation(Location startLocation) {
-		this.startLocation = startLocation;
-	}
-
-	public Location getPreviousLocation() {
-		return previousLocation;
-	}
-
-	public void setPreviousLocation(Location previousLocation) {
-		this.previousLocation = previousLocation;
+		data.power(power);
 	}
 
 	public Location getCurrentLocation() {
 		return currentLocation;
 	}
 
-	public void setCurrentLocation(Location currentLocation) {
-		this.currentLocation = currentLocation;
-	}
-
 	public Vector getCurrentVelocity() {
 		return currentVelocity;
-	}
-
-	public void setCurrentVelocity(Vector currentVelocity) {
-		this.currentVelocity = currentVelocity;
-	}
-
-	public Vector getStartDirection() {
-		return startDirection;
-	}
-
-	public void setStartDirection(Vector startDirection) {
-		this.startDirection = startDirection;
-	}
-
-	public int getCurrentX() {
-		return currentX;
-	}
-
-	public void setCurrentX(int currentX) {
-		this.currentX = currentX;
-	}
-
-	public int getCurrentZ() {
-		return currentZ;
-	}
-
-	public void setCurrentZ(int currentZ) {
-		this.currentZ = currentZ;
 	}
 
 	public int getTaskId() {
@@ -699,36 +638,8 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		this.taskId = taskId;
 	}
 
-	public BoundingBox getHitBox() {
-		return hitBox;
-	}
-
-	public void setHitBox(BoundingBox hitBox) {
-		this.hitBox = hitBox;
-	}
-
-	public int getMaxHitLimit() {
-		return maxHitLimit;
-	}
-
-	public void setMaxHitLimit(int maxHitLimit) {
-		this.maxHitLimit = maxHitLimit;
-	}
-
 	public Set<LivingEntity> getImmune() {
 		return immune;
-	}
-
-	public void setImmune(Set<LivingEntity> immune) {
-		this.immune = immune;
-	}
-
-	public ValidTargetChecker getEntitySpellChecker() {
-		return entitySpellChecker;
-	}
-
-	public void setEntitySpellChecker(ValidTargetChecker entitySpellChecker) {
-		this.entitySpellChecker = entitySpellChecker;
 	}
 
 	public ParticleProjectileTracker getTracker() {
@@ -747,184 +658,88 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		this.spell = spell;
 	}
 
-	public Set<Material> getGroundMaterials() {
-		return groundMaterials;
-	}
-
 	public void setGroundMaterials(Set<Material> groundMaterials) {
 		this.groundMaterials = groundMaterials;
-	}
-
-	public Set<Material> getDisallowedGroundMaterials() {
-		return disallowedGroundMaterials;
 	}
 
 	public void setDisallowedGroundMaterials(Set<Material> disallowedGroundMaterials) {
 		this.disallowedGroundMaterials = disallowedGroundMaterials;
 	}
 
-	public ValidTargetList getTargetList() {
-		return targetList;
-	}
-
 	public void setTargetList(ValidTargetList targetList) {
 		this.targetList = targetList;
-	}
-
-	public ModifierSet getProjectileModifiers() {
-		return projectileModifiers;
 	}
 
 	public void setProjectileModifiers(ModifierSet projectileModifiers) {
 		this.projectileModifiers = projectileModifiers;
 	}
 
-	public Map<String, Subspell> getInteractionSpells() {
-		return interactionSpells;
-	}
-
 	public void setInteractionSpells(Map<String, Subspell> interactionSpells) {
 		this.interactionSpells = interactionSpells;
-	}
-
-	public int getCounter() {
-		return counter;
-	}
-
-	public void setCounter(int counter) {
-		this.counter = counter;
-	}
-
-	public double getMaxDuration() {
-		return maxDuration;
 	}
 
 	public void setMaxDuration(double maxDuration) {
 		this.maxDuration = maxDuration;
 	}
 
-	public double getMaxDistanceSquared() {
-		return maxDistanceSquared;
-	}
-
 	public void setMaxDistanceSquared(double maxDistanceSquared) {
 		this.maxDistanceSquared = maxDistanceSquared;
-	}
-
-	public boolean shouldHugSurface() {
-		return hugSurface;
 	}
 
 	public void setHugSurface(boolean hugSurface) {
 		this.hugSurface = hugSurface;
 	}
 
-	public boolean shouldChangePitch() {
-		return changePitch;
-	}
-
 	public void setChangePitch(boolean changePitch) {
 		this.changePitch = changePitch;
-	}
-
-	public boolean isControllable() {
-		return controllable;
 	}
 
 	public void setControllable(boolean controllable) {
 		this.controllable = controllable;
 	}
 
-	public boolean shouldCallEvents() {
-		return callEvents;
-	}
-
 	public void setCallEvents(boolean callEvents) {
 		this.callEvents = callEvents;
-	}
-
-	public boolean shouldStopOnHitGround() {
-		return stopOnHitGround;
 	}
 
 	public void setStopOnHitGround(boolean stopOnHitGround) {
 		this.stopOnHitGround = stopOnHitGround;
 	}
 
-	public boolean shouldStopOnModifierFail() {
-		return stopOnModifierFail;
-	}
-
 	public void setStopOnModifierFail(boolean stopOnModifierFail) {
 		this.stopOnModifierFail = stopOnModifierFail;
-	}
-
-	public boolean isCasterAllowedToInteract() {
-		return allowCasterInteract;
 	}
 
 	public void setAllowCasterInteract(boolean allowCasterInteract) {
 		this.allowCasterInteract = allowCasterInteract;
 	}
 
-	public boolean isPowerAffectedByVelocity() {
-		return powerAffectsVelocity;
-	}
-
 	public void setPowerAffectsVelocity(boolean powerAffectsVelocity) {
 		this.powerAffectsVelocity = powerAffectsVelocity;
-	}
-
-	public boolean canHitGround() {
-		return hitGround;
 	}
 
 	public void setHitGround(boolean hitGround) {
 		this.hitGround = hitGround;
 	}
 
-	public boolean canHitAirAtEnd() {
-		return hitAirAtEnd;
-	}
-
 	public void setHitAirAtEnd(boolean hitAirAtEnd) {
 		this.hitAirAtEnd = hitAirAtEnd;
-	}
-
-	public boolean canHitAirDuring() {
-		return hitAirDuring;
 	}
 
 	public void setHitAirDuring(boolean hitAirDuring) {
 		this.hitAirDuring = hitAirDuring;
 	}
 
-	public boolean canHitAirAfterDuration() {
-		return hitAirAfterDuration;
-	}
-
 	public void setHitAirAfterDuration(boolean hitAirAfterDuration) {
 		this.hitAirAfterDuration = hitAirAfterDuration;
-	}
-
-	public float getAcceleration() {
-		return acceleration;
 	}
 
 	public void setAcceleration(float acceleration) {
 		this.acceleration = acceleration;
 	}
 
-	public float getProjectileTurn() {
-		return projectileTurn;
-	}
-
 	public void setProjectileTurn(float projectileTurn) {
 		this.projectileTurn = projectileTurn;
-	}
-
-	public float getProjectileVelocity() {
-		return projectileVelocity;
 	}
 
 	public void setProjectileVelocity(float projectileVelocity) {
@@ -935,68 +750,32 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		this.verticalRotation = verticalRotation;
 	}
 
-	public double getVerticalRotation() {
-		return verticalRotation;
-	}
-
 	public void setHorizontalRotation(double horizontalRotation) {
 		this.horizontalRotation = horizontalRotation;
-	}
-
-	public double getHorizontalRotation() {
-		return horizontalRotation;
 	}
 
 	public void setXRotation(double xRotation) {
 		this.xRotation = xRotation;
 	}
 
-	public double getXRotation() {
-		return xRotation;
-	}
-
-	public float getProjectileVertOffset() {
-		return projectileVertOffset;
-	}
-
 	public void setProjectileVertOffset(float projectileVertOffset) {
 		this.projectileVertOffset = projectileVertOffset;
-	}
-
-	public float getProjectileVertSpread() {
-		return projectileVertSpread;
 	}
 
 	public void setProjectileVertSpread(float projectileVertSpread) {
 		this.projectileVertSpread = projectileVertSpread;
 	}
 
-	public float getProjectileHorizOffset() {
-		return projectileHorizOffset;
-	}
-
 	public void setProjectileHorizOffset(float projectileHorizOffset) {
 		this.projectileHorizOffset = projectileHorizOffset;
-	}
-
-	public float getProjectileHorizSpread() {
-		return projectileHorizSpread;
 	}
 
 	public void setProjectileHorizSpread(float projectileHorizSpread) {
 		this.projectileHorizSpread = projectileHorizSpread;
 	}
 
-	public float getProjectileVertGravity() {
-		return projectileVertGravity;
-	}
-
 	public void setProjectileVertGravity(float projectileVertGravity) {
 		this.projectileVertGravity = projectileVertGravity;
-	}
-
-	public float getProjectileHorizGravity() {
-		return projectileHorizGravity;
 	}
 
 	public void setProjectileHorizGravity(float projectileHorizGravity) {
@@ -1011,176 +790,88 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		this.tickInterval = tickInterval;
 	}
 
-	public int getSpellInterval() {
-		return spellInterval;
-	}
-
 	public void setSpellInterval(int spellInterval) {
 		this.spellInterval = spellInterval;
-	}
-
-	public int getTickSpellLimit() {
-		return tickSpellLimit;
 	}
 
 	public void setTickSpellLimit(int tickSpellLimit) {
 		this.tickSpellLimit = tickSpellLimit;
 	}
 
-	public int getMaxEntitiesHit() {
-		return maxEntitiesHit;
-	}
-
 	public void setMaxEntitiesHit(int maxEntitiesHit) {
 		this.maxEntitiesHit = maxEntitiesHit;
-	}
-
-	public int getAccelerationDelay() {
-		return accelerationDelay;
 	}
 
 	public void setAccelerationDelay(int accelerationDelay) {
 		this.accelerationDelay = accelerationDelay;
 	}
 
-	public int getIntermediateEffects() {
-		return intermediateEffects;
-	}
-
 	public void setIntermediateEffects(int intermediateEffects) {
 		this.intermediateEffects = intermediateEffects;
-	}
-
-	public int getIntermediateHitboxes() {
-		return intermediateHitboxes;
 	}
 
 	public void setIntermediateHitboxes(int intermediateHitboxes) {
 		this.intermediateHitboxes = intermediateHitboxes;
 	}
 
-	public int getSpecialEffectInterval() {
-		return specialEffectInterval;
-	}
-
 	public void setSpecialEffectInterval(int specialEffectInterval) {
 		this.specialEffectInterval = specialEffectInterval;
-	}
-
-	public int getGroundVerticalHitRadius() {
-		return groundVerticalHitRadius;
 	}
 
 	public void setGroundVerticalHitRadius(int groundVerticalHitRadius) {
 		this.groundVerticalHitRadius = groundVerticalHitRadius;
 	}
 
-	public int getGroundHorizontalHitRadius() {
-		return groundHorizontalHitRadius;
-	}
-
 	public void setGroundHorizontalHitRadius(int groundHorizontalHitRadius) {
 		this.groundHorizontalHitRadius = groundHorizontalHitRadius;
-	}
-
-	public float getStartXOffset() {
-		return startXOffset;
 	}
 
 	public void setStartXOffset(float startXOffset) {
 		this.startXOffset = startXOffset;
 	}
 
-	public float getStartYOffset() {
-		return startYOffset;
-	}
-
 	public void setStartYOffset(float startYOffset) {
 		this.startYOffset = startYOffset;
-	}
-
-	public float getStartZOffset() {
-		return startZOffset;
 	}
 
 	public void setStartZOffset(float startZOffset) {
 		this.startZOffset = startZOffset;
 	}
 
-	public float getTargetYOffset() {
-		return targetYOffset;
-	}
-
 	public void setTargetYOffset(float targetYOffset) {
 		this.targetYOffset = targetYOffset;
-	}
-
-	public Vector getEffectOffset() {
-		return effectOffset;
 	}
 
 	public void setEffectOffset(Vector effectOffset) {
 		this.effectOffset = effectOffset;
 	}
 
-	public float getTicksPerSecond() {
-		return ticksPerSecond;
-	}
-
 	public void setTicksPerSecond(float ticksPerSecond) {
 		this.ticksPerSecond = ticksPerSecond;
-	}
-
-	public float getHeightFromSurface() {
-		return heightFromSurface;
 	}
 
 	public void setHeightFromSurface(float heightFromSurface) {
 		this.heightFromSurface = heightFromSurface;
 	}
 
-	public float getVerticalHitRadius() {
-		return verticalHitRadius;
-	}
-
 	public void setVerticalHitRadius(float verticalHitRadius) {
 		this.verticalHitRadius = verticalHitRadius;
-	}
-
-	public float getHorizontalHitRadius() {
-		return horizontalHitRadius;
 	}
 
 	public void setHorizontalHitRadius(float horizontalHitRadius) {
 		this.horizontalHitRadius = horizontalHitRadius;
 	}
 
-	public Subspell getAirSpell() {
-		return airSpell;
-	}
-
 	public void setAirSpell(Subspell airSpell) {
 		this.airSpell = airSpell;
-	}
-
-	public Subspell getTickSpell() {
-		return tickSpell;
 	}
 
 	public void setTickSpell(Subspell tickSpell) {
 		this.tickSpell = tickSpell;
 	}
 
-	public Subspell getEntitySpell() {
-		return entitySpell;
-	}
-
 	public void setEntitySpell(Subspell entitySpell) {
 		this.entitySpell = entitySpell;
-	}
-
-	public Subspell getCasterSpell() {
-		return casterSpell;
 	}
 
 	public void setCasterSpell(Subspell casterSpell) {
@@ -1195,24 +886,12 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		this.groundSpell = groundSpell;
 	}
 
-	public Subspell getDurationSpell() {
-		return durationSpell;
-	}
-
 	public void setDurationSpell(Subspell durationSpell) {
 		this.durationSpell = durationSpell;
 	}
 
-	public Subspell getModifierSpell() {
-		return modifierSpell;
-	}
-
 	public void setModifierSpell(Subspell modifierSpell) {
 		this.modifierSpell = modifierSpell;
-	}
-
-	public Subspell getEntityLocationSpell() {
-		return entityLocationSpell;
 	}
 
 	public void setEntityLocationSpell(Subspell entityLocationSpell) {
@@ -1220,7 +899,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 	}
 
 	public String[] getArgs() {
-		return args;
+		return data.args();
 	}
 
 	public SpellData getSpellData() {

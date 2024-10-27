@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -47,8 +48,9 @@ public class ImpactRecordSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.add(entity.getUniqueId());
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        entities.add(data.caster().getUniqueId());
 		return true;
 	}
 

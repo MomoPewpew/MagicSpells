@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -65,8 +66,9 @@ public class LifewalkSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		entities.add(entity.getUniqueId());
+	public boolean castBuff(SpellData data) {
+        assert data.caster() != null;
+        entities.add(data.caster().getUniqueId());
 		if (grower == null) grower = new Grower();
 		return true;
 	}

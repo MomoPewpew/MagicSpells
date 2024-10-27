@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells;
 import java.util.List;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
@@ -55,9 +56,10 @@ public class RandomSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			RandomOptionSet set = options;
+			LivingEntity caster = data.caster();
 			if (checkIndividualCooldowns || checkIndividualModifiers) {
 				set = new RandomOptionSet();
 				for (SpellOption o : options.randomOptionSetOptions) {
@@ -71,7 +73,7 @@ public class RandomSpell extends InstantSpell {
 			}
 			if (!set.randomOptionSetOptions.isEmpty()) {
 				Subspell spell = set.choose();
-				return spell != null && spell.subcast(caster, power, args) ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED;
+				return spell != null && spell.subcast(data) ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED;
 			}
 			return PostCastAction.ALREADY_HANDLED;
 		}

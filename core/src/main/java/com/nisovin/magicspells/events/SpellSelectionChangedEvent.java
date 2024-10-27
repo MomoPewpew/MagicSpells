@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.events;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 
 import com.nisovin.magicspells.Spell;
@@ -12,7 +13,7 @@ public class SpellSelectionChangedEvent extends SpellEvent {
 	private Spellbook spellbook;
 
 	public SpellSelectionChangedEvent(Spell spell, Player caster, CastItem castItem, Spellbook spellbook) {
-		super(spell, caster);
+		super(spell, new SpellData(caster));
 		this.castItem = castItem;
 		this.spellbook = spellbook;
 	}

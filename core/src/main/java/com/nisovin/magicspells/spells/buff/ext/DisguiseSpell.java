@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.entity.Entity;
@@ -100,21 +101,23 @@ public class DisguiseSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
+	public boolean castBuff(SpellData data) {
+		LivingEntity entity = data.caster();
+		assert entity != null;
 		// STRING
 		if (disguiseData != null) {
-			Disguise disguise = disguiseData.get(entity, null, power, args);
+			Disguise disguise = disguiseData.get(data);
 			if (disguise == null) return false;
 
 			DisguiseAPI.disguiseEntity(entity, disguise);
-			entities.add(entity.getUniqueId());
+            entities.add(entity.getUniqueId());
 
 			return true;
 		}
 
 		if (entityData == null) return false;
 
-		DisguiseType disguiseType = DisguiseType.getType(entityData.getEntityType().get(entity, null, power, args));
+		DisguiseType disguiseType = DisguiseType.getType(entityData.getEntityType().get(data));
 
 		Disguise disguise;
 		if (disguiseType.isPlayer()) disguise = new PlayerDisguise(playerName, skinName);
@@ -127,71 +130,71 @@ public class DisguiseSpell extends BuffSpell {
 		watcher.setGlowing(glowing);
 
 		if (watcher instanceof AgeableWatcher ageableWatcher)
-			ageableWatcher.setBaby(entityData.getBaby().get(entity, null, power, args));
+			ageableWatcher.setBaby(entityData.getBaby().get(data));
 
 		if (watcher instanceof AbstractHorseWatcher abstractHorseWatcher) {
-			abstractHorseWatcher.setSaddled(entityData.getSaddled().get(entity, null, power, args));
+			abstractHorseWatcher.setSaddled(entityData.getSaddled().get(data));
 
 			if (abstractHorseWatcher instanceof ChestedHorseWatcher chestedHorseWatcher)
-				chestedHorseWatcher.setCarryingChest(entityData.getChested().get(entity, null, power, args));
+				chestedHorseWatcher.setCarryingChest(entityData.getChested().get(data));
 
 			if (abstractHorseWatcher instanceof HorseWatcher horseWatcher) {
-				horseWatcher.setColor(entityData.getHorseColor().get(entity, null, power, args));
-				horseWatcher.setStyle(entityData.getHorseStyle().get(entity, null, power, args));
+				horseWatcher.setColor(entityData.getHorseColor().get(data));
+				horseWatcher.setStyle(entityData.getHorseStyle().get(data));
 			}
 
 			if (abstractHorseWatcher instanceof LlamaWatcher llamaWatcher)
-				llamaWatcher.setColor(entityData.getLlamaColor().get(entity, null, power, args));
+				llamaWatcher.setColor(entityData.getLlamaColor().get(data));
 		}
 
 		if (watcher instanceof TameableWatcher tameableWatcher) {
-			tameableWatcher.setTamed(entityData.getTamed().get(entity, null, power, args));
+			tameableWatcher.setTamed(entityData.getTamed().get(data));
 
 			if (tameableWatcher instanceof ParrotWatcher parrotWatcher)
-				parrotWatcher.setVariant(entityData.getParrotVariant().get(entity, null, power, args));
+				parrotWatcher.setVariant(entityData.getParrotVariant().get(data));
 
 			if (tameableWatcher instanceof WolfWatcher wolfWatcher) {
-				DyeColor color = entityData.getColor().get(entity, null, power, args);
+				DyeColor color = entityData.getColor().get(data);
 				if (color != null) wolfWatcher.setCollarColor(color);
 			}
 		}
 
 		if (watcher instanceof CreeperWatcher creeperWatcher)
-			creeperWatcher.setPowered(entityData.getPowered().get(entity, null, power, args));
+			creeperWatcher.setPowered(entityData.getPowered().get(data));
 
 		if (watcher instanceof DroppedItemWatcher droppedItemWatcher)
-			droppedItemWatcher.setItemStack(new ItemStack(entityData.getDroppedItemStack().get(entity, null, power, args)));
+			droppedItemWatcher.setItemStack(new ItemStack(entityData.getDroppedItemStack().get(data)));
 
 		if (watcher instanceof EndermanWatcher endermanWatcher)
-			endermanWatcher.setItemInMainHand(entityData.getCarriedBlockData().get(entity, null, power, args).getMaterial());
+			endermanWatcher.setItemInMainHand(entityData.getCarriedBlockData().get(data).getMaterial());
 
 		if (watcher instanceof FallingBlockWatcher fallingBlockWatcher)
-			fallingBlockWatcher.setBlockData(entityData.getFallingBlockData().get(entity, null, power, args));
+			fallingBlockWatcher.setBlockData(entityData.getFallingBlockData().get(data));
 
 		if (watcher instanceof PigWatcher pigWatcher)
-			pigWatcher.setSaddled(entityData.getSaddled().get(entity, null, power, args));
+			pigWatcher.setSaddled(entityData.getSaddled().get(data));
 
 		if (watcher instanceof PufferFishWatcher pufferFishWatcher)
-			pufferFishWatcher.setPuffState(entityData.getSize().get(entity, null, power, args));
+			pufferFishWatcher.setPuffState(entityData.getSize().get(data));
 
 		if (watcher instanceof SheepWatcher sheepWatcher) {
-			DyeColor color = entityData.getColor().get(entity, null, power, args);
+			DyeColor color = entityData.getColor().get(data);
 			if (color != null) sheepWatcher.setColor(color);
 
-			sheepWatcher.setSheared(entityData.getSheared().get(entity, null, power, args));
+			sheepWatcher.setSheared(entityData.getSheared().get(data));
 		}
 
 		if (watcher instanceof SlimeWatcher slimeWatcher)
-			slimeWatcher.setSize(entityData.getSize().get(entity, null, power, args));
+			slimeWatcher.setSize(entityData.getSize().get(data));
 
 		if (watcher instanceof TropicalFishWatcher tropicalFishWatcher) {
-			tropicalFishWatcher.setBodyColor(entityData.getColor().get(entity, null, power, args));
-			tropicalFishWatcher.setPatternColor(entityData.getTropicalFishPatternColor().get(entity, null, power, args));
-			tropicalFishWatcher.setPattern(entityData.getTropicalFishPattern().get(entity, null, power, args));
+			tropicalFishWatcher.setBodyColor(entityData.getColor().get(data));
+			tropicalFishWatcher.setPatternColor(entityData.getTropicalFishPatternColor().get(data));
+			tropicalFishWatcher.setPattern(entityData.getTropicalFishPattern().get(data));
 		}
 
 		if (watcher instanceof VillagerWatcher villagerWatcher) {
-			Villager.Profession profession = entityData.getProfession().get(entity, null, power, args);
+			Villager.Profession profession = entityData.getProfession().get(data);
 			if (profession != null) villagerWatcher.setProfession(profession);
 		}
 

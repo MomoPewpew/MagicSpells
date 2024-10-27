@@ -160,7 +160,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			Location locToSpawn = null;
 			LivingEntity target = null;

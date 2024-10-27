@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
@@ -46,16 +47,18 @@ public class GillsSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
+	public boolean castBuff(SpellData data) {
+		assert data.caster() != null;
 		if (headEffect && headMaterial != null) {
-			EntityEquipment equipment = entity.getEquipment();
-			ItemStack helmet = equipment.getHelmet();
-			entities.put(entity.getUniqueId(), helmet);
+            EntityEquipment equipment = data.caster().getEquipment();
+            assert equipment != null;
+            ItemStack helmet = equipment.getHelmet();
+			entities.put(data.caster().getUniqueId(), helmet);
 			equipment.setHelmet(new ItemStack(headMaterial));
 			return true;
 		}
 
-		entities.put(entity.getUniqueId(), null);
+		entities.put(data.caster().getUniqueId(), null);
 		return true;
 	}
 

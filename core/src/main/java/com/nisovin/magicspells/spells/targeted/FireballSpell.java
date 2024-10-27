@@ -104,7 +104,7 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			boolean selfTarget = false;
 			LivingEntity target = null;

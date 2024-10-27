@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -17,11 +18,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.TimeUtil;
-import com.nisovin.magicspells.util.CastData;
-import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.spells.BuffSpell;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.config.ConfigData;
 
 public class WindwalkSpell extends BuffSpell {
@@ -65,19 +62,19 @@ public class WindwalkSpell extends BuffSpell {
 	}
 
 	@Override
-	public boolean castBuff(LivingEntity entity, float power, String[] args) {
-		if (!(entity instanceof Player player)) return false;
+	public boolean castBuff(SpellData data) {
+		if (!(data.caster() instanceof Player player)) return false;
 
-		float launchSpeed = this.launchSpeed.get(entity, null, power, args);
-		if (launchSpeed > 0) entity.setVelocity(new Vector(0, launchSpeed, 0));
-		else entity.teleportAsync(entity.getLocation().add(0, 0.25, 0));
+		float launchSpeed = this.launchSpeed.get(data);
+		if (launchSpeed > 0) data.caster().setVelocity(new Vector(0, launchSpeed, 0));
+		else data.caster().teleportAsync(data.caster().getLocation().add(0, 0.25, 0));
 
-		FlyData flyData = new FlyData(new CastData(power, args), player.getAllowFlight(), player.getFlySpeed());
-		players.put(entity.getUniqueId(), flyData);
+		FlyData flyData = new FlyData(new CastData(data.power(), data.args()), player.getAllowFlight(), player.getFlySpeed());
+		players.put(data.caster().getUniqueId(), flyData);
 
 		player.setAllowFlight(true);
 		player.setFlying(true);
-		player.setFlySpeed(flySpeed.get(entity, null, power, args));
+		player.setFlySpeed(flySpeed.get(data));
 
 		if (heightMonitor == null) heightMonitor = new HeightMonitor();
 

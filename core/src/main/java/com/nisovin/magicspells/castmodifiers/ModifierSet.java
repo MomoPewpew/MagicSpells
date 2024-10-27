@@ -83,7 +83,7 @@ public class ModifierSet {
 			boolean cont = modifier.apply(event);
 			if (cont) continue;
 
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getPlayer(), MagicSpells.NULL_ARGS);
+			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getPlayer(), new String[0]);
 			break;
 		}
 	}
@@ -93,7 +93,7 @@ public class ModifierSet {
 			boolean cont = modifier.apply(event);
 			if (cont) continue;
 
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), MagicSpells.NULL_ARGS);
+			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), new String[0]);
 			break;
 		}
 	}
@@ -103,7 +103,7 @@ public class ModifierSet {
 			boolean cont = modifier.apply(event);
 			if (cont) continue;
 
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getPlayer(), MagicSpells.NULL_ARGS);
+			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getPlayer(), new String[0]);
 			break;
 		}
 	}
@@ -113,7 +113,7 @@ public class ModifierSet {
 			boolean cont = modifier.apply(event);
 			if (cont) continue;
 
-			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), MagicSpells.NULL_ARGS);
+			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), new String[0]);
 			break;
 		}
 	}

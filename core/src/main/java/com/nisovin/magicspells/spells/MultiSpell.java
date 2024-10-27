@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -71,7 +72,7 @@ public final class MultiSpell extends InstantSpell {
 	}
 
 	@Override
-	public Spell.PostCastAction castSpell(LivingEntity caster, Spell.SpellCastState state, float power, String[] args) {
+	public Spell.PostCastAction castSpell(Spell.SpellCastState state, SpellData data) {
 		if (state == Spell.SpellCastState.NORMAL) {
 			if (!castRandomSpellInstead) {
 				int delay = 0;
@@ -81,8 +82,8 @@ public final class MultiSpell extends InstantSpell {
 						delay += action.getDelay();
 					} else if (action.isSpell()) {
 						Subspell spell = action.getSpell();
-						if (delay == 0) spell.subcast(caster, power, args);
-						else MagicSpells.scheduleDelayedTask(new DelayedSpell(spell, caster, power, args), delay);
+						if (delay == 0) spell.subcast(data);
+						else MagicSpells.scheduleDelayedTask(new DelayedSpell(spell, data), delay);
 					}
 				}
 			} else {
@@ -99,21 +100,21 @@ public final class MultiSpell extends InstantSpell {
 						s = (int) Math.round(s + actions.get(i++).chance());
 					}
 					Action action = actions.get(Math.max(0, i - 1)).action();
-					if (action.isSpell()) action.getSpell().subcast(caster, power, args);
+					if (action.isSpell()) action.getSpell().subcast(data);
 				} else if (enableIndividualChances) {
 					for (ActionChance actionChance : actions) {
 						double chance = Math.random();
 						if ((actionChance.chance() / 100.0D > chance) && actionChance.action().isSpell()) {
 							Action action = actionChance.action();
-							action.getSpell().subcast(caster, power, args);
+							action.getSpell().subcast(data);
 						}
 					}
 				} else {
 					Action action = actions.get(random.nextInt(actions.size())).action();
-					action.getSpell().subcast(caster, power, args);
+					action.getSpell().subcast(data);
 				}
 			}
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+			playSpellEffects(EffectPosition.CASTER, data.caster(), data.power(), data.args());
 		}
 		return Spell.PostCastAction.HANDLE_NORMALLY;
 	}
@@ -221,22 +222,21 @@ public final class MultiSpell extends InstantSpell {
 	private static class DelayedSpell implements Runnable {
 		
 		private final Subspell spell;
-		private final String[] args;
-		private final float power;
+		private final SpellData data;
 		private final UUID casterUUID;
 
-		DelayedSpell(Subspell spell, LivingEntity caster, float power, String[] args) {
-			this.casterUUID = caster.getUniqueId();
+		DelayedSpell(Subspell spell, SpellData data) {
 			this.spell = spell;
-			this.power = power;
-			this.args = args;
+			this.data = data.builder().build();
+            assert this.data.caster() != null;
+            this.casterUUID = this.data.caster().getUniqueId();
 		}
 
 		@Override
 		public void run() {
 			Entity entity = Bukkit.getEntity(casterUUID);
 			if (entity == null || !entity.isValid() || !(entity instanceof LivingEntity livingEntity)) return;
-			spell.subcast(livingEntity, power, args);
+			spell.subcast(data);
 		}
 		
 	}

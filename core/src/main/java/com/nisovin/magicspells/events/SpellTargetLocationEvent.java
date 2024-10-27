@@ -5,26 +5,16 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class SpellTargetLocationEvent extends SpellEvent implements Cancellable {
 
-	private Location target;
-	private String[] args;
-	private float power;
+	private SpellData data;
 	private boolean cancelled = false;
 
-	public SpellTargetLocationEvent(Spell spell, LivingEntity caster, Location target, float power, String[] args) {
-		super(spell, caster);
-		this.target = target;
-		this.power = power;
-		this.args = args;
-	}
-
-	public SpellTargetLocationEvent(Spell spell, LivingEntity caster, Location target, float power) {
-		super(spell, caster);
-		this.target = target;
-		this.power = power;
-		this.args = null;
+	public SpellTargetLocationEvent(Spell spell, SpellData data) {
+		super(spell, data);
+		this.data = data;
 	}
 
 	/**
@@ -32,7 +22,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @return the targeted living entity
 	 */
 	public Location getTargetLocation() {
-		return target;
+		return data.location();
 	}
 
 	/**
@@ -40,7 +30,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @param target the new target
 	 */
 	public void setTargetLocation(Location target) {
-		this.target = target;
+		data.location(target);
 	}
 
 	/**
@@ -48,7 +38,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @return the power level
 	 */
 	public float getPower() {
-		return power;
+		return data.power();
 	}
 
 	/**
@@ -56,7 +46,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @param power the power level
 	 */
 	public void setPower(float power) {
-		this.power = power;
+		data.power(power);
 	}
 
 	/**
@@ -64,7 +54,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @return the spell arguments
 	 */
 	public String[] getSpellArgs() {
-		return args;
+		return data.args();
 	}
 
 	/**
@@ -72,7 +62,7 @@ public class SpellTargetLocationEvent extends SpellEvent implements Cancellable 
 	 * @param power the power level multiplier
 	 */
 	public void increasePower(float power) {
-		this.power *= power;
+		data.power(data.power() * power);
 	}
 
 	@Override

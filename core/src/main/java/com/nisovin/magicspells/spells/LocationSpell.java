@@ -7,6 +7,7 @@ import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.MagicLocation;
+import com.nisovin.magicspells.util.SpellData;
 
 public class LocationSpell extends InstantSpell {
 
@@ -49,13 +50,15 @@ public class LocationSpell extends InstantSpell {
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			Location loc = location.getLocation();
 			if (loc == null) return PostCastAction.ALREADY_HANDLED;
 
-			if (spellToCast != null) spellToCast.subcast(caster, loc, power, args);
-			playSpellEffects(caster, loc, power, args);
+			data = data.location(loc);
+
+			if (spellToCast != null) spellToCast.subcast(data);
+			playSpellEffects(data.caster(), loc, data.power(), data.args());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}

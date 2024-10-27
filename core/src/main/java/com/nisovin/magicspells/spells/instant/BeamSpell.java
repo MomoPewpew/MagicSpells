@@ -148,7 +148,7 @@ public class BeamSpell extends InstantSpell implements TargetedLocationSpell, Ta
 	}
 
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) shootBeam(caster, null, caster.getLocation(), power, args);
 		return PostCastAction.HANDLE_NORMALLY;
 	}

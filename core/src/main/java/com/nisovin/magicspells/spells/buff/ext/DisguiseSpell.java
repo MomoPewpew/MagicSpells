@@ -229,12 +229,4 @@ public class DisguiseSpell extends BuffSpell {
 		return entities;
 	}
 
-	public EntityData getEntityData() {
-		return entityData;
-	}
-
-	public void setEntityData(EntityData entityData) {
-		this.entityData = entityData;
-	}
-
 }

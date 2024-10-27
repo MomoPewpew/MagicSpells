@@ -124,46 +124,6 @@ public class ListSpell extends CommandSpell {
 		return filter.check(spell);
 	}
 
-	public List<String> getSpellsToHide() {
-		return spellsToHide;
-	}
-
-	public int getLineLength() {
-		return lineLength;
-	}
-
-	public boolean shouldReloadGrantedSpell() {
-		return reloadGrantedSpells;
-	}
-
-	public void setReloadGrantedSpells(boolean reloadGrantedSpells) {
-		this.reloadGrantedSpells = reloadGrantedSpells;
-	}
-
-	public boolean shouldOnlyShowCastableSpells() {
-		return onlyShowCastableSpells;
-	}
-
-	public void setOnlyShowCastableSpells(boolean onlyShowCastableSpells) {
-		this.onlyShowCastableSpells = onlyShowCastableSpells;
-	}
-
-	public String getStrPrefix() {
-		return strPrefix;
-	}
-
-	public void setStrPrefix(String strPrefix) {
-		this.strPrefix = strPrefix;
-	}
-
-	public String getStrNoSpells() {
-		return strNoSpells;
-	}
-
-	public void setStrNoSpells(String strNoSpells) {
-		this.strNoSpells = strNoSpells;
-	}
-
 	public SpellFilter getFilter() {
 		return filter;
 	}

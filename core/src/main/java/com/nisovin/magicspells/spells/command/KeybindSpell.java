@@ -174,26 +174,6 @@ public class KeybindSpell extends CommandSpell {
 		return null;
 	}
 
-	public Map<String, Keybinds> getPlayerKeybinds() {
-		return playerKeybinds;
-	}
-
-	public ItemStack getWandItem() {
-		return wandItem;
-	}
-
-	public void setWandItem(ItemStack wandItem) {
-		this.wandItem = wandItem;
-	}
-
-	public ItemStack getDefaultSpellIcon() {
-		return defaultSpellIcon;
-	}
-
-	public void setDefaultSpellIcon(ItemStack defaultSpellIcon) {
-		this.defaultSpellIcon = defaultSpellIcon;
-	}
-
 	private class Keybinds {
 		
 		private Player player;

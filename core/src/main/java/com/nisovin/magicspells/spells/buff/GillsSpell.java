@@ -113,28 +113,4 @@ public class GillsSpell extends BuffSpell {
 		return entities;
 	}
 
-	public Material getHeadMaterial() {
-		return headMaterial;
-	}
-
-	public void setHeadMaterial(Material headMaterial) {
-		this.headMaterial = headMaterial;
-	}
-
-	public boolean hasHeadEffect() {
-		return headEffect;
-	}
-
-	public void setHeadEffect(boolean headEffect) {
-		this.headEffect = headEffect;
-	}
-
-	public boolean shouldRefillAirBar() {
-		return refillAirBar;
-	}
-
-	public void setRefillAirBar(boolean refillAirBar) {
-		this.refillAirBar = refillAirBar;
-	}
-
 }

@@ -564,10 +564,6 @@ public class MinionSpell extends BuffSpell {
 		}
 	}
 
-	public Map<UUID, LivingEntity> getMinions() {
-		return minions;
-	}
-
 	public Map<LivingEntity, UUID> getPlayers() {
 		return players;
 	}
@@ -575,77 +571,12 @@ public class MinionSpell extends BuffSpell {
 	public Map<UUID, LivingEntity> getTargets() {
 		return targets;
 	}
-
-	public List<PotionEffect> getPotionEffects() {
-		return potionEffects;
-	}
-
-	public Set<AttributeManager.AttributeInfo> getAttributes() {
-		return attributes;
-	}
-
-	public ValidTargetList getMinionTargetList() {
-		return minionTargetList;
-	}
-
-	public void setMinionTargetList(ValidTargetList minionTargetList) {
-		this.minionTargetList = minionTargetList;
-	}
-
-	public EntityType[] getCreatureTypes() {
-		return creatureTypes;
-	}
-
-	public void setCreatureTypes(EntityType[] creatureTypes) {
-		this.creatureTypes = creatureTypes;
-	}
-
-	public boolean shouldPowerAffectHealth() {
-		return powerAffectsHealth;
-	}
-
-	public void setPowerAffectsHealth(boolean powerAffectsHealth) {
-		this.powerAffectsHealth = powerAffectsHealth;
-	}
-
-	public boolean shouldPreventCombust() {
-		return preventCombust;
-	}
-
-	public void setPreventCombust(boolean preventCombust) {
-		this.preventCombust = preventCombust;
-	}
-
-	public boolean hasGravity() {
-		return gravity;
-	}
-
 	public void setGravity(boolean gravity) {
 		this.gravity = gravity;
 	}
 
-	public boolean isBaby() {
-		return baby;
-	}
-
-	public void setBaby(boolean baby) {
-		this.baby = baby;
-	}
-
-	public double getPowerHealthFactor() {
-		return powerHealthFactor;
-	}
-
-	public void setPowerHealthFactor(double powerHealthFactor) {
-		this.powerHealthFactor = powerHealthFactor;
-	}
-
 	public double getMaxHealth() {
 		return maxHealth;
-	}
-
-	public void setMaxHealth(double maxHealth) {
-		this.maxHealth = maxHealth;
 	}
 
 	public double getHealth() {
@@ -656,164 +587,12 @@ public class MinionSpell extends BuffSpell {
 		this.health = health;
 	}
 
-	public String getMinionName() {
-		return minionName;
-	}
-
-	public void setMinionName(String minionName) {
-		this.minionName = minionName;
-	}
-
-	public Vector getSpawnOffset() {
-		return spawnOffset;
-	}
-
-	public void setSpawnOffset(Vector spawnOffset) {
-		this.spawnOffset = spawnOffset;
-	}
-
-	public double getFollowRange() {
-		return followRange;
-	}
-
-	public void setFollowRange(double followRange) {
-		this.followRange = followRange;
-	}
-
-	public float getFollowSpeed() {
-		return followSpeed;
-	}
-
-	public void setFollowSpeed(float followSpeed) {
-		this.followSpeed = followSpeed;
-	}
-
 	public float getMaxDistance() {
 		return maxDistance;
 	}
 
 	public void setMaxDistance(float maxDistance) {
 		this.maxDistance = maxDistance;
-	}
-
-	public Subspell getSpawnSpell() {
-		return spawnSpell;
-	}
-
-	public void setSpawnSpell(Subspell spawnSpell) {
-		this.spawnSpell = spawnSpell;
-	}
-
-	public Subspell getDeathSpell() {
-		return deathSpell;
-	}
-
-	public void setDeathSpell(Subspell deathSpell) {
-		this.deathSpell = deathSpell;
-	}
-
-	public Subspell getAttackSpell() {
-		return attackSpell;
-	}
-
-	public void setAttackSpell(Subspell attackSpell) {
-		this.attackSpell = attackSpell;
-	}
-
-	public ItemStack getMainHandItem() {
-		return mainHandItem;
-	}
-
-	public void setMainHandItem(ItemStack mainHandItem) {
-		this.mainHandItem = mainHandItem;
-	}
-
-	public ItemStack getOffHandItem() {
-		return offHandItem;
-	}
-
-	public void setOffHandItem(ItemStack offHandItem) {
-		this.offHandItem = offHandItem;
-	}
-
-	public ItemStack getHelmet() {
-		return helmet;
-	}
-
-	public void setHelmet(ItemStack helmet) {
-		this.helmet = helmet;
-	}
-
-	public ItemStack getChestplate() {
-		return chestplate;
-	}
-
-	public void setChestplate(ItemStack chestplate) {
-		this.chestplate = chestplate;
-	}
-
-	public ItemStack getLeggings() {
-		return leggings;
-	}
-
-	public void setLeggings(ItemStack leggings) {
-		this.leggings = leggings;
-	}
-
-	public ItemStack getBoots() {
-		return boots;
-	}
-
-	public void setBoots(ItemStack boots) {
-		this.boots = boots;
-	}
-
-	public float getMainHandItemDropChance() {
-		return mainHandItemDropChance;
-	}
-
-	public void setMainHandItemDropChance(float mainHandItemDropChance) {
-		this.mainHandItemDropChance = mainHandItemDropChance;
-	}
-
-	public float getOffHandItemDropChance() {
-		return offHandItemDropChance;
-	}
-
-	public void setOffHandItemDropChance(float offHandItemDropChance) {
-		this.offHandItemDropChance = offHandItemDropChance;
-	}
-
-	public float getHelmetDropChance() {
-		return helmetDropChance;
-	}
-
-	public void setHelmetDropChance(float helmetDropChance) {
-		this.helmetDropChance = helmetDropChance;
-	}
-
-	public float getChestplateDropChance() {
-		return chestplateDropChance;
-	}
-
-	public void setChestplateDropChance(float chestplateDropChance) {
-		this.chestplateDropChance = chestplateDropChance;
-	}
-
-	public float getLeggingsDropChance() {
-		return leggingsDropChance;
-	}
-
-	public void setLeggingsDropChance(float leggingsDropChance) {
-		this.leggingsDropChance = leggingsDropChance;
-	}
-
-	public float getBootsDropChance() {
-		return bootsDropChance;
-	}
-
-	public void setBootsDropChance(float bootsDropChance) {
-		this.bootsDropChance = bootsDropChance;
 	}
 
 }

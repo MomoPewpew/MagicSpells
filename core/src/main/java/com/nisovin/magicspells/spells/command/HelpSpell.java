@@ -71,44 +71,4 @@ public class HelpSpell extends CommandSpell {
 		return null;
 	}
 
-	public boolean shouldRequireKnownSpell() {
-		return requireKnownSpell;
-	}
-
-	public void setRequireKnownSpell(boolean requireKnownSpell) {
-		this.requireKnownSpell = requireKnownSpell;
-	}
-
-	public String getStrUsage() {
-		return strUsage;
-	}
-
-	public void setStrUsage(String strUsage) {
-		this.strUsage = strUsage;
-	}
-
-	public String getStrNoSpell() {
-		return strNoSpell;
-	}
-
-	public void setStrNoSpell(String strNoSpell) {
-		this.strNoSpell = strNoSpell;
-	}
-
-	public String getStrDescLine() {
-		return strDescLine;
-	}
-
-	public void setStrDescLine(String strDescLine) {
-		this.strDescLine = strDescLine;
-	}
-
-	public String getStrCostLine() {
-		return strCostLine;
-	}
-
-	public void setStrCostLine(String strCostLine) {
-		this.strCostLine = strCostLine;
-	}
-
 }

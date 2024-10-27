@@ -144,14 +144,6 @@ public class HasteSpell extends BuffSpell {
 		return players;
 	}
 
-	public boolean isHidden() {
-		return hidden;
-	}
-
-	public void setHidden(boolean hidden) {
-		this.hidden = hidden;
-	}
-
 	private class HasteData {
 
 		private final int accelerationIncrease;

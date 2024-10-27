@@ -137,12 +137,4 @@ public class ResistSpell extends BuffSpell {
 		return entities;
 	}
 
-	public Set<String> getSpellDamageTypes() {
-		return spellDamageTypes;
-	}
-
-	public Set<DamageCause> getNormalDamageTypes() {
-		return normalDamageTypes;
-	}
-
 }

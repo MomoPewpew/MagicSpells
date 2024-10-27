@@ -118,12 +118,4 @@ public class FrostwalkSpell extends BuffSpell {
 		return entities;
 	}
 
-	public boolean isLeaveFrozen() {
-		return leaveFrozen;
-	}
-
-	public void setLeaveFrozen(boolean leaveFrozen) {
-		this.leaveFrozen = leaveFrozen;
-	}
-
 }

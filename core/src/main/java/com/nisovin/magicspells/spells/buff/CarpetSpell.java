@@ -147,16 +147,4 @@ public class CarpetSpell extends BuffSpell {
 		return entities;
 	}
 
-	public Set<UUID> getFalling() {
-		return falling;
-	}
-
-	public Material getPlatformMaterial() {
-		return platformMaterial;
-	}
-
-	public void setPlatformMaterial(Material platformMaterial) {
-		this.platformMaterial = platformMaterial;
-	}
-
 }

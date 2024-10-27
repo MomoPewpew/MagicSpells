@@ -127,14 +127,6 @@ public class WindwalkSpell extends BuffSpell {
 		return players;
 	}
 
-	public boolean shouldCancelOnLand() {
-		return cancelOnLand;
-	}
-
-	public void setCancelOnLand(boolean cancelOnLand) {
-		this.cancelOnLand = cancelOnLand;
-	}
-
 	public class FlyDisableListener implements Listener {
 
 		@EventHandler(priority = EventPriority.MONITOR)

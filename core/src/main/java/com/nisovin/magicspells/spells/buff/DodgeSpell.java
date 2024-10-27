@@ -151,20 +151,4 @@ public class DodgeSpell extends BuffSpell {
 		this.filter = filter;
 	}
 
-	public Subspell getSpellBeforeDodge() {
-		return spellBeforeDodge;
-	}
-
-	public void setSpellBeforeDodge(Subspell spellBeforeDodge) {
-		this.spellBeforeDodge = spellBeforeDodge;
-	}
-
-	public Subspell getSpellAfterDodge() {
-		return spellAfterDodge;
-	}
-
-	public void setSpellAfterDodge(Subspell spellAfterDodge) {
-		this.spellAfterDodge = spellAfterDodge;
-	}
-
 }

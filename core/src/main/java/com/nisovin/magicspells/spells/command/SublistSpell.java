@@ -114,48 +114,4 @@ public class SublistSpell extends CommandSpell {
 		return null;
 	}
 
-	public List<String> getSpellsToHide() {
-		return spellsToHide;
-	}
-
-	public List<String> getSpellsToShow() {
-		return spellsToShow;
-	}
-
-	public int getLineLength() {
-		return lineLength;
-	}
-
-	public boolean shouldReloadGrantedSpells() {
-		return reloadGrantedSpells;
-	}
-
-	public void setReloadGrantedSpells(boolean reloadGrantedSpells) {
-		this.reloadGrantedSpells = reloadGrantedSpells;
-	}
-
-	public boolean shouldOnlyShowCastableSpells() {
-		return onlyShowCastableSpells;
-	}
-
-	public void setOnlyShowCastableSpells(boolean onlyShowCastableSpells) {
-		this.onlyShowCastableSpells = onlyShowCastableSpells;
-	}
-
-	public String getStrPrefix() {
-		return strPrefix;
-	}
-
-	public void setStrPrefix(String strPrefix) {
-		this.strPrefix = strPrefix;
-	}
-
-	public String getStrNoSpells() {
-		return strNoSpells;
-	}
-
-	public void setStrNoSpells(String strNoSpells) {
-		this.strNoSpells = strNoSpells;
-	}
-
 }

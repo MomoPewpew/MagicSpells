@@ -135,39 +135,7 @@ public class WindglideSpell extends BuffSpell {
 
 		if (blockCollisionDmg) e.setCancelled(true);
 		if (cancelOnCollision) turnOff(entity);
-		if (collisionSpell != null) collisionSpell.subcast(entity, entity.getLocation(), data.power(), data.args());
-	}
-
-	public Subspell getGlideSpell() {
-		return glideSpell;
-	}
-
-	public void setGlideSpell(Subspell glideSpell) {
-		this.glideSpell = glideSpell;
-	}
-
-	public Subspell getCollisionSpell() {
-		return collisionSpell;
-	}
-
-	public void setCollisionSpell(Subspell collisionSpell) {
-		this.collisionSpell = collisionSpell;
-	}
-
-	public boolean shouldCancelOnCollision() {
-		return cancelOnCollision;
-	}
-
-	public void setCancelOnCollision(boolean cancelOnCollision) {
-		this.cancelOnCollision = cancelOnCollision;
-	}
-
-	public boolean shouldBlockCollisionDamage() {
-		return blockCollisionDmg;
-	}
-
-	public void setBlockCollisionDmg(boolean blockCollisionDmg) {
-		this.blockCollisionDmg = blockCollisionDmg;
+		if (collisionSpell != null) collisionSpell.subcast(data.builder().caster(entity).location(entity.getLocation()).build());
 	}
 
 	public int getInterval() {
@@ -211,7 +179,7 @@ public class WindglideSpell extends BuffSpell {
 				v = eLoc.getDirection().normalize().multiply(velocity).add(new Vector(0, height, 0));
 				entity.setVelocity(v);
 
-				if (glideSpell != null) glideSpell.subcast(caster, eLoc, data.power(), data.args());
+				if (glideSpell != null) glideSpell.subcast(data.builder().caster(caster).location(eLoc).build());
 				playSpellEffects(EffectPosition.SPECIAL, eLoc, data);
 				addUseAndChargeCost(caster);
 			}

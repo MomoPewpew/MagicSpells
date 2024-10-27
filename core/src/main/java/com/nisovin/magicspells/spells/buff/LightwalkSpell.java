@@ -115,24 +115,4 @@ public class LightwalkSpell extends BuffSpell {
 		return players;
 	}
 
-	public Set<Material> getAllowedTypes() {
-		return allowedTypes;
-	}
-
-	public int getYOffset() {
-		return yOffset;
-	}
-
-	public void setYOffset(int yOffset) {
-		this.yOffset = yOffset;
-	}
-
-	public BlockData getBlockType() {
-		return blockType;
-	}
-
-	public void setBlockType(BlockData blockTyoe) {
-		this.blockType = blockTyoe;
-	}
-
 }

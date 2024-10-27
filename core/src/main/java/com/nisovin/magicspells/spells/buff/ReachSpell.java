@@ -175,28 +175,4 @@ public class ReachSpell extends BuffSpell {
 		return players;
 	}
 
-	public Set<Material> getDisallowedBreakBlocks() {
-		return disallowedBreakBlocks;
-	}
-
-	public Set<Material> getDisallowedPlaceBlocks() {
-		return disallowedPlaceBlocks;
-	}
-
-	public boolean shouldDropBlocks() {
-		return dropBlocks;
-	}
-
-	public void setDropBlocks(boolean dropBlocks) {
-		this.dropBlocks = dropBlocks;
-	}
-
-	public boolean shouldConsumeBlocks() {
-		return consumeBlocks;
-	}
-
-	public void setConsumeBlocks(boolean consumeBlocks) {
-		this.consumeBlocks = consumeBlocks;
-	}
-
 }

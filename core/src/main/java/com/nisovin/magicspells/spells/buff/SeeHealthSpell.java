@@ -120,14 +120,6 @@ public class SeeHealthSpell extends BuffSpell {
 		this.interval = interval;
 	}
 
-	public String getSymbol() {
-		return symbol;
-	}
-
-	public void setSymbol(String symbol) {
-		this.symbol = symbol;
-	}
-
 	private class Updater implements Runnable {
 
 		private final int taskId;
@@ -144,7 +136,7 @@ public class SeeHealthSpell extends BuffSpell {
 				if (player == null || !player.isValid()) continue;
 
 				CastData data = entry.getValue();
-				TargetInfo<LivingEntity> target = getTargetedEntity(player, data.power(), data.args());
+				TargetInfo<LivingEntity> target = getTargetedEntity(new SpellData(player, data.power(), data.args()));
 				if (!target.noTarget()) showHealthBar(player, target.target(), data);
 			}
 		}

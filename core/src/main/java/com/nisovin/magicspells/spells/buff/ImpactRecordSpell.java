@@ -96,12 +96,4 @@ public class ImpactRecordSpell extends BuffSpell {
 		this.recordFilter = recordFilter;
 	}
 
-	public boolean isRecordCancelled() {
-		return recordCancelled;
-	}
-
-	public void setRecordCancelled(boolean recordCancelled) {
-		this.recordCancelled = recordCancelled;
-	}
-
 }

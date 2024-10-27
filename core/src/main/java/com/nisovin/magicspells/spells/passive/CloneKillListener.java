@@ -4,6 +4,7 @@ import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 import com.nisovin.magicspells.util.OverridePriority;
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.LivingEntity;
@@ -29,7 +30,7 @@ public class CloneKillListener extends PassiveListener {
             //Using larger radius for situations where this would actually be triggered :3
             Collection<LivingEntity> nearbyEntities = displayEntity.getLocation().getNearbyLivingEntities(20);
             Bukkit.getLogger().info("Found: " + nearbyEntities.size());
-            if(nearbyEntities.size() > 0)   passiveSpell.activate(nearbyEntities.stream().findFirst().get());
+            if(nearbyEntities.size() > 0)   passiveSpell.activate(new SpellData(nearbyEntities.stream().findFirst().get()));
         }
     }
 

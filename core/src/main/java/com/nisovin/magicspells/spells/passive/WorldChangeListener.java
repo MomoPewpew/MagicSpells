@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.World;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -48,7 +49,7 @@ public class WorldChangeListener extends PassiveListener {
 		Player caster = event.getPlayer();
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
-		boolean casted = passiveSpell.activate(event.getPlayer());
+		boolean casted = passiveSpell.activate(new SpellData(event.getPlayer()));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

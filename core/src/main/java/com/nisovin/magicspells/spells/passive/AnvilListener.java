@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
@@ -93,7 +94,7 @@ public class AnvilListener extends PassiveListener {
 		if (secondItem != null && !contains(secondItem, event.getInventory().getSecondItem())) return;
 		if (resultItem != null && !contains(resultItem, event.getInventory().getResult())) return;
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(new SpellData(caster));
 		if (cancelDefaultAction(casted)) event.setResult(null);
 	}
 

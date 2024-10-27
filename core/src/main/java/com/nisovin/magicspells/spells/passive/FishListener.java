@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import java.util.EnumSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.EntityType;
@@ -55,8 +56,8 @@ public class FishListener extends PassiveListener {
 		Entity caught = event.getCaught();
 		if (!types.isEmpty() && (caught == null || !types.contains(caught.getType()))) return;
 
-		boolean casted = caught instanceof LivingEntity ? passiveSpell.activate(caster, (LivingEntity) caught) :
-			passiveSpell.activate(caster, event.getHook().getLocation());
+		boolean casted = caught instanceof LivingEntity ? passiveSpell.activate(new SpellData(caster, (LivingEntity) caught)) :
+			passiveSpell.activate(new SpellData(caster, event.getHook().getLocation()));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

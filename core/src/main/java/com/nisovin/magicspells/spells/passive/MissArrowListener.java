@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Projectile;
@@ -81,7 +82,7 @@ public class MissArrowListener extends PassiveListener {
 			if (!contains(itemData)) return;
 		}
 
-		passiveSpell.activate(caster, event.getEntity().getLocation());
+		passiveSpell.activate(new SpellData(caster, event.getEntity().getLocation()));
 	}
 
 	private boolean contains(MagicItemData itemData) {

@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.Event;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -25,7 +26,7 @@ public class LeftClickListener extends PassiveListener {
 		Player caster = event.getPlayer();
 		if (!hasSpell(event.getPlayer()) || !canTrigger(caster)) return;
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(new SpellData(caster));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

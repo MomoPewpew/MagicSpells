@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
@@ -56,7 +57,7 @@ public class UnequipListener extends PassiveListener {
 			if (!contains(oldData, newData)) return;
 		}
 
-		passiveSpell.activate(caster);
+		passiveSpell.activate(new SpellData(caster));
 	}
 
 	private boolean contains(MagicItemData oldData, MagicItemData newData) {

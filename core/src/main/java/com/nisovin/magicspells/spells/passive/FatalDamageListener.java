@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.EventHandler;
 
 import java.util.EnumSet;
@@ -76,7 +77,7 @@ public class FatalDamageListener extends PassiveListener {
 			if (itemData == null || !contains(itemData)) return;
 		}
 
-		boolean casted = passiveSpell.activate(caster, attacker);
+		boolean casted = passiveSpell.activate(new SpellData(caster, attacker));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
@@ -59,7 +60,7 @@ public class LeftClickBlockTypeListener extends PassiveListener {
 		}
 
 		if (!blockDatas.isEmpty() && !match) return;
-		boolean casted = passiveSpell.activate(event.getPlayer(), block.getLocation().add(0.5, 0.5, 0.5));
+		boolean casted = passiveSpell.activate(new SpellData(event.getPlayer(), block.getLocation().add(0.5, 0.5, 0.5)));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

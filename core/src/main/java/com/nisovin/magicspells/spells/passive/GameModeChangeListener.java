@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import java.util.EnumSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -42,7 +43,7 @@ public class GameModeChangeListener extends PassiveListener {
 
 		if (!gameModes.isEmpty() && !gameModes.contains(event.getNewGameMode())) return;
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(new SpellData(caster));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
@@ -52,7 +53,7 @@ public class CraftListener extends PassiveListener {
 			if (itemData == null || !contains(itemData)) return;
 		}
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(new SpellData(caster));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

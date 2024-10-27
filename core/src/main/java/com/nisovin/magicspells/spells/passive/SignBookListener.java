@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import net.kyori.adventure.text.Component;
 
 import org.bukkit.entity.Player;
@@ -39,14 +40,14 @@ public class SignBookListener extends PassiveListener {
 		if (!hasSpell(player) || !canTrigger(player)) return;
 
 		if (text.isEmpty()) {
-			boolean casted = passiveSpell.activate(player);
+			boolean casted = passiveSpell.activate(new SpellData(player));
 			if (cancelDefaultAction(casted)) event.setCancelled(true);
 			return;
 		}
 
 		for (Component page : event.getNewBookMeta().pages()) {
 			if (!text.contains(Util.getStringFromComponent(page))) continue;
-			boolean casted = passiveSpell.activate(player);
+			boolean casted = passiveSpell.activate(new SpellData(player));
 			if (cancelDefaultAction(casted)) event.setCancelled(true);
 			return;
 		}

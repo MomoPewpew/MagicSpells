@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryOpenEvent;
@@ -53,7 +54,7 @@ public class InventoryOpenListener extends PassiveListener {
 		HumanEntity caster = event.getPlayer();
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(new SpellData(caster));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

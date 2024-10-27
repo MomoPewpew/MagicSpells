@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
@@ -99,7 +100,7 @@ public class GrindstoneListener extends PassiveListener {
 		if (lowerItem != null && !contains(lowerItem, grindstone.getLowerItem())) return;
 		if (resultItem != null && !contains(resultItem, grindstone.getResult())) return;
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(new SpellData(caster));
 		if (cancelDefaultAction(casted)) event.setResult(null);
 	}
 

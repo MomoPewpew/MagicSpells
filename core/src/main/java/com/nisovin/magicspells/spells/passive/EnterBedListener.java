@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerBedEnterEvent;
@@ -23,7 +24,7 @@ public class EnterBedListener extends PassiveListener {
 		Player player = event.getPlayer();
 		if (!hasSpell(player) || !canTrigger(player)) return;
 
-		boolean casted = passiveSpell.activate(player);
+		boolean casted = passiveSpell.activate(new SpellData(player));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

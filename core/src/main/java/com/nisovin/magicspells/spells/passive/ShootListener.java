@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityShootBowEvent;
@@ -23,7 +24,7 @@ public class ShootListener extends PassiveListener {
 		LivingEntity caster = event.getEntity();
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
-		boolean casted = passiveSpell.activate(caster, event.getForce());
+		boolean casted = passiveSpell.activate(new SpellData(caster, event.getForce()));
 		if (cancelDefaultAction(casted)) {
 			event.setCancelled(true);
 			event.getProjectile().remove();

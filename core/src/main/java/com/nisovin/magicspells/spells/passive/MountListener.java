@@ -4,6 +4,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 import com.nisovin.magicspells.util.MobUtil;
 import com.nisovin.magicspells.util.OverridePriority;
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
@@ -39,7 +40,7 @@ public class MountListener extends PassiveListener {
 		if (!types.isEmpty() && !types.contains(event.getMount().getType())) return;
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(new SpellData(caster));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

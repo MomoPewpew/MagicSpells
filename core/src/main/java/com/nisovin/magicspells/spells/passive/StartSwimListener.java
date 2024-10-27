@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityToggleSwimEvent;
@@ -23,7 +24,7 @@ public class StartSwimListener extends PassiveListener {
 		if (!event.isSwimming()) return;
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(new SpellData(caster));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

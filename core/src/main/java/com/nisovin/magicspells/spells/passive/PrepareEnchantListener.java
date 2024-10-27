@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
@@ -49,7 +50,7 @@ public class PrepareEnchantListener extends PassiveListener {
 
 		if (items != null && !contains(event.getItem())) return;
 
-		boolean casted = passiveSpell.activate(caster);
+		boolean casted = passiveSpell.activate(new SpellData(caster));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

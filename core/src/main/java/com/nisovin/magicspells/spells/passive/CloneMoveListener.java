@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.passive.util.PassiveListener;
 import com.nisovin.magicspells.util.OverridePriority;
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.LivingEntity;
@@ -34,7 +35,7 @@ public class CloneMoveListener extends PassiveListener {
                 if(nearbyEntities.size() == 0)
                     nearbyEntities = Objects.requireNonNull(event.getTo()).getNearbyLivingEntities(4);
                 if(nearbyEntities.size() > 0){
-                    passiveSpell.activate(nearbyEntities.stream().findFirst().get(), null, event.getTo());
+                    passiveSpell.activate(new SpellData(nearbyEntities.stream().findFirst().get(), null, event.getTo()));
                     //Just pull any entity and cast the spell using them?
                 }
 

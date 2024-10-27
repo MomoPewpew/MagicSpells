@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.ItemStack;
@@ -80,7 +81,7 @@ public class InventoryClickListener extends PassiveListener {
 			if (!itemCursor.matches(itemData)) return;
 		}
 
-		boolean casted = passiveSpell.activate(player);
+		boolean casted = passiveSpell.activate(new SpellData(player));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

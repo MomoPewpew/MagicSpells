@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -19,7 +20,7 @@ public class ChatListener extends PassiveListener {
 		Player caster = event.getPlayer();
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
-		passiveSpell.activate(caster);
+		passiveSpell.activate(new SpellData(caster));
 	}
 
 }

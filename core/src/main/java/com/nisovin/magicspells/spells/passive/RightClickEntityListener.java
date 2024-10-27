@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import java.util.EnumSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.EntityType;
@@ -65,8 +66,8 @@ public class RightClickEntityListener extends PassiveListener {
 		if (!hasSpell(caster) || !canTrigger(caster))
 			return;
 
-		boolean casted = entity instanceof LivingEntity ? passiveSpell.activate(caster, (LivingEntity) entity)
-				: passiveSpell.activate(caster, entity.getLocation());
+		boolean casted = entity instanceof LivingEntity ? passiveSpell.activate(new SpellData(caster, (LivingEntity) entity))
+				: passiveSpell.activate(new SpellData(caster, entity.getLocation()));
 		if (cancelDefaultAction(casted))
 			event.setCancelled(true);
 	}

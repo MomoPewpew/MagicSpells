@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.EnumSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -76,7 +77,7 @@ public class TakeDamageListener extends PassiveListener {
 			if (itemData == null || !contains(itemData)) return;
 		}
 
-		boolean casted = passiveSpell.activate(caster, attacker);
+		boolean casted = passiveSpell.activate(new SpellData(caster, attacker));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

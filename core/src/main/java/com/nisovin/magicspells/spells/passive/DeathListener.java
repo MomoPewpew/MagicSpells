@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -21,7 +22,7 @@ public class DeathListener extends PassiveListener {
 		LivingEntity entity = event.getEntity();
 		if (!hasSpell(entity) || !canTrigger(entity)) return;
 
-		passiveSpell.activate(entity);
+		passiveSpell.activate(new SpellData(entity));
 	}
 
 }

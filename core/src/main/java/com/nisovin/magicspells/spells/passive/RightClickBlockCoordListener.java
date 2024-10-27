@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
@@ -59,7 +60,7 @@ public class RightClickBlockCoordListener extends PassiveListener {
 		MagicLocation loc = new MagicLocation(location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
 		if (!locations.contains(loc)) return;
 
-		boolean casted = passiveSpell.activate(caster, location.add(0.5, 0.5, 0.5));
+		boolean casted = passiveSpell.activate(new SpellData(caster, location.add(0.5, 0.5, 0.5)));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

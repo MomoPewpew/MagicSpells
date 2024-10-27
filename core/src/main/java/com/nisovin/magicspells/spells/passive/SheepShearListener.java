@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import java.util.EnumSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.DyeColor;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Entity;
@@ -47,7 +48,7 @@ public class SheepShearListener extends PassiveListener {
 		Sheep target = (Sheep) event.getEntity();
 		if (!dyeColors.isEmpty() && !dyeColors.contains(target.getColor())) return;
 
-		boolean casted = passiveSpell.activate(caster, target);
+		boolean casted = passiveSpell.activate(new SpellData(caster, target));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

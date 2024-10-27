@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -24,7 +25,7 @@ public class StartSneakListener extends PassiveListener {
 		Player caster = event.getPlayer();
 		if (!hasSpell(event.getPlayer()) || !canTrigger(caster)) return;
 
-		boolean casted = passiveSpell.activate(event.getPlayer());
+		boolean casted = passiveSpell.activate(new SpellData(event.getPlayer()));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

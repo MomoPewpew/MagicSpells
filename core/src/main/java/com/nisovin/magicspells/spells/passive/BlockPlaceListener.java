@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import java.util.EnumSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -41,7 +42,7 @@ public class BlockPlaceListener extends PassiveListener {
 		Block block = event.getBlock();
 		if (!materials.isEmpty() && !materials.contains(block.getType())) return;
 
-		boolean casted = passiveSpell.activate(player, block.getLocation().add(0.5, 0.5, 0.5));
+		boolean casted = passiveSpell.activate(new SpellData(player, block.getLocation().add(0.5, 0.5, 0.5)));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

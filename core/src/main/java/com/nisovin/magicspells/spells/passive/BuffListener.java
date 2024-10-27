@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import java.util.EnumSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.World;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -130,7 +131,7 @@ public class BuffListener extends PassiveListener {
 
 		for (Subspell s : passiveSpell.getActivatedSpells()) {
 			if (s.getSpell() instanceof BuffSpell buff && buff.isActive(entity)) continue;
-			s.subcast(entity, 1F, null);
+			s.subcast(new SpellData(entity));
 		}
 	}
 

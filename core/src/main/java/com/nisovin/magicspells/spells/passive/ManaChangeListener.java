@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.passive;
 
 import java.util.EnumSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 
@@ -37,7 +38,7 @@ public class ManaChangeListener extends PassiveListener {
 		Player caster = event.getPlayer();
 		if (!canTrigger(caster) || !hasSpell(caster)) return;
 
-		passiveSpell.activate(caster);
+		passiveSpell.activate(new SpellData(caster));
 	}
 
 }

@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 
@@ -29,7 +30,7 @@ public class SpellTargetListener extends PassiveListener {
 
 		if (filter != null && !filter.check(event.getSpell())) return;
 
-		boolean casted = passiveSpell.activate(caster, event.getTarget());
+		boolean casted = passiveSpell.activate(new SpellData(caster, event.getTarget()));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

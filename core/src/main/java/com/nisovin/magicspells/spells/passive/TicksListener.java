@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.World;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
@@ -174,7 +175,7 @@ public class TicksListener extends PassiveListener {
 					entities.remove(entity);
 					continue;
 				}
-				passiveSpell.activate(entity);
+				passiveSpell.activate(new SpellData(entity));
 			}
 
 			if (profilingKey != null) MagicSpells.addProfile(profilingKey, System.nanoTime() - start);

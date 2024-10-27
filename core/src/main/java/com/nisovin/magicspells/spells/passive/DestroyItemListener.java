@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -66,7 +67,7 @@ public class DestroyItemListener extends PassiveListener {
 			if (itemData == null || !contains(itemData)) return;
 		}
 
-		boolean casted = passiveSpell.activate(caster, item.getLocation());
+		boolean casted = passiveSpell.activate(new SpellData(caster, item.getLocation()));
         
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
     }

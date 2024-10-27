@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.passive;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.World;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -21,7 +22,7 @@ public class MagicSpellsLoadedListener extends PassiveListener {
 	public void onLoaded(MagicSpellsLoadedEvent e) {
 		for (World world : Bukkit.getWorlds())
 			for (LivingEntity livingEntity : world.getLivingEntities())
-				if (hasSpell(livingEntity) && canTrigger(livingEntity)) passiveSpell.activate(livingEntity);
+				if (hasSpell(livingEntity) && canTrigger(livingEntity)) passiveSpell.activate(new SpellData(livingEntity));
 	}
 
 }

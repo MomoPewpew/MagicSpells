@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
@@ -92,7 +93,7 @@ public class PotionEffectListener extends PassiveListener {
 
 		if (type == null || !types.contains(type)) return;
 
-		boolean casted = passiveSpell.activate(entity);
+		boolean casted = passiveSpell.activate(new SpellData(entity));
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

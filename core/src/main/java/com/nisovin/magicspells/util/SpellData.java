@@ -28,7 +28,7 @@ public record SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity ta
 	}
 
 	public SpellData(@Nullable LivingEntity caster, LivingEntity target, Location location, float power) {
-		this(caster, target, null, power, new String[0], null);
+		this(caster, target, location, power, new String[0], null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @NotNull Location location, @NotNull float power) {
@@ -59,8 +59,8 @@ public record SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity ta
 		this(caster, null, null, 1f, args, null);
 	}
 
-	public SpellData(@Nullable LivingEntity caster, Location target) {
-		this(caster, null, target, 1f, new String[0], null);
+	public SpellData(@Nullable LivingEntity caster, Location location) {
+		this(caster, null, location, 1f, new String[0], null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, LivingEntity target) {

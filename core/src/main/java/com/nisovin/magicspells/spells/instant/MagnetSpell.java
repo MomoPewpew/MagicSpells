@@ -48,41 +48,29 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Location location = caster.getLocation();
+			List<Item> items = getNearbyItems(data);
+			magnet(data, items);
 
-			List<Item> items = getNearbyItems(caster, location, power, args);
-			magnet(caster, location, items, power, args);
-
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+			playSpellEffects(EffectPosition.CASTER, data.caster(), data);
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Collection<Item> targetItems = getNearbyItems(caster, target, power, args);
-		magnet(caster, target, targetItems, power, args);
+	public boolean castAtLocation(SpellData data) {
+		Collection<Item> targetItems = getNearbyItems(data);
+		magnet(data, targetItems);
 
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
-	private List<Item> getNearbyItems(LivingEntity caster, Location center, float power, String[] args) {
-		double radius = this.radius.get(caster, null, power, args);
-		if (powerAffectsRadius) radius *= power;
+	private List<Item> getNearbyItems(SpellData data) {
+		double radius = this.radius.get(data);
+		if (powerAffectsRadius) radius *= data.power();
 		radius = Math.min(radius, MagicSpells.getGlobalRadius());
 
-		Collection<Entity> entities = center.getWorld().getNearbyEntities(center, radius, radius, radius);
+		Collection<Entity> entities = data.location().getWorld().getNearbyEntities(data.location(), radius, radius, radius);
 		List<Item> ret = new ArrayList<>();
 		for (Entity e : entities) {
 			if (!(e instanceof Item i)) continue;
@@ -100,53 +88,32 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 		return ret;
 	}
 
-	private void magnet(LivingEntity caster, Location location, Collection<Item> items, float power, String[] args) {
+	private void magnet(SpellData data, Collection<Item> items) {
 		double velocity = 0;
 		if (!resolveVelocityPerItem) {
-			velocity = this.velocity.get(caster, null, power, args);
-			if (powerAffectsVelocity) velocity *= power;
+			velocity = this.velocity.get(data);
+			if (powerAffectsVelocity) velocity *= data.power();
 		}
 
-		SpellData data = new SpellData(caster, power, args);
-		for (Item i : items) magnet(caster, location, i, power, args, data, velocity);
+		for (Item i : items) magnet(i, data, velocity);
 	}
 
-	private void magnet(LivingEntity caster, Location origin, Item item, float power, String[] args, SpellData data, double velocity) {
+	private void magnet(Item item, SpellData data, double velocity) {
 		if (removeItemGravity) item.setGravity(false);
-		if (teleport) item.teleportAsync(origin);
+		if (teleport) item.teleportAsync(data.location());
 		else {
 			if (resolveVelocityPerItem) {
-				velocity = this.velocity.get(caster, null, power, args);
-				if (powerAffectsVelocity) velocity *= power;
+				velocity = this.velocity.get(data);
+				if (powerAffectsVelocity) velocity *= data.power();
 			}
 
-			item.setVelocity(origin.toVector().subtract(item.getLocation().toVector()).normalize().multiply(velocity));
+			item.setVelocity(data.location().toVector().subtract(item.getLocation().toVector()).normalize().multiply(velocity));
 		}
 		playSpellEffects(EffectPosition.PROJECTILE, item, data);
 	}
 
-	public boolean shouldTeleport() {
-		return teleport;
-	}
-
 	public void setTeleport(boolean teleport) {
 		this.teleport = teleport;
-	}
-
-	public boolean shouldForcePickup() {
-		return forcePickup;
-	}
-
-	public void setForcePickup(boolean forcePickup) {
-		this.forcePickup = forcePickup;
-	}
-
-	public boolean shouldRemoveItemGravity() {
-		return removeItemGravity;
-	}
-
-	public void setRemoveItemGravity(boolean removeItemGravity) {
-		this.removeItemGravity = removeItemGravity;
 	}
 
 }

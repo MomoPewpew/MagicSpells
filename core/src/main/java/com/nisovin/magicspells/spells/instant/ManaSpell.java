@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.instant;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
@@ -25,13 +26,13 @@ public class ManaSpell extends InstantSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			int amount = mana.get(caster, null, power, args);
-			if (powerAffectsMana) amount = Math.round(amount * power);
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			int amount = mana.get(data);
+			if (powerAffectsMana) amount = Math.round(amount * data.power());
 
 			boolean added = MagicSpells.getManaHandler().addMana(player, amount, ManaChangeReason.OTHER);
 			if (!added) return PostCastAction.ALREADY_HANDLED;
-			playSpellEffects(EffectPosition.CASTER, player, power, args);
+			playSpellEffects(EffectPosition.CASTER, player, data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}

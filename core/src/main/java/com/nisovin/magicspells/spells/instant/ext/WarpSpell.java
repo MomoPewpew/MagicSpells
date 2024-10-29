@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.instant.ext;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
@@ -35,6 +36,7 @@ public class WarpSpell extends InstantSpell {
 		}
 
 		Location twLoc = ((Location) targetWarp.getLoc()).clone();
+		LivingEntity caster = data.caster();
 		Location cLoc = caster.getLocation();
 
 		if (rememberOffset) {

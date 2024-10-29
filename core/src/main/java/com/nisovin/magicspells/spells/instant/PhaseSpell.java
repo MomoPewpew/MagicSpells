@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.instant;
 import java.util.List;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -56,9 +57,13 @@ public class PhaseSpell extends InstantSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
+			LivingEntity caster = data.caster();
+			float power = data.power();
+			String[] args = data.args();
+
 			int r = getRange(caster, power, args);
 
-			int distance = maxDistance.get(caster, null, power, args);
+			int distance = maxDistance.get(data);
 			if (powerAffectsMaxDistance) distance = Math.round(distance * power);
 
 			BlockIterator iter;
@@ -113,22 +118,6 @@ public class PhaseSpell extends InstantSpell {
 		// Check only blacklist.
 		if (phasableBlocks.isEmpty()) return !nonPhasableBlocks.contains(block.getType());
 		return phasableBlocks.contains(block.getType()) && !nonPhasableBlocks.contains(block.getType());
-	}
-
-	public List<Material> getPhasableBlocks() {
-		return phasableBlocks;
-	}
-
-	public List<Material> getNonPhasableBlocks() {
-		return nonPhasableBlocks;
-	}
-
-	public String getStrCantPhase() {
-		return strCantPhase;
-	}
-
-	public void setStrCantPhase(String strCantPhase) {
-		this.strCantPhase = strCantPhase;
 	}
 
 }

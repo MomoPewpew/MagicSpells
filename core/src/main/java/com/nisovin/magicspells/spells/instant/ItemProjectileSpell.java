@@ -149,60 +149,48 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			ItemProjectileTracker tracker = new ItemProjectileTracker(caster, caster.getLocation(), power, args);
+			ItemProjectileTracker tracker = new ItemProjectileTracker(data);
 
-			ItemStack itemStack = MagicItems.getMagicItemFromString(magicItemName.get(null), null);
-
-			setupTracker(tracker, caster, power, args);
+			setupTracker(tracker, data);
 			tracker.start();
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity livingEntity, Location target, float power, String[] args) {
-		ItemProjectileTracker tracker = new ItemProjectileTracker(livingEntity, target, power, args);
-		setupTracker(tracker, livingEntity, power, args);
+	public boolean castAtLocation(SpellData data) {
+		ItemProjectileTracker tracker = new ItemProjectileTracker(data);
+		setupTracker(tracker, data);
 		tracker.start();
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
-	private void setupTracker(ItemProjectileTracker tracker, ItemStack item, LivingEntity caster, float power, String[] args) {
+	private void setupTracker(ItemProjectileTracker tracker, SpellData data) {
 		tracker.setSpell(this);
 
 		tracker.setItemName(itemName);
-		tracker.setItem(item);
+		tracker.setItem(MagicItems.getMagicItemFromString(magicItemName.get(data), data).getItemStack());
 
-		tracker.setSpellDelay(spellDelay.get(caster, null, power, args));
-		tracker.setPickupDelay(pickupDelay.get(caster, null, power, args));
-		tracker.setRemoveDelay(removeDelay.get(caster, null, power, args));
-		tracker.setTickInterval(tickInterval.get(caster, null, power, args));
-		tracker.setSpellInterval(spellInterval.get(caster, null, power, args));
-		tracker.setItemNameDelay(itemNameDelay.get(caster, null, power, args));
-		tracker.setSpecialEffectInterval(specialEffectInterval.get(caster, null, power, args));
-		tracker.setentityHitDelay(entityHitDelay.get(caster, null, power, args));
+		tracker.setSpellDelay(spellDelay.get(data));
+		tracker.setPickupDelay(pickupDelay.get(data));
+		tracker.setRemoveDelay(removeDelay.get(data));
+		tracker.setTickInterval(tickInterval.get(data));
+		tracker.setSpellInterval(spellInterval.get(data));
+		tracker.setItemNameDelay(itemNameDelay.get(data));
+		tracker.setSpecialEffectInterval(specialEffectInterval.get(data));
+		tracker.setentityHitDelay(entityHitDelay.get(data));
 
-		tracker.setSpeed(speed.get(caster, null, power, args));
+		tracker.setSpeed(speed.get(data));
 
-		float yOffset = this.yOffset.get(caster, null, power, args);
+		float yOffset = this.yOffset.get(data);
 		tracker.setYOffset(yOffset);
 
-		float vertSpeed = this.vertSpeed.get(caster, null, power, args);
+		float vertSpeed = this.vertSpeed.get(data);
 		tracker.setVertSpeed(vertSpeed);
 
-		tracker.setHitRadius(hitRadius.get(caster, null, power, args));
-		tracker.setVertHitRadius(vertHitRadius.get(caster, null, power, args));
-		tracker.setRotationOffset(rotationOffset.get(caster, null, power, args));
+		tracker.setHitRadius(hitRadius.get(data));
+		tracker.setVertHitRadius(vertHitRadius.get(data));
+		tracker.setRotationOffset(rotationOffset.get(data));
 
 		tracker.setCallEvents(checkPlugins);
 		tracker.setVertSpeedUsed(vertSpeed != 0);
@@ -225,44 +213,8 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 		return trackerSet;
 	}
 
-	public Component getItemName() {
-		return itemName;
-	}
-
-	public void setItemName(Component itemName) {
-		this.itemName = itemName;
-	}
-
-	public boolean shouldCheckPlugins() {
-		return checkPlugins;
-	}
-
 	public void setCheckPlugins(boolean checkPlugins) {
 		this.checkPlugins = checkPlugins;
-	}
-
-	public boolean shouldStopOnHitGround() {
-		return stopOnHitGround;
-	}
-
-	public void setStopOnHitGround(boolean stopOnHitGround) {
-		this.stopOnHitGround = stopOnHitGround;
-	}
-
-	public boolean shouldStopOnHitEntity() {
-		return stopOnHitEntity;
-	}
-
-	public void setStopOnHitEntity(boolean stopOnHitEntity) {
-		this.stopOnHitEntity = stopOnHitEntity;
-	}
-
-	public boolean shouldProjectileHaveGravity() {
-		return projectileHasGravity;
-	}
-
-	public void setProjectileHasGravity(boolean projectileHasGravity) {
-		this.projectileHasGravity = projectileHasGravity;
 	}
 
 	public Vector getRelativeOffset() {
@@ -273,48 +225,12 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 		this.relativeOffset = relativeOffset;
 	}
 
-	public Subspell getSpellOnTick() {
-		return spellOnTick;
-	}
-
-	public void setSpellOnTick(Subspell spellOnTick) {
-		this.spellOnTick = spellOnTick;
-	}
-
-	public Subspell getSpellOnDelay() {
-		return spellOnDelay;
-	}
-
-	public void setSpellOnDelay(Subspell spellOnDelay) {
-		this.spellOnDelay = spellOnDelay;
-	}
-
-	public Subspell getSpellOnHitEntity() {
-		return spellOnHitEntity;
-	}
-
-	public void setSpellOnHitEntity(Subspell spellOnHitEntity) {
-		this.spellOnHitEntity = spellOnHitEntity;
-	}
-
-	public Subspell getSpellOnHitGround() {
-		return spellOnHitGround;
-	}
-
-	public void setSpellOnHitGround(Subspell spellOnHitGround) {
-		this.spellOnHitGround = spellOnHitGround;
-	}
-
 	public void playEffects(EffectPosition position, Location loc, SpellData data) {
 		playSpellEffects(position, loc, data);
 	}
 
 	public void playEffects(EffectPosition position, Entity entity, SpellData data) {
 		playSpellEffects(position, entity, data);
-	}
-
-	public void playTrackingLineEffects(EffectPosition position, Location startLocation, Location location, LivingEntity caster, Projectile projectile, SpellData data) {
-		playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, startLocation, projectile.getLocation(), caster, projectile, data);
 	}
 
 }

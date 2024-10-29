@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.instant;
 import java.util.List;
 import java.util.TreeSet;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.World;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -13,12 +14,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.MobUtil;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
-import com.nisovin.magicspells.util.PlayerNameUtils;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.events.SpellTargetEvent;
@@ -73,8 +70,10 @@ public class DowseSpell extends InstantSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			double radius = this.radius.get(caster, null, power, args);
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			float power = data.power();
+			String[] args = data.args();
+			double radius = this.radius.get(data);
 			if (powerAffectsRadius) radius *= power;
 
 			radius = Math.min(radius, MagicSpells.getGlobalRadius());
@@ -143,7 +142,7 @@ public class DowseSpell extends InstantSpell {
 					if (!ordered.isEmpty()) {
 						for (NearbyEntity ne : ordered) {
 							if (ne.entity instanceof LivingEntity) {
-								SpellTargetEvent event = new SpellTargetEvent(this, player, (LivingEntity) ne.entity, power, args);
+								SpellTargetEvent event = new SpellTargetEvent(this, data);
 								EventUtil.call(event);
 								if (!event.isCancelled()) {
 									foundEntity = ne.entity;
@@ -171,7 +170,7 @@ public class DowseSpell extends InstantSpell {
 				if (getDistance) distance = (int) Math.round(player.getLocation().distance(foundEntity.getLocation()));
 			}
 			
-			playSpellEffects(EffectPosition.CASTER, player, power, args);
+			playSpellEffects(EffectPosition.CASTER, player, data);
 			if (getDistance) {
 				sendMessage(strCastSelf, player, args, "%d", distance + "");
 				sendMessageNear(player, strCastOthers, args, "%d", String.valueOf(distance));
@@ -194,48 +193,12 @@ public class DowseSpell extends InstantSpell {
 		return entityType;
 	}
 
-	public void setEntityType(EntityType entityType) {
-		this.entityType = entityType;
-	}
-
 	public String getPlayerName() {
 		return playerName;
 	}
 
 	public void setPlayerName(String playerName) {
 		this.playerName = playerName;
-	}
-
-	public String getStrNotFound() {
-		return strNotFound;
-	}
-
-	public void setStrNotFound(String strNotFound) {
-		this.strNotFound = strNotFound;
-	}
-
-	public boolean shouldUpdateCompass() {
-		return setCompass;
-	}
-
-	public void setUpdateCompass(boolean setCompass) {
-		this.setCompass = setCompass;
-	}
-
-	public boolean shouldGetDistance() {
-		return getDistance;
-	}
-
-	public void setGetDistance(boolean getDistance) {
-		this.getDistance = getDistance;
-	}
-
-	public boolean shouldRotatePlayer() {
-		return rotatePlayer;
-	}
-
-	public void setRotatePlayer(boolean rotatePlayer) {
-		this.rotatePlayer = rotatePlayer;
 	}
 
 	private static class NearbyEntity implements Comparable<NearbyEntity> {

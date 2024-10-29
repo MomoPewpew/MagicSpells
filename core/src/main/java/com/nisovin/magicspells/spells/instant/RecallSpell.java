@@ -58,6 +58,10 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
+			LivingEntity caster = data.caster();
+			float power = data.power();
+			String[] args = data.args();
+
 			Location markLocation = null;
 			if (args != null && args.length == 1 && caster.hasPermission("magicspells.advanced." + internalName)) {
 				Player target = PlayerNameUtils.getPlayer(args[0]);
@@ -95,7 +99,6 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 
 			caster.teleportAsync(markLocation);
 
-			SpellData data = new SpellData(caster, power, args);
 			playSpellEffects(EffectPosition.CASTER, from, data);
 			playSpellEffects(EffectPosition.TARGET, markLocation, data);
 		}
@@ -103,81 +106,20 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
 
-		Location mark = getRecallLocation(caster);
+		Location mark = getRecallLocation(data.caster());
 		if (mark == null) return false;
 
-		target.teleportAsync(mark);
+		data.target().teleportAsync(mark);
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
 	}
 
 	private Location getRecallLocation(LivingEntity caster) {
 		if (useBedLocation && caster instanceof Player) return ((Player) caster).getBedSpawnLocation();
 		if (markSpell == null) return null;
 		return markSpell.getEffectiveMark(caster);
-	}
-
-	public boolean shouldUseBedLocation() {
-		return useBedLocation;
-	}
-
-	public void setUseBedLocation(boolean useBedLocation) {
-		this.useBedLocation = useBedLocation;
-	}
-
-	public boolean shouldAllowCrossWorld() {
-		return allowCrossWorld;
-	}
-
-	public void setAllowCrossWorld(boolean allowCrossWorld) {
-		this.allowCrossWorld = allowCrossWorld;
-	}
-
-	public String getStrNoMark() {
-		return strNoMark;
-	}
-
-	public void setStrNoMark(String strNoMark) {
-		this.strNoMark = strNoMark;
-	}
-
-	public String getStrTooFar() {
-		return strTooFar;
-	}
-
-	public void setStrTooFar(String strTooFar) {
-		this.strTooFar = strTooFar;
-	}
-
-	public String getStrOtherWorld() {
-		return strOtherWorld;
-	}
-
-	public void setStrOtherWorld(String strOtherWorld) {
-		this.strOtherWorld = strOtherWorld;
-	}
-
-	public String getStrRecallFailed() {
-		return strRecallFailed;
-	}
-
-	public void setStrRecallFailed(String strRecallFailed) {
-		this.strRecallFailed = strRecallFailed;
-	}
-
-	public MarkSpell getMarkSpell() {
-		return markSpell;
-	}
-
-	public void setMarkSpell(MarkSpell markSpell) {
-		this.markSpell = markSpell;
 	}
 
 }

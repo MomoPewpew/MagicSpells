@@ -83,13 +83,13 @@ public class RitualSpell extends InstantSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (spellToCast == null || !(caster instanceof Player player)) return PostCastAction.ALREADY_HANDLED;
+		if (spellToCast == null || !(data.caster() instanceof Player player)) return PostCastAction.ALREADY_HANDLED;
 		if (activeRituals.containsKey(player)) {
 			ActiveRitual channel = activeRituals.remove(player);
 			channel.stop(strRitualInterrupted);
 		}
 		if (state == SpellCastState.NORMAL) {
-			activeRituals.put(player, new ActiveRitual(player, power, args));
+			activeRituals.put(player, new ActiveRitual(data));
 			if (!chargeReagentsImmediately && !setCooldownImmediately) return PostCastAction.MESSAGES_ONLY;
 			if (!chargeReagentsImmediately) return PostCastAction.NO_REAGENTS;
 			if (!setCooldownImmediately) return PostCastAction.NO_COOLDOWN;
@@ -107,7 +107,7 @@ public class RitualSpell extends InstantSpell {
 
 		if (!needSpellToParticipate || hasThisSpell(event.getPlayer())) {
 			channel.addChanneler(event.getPlayer());
-			sendMessage(strRitualJoined, event.getPlayer(), channel.args);
+			sendMessage(strRitualJoined, event.getPlayer(), channel.data.args());
 		}
 	}
 
@@ -133,11 +133,7 @@ public class RitualSpell extends InstantSpell {
 
 	private class ActiveRitual implements Runnable {
 
-		private final Player caster;
-
 		private final SpellData data;
-		private final String[] args;
-		private final float power;
 
 		private final Map<Player, Location> channelers;
 		private final int taskId;
@@ -149,25 +145,21 @@ public class RitualSpell extends InstantSpell {
 
 		private int duration = 0;
 
-		private ActiveRitual(Player caster, float power, String[] args) {
-			this.caster = caster;
-			this.power = power;
-			this.args = args;
-
-			data = new SpellData(caster, power, args);
+		private ActiveRitual(SpellData data) {
+			this.data = data;
 
 			channelers = new HashMap<>();
-			channelers.put(caster, caster.getLocation());
+			channelers.put((Player) data.caster(), data.caster().getLocation());
 
-			tickInterval = RitualSpell.this.tickInterval.get(caster, null, power, args);
-			effectInterval = RitualSpell.this.effectInterval.get(caster, null, power, args);
-			ritualDuration = RitualSpell.this.ritualDuration.get(caster, null, power, args);
-			reqParticipants = RitualSpell.this.reqParticipants.get(caster, null, power, args);
+			tickInterval = RitualSpell.this.tickInterval.get(data);
+			effectInterval = RitualSpell.this.effectInterval.get(data);
+			ritualDuration = RitualSpell.this.ritualDuration.get(data);
+			reqParticipants = RitualSpell.this.reqParticipants.get(data);
 
 			taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(MagicSpells.plugin, this, tickInterval, tickInterval);
 
-			if (showProgressOnExpBar) MagicSpells.getExpBarManager().lock(caster, this);
-			playSpellEffects(EffectPosition.CASTER, caster, data);
+			if (showProgressOnExpBar) MagicSpells.getExpBarManager().lock((Player) data.caster(), this);
+			playSpellEffects(EffectPosition.CASTER, data.caster(), data);
 		}
 
 		private void addChanneler(Player player) {
@@ -187,6 +179,7 @@ public class RitualSpell extends InstantSpell {
 
 		@Override
 		public void run() {
+			Player caster = (Player) data.caster();
 			duration += tickInterval;
 			int count = channelers.size();
 			boolean interrupted = false;
@@ -199,7 +192,7 @@ public class RitualSpell extends InstantSpell {
 				Location oldloc = channelers.get(player);
 				Location newloc = player.getLocation();
 				if (!player.isOnline() || player.isDead() || Math.abs(oldloc.getX() - newloc.getX()) > 0.2 || Math.abs(oldloc.getY() - newloc.getY()) > 0.2 || Math.abs(oldloc.getZ() - newloc.getZ()) > 0.2) {
-					if (player.equals(caster)) {
+					if (player.equals(data.caster())) {
 						interrupted = true;
 						break;
 					} else {
@@ -220,7 +213,7 @@ public class RitualSpell extends InstantSpell {
 
 			if (interrupted) {
 				stop(strRitualInterrupted);
-				if (spellOnInterrupt != null && caster.isValid()) spellOnInterrupt.subcast(caster, caster.getLocation(), power, args);
+				if (spellOnInterrupt != null && caster.isValid()) spellOnInterrupt.subcast(data);
 			}
 
 			if (duration >= ritualDuration) {
@@ -229,7 +222,7 @@ public class RitualSpell extends InstantSpell {
 					if (chargeReagentsImmediately || hasReagents(caster)) {
 						stop(strRitualSuccess);
 						playSpellEffects(EffectPosition.DELAYED, caster, data);
-						PostCastAction action = spellToCast.castSpell(caster, SpellCastState.NORMAL, power, args);
+						PostCastAction action = spellToCast.castSpell(SpellCastState.NORMAL, data.builder().build());
 						if (!chargeReagentsImmediately && action.chargeReagents()) removeReagents(caster);
 						if (!setCooldownImmediately && action.setCooldown()) setCooldown(caster, cooldown);
 						if (setCooldownForAll && action.setCooldown()) {
@@ -244,12 +237,12 @@ public class RitualSpell extends InstantSpell {
 
 		private void stop(String message) {
 			for (Player player : channelers.keySet()) {
-				sendMessage(message, player, args);
+				sendMessage(message, player, data.args());
 				resetManaBar(player);
 			}
 			channelers.clear();
 			Bukkit.getScheduler().cancelTask(taskId);
-			activeRituals.remove(caster);
+			activeRituals.remove(data.caster());
 		}
 
 		private void resetManaBar(Player player) {

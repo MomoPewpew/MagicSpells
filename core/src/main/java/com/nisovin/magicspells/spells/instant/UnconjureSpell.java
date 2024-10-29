@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.instant;
 import java.util.List;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
@@ -48,7 +49,7 @@ public class UnconjureSpell extends InstantSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
 			PlayerInventory inventory = player.getInventory();
 
 			ItemStack[] contents = new ItemStack[1];

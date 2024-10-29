@@ -70,28 +70,19 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
+			LivingEntity caster = data.caster();
 			marks.put(getKey(caster), new MagicLocation(caster.getLocation()));
 			if (permanentMarks) saveMarks();
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+			playSpellEffects(EffectPosition.CASTER, caster, data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		marks.put(getKey(caster), new MagicLocation(target));
-		if (caster != null) playSpellEffects(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		marks.put(getKey(data.caster()), new MagicLocation(data.location()));
+		if (data.caster() != null) playSpellEffects(data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
 	}
 	
 	@EventHandler(priority=EventPriority.MONITOR)
@@ -105,38 +96,6 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 		MagicLocation loc = marks.get(getKey(event.getPlayer()));
 		if (loc != null) event.setRespawnLocation(loc.getLocation());
 		else if (enableDefaultMarks && defaultMark != null) event.setRespawnLocation(defaultMark.getLocation());
-	}
-
-	public MagicLocation getDefaultMark() {
-		return defaultMark;
-	}
-
-	public void setDefaultMark(MagicLocation defaultMark) {
-		this.defaultMark = defaultMark;
-	}
-
-	public boolean shouldMarksBePermanent() {
-		return permanentMarks;
-	}
-
-	public void setPermanentMarks(boolean permanentMarks) {
-		this.permanentMarks = permanentMarks;
-	}
-
-	public boolean areDefaultMarksEnabled() {
-		return enableDefaultMarks;
-	}
-
-	public void setEnableDefaultMarks(boolean enableDefaultMarks) {
-		this.enableDefaultMarks = enableDefaultMarks;
-	}
-
-	public boolean shouldUseAsRespawnLocation() {
-		return useAsRespawnLocation;
-	}
-
-	public void setUseAsRespawnLocation(boolean useAsRespawnLocation) {
-		this.useAsRespawnLocation = useAsRespawnLocation;
 	}
 	
 	public Map<UUID, MagicLocation> getMarks() {
@@ -200,10 +159,6 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 	public UUID getKey(LivingEntity livingEntity) {
 		if (livingEntity == null) return null;
 		return livingEntity.getUniqueId();
-	}
-	
-	public boolean usesDefaultMark() {
-		return enableDefaultMarks;
 	}
 	
 	public Location getEffectiveMark(LivingEntity livingEntity) {

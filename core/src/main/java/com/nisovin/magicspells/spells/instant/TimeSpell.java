@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.instant;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.World;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -26,47 +27,21 @@ public class TimeSpell extends InstantSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			World world = caster.getWorld();
-			setTime(caster, world, power, args);
+			World world = data.caster().getWorld();
+			setTime(data.caster(), world, data.power(), data.args());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		setTime(caster, target.getWorld(), power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		setTime(caster, target.getWorld(), power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		setTime(null, target.getWorld(), power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		setTime(null, target.getWorld(), power, null);
+	public boolean castAtLocation(SpellData data) {
+		setTime(data.caster(), data.location().getWorld(), data.power(), data.args());
 		return true;
 	}
 
 	private void setTime(LivingEntity caster, World world, float power, String[] args) {
 		world.setTime(timeToSet.get(caster, null, power, args));
 		for (Player p : world.getPlayers()) sendMessage(strAnnounce, p, args);
-	}
-
-	public String getStrAnnounce() {
-		return strAnnounce;
-	}
-
-	public void setStrAnnounce(String strAnnounce) {
-		this.strAnnounce = strAnnounce;
 	}
 
 }

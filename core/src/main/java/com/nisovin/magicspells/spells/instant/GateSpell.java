@@ -31,9 +31,8 @@ public class GateSpell extends InstantSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-
-		SpellData data = new SpellData(caster, power, args);
-
+		LivingEntity caster = data.caster();
+		String[] args = data.args();
 		String world = this.world.get(data);
 		String coordinates = this.coordinates.get(data);
 
@@ -105,7 +104,6 @@ public class GateSpell extends InstantSpell {
 			}
 			caster.teleportAsync(location);
 
-			data = new SpellData(caster, power, args);
 			playSpellEffects(EffectPosition.CASTER, from, data);
 			playSpellEffects(EffectPosition.TARGET, to, data);
 		}
@@ -118,22 +116,6 @@ public class GateSpell extends InstantSpell {
 
 	public void setWorld(ConfigData<String> world) {
 		this.world = world;
-	}
-
-	public ConfigData<String> getCoordinates() {
-		return coordinates;
-	}
-
-	public void setCoordinates(ConfigData<String> coordinates) {
-		this.coordinates = coordinates;
-	}
-
-	public String getStrGateFailed() {
-		return strGateFailed;
-	}
-
-	public void setStrGateFailed(String strGateFailed) {
-		this.strGateFailed = strGateFailed;
 	}
 
 }

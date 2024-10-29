@@ -252,21 +252,23 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 
 		if (itemListData == null) return PostCastAction.ALREADY_HANDLED;
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			if (delay >= 0) MagicSpells.scheduleDelayedTask(() -> conjureItems((Player) caster, power, args), delay);
-			else if (!conjureItems((Player) caster, power, args)) return PostCastAction.ALREADY_HANDLED;
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
+			if (delay >= 0) MagicSpells.scheduleDelayedTask(() -> conjureItems(data), delay);
+			else if (!conjureItems(data)) return PostCastAction.ALREADY_HANDLED;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 		
 	}
 	
-	private boolean conjureItems(Player player, float power, String[] args) {
+	private boolean conjureItems(SpellData data) {
+		Player player = (Player) data.caster();
+		float power = data.power();
+
 		boolean succes = true;
 
-		SpellData spellData = new SpellData(player, power, args);
-		List<String> itemList = this.itemListData.get(spellData);
+		List<String> itemList = this.itemListData.get(data);
 		
-		Object[] itemResults = processItemList(itemList, spellData);
+		Object[] itemResults = processItemList(itemList, data);
 
 		ItemStack[] itemTypes = (ItemStack[]) itemResults[0];
 		int[] itemMinQuantities = (int[]) itemResults[1];
@@ -401,21 +403,18 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return conjureItemsAtLocation(target, power, caster, null);
-	}
-	
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return conjureItemsAtLocation(target, power, null, null);
+	public boolean castAtLocation(SpellData data) {
+		return conjureItemsAtLocation(data);
 	}
 
-	private boolean conjureItemsAtLocation(Location location, float power, @NotNull LivingEntity player, @NotNull LivingEntity target) {
+	private boolean conjureItemsAtLocation(SpellData data) {
+		Location location = data.location();
+		float power = data.power();
+		LivingEntity player = data.caster();
 
-		SpellData spellData = new SpellData(player, null, power, null);
-		List<String> itemList = this.itemListData.get(spellData);
+		List<String> itemList = this.itemListData.get(data);
 
-		Object[] itemResults = processItemList(itemList, spellData);
+		Object[] itemResults = processItemList(itemList, data);
 		ItemStack[] itemTypes = (ItemStack[]) itemResults[0];
 		int[] itemMinQuantities = (int[]) itemResults[1];
 		int[] itemMaxQuantities = (int[]) itemResults[2];
@@ -451,21 +450,11 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
 
-		if (target instanceof Player player) conjureItems(player, power, null);
-		else return conjureItemsAtLocation(target.getLocation(), power, caster, target);
-
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-
-		if (target instanceof Player player) conjureItems(player, power, null);
-		else return conjureItemsAtLocation(target.getLocation(), power, null, target);
+		if (data.caster() instanceof Player) conjureItems(data);
+		else return conjureItemsAtLocation(data);
 
 		return true;
 	}
@@ -475,148 +464,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		expirationHandler = null;
 	}
 
-	private int getDelay() {
-		return delay;
-	}
-
 	public void setDelay(int delay) {
 		this.delay = delay;
-	}
-
-	public int getPickupDelay() {
-		return pickupDelay;
-	}
-
-	public void setPickupDelay(int pickupDelay) {
-		this.pickupDelay = pickupDelay;
-	}
-
-	public int getRequiredSlot() {
-		return requiredSlot;
-	}
-
-	public void setRequiredSlot(int requiredSlot) {
-		this.requiredSlot = requiredSlot;
-	}
-
-	public int getPreferredSlot() {
-		return preferredSlot;
-	}
-
-	public void setPreferredSlot(int preferredSlot) {
-		this.preferredSlot = preferredSlot;
-	}
-
-	public double getExpiration() {
-		return expiration;
-	}
-
-	public void setExpiration(double expiration) {
-		this.expiration = expiration;
-	}
-
-	public float getRandomVelocity() {
-		return randomVelocity;
-	}
-
-	public void setRandomVelocity(float randomVelocity) {
-		this.randomVelocity = randomVelocity;
-	}
-
-	public boolean shouldConjureInOffhand() {
-		return offhand;
-	}
-
-	public void setConjureInOffhand(boolean offhand) {
-		this.offhand = offhand;
-	}
-
-	public boolean shouldAutoEquip() {
-		return autoEquip;
-	}
-
-	public void setAutoEquip(boolean autoEquip) {
-		this.autoEquip = autoEquip;
-	}
-
-	public boolean shouldStackExisting() {
-		return stackExisting;
-	}
-
-	public void setStackExisting(boolean stackExisting) {
-		this.stackExisting = stackExisting;
-	}
-
-	public boolean shouldItemHaveGravity() {
-		return itemHasGravity;
-	}
-
-	public void setItemHasGravity(boolean itemHasGravity) {
-		this.itemHasGravity = itemHasGravity;
-	}
-
-	public boolean shouldAddToInventory() {
-		return addToInventory;
-	}
-
-	public void setAddToInventory(boolean addToInventory) {
-		this.addToInventory = addToInventory;
-	}
-
-	public boolean shouldAddToEnderChest() {
-		return addToEnderChest;
-	}
-
-	public void setAddToEnderChest(boolean addToEnderChest) {
-		this.addToEnderChest = addToEnderChest;
-	}
-
-	public boolean shouldIgnoreMaxStackSize() {
-		return ignoreMaxStackSize;
-	}
-
-	public void setIgnoreMaxStackSize(boolean ignoreMaxStackSize) {
-		this.ignoreMaxStackSize = ignoreMaxStackSize;
-	}
-
-	public boolean shouldPowerAffectChance() {
-		return powerAffectsChance;
-	}
-
-	public void setPowerAffectsChance(boolean powerAffectsChance) {
-		this.powerAffectsChance = powerAffectsChance;
-	}
-
-	public boolean shouldDropIfInventoryFull() {
-		return dropIfInventoryFull;
-	}
-
-	public void setDropIfInventoryFull(boolean dropIfInventoryFull) {
-		this.dropIfInventoryFull = dropIfInventoryFull;
-	}
-
-	public boolean shouldPowerAffectQuantity() {
-		return powerAffectsQuantity;
-	}
-
-	public void setPowerAffectsQuantity(boolean powerAffectsQuantity) {
-		this.powerAffectsQuantity = powerAffectsQuantity;
-	}
-
-	public boolean shouldForceUpdateInventory() {
-		return forceUpdateInventory;
-	}
-
-	public void setForceUpdateInventory(boolean forceUpdateInventory) {
-		this.forceUpdateInventory = forceUpdateInventory;
-	}
-
-	public boolean shouldCalculateDropsIndividually() {
-		return calculateDropsIndividually;
-	}
-
-	public void setCalculateDropsIndividually(boolean calculateDropsIndividually) {
-		this.calculateDropsIndividually = calculateDropsIndividually;
 	}
 	
 	private static class ExpirationHandler implements Listener {

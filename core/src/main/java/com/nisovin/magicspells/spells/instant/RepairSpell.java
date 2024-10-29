@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -91,12 +92,12 @@ public class RepairSpell extends InstantSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
 			boolean repaired = false;
 			for (String s : toRepair) {
 				if (s.equals(REPAIR_SELECTOR_KEY_HELD)) {
 					ItemStack item = player.getInventory().getItemInMainHand();
-					item = repair(caster, item, power, args);
+					item = repair(data, item);
 					if (item == null) continue;
 					repaired = true;
 					player.getInventory().setItemInMainHand(item);
@@ -116,7 +117,7 @@ public class RepairSpell extends InstantSpell {
 					}
 					for (int i = start; i < end; i++) {
 						ItemStack item = items[i];
-						item = repair(caster, item, power, args);
+						item = repair(data, item);
 						if (item == null) continue;
 						items[i] = item;
 						repaired = true;
@@ -127,7 +128,7 @@ public class RepairSpell extends InstantSpell {
 
 				if (s.equals(REPAIR_SELECTOR_KEY_HELMET)) {
 					ItemStack item = player.getInventory().getHelmet();
-					item = repair(caster, item, power, args);
+					item = repair(data, item);
 					if (item == null) continue;
 					repaired = true;
 					player.getInventory().setHelmet(item);
@@ -136,7 +137,7 @@ public class RepairSpell extends InstantSpell {
 
 				if (s.equals(REPAIR_SELECTOR_KEY_CHESTPLATE)) {
 					ItemStack item = player.getInventory().getChestplate();
-					item = repair(caster, item, power, args);
+					item = repair(data, item);
 					if (item == null) continue;
 					repaired = true;
 					player.getInventory().setChestplate(item);
@@ -145,7 +146,7 @@ public class RepairSpell extends InstantSpell {
 
 				if (s.equals(REPAIR_SELECTOR_KEY_LEGGINGS)) {
 					ItemStack item = player.getInventory().getLeggings();
-					item = repair(caster, item, power, args);
+					item = repair(data, item);
 					if (item == null) continue;
 					repaired = true;
 					player.getInventory().setLeggings(item);
@@ -154,7 +155,7 @@ public class RepairSpell extends InstantSpell {
 
 				if (s.equals(REPAIR_SELECTOR_KEY_BOOTS)) {
 					ItemStack item = player.getInventory().getBoots();
-					item = repair(caster, item, power, args);
+					item = repair(data, item);
 					if (item == null) continue;
 					repaired = true;
 					player.getInventory().setBoots(item);
@@ -162,21 +163,21 @@ public class RepairSpell extends InstantSpell {
 
 			}
 			if (!repaired) {
-				sendMessage(strNothingToRepair, player, args);
+				sendMessage(strNothingToRepair, player, data.args());
 				return PostCastAction.ALREADY_HANDLED;
 			}
 			
-			playSpellEffects(EffectPosition.CASTER, player, power, args);
+			playSpellEffects(EffectPosition.CASTER, player, data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	private ItemStack repair(LivingEntity caster, ItemStack item, float power, String[] args) {
+	private ItemStack repair(SpellData data, ItemStack item) {
 		if (item == null) return null;
 		if (!isRepairable(item)) return null;
 		Damageable meta = (Damageable) item.getItemMeta();
 		if (meta.getDamage() > 0) {
-			meta.setDamage(newDurability(caster, item, power, args));
+			meta.setDamage(newDurability(data, item));
 			item.setItemMeta(meta);
 			return item;
 		}
@@ -190,66 +191,14 @@ public class RepairSpell extends InstantSpell {
 		return allowedItems == null || allowedItems.contains(item.getType());
 	}
 
-	private int newDurability(LivingEntity caster, ItemStack item, float power, String[] args) {
+	private int newDurability(SpellData data, ItemStack item) {
 		Damageable meta = (Damageable) item.getItemMeta();
 
-		int durability = meta.getDamage() - repairAmt.get(caster, null, power, args);
+		int durability = meta.getDamage() - repairAmt.get(data);
 		durability = Math.min(durability, item.getType().getMaxDurability());
 		durability = Math.max(durability, 0);
 
 		return durability;
-	}
-
-	public static String getRepairSelectorKeyHeld() {
-		return REPAIR_SELECTOR_KEY_HELD;
-	}
-
-	public static String getRepairSelectorKeyHotbar() {
-		return REPAIR_SELECTOR_KEY_HOTBAR;
-	}
-
-	public static String getRepairSelectorKeyInventory() {
-		return REPAIR_SELECTOR_KEY_INVENTORY;
-	}
-
-	public static String getRepairSelectorKeyHelmet() {
-		return REPAIR_SELECTOR_KEY_HELMET;
-	}
-
-	public static String getRepairSelectorKeyChestplate() {
-		return REPAIR_SELECTOR_KEY_CHESTPLATE;
-	}
-
-	public static String getRepairSelectorKeyLeggings() {
-		return REPAIR_SELECTOR_KEY_LEGGINGS;
-	}
-
-	public static String getRepairSelectorKeyBoots() {
-		return REPAIR_SELECTOR_KEY_BOOTS;
-	}
-
-	public String getStrNothingToRepair() {
-		return strNothingToRepair;
-	}
-
-	public void setStrNothingToRepair(String strNothingToRepair) {
-		this.strNothingToRepair = strNothingToRepair;
-	}
-
-	public String[] getToRepair() {
-		return toRepair;
-	}
-
-	public void setToRepair(String[] toRepair) {
-		this.toRepair = toRepair;
-	}
-
-	public Set<Material> getIgnoredItems() {
-		return ignoredItems;
-	}
-
-	public Set<Material> getAllowedItems() {
-		return allowedItems;
 	}
 
 }

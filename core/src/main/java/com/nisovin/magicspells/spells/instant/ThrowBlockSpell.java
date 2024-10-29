@@ -149,65 +149,48 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Vector v = getVector(caster, caster.getLocation(), power, args);
-			Location l = caster.getEyeLocation().add(v);
-			l.add(0, yOffset.get(caster, null, power, args), 0);
-			ThrownBlock info = spawnFallingBlock(caster, l, v, power, args);
-			playSpellEffects(EffectPosition.CASTER, caster, info.data);
+			Vector v = getVector(data);
+			Location l = data.caster().getEyeLocation().add(v);
+			l.add(0, yOffset.get(data), 0);
+			ThrownBlock info = spawnFallingBlock(data, v);
+			playSpellEffects(EffectPosition.CASTER, data.caster(), info.data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Vector v = getVector(caster, target, power, args);
-		ThrownBlock info = spawnFallingBlock(caster,
-				target.clone().add(0, yOffset.get(caster, null, power, args), 0), v, power, args);
-		playSpellEffects(EffectPosition.CASTER, target, info.data);
+	public boolean castAtLocation(SpellData data) {
+		Vector v = getVector(data);
+        assert data.location() != null;
+        ThrownBlock info = spawnFallingBlock(data.builder().location(data.location().clone().add(0, yOffset.get(data), 0)).build(), v);
+		playSpellEffects(EffectPosition.CASTER, data.target(), info.data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
+	private Vector getVector(SpellData data) {
+		Vector v = data.location().getDirection();
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		Vector v = getVector(null, target, power, args);
-		ThrownBlock info = spawnFallingBlock(null, target.clone().add(0, yOffset.get(null, null, power, args), 0),
-				v, power, args);
-		playSpellEffects(EffectPosition.CASTER, target, info.data);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
-	}
-
-	private Vector getVector(LivingEntity caster, Location loc, float power, String[] args) {
-		Vector v = loc.getDirection();
-
-		float verticalAdjustment = this.verticalAdjustment.get(caster, null, power, args);
+		float verticalAdjustment = this.verticalAdjustment.get(data);
 		if (verticalAdjustment != 0)
 			v.setY(v.getY() + verticalAdjustment);
 
-		float rotationOffset = this.rotationOffset.get(caster, null, power, args);
+		float rotationOffset = this.rotationOffset.get(data);
 		if (rotationOffset != 0)
 			Util.rotateVector(v, rotationOffset);
 
-		float velocity = this.velocity.get(caster, null, power, args);
+		float velocity = this.velocity.get(data);
 		if (applySpellPowerToVelocity)
-			velocity *= power;
+			velocity *= data.power();
 
 		return v.normalize().multiply(velocity);
 	}
 
-	private ThrownBlock spawnFallingBlock(LivingEntity caster, Location location, Vector velocity, float power,
-			String[] args) {
+	private ThrownBlock spawnFallingBlock(SpellData data, Vector velocity) {
 		Entity entity = null;
-		ThrownBlock info = new ThrownBlock(material.createBlockData(), caster, power, args);
+		ThrownBlock info = new ThrownBlock(material.createBlockData(), data);
+
+		Location location = data.location();
+		LivingEntity caster = data.caster();
 
 		if (material != null) {
 			FallingBlock block = location.getWorld().spawn(location, FallingBlock.class);
@@ -223,7 +206,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 				new ThrowBlockMonitor(block, info);
 			entity = block;
 
-			int duration = this.duration.get(caster, power, args);
+			int duration = this.duration.get(data);
 			if (duration > 0) {
 				thrownBlocks.add(info);
 				MagicSpells.scheduleDelayedTask(() -> {
@@ -244,7 +227,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, caster.getLocation(),
 					tnt.getLocation(), caster, tnt, info.data);
 
-			int tntFuse = this.tntFuse.get(caster, null, power, args);
+			int tntFuse = this.tntFuse.get(data);
 			tnt.setFuseTicks(tntFuse);
 			tnt.setVelocity(velocity);
 			entity = tnt;
@@ -283,7 +266,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 							BlockUtils.setBlockFromFallingBlock(b, block, true);
 					}
 					if (!info.spellActivated && spellOnLand != null) {
-						spellOnLand.subcast(info.caster, block.getLocation(), info.power, info.args);
+						spellOnLand.subcast(info.data.builder().location(block.getLocation()).build());
 						info.spellActivated = true;
 					}
 					block.remove();
@@ -291,7 +274,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			}
 			if (ensureSpellCast && block.isDead()) {
 				if (!info.spellActivated && spellOnLand != null) {
-					spellOnLand.subcast(info.caster, block.getLocation(), info.power, info.args);
+					spellOnLand.subcast(info.data.builder().location(block.getLocation()).build());
 					info.spellActivated = true;
 				}
 				MagicSpells.cancelTask(task);
@@ -320,9 +303,9 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			if (info == null || !(event.getEntity() instanceof LivingEntity target))
 				return;
 
-			float power = info.power;
-			if (callTargetEvent && info.caster != null) {
-				SpellTargetEvent evt = new SpellTargetEvent(thisSpell, info.caster, target, power, info.args);
+			float power = info.data.power();
+			if (callTargetEvent && info.data.caster() != null) {
+				SpellTargetEvent evt = new SpellTargetEvent(thisSpell, info.data);
 				EventUtil.call(evt);
 				if (evt.isCancelled()) {
 					event.setCancelled(true);
@@ -336,8 +319,8 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			if (powerAffectsDamage)
 				damage *= power;
 
-			if (checkPlugins && info.caster != null) {
-				MagicSpellsEntityDamageByEntityEvent evt = new MagicSpellsEntityDamageByEntityEvent(info.caster, target,
+			if (checkPlugins && info.data.caster() != null) {
+				MagicSpellsEntityDamageByEntityEvent evt = new MagicSpellsEntityDamageByEntityEvent(info.data.caster(), target,
 						DamageCause.ENTITY_ATTACK, damage, ThrowBlockSpell.this);
 				EventUtil.call(evt);
 				if (evt.isCancelled()) {
@@ -348,7 +331,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			event.setDamage(damage);
 
 			if (spellOnLand != null && !info.spellActivated) {
-				spellOnLand.subcast(info.caster, target.getLocation(), power, info.args);
+				spellOnLand.subcast(info.data.builder().location(target.getLocation()).power(power).build());
 				info.spellActivated = true;
 			}
 		}
@@ -368,8 +351,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 				}
 
 				if (spellOnLand != null && info != null && !info.spellActivated) {
-					spellOnLand.subcast(info.caster, event.getBlock().getLocation().add(0.5, 0.5, 0.5), info.power,
-							info.args);
+					spellOnLand.subcast(info.data.builder().location(event.getBlock().getLocation().add(0.5, 0.5, 0.5)).build());
 					info.spellActivated = true;
 				}
 			}
@@ -392,7 +374,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 				event.getEntity().remove();
 			}
 			if (spellOnLand != null && !info.spellActivated) {
-				spellOnLand.subcast(info.caster, entity.getLocation(), info.power, info.args);
+				spellOnLand.subcast(info.data);
 				info.spellActivated = true;
 			}
 		}
@@ -401,23 +383,16 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 
 	public class ThrownBlock {
 
-		private final LivingEntity caster;
 		private final SpellData data;
-		private final String[] args;
-		private final float power;
 
 		private boolean spellActivated;
 
 		public final BlockData blockData;
 		public Block targetBlock;
 
-		public ThrownBlock(BlockData blockData, LivingEntity caster, float power, String[] args) {
+		public ThrownBlock(BlockData blockData, SpellData data) {
 			this.blockData = blockData;
-			this.caster = caster;
-			this.power = power;
-			this.args = args;
-
-			data = new SpellData(caster, power, args);
+			this.data = data;
 
 			spellActivated = false;
 		}

@@ -50,48 +50,32 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			boolean killed = purge(caster, caster.getLocation(), power, args);
+			boolean killed = purge(data);
 			if (!killed) return PostCastAction.ALREADY_HANDLED;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		boolean killed = purge(caster, target, power, args);
-		if (killed && caster != null) playSpellEffects(EffectPosition.CASTER, caster, power, args);
+	public boolean castAtLocation(SpellData data) {
+		boolean killed = purge(data);
+		if (killed && data.caster() != null) playSpellEffects(EffectPosition.CASTER, data.caster(), data);
 		return killed;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(null, target, power, null);
-	}
-
-	private boolean purge(LivingEntity caster, Location loc, float power, String[] args) {
-		double castingRange = radius.get(caster, null, power, args);
-		if (powerAffectsRadius) castingRange *= power;
+	private boolean purge(SpellData data) {
+		double castingRange = radius.get(data);
+		if (powerAffectsRadius) castingRange *= data.power();
 		castingRange = Math.min(castingRange, MagicSpells.getGlobalRadius());
 
-		Collection<Entity> entitiesNearby = loc.getWorld().getNearbyEntities(loc, castingRange, castingRange, castingRange);
+		Collection<Entity> entitiesNearby = data.location().getWorld().getNearbyEntities(data.location(), castingRange, castingRange, castingRange);
 		boolean killed = false;
 		for (Entity entity : entitiesNearby) {
 			if (!(entity instanceof LivingEntity livingEntity)) continue;
 			if (entity instanceof Player) continue;
 			if (entities != null && !entities.contains(entity.getType())) continue;
 
-			SpellData data = new SpellData(caster, livingEntity, power, args);
-			playSpellEffectsTrail(loc, entity.getLocation(), data);
+			playSpellEffectsTrail(data.location(), entity.getLocation(), data);
 			playSpellEffects(EffectPosition.TARGET, entity, data);
 
 			livingEntity.setHealth(0);

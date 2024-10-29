@@ -4,6 +4,7 @@ import com.comphenix.protocol.PacketType;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spells.targeted.PasteSpell;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
@@ -26,7 +27,7 @@ public class UndoPasteSpell extends InstantSpell {
         if(state == SpellCastState.NORMAL){
 
             if(ignoreOtherPlayers){
-                PasteSpell.undoPlayerPastes(pasteSpellName, caster.getUniqueId().toString());
+                PasteSpell.undoPlayerPastes(pasteSpellName, data.caster().getUniqueId().toString());
             }else{
                 PasteSpell.undoPastes(pasteSpellName);
             }

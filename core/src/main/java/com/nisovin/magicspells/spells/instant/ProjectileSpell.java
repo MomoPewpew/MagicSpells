@@ -198,35 +198,23 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			ProjectileTracker tracker = new ProjectileTracker(caster, caster.getLocation(), power, args);
-			setupTracker(tracker, caster, power, args);
+			ProjectileTracker tracker = new ProjectileTracker(data);
+			setupTracker(tracker, data);
 			tracker.start();
-			playSpellEffects(EffectPosition.CASTER, caster, tracker.getSpellData());
+			playSpellEffects(EffectPosition.CASTER, data.caster(), tracker.getSpellData());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity livingEntity, Location target, float power, String[] args) {
-		ProjectileTracker tracker = new ProjectileTracker(livingEntity, target, power, args);
-		setupTracker(tracker, livingEntity, power, args);
+	public boolean castAtLocation(SpellData data) {
+		ProjectileTracker tracker = new ProjectileTracker(data);
+		setupTracker(tracker, data);
 		tracker.start();
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
-	private void setupTracker(ProjectileTracker tracker, LivingEntity caster, float power, String[] args) {
-		SpellData data = new SpellData(caster, null, power, args);
-
+	private void setupTracker(ProjectileTracker tracker, SpellData data) {
 		tracker.setSpell(this);
 
 		tracker.setProjectileManager(projectileManager);
@@ -303,7 +291,7 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 			if (!tracker.getProjectile().equals(projectile)) continue;
 
 			if (tracker.getHitSpell() != null)
-				tracker.getHitSpell().subcast(tracker.getCaster(), entity, tracker.getPower(), tracker.getArgs());
+				tracker.getHitSpell().subcast(tracker.getSpellData());
 
 			playSpellEffects(EffectPosition.TARGET, entity, tracker.getSpellData());
 			event.setCancelled(true);
@@ -358,7 +346,7 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 			if (!tracker.getProjectile().equals(projectile)) continue;
 
 			if (tracker.getCaster() != null && tracker.getGroundSpell() != null) {
-				tracker.getGroundSpell().subcast(tracker.getCaster(), projectile.getLocation(), tracker.getPower(), tracker.getArgs());
+				tracker.getGroundSpell().subcast(tracker.getSpellData());
 			}
 			tracker.stop(false);
 			iterator.remove();
@@ -373,10 +361,6 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 
 	public void playEffects(EffectPosition position, Location loc, SpellData data) {
 		playSpellEffects(position, loc, data);
-	}
-
-	public void playEffects(EffectPosition position, Entity entity, SpellData data) {
-		playSpellEffects(position, entity, data);
 	}
 
 	public Set<EffectlibSpellEffect> playEffectsProjectile(EffectPosition position, Location location, SpellData data) {
@@ -399,14 +383,6 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 		this.zoneManager = zoneManager;
 	}
 
-	public ProjectileManager getProjectileManager() {
-		return projectileManager;
-	}
-
-	public void setProjectileManager(ProjectileManager projectileManager) {
-		this.projectileManager = projectileManager;
-	}
-
 	public Vector getRelativeOffset() {
 		return relativeOffset;
 	}
@@ -415,76 +391,8 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 		this.relativeOffset = relativeOffset;
 	}
 
-	public Vector getEffectOffset() {
-		return effectOffset;
-	}
-
-	public void setEffectOffset(Vector effectOffset) {
-		this.effectOffset = effectOffset;
-	}
-
-	public boolean isVisible() {
-		return visible;
-	}
-
-	public void setVisible(boolean visible) {
-		this.visible = visible;
-	}
-
-	public boolean hasGravity() {
-		return gravity;
-	}
-
 	public void setGravity(boolean gravity) {
 		this.gravity = gravity;
-	}
-
-	public boolean isCharged() {
-		return charged;
-	}
-
-	public void setCharged(boolean charged) {
-		this.charged = charged;
-	}
-
-	public boolean isIncendiary() {
-		return incendiary;
-	}
-
-	public void setIncendiary(boolean incendiary) {
-		this.incendiary = incendiary;
-	}
-
-	public boolean shouldStopOnModifierFail() {
-		return stopOnModifierFail;
-	}
-
-	public void setStopOnModifierFail(boolean stopOnModifierFail) {
-		this.stopOnModifierFail = stopOnModifierFail;
-	}
-
-	public Component getProjectileName() {
-		return projectileName;
-	}
-
-	public void setProjectileName(Component projectileName) {
-		this.projectileName = projectileName;
-	}
-
-	public Subspell getHitSpell() {
-		return hitSpell;
-	}
-
-	public void setHitSpell(Subspell hitSpell) {
-		this.hitSpell = hitSpell;
-	}
-
-	public Subspell getTickSpell() {
-		return tickSpell;
-	}
-
-	public void setTickSpell(Subspell tickSpell) {
-		this.tickSpell = tickSpell;
 	}
 
 	public Subspell getGroundSpell() {
@@ -493,42 +401,6 @@ public class ProjectileSpell extends InstantSpell implements TargetedLocationSpe
 
 	public void setGroundSpell(Subspell groundSpell) {
 		this.groundSpell = groundSpell;
-	}
-
-	public Subspell getModifierSpell() {
-		return modifierSpell;
-	}
-
-	public void setModifierSpell(Subspell modifierSpell) {
-		this.modifierSpell = modifierSpell;
-	}
-
-	public Subspell getDurationSpell() {
-		return durationSpell;
-	}
-
-	public void setDurationSpell(Subspell durationSpell) {
-		this.durationSpell = durationSpell;
-	}
-
-	public Subspell getEntityLocationSpell() {
-		return entityLocationSpell;
-	}
-
-	public void setEntityLocationSpell(Subspell entityLocationSpell) {
-		this.entityLocationSpell = entityLocationSpell;
-	}
-
-	public ModifierSet getProjectileModifiers() {
-		return projectileModifiers;
-	}
-
-	public void setProjectileModifiers(ModifierSet projectileModifiers) {
-		this.projectileModifiers = projectileModifiers;
-	}
-
-	public boolean shouldCheckPlugins() {
-		return checkPlugins;
 	}
 
 	public void setCheckPlugins(boolean checkPlugins) {

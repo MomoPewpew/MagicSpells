@@ -41,14 +41,15 @@ public class ForcepushSpell extends InstantSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			knockback(caster, power, args);
+			knockback(data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	private void knockback(LivingEntity caster, float basePower, String[] args) {
-		double radius = Math.min(this.radius.get(caster, null, basePower, args), MagicSpells.getGlobalRadius());
+	private void knockback(SpellData data) {
+		double radius = Math.min(this.radius.get(data), MagicSpells.getGlobalRadius());
 
+		LivingEntity caster = data.caster();
 		List<Entity> entities = caster.getNearbyEntities(radius, radius, radius);
 		Vector e;
 		Vector v;
@@ -57,42 +58,33 @@ public class ForcepushSpell extends InstantSpell {
 			if (!(entity instanceof LivingEntity target)) continue;
 			if (!validTargetList.canTarget(caster, entity)) continue;
 
-			SpellTargetEvent event = new SpellTargetEvent(this, caster, target, basePower, args);
+			SpellTargetEvent event = new SpellTargetEvent(this, data);
 			EventUtil.call(event);
 			if (event.isCancelled()) continue;
 
 			float power = event.getPower();
 			target = event.getTarget();
 
-			double force = this.force.get(caster, target, power, args) / 10;
+			double force = this.force.get(data) / 10;
 			if (powerAffectsForce) force *= power;
 
 			e = target.getLocation().toVector();
 			v = e.subtract(p).normalize().multiply(force);
 
-			double yForce = this.yForce.get(caster, target, power, args) / 10;
+			double yForce = this.yForce.get(data) / 10;
 			if (powerAffectsForce) yForce *= power;
 
-			v.setY(Math.min(v.getY() + yForce, maxYForce.get(caster, target, power, args) / 10));
+			v.setY(Math.min(v.getY() + yForce, maxYForce.get(data) / 10));
 			v = Util.makeFinite(v);
 
 			if (addVelocityInstead) target.setVelocity(target.getVelocity().add(v));
 			else target.setVelocity(v);
 
-			SpellData data = new SpellData(caster, target, power, args);
 			playSpellEffects(EffectPosition.TARGET, target, data);
-			playSpellEffectsTrail(caster.getLocation(), target.getLocation(), data);
+			playSpellEffectsTrail(data.caster().getLocation(), target.getLocation(), data);
 		}
 
-		playSpellEffects(EffectPosition.CASTER, caster, basePower, args);
-	}
-
-	public boolean shouldAddVelocityInstead() {
-		return addVelocityInstead;
-	}
-
-	public void setAddVelocityInstead(boolean addVelocityInstead) {
-		this.addVelocityInstead = addVelocityInstead;
+		playSpellEffects(EffectPosition.CASTER, data.caster(), data);
 	}
 
 }

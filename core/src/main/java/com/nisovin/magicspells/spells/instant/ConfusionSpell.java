@@ -32,30 +32,23 @@ public class ConfusionSpell extends InstantSpell implements TargetedLocationSpel
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			confuse(caster, caster.getLocation(), power, args);
+			confuse(data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		confuse(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		confuse(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		confuse(caster, target, power, null);
-		return true;
-	}
+	private void confuse(SpellData data) {
+		LivingEntity caster = data.caster();
+		Location location = data.location();
+		float power = data.power();
 
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
-	private void confuse(LivingEntity caster, Location location, float power, String[] args) {
-		double castingRange = radius.get(caster, null, power, args);
+		double castingRange = radius.get(data);
 		if (powerAffectsRadius) castingRange = castingRange * power;
 
 		castingRange = Math.min(castingRange, MagicSpells.getGlobalRadius());
@@ -74,12 +67,10 @@ public class ConfusionSpell extends InstantSpell implements TargetedLocationSpel
 			if (next >= monsters.size()) next = 0;
 			MobUtil.setTarget(monsters.get(i), monsters.get(next));
 
-			SpellData data = new SpellData(caster, monsters.get(i), power, args);
-
 			playSpellEffects(EffectPosition.TARGET, monsters.get(i), data);
 			playSpellEffectsTrail(caster.getLocation(), monsters.get(i).getLocation(), data);
 		}
-		playSpellEffects(EffectPosition.CASTER, caster, power, args);
+		playSpellEffects(EffectPosition.CASTER, caster, data);
 	}
 
 }

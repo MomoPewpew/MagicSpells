@@ -238,6 +238,8 @@ public class Subspell {
 	}
 
 	public boolean subcast(SpellData data, boolean passTargeting, boolean useTargetForLocation) {
+		data = data.builder().build();
+
 		if (invert) data.invert();
 
 		CastTargeting targeting = this.targeting;

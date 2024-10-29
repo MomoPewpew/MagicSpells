@@ -132,6 +132,9 @@ public class SteedSpell extends InstantSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
+			LivingEntity caster = data.caster();
+			String[] args = data.args();
+
 			if (caster.getVehicle() != null) {
 				sendMessage(strAlreadyMounted, caster, args);
 				return PostCastAction.ALREADY_HANDLED;
@@ -150,7 +153,7 @@ public class SteedSpell extends InstantSpell {
 					abstractHorse.setAdult();
 					abstractHorse.setTamed(true);
 					if (caster instanceof AnimalTamer tamer) abstractHorse.setOwner(tamer);
-					abstractHorse.setJumpStrength(jumpStrength.get(caster, null, power, args));
+					abstractHorse.setJumpStrength(jumpStrength.get(data));
 					abstractHorse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
 
 					if (abstractHorse instanceof Horse horse) {
@@ -166,10 +169,10 @@ public class SteedSpell extends InstantSpell {
 			});
 			entity.addPassenger(caster);
 
-			if (entity instanceof LivingEntity le) spellOnSpawn.subcast(caster, le, power, args);
-			else spellOnSpawn.subcast(caster, entity.getLocation(), power, args);
+			if (entity instanceof LivingEntity le) spellOnSpawn.subcast(data.builder().target(le).build());
+			else spellOnSpawn.subcast(data);
 
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+			playSpellEffects(EffectPosition.CASTER, caster, data);
 			mounted.put(caster.getUniqueId(), entity.getEntityId());
 		}
 		return PostCastAction.HANDLE_NORMALLY;

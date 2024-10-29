@@ -62,9 +62,9 @@ public class FlightPathSpell extends InstantSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			ActiveFlight flight = new ActiveFlight(player, power, args);
-			flightHandler.addFlight(flight, power, args);
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			ActiveFlight flight = new ActiveFlight(player, data.power(), data.args());
+			flightHandler.addFlight(flight, data.power(), data.args());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}

@@ -71,15 +71,18 @@ public class LeapSpell extends InstantSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
+			LivingEntity caster = data.caster();
+			float power = data.power();
+
 			Vector v = caster.getLocation().getDirection();
 
-			float forwardVelocity = this.forwardVelocity.get(caster, null, power, args) / 10;
+			float forwardVelocity = this.forwardVelocity.get(data) / 10;
 			if (powerAffectsVelocity) forwardVelocity *= power;
 
-			float upwardVelocity = this.upwardVelocity.get(caster, null, power, args) / 10;
+			float upwardVelocity = this.upwardVelocity.get(data) / 10;
 			if (powerAffectsVelocity) upwardVelocity *= power;
 
-			float rotation = this.rotation.get(caster, null, power, args);
+			float rotation = this.rotation.get(data);
 
 			v.setY(0).normalize().multiply(forwardVelocity).setY(upwardVelocity);
 			if (rotation != 0) Util.rotateVector(v, rotation);
@@ -92,7 +95,7 @@ public class LeapSpell extends InstantSpell {
 			}
 
 			jumping.add(caster.getUniqueId());
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+			playSpellEffects(EffectPosition.CASTER, caster, data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
@@ -102,45 +105,9 @@ public class LeapSpell extends InstantSpell {
 		if (event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
 		LivingEntity livingEntity = (LivingEntity) event.getEntity();
 		if (!jumping.remove(livingEntity.getUniqueId())) return;
-		if (landSpell != null) landSpell.subcast(livingEntity, 1f, null);
+		if (landSpell != null) landSpell.subcast(new SpellData(livingEntity));
 		playSpellEffects(EffectPosition.TARGET, livingEntity.getLocation(), new SpellData(livingEntity));
 		if (cancelDamage) event.setCancelled(true);
-	}
-
-	public Set<UUID> getJumping() {
-		return jumping;
-	}
-
-	public boolean isClientOnly() {
-		return clientOnly;
-	}
-
-	public void setClientOnly(boolean clientOnly) {
-		this.clientOnly = clientOnly;
-	}
-
-	public boolean shouldCancelDamage() {
-		return cancelDamage;
-	}
-
-	public void setCancelDamage(boolean cancelDamage) {
-		this.cancelDamage = cancelDamage;
-	}
-
-	public boolean shouldAddVelocityInstead() {
-		return addVelocityInstead;
-	}
-
-	public void setAddVelocityInstead(boolean addVelocityInstead) {
-		this.addVelocityInstead = addVelocityInstead;
-	}
-
-	public Subspell getLandSpell() {
-		return landSpell;
-	}
-
-	public void setLandSpell(Subspell landSpell) {
-		this.landSpell = landSpell;
 	}
 
 }

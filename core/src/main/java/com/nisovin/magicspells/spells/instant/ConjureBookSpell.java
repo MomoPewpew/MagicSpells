@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.entity.Item;
@@ -15,10 +16,6 @@ import org.bukkit.inventory.meta.BookMeta;
 import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.Util;
-import com.nisovin.magicspells.util.RegexUtil;
-import com.nisovin.magicspells.util.BlockUtils;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
@@ -58,9 +55,9 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 	
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
 			boolean added = false;
-			ItemStack item = createBook(player, args);
+			ItemStack item = createBook(player, data.args());
 			if (openInstead) player.openBook(item);
 			else {
 				if (addToInventory) {
@@ -75,10 +72,10 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 					dropped.setItemStack(item);
 					dropped.setGravity(gravity);
 
-					int delay = Math.max(pickupDelay.get(caster, null, power, args), 0);
+					int delay = Math.max(pickupDelay.get(data), 0);
 					dropped.setPickupDelay(delay);
 
-					playSpellEffects(EffectPosition.SPECIAL, dropped, power, args);
+					playSpellEffects(EffectPosition.SPECIAL, dropped, data);
 				}
 			}
 		}
@@ -86,34 +83,20 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Player player = caster instanceof Player p ? p : null;
+	public boolean castAtLocation(SpellData data) {
+		Player player = data.caster() instanceof Player p ? p : null;
 
-		ItemStack item = createBook(player, args);
-		Item dropped = target.getWorld().dropItem(target, item);
+		ItemStack item = createBook(player, data.args());
+        assert data.location() != null;
+        Item dropped = data.location().getWorld().dropItem(data.location(), item);
 		dropped.setItemStack(item);
 		dropped.setGravity(gravity);
 
-		int delay = Math.max(pickupDelay.get(caster, null, power, args), 0);
+		int delay = Math.max(pickupDelay.get(data), 0);
 		dropped.setPickupDelay(delay);
 
-		playSpellEffects(EffectPosition.SPECIAL, dropped, power, args);
+		playSpellEffects(EffectPosition.SPECIAL, dropped, data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(null, target, power, null);
 	}
 
 	private static Component createComponent(String raw, Player player, String displayName, String[] args) {
@@ -166,36 +149,8 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 		return item;
 	}
 
-	public static Pattern getNameVariablePattern() {
-		return NAME_VARIABLE_PATTERN;
-	}
-
-	public static Pattern getDisplayNameVariablePattern() {
-		return DISPLAY_NAME_VARIABLE_PATTERN;
-	}
-
-	public boolean isOpenInstead() {
-		return openInstead;
-	}
-
-	public void setOpenInstead(boolean openInstead) {
-		this.openInstead = openInstead;
-	}
-
-	public boolean hasGravity() {
-		return gravity;
-	}
-
 	public void setGravity(boolean gravity) {
 		this.gravity = gravity;
-	}
-
-	public boolean shouldAddToInventory() {
-		return addToInventory;
-	}
-
-	public void setAddToInventory(boolean addToInventory) {
-		this.addToInventory = addToInventory;
 	}
 
 	public String getTitle() {
@@ -212,14 +167,6 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 
 	public void setAuthor(String author) {
 		this.author = author;
-	}
-
-	public List<String> getPages() {
-		return pages;
-	}
-
-	public void setPages(List<String> pages) {
-		this.pages = pages;
 	}
 
 	public List<String> getLore() {

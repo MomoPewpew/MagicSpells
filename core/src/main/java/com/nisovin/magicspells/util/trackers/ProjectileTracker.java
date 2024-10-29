@@ -501,4 +501,7 @@ public class ProjectileTracker implements Runnable, Tracker {
 		return data.args();
 	}
 
+    public SpellData getSpellData() {
+		return data;
+    }
 }

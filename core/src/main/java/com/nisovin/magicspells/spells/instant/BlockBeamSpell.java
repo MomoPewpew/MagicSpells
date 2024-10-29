@@ -164,58 +164,28 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL) shootBeam(caster, null, caster.getLocation(), power, args);
+		if (state == SpellCastState.NORMAL) shootBeam(data);
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		shootBeam(caster, target, caster.getLocation(), power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		shootBeam(data);
 		return true;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		shootBeam(caster, null, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		shootBeam(data);
 		return true;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location location, float v) {
-		return false;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		shootBeam(caster, target, from, power, args);
+	public boolean castAtEntityFromLocation(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		shootBeam(data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(caster, from, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		return false;
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -224,19 +194,22 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 		if (target.hasMetadata("MSBlockBeam")) e.setCancelled(true);
 	}
 
-	private void shootBeam(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
+	private void shootBeam(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+		Location from = data.location();
+
 		if (headItem == null) return;
 
-		SpellData data = new SpellData(caster, target, power, args);
 		playSpellEffects(EffectPosition.CASTER, caster, data);
 
 		Location loc = from.clone();
 		if (!changePitch) loc.setPitch(0);
 
-		float beamVertOffset = this.beamVertOffset.get(caster, target, power, args);
+		float beamVertOffset = this.beamVertOffset.get(data);
 		if (beamVertOffset != 0) loc.setPitch(loc.getPitch() - beamVertOffset);
 
-		float beamHorizOffset = this.beamHorizOffset.get(caster, target, power, args);
+		float beamHorizOffset = this.beamHorizOffset.get(data);
 		if (beamHorizOffset != 0) loc.setYaw(loc.getYaw() + beamHorizOffset);
 
 		Vector startDir;
@@ -246,7 +219,7 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 		//apply relative offset
 		Vector relativeOffset;
 
-		double yOffset = this.yOffset.get(caster, target, power, args);
+		double yOffset = this.yOffset.get(data);
 		if (yOffset != 0) relativeOffset = this.relativeOffset.clone().setY(yOffset);
 		else relativeOffset = this.relativeOffset;
 
@@ -255,7 +228,7 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 		loc.add(loc.getDirection().multiply(relativeOffset.getX()));
 		loc.setY(loc.getY() + relativeOffset.getY());
 
-		float interval = this.interval.get(caster, target, power, args);
+		float interval = this.interval.get(data);
 		if (interval < 0.01) interval = 0.01f;
 
 		Vector dir;
@@ -273,8 +246,8 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 			dir = targetLoc.toVector().subtract(loc.toVector()).normalize().multiply(interval);
 		}
 
-		float beamVerticalSpread = this.beamVerticalSpread.get(caster, target, power, args);
-		float beamHorizontalSpread = this.beamHorizontalSpread.get(caster, target, power, args);
+		float beamVerticalSpread = this.beamVerticalSpread.get(data);
+		float beamHorizontalSpread = this.beamHorizontalSpread.get(data);
 		if (beamVerticalSpread > 0 || beamHorizontalSpread > 0) {
 			float rx = -1 + random.nextFloat() * 2;
 			float ry = -1 + random.nextFloat() * 2;
@@ -282,16 +255,16 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 			dir.add(new Vector(rx * beamHorizontalSpread, ry * beamVerticalSpread, rz * beamHorizontalSpread));
 		}
 
-		double verticalHitRadius = this.verticalHitRadius.get(caster, target, power, args);
-		double maxDistance = this.maxDistance.get(caster, target, power, args);
-		double hitRadius = this.hitRadius.get(caster, target, power, args);
-		double health = this.health.get(caster, target, power, args);
+		double verticalHitRadius = this.verticalHitRadius.get(data);
+		double maxDistance = this.maxDistance.get(data);
+		double hitRadius = this.hitRadius.get(data);
+		double health = this.health.get(data);
 
-		float rotationX = this.rotationX.get(caster, target, power, args);
-		float rotationY = this.rotationY.get(caster, target, power, args);
-		float rotationZ = this.rotationZ.get(caster, target, power, args);
-		float rotation = this.rotation.get(caster, target, power, args);
-		float gravity = -this.gravity.get(caster, target, power, args);
+		float rotationX = this.rotationX.get(data);
+		float rotationY = this.rotationY.get(data);
+		float rotationZ = this.rotationZ.get(data);
+		float rotation = this.rotation.get(data);
+		float gravity = -this.gravity.get(data);
 
 		List<LivingEntity> armorStandList = new ArrayList<>();
 		HashSet<Entity> immune = new HashSet<>();
@@ -311,7 +284,7 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 			//check block collision
 			if (!isTransparent(loc.getBlock())) {
 				playSpellEffects(EffectPosition.DISABLED, loc, data);
-				if (groundSpell != null) groundSpell.subcast(caster, loc, power, args);
+				if (groundSpell != null) groundSpell.subcast(data);
 				if (stopOnHitGround) break;
 			}
 
@@ -344,13 +317,13 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 				if (e == caster || !e.isValid() || immune.contains(e)) continue;
 				if (validTargetList != null && !validTargetList.canTarget(e)) continue;
 
-				SpellTargetEvent event = new SpellTargetEvent(this, caster, e, power, args);
+				SpellTargetEvent event = new SpellTargetEvent(this, data);
 				if (!event.callEvent()) continue;
 
 				LivingEntity subTarget = event.getTarget();
 				float subPower = event.getPower();
 
-				if (hitSpell != null) hitSpell.subcast(caster, subTarget, subPower, args);
+				if (hitSpell != null) hitSpell.subcast(data.builder().power(subPower).build());
 
 				playSpellEffects(EffectPosition.TARGET, subTarget, data);
 				playSpellEffectsTrail(caster.getLocation(), subTarget.getLocation(), data);
@@ -363,12 +336,12 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 		//end of the beam
 		if (!zoneManager.willFizzle(loc, this) && d >= maxDistance) {
 			playSpellEffects(EffectPosition.DELAYED, loc, data);
-			if (endSpell != null) endSpell.subcast(caster, loc, power, args);
+			if (endSpell != null) endSpell.subcast(data);
 		}
 
 		entities.add(armorStandList);
 
-		int removeDelay = this.removeDelay.get(caster, target, power, args);
+		int removeDelay = this.removeDelay.get(data);
 		MagicSpells.scheduleDelayedTask(() -> {
 			for (LivingEntity entity : armorStandList) entity.remove();
 			entities.remove(armorStandList);
@@ -381,70 +354,6 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 
 	public void setRelativeOffset(Vector relativeOffset) {
 		this.relativeOffset = relativeOffset;
-	}
-
-	public Vector getTargetRelativeOffset() {
-		return targetRelativeOffset;
-	}
-
-	public void setTargetRelativeOffset(Vector targetRelativeOffset) {
-		this.targetRelativeOffset = targetRelativeOffset;
-	}
-
-	public boolean isSmall() {
-		return small;
-	}
-
-	public void setSmall(boolean small) {
-		this.small = small;
-	}
-
-	public boolean shouldUseHpFix() {
-		return hpFix;
-	}
-
-	public void setHpFix(boolean hpFix) {
-		this.hpFix = hpFix;
-	}
-
-	public boolean shouldChangePitch() {
-		return changePitch;
-	}
-
-	public void setChangePitch(boolean changePitch) {
-		this.changePitch = changePitch;
-	}
-
-	public boolean shouldStopOnHitEntity() {
-		return stopOnHitEntity;
-	}
-
-	public void setStopOnHitEntity(boolean stopOnHitEntity) {
-		this.stopOnHitEntity = stopOnHitEntity;
-	}
-
-	public boolean shouldStopOnHitGround() {
-		return stopOnHitGround;
-	}
-
-	public void setStopOnHitGround(boolean stopOnHitGround) {
-		this.stopOnHitGround = stopOnHitGround;
-	}
-
-	public Subspell getHitSpell() {
-		return hitSpell;
-	}
-
-	public void setHitSpell(Subspell hitSpell) {
-		this.hitSpell = hitSpell;
-	}
-
-	public Subspell getEndSpell() {
-		return endSpell;
-	}
-
-	public void setEndSpell(Subspell endSpell) {
-		this.endSpell = endSpell;
 	}
 
 	public Subspell getGroundSpell() {

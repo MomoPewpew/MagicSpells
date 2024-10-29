@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.enchantments.Enchantment;
@@ -44,10 +45,11 @@ public class EnchantSpell extends InstantSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			ItemStack targetItem = caster.getEquipment().getItemInMainHand();
+            assert data.caster() != null;
+            ItemStack targetItem = data.caster().getEquipment().getItemInMainHand();
 			if (targetItem == null) return PostCastAction.ALREADY_HANDLED;
 			enchant(targetItem);
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+			playSpellEffects(EffectPosition.CASTER, data.caster(), data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}

@@ -117,22 +117,22 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
 			boolean added = false;
 			ItemStack item = firework.clone();
-			item.setAmount(count.get(caster, null, power, args));
+			item.setAmount(count.get(data));
 
 			ItemMeta meta = item.getItemMeta();
-			if (meta instanceof FireworkMeta fMeta) fMeta.setPower(flight.get(caster, null, power, args));
+			if (meta instanceof FireworkMeta fMeta) fMeta.setPower(flight.get(data));
 
 			if (addToInventory) added = Util.addToInventory(player.getInventory(), item, true, false);
-			SpellData data = new SpellData(caster, power, args);
+
 			if (!added) {
 				Item dropped = player.getWorld().dropItem(player.getLocation(), item);
 				dropped.setItemStack(item);
 				dropped.setGravity(gravity);
 
-				int delay = Math.max(pickupDelay.get(caster, null, power, args), 0);
+				int delay = Math.max(pickupDelay.get(data), 0);
 				dropped.setPickupDelay(delay);
 
 				playSpellEffects(EffectPosition.SPECIAL, dropped, data);
@@ -143,41 +143,25 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		SpellData data = new SpellData(caster, power, args);
-		playSpellEffects(EffectPosition.CASTER, caster, data);
+	public boolean castAtLocation(SpellData data) {
+		playSpellEffects(EffectPosition.CASTER, data.caster(), data);
 
 		ItemStack item = firework.clone();
-		item.setAmount(count.get(caster, null, power, args));
+		item.setAmount(count.get(data));
 
 		ItemMeta meta = item.getItemMeta();
-		if (meta instanceof FireworkMeta fMeta) fMeta.setPower(flight.get(caster, null, power, args));
+		if (meta instanceof FireworkMeta fMeta) fMeta.setPower(flight.get(data));
 
-		Item dropped = target.getWorld().dropItem(target, item);
+        assert data.location() != null;
+        Item dropped = data.location().getWorld().dropItem(data.location(), item);
 		dropped.setItemStack(item);
 		dropped.setGravity(gravity);
 
-		int delay = Math.max(pickupDelay.get(caster, null, power, args), 0);
+		int delay = Math.max(pickupDelay.get(data), 0);
 		dropped.setPickupDelay(delay);
 
 		playSpellEffects(EffectPosition.SPECIAL, dropped, data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(null, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
-
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(null, target, power, null);
 	}
 
 }

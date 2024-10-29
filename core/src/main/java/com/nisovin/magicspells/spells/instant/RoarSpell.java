@@ -35,7 +35,8 @@ public class RoarSpell extends InstantSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			double radius = Math.min(this.radius.get(caster, null, power, args), MagicSpells.getGlobalRadius());
+			LivingEntity caster = data.caster();
+			double radius = Math.min(this.radius.get(data), MagicSpells.getGlobalRadius());
 			List<Entity> entities = caster.getNearbyEntities(radius, radius, radius);
 
 			int count = 0;
@@ -47,35 +48,18 @@ public class RoarSpell extends InstantSpell {
 				MobUtil.setTarget(livingEntity, caster);
 				count++;
 
-				SpellData data = new SpellData(caster, livingEntity, power, args);
 				playSpellEffectsTrail(caster.getLocation(), entity.getLocation(), data);
 				playSpellEffects(EffectPosition.TARGET, entity, data);
 			}
 
 			if (cancelIfNoTargets && count == 0) {
-				sendMessage(strNoTarget, caster, args);
+				sendMessage(strNoTarget, caster, data.args());
 				return PostCastAction.ALREADY_HANDLED;
 			}
 
-			playSpellEffects(EffectPosition.CASTER, caster, power, args);
+			playSpellEffects(EffectPosition.CASTER, caster, data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
-	}
-
-	public String getStrNoTarget() {
-		return strNoTarget;
-	}
-
-	public void setStrNoTarget(String strNoTarget) {
-		this.strNoTarget = strNoTarget;
-	}
-
-	public boolean shouldCancelIfNoTargets() {
-		return cancelIfNoTargets;
-	}
-
-	public void setCancelIfNoTargets(boolean cancelIfNoTargets) {
-		this.cancelIfNoTargets = cancelIfNoTargets;
 	}
 
 }

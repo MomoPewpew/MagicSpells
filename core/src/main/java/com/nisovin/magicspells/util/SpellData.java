@@ -16,11 +16,11 @@ public record SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity ta
 	public static final SpellData NULL = new SpellData(null, null, null, 1f, null, null);
 
 	public SpellData(@Nullable LivingEntity caster, @NotNull float power, @NotNull String[] args, @NotNull ItemStack castItem) {
-		this(caster, null, null, power, args, castItem);
+		this(caster, null, Objects.requireNonNull(caster).getLocation(), power, args, castItem);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @NotNull LivingEntity target, @NotNull float power, @NotNull String[] args) {
-		this(caster, target, null, power, args, null);
+		this(caster, target, Objects.requireNonNull(target).getLocation(), power, args, null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @NotNull Location location, @NotNull float power, @NotNull String[] args) {
@@ -36,15 +36,15 @@ public record SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity ta
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @NotNull float power, @NotNull String[] args) {
-		this(caster, null, null, power, args, null);
+		this(caster, null, Objects.requireNonNull(caster).getLocation(), power, args, null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @NotNull String[] args, @Nullable ItemStack castItem) {
-		this(caster, null, null, 1f, args, castItem);
+		this(caster, null, Objects.requireNonNull(caster).getLocation(), 1f, args, castItem);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, LivingEntity target, float power) {
-		this(caster, target, null, power, new String[0], null);
+		this(caster, target, Objects.requireNonNull(target).getLocation(), power, new String[0], null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, LivingEntity target, Location location) {
@@ -52,11 +52,11 @@ public record SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity ta
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @Nullable ItemStack castItem) {
-		this(caster, null, null, 1f, new String[0], castItem);
+		this(caster, null, Objects.requireNonNull(caster).getLocation(), 1f, new String[0], castItem);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @NotNull String[] args) {
-		this(caster, null, null, 1f, args, null);
+		this(caster, null, Objects.requireNonNull(caster).getLocation(), 1f, args, null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, Location location) {
@@ -64,15 +64,15 @@ public record SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity ta
 	}
 
 	public SpellData(@Nullable LivingEntity caster, LivingEntity target) {
-		this(caster, target, null, 1f, new String[0], null);
+		this(caster, target, Objects.requireNonNull(target).getLocation(), 1f, new String[0], null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, float power) {
-		this(caster, null, null, power, new String[0], null);
+		this(caster, null, Objects.requireNonNull(caster).getLocation(), power, new String[0], null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster) {
-		this(caster, null, null, 1f, new String[0], null);
+		this(caster, null, Objects.requireNonNull(caster).getLocation(), 1f, new String[0], null);
 	}
 
 	public Builder builder() {

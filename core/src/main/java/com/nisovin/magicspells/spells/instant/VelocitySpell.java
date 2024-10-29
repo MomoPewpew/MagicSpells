@@ -47,66 +47,34 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			launch(caster, caster, null, power, args);
+			launch(data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		return launch(caster, target, from, power, args);
+	public boolean castAtEntityFromLocation(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		return launch(data);
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		return launch(caster, target, from, power, null);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		return launch(data);
 	}
 
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		return launch(null, target, from, power, args);
-	}
+	private boolean launch(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+		Location from = data.location();
 
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		return launch(null, target, from, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		return launch(caster, target, null, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		return launch(caster, target, null, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		return launch(null, target, null, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		return launch(null, target, null, power, null);
-	}
-
-	private boolean launch(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
 		if (target == null) return false;
 
 		if (from == null) from = target.getLocation();
 
-		double speed = this.speed.get(caster, caster, power, args) / 10;
-		if (powerAffectsSpeed) speed *= power;
+		double speed = this.speed.get(data) / 10;
+		if (powerAffectsSpeed) speed *= data.power();
 
 		Vector velocity = from.getDirection().normalize().multiply(speed);
 
@@ -114,8 +82,8 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		else target.setVelocity(velocity);
 		jumping.add(target.getUniqueId());
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (caster != null) playSpellEffects(data);
+		else playSpellEffects(EffectPosition.TARGET, target, data);
 
 		return true;
 	}
@@ -127,26 +95,6 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 		if (!jumping.remove(livingEntity.getUniqueId())) return;
 		playSpellEffects(EffectPosition.TARGET, livingEntity.getLocation(), new SpellData(livingEntity));
 		if (cancelDamage) event.setCancelled(true);
-	}
-
-	public Set<UUID> getJumping() {
-		return jumping;
-	}
-
-	public boolean shouldCancelDamage() {
-		return cancelDamage;
-	}
-
-	public void setCancelDamage(boolean cancelDamage) {
-		this.cancelDamage = cancelDamage;
-	}
-
-	public boolean shouldAddVelocityInstead() {
-		return addVelocityInstead;
-	}
-
-	public void setAddVelocityInstead(boolean addVelocityInstead) {
-		this.addVelocityInstead = addVelocityInstead;
 	}
 
 }

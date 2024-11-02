@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.util.BlockIterator;
@@ -29,12 +30,13 @@ public class BlinkSpell extends TargetedSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			int range = getRange(power);
+			LivingEntity caster = data.caster();
+			int range = getRange(data.power());
 			if (range <= 0) range = 25;
 			if (range > 125) range = 125;
 			BlockIterator iter; 
 			try {
-				iter = new BlockIterator(caster, range);
+				iter = new BlockIterator(data.caster(), range);
 			} catch (IllegalStateException e) {
 				iter = null;
 			}
@@ -54,7 +56,7 @@ public class BlinkSpell extends TargetedSpell implements TargetedLocationSpell {
 				}
 			}
 
-			if (found == null) return noTarget(caster, strCantBlink, args);
+			if (found == null) return noTarget(data, strCantBlink);
 
 			Location loc = null;
 			if (!passThroughCeiling && found.getRelative(0, -1, 0).equals(prev)) {
@@ -71,45 +73,35 @@ public class BlinkSpell extends TargetedSpell implements TargetedLocationSpell {
 				loc = prev.getLocation();
 			}
 			if (loc != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, loc, power, args);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 				EventUtil.call(event);
 
 				if (event.isCancelled()) loc = null;
 				else loc = event.getTargetLocation();
 			}
 
-			if (loc == null) return noTarget(caster, strCantBlink, args);
+			if (loc == null) return noTarget(data, strCantBlink);
 
 			loc.setX(loc.getX() + 0.5);
 			loc.setZ(loc.getZ() + 0.5);
 			loc.setPitch(caster.getLocation().getPitch());
 			loc.setYaw(caster.getLocation().getYaw());
 
-			playSpellEffects(caster, loc, power, args);
+			playSpellEffects(data.builder().location(loc).build());
 			caster.teleportAsync(loc);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Location location = target.clone();
-		location.setYaw(caster.getLocation().getYaw());
-		location.setPitch(caster.getLocation().getPitch());
+	public boolean castAtLocation(SpellData data) {
+		Location location = data.location().clone();
+		location.setYaw(data.caster().getLocation().getYaw());
+		location.setPitch(data.caster().getLocation().getPitch());
 
-		playSpellEffects(caster, location, power, args);
-		caster.teleportAsync(location);
+		playSpellEffects(data);
+		data.caster().teleportAsync(location);
 		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
 	}
 
 }

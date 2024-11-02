@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Breedable;
 import org.bukkit.entity.LivingEntity;
@@ -32,11 +33,11 @@ public class AgeSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, AGEABLE, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+			TargetInfo<LivingEntity> info = getTargetedEntity(data, AGEABLE);
+			if (info.noTarget()) return noTarget(data, info);
 
-			applyAgeChanges(caster, (Ageable) info.target(), info.power(), args);
-			sendMessages(caster, info.target(), args);
+			applyAgeChanges(data.builder().target(info.target()).build());
+			sendMessages(data.caster(), info.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -45,35 +46,20 @@ public class AgeSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target) || !(target instanceof Ageable ageable)) return false;
-		applyAgeChanges(caster, ageable, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target()) || !(data.target() instanceof Ageable ageable)) return false;
+		applyAgeChanges(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
+	private void applyAgeChanges(SpellData data) {
+		Ageable target = (Ageable) data.target();
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target) || !(target instanceof Ageable ageable)) return false;
-		applyAgeChanges(null, ageable, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	private void applyAgeChanges(LivingEntity caster, Ageable target, float power, String[] args) {
-		if (setMaturity) target.setAge(rawAge.get(caster, target, power, args));
+		if (setMaturity) target.setAge(rawAge.get(data));
 		if (target instanceof Breedable breedable) breedable.setAgeLock(applyAgeLock);
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (data.caster() != null) playSpellEffects(data);
+		else playSpellEffects(EffectPosition.TARGET, data.caster(), data);
 	}
 
 }

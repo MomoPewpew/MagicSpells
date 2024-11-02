@@ -53,13 +53,13 @@ public class CaptureSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, CAPTURABLE, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data, CAPTURABLE);
+			if (target.noTarget()) return noTarget(data);
 
-			boolean ok = capture(caster, target.target(), target.power(), args);
-			if (!ok) return noTarget(caster, args);
+			boolean ok = capture(data.builder().target(target.target()).power(target.getPower()).build());
+			if (!ok) return noTarget(data);
 
-			sendMessages(caster, target.target(), args);
+			sendMessages(data.caster(), target.target(), data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 
@@ -67,25 +67,9 @@ public class CaptureSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target) || !MobUtil.hasEggMaterialForEntityType(target.getType())) return false;
-		return capture(caster, target, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target) || !MobUtil.hasEggMaterialForEntityType(target.getType())) return false;
-		return capture(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target()) || !MobUtil.hasEggMaterialForEntityType(data.target().getType())) return false;
+		return capture(data);
 	}
 
 	@Override
@@ -93,12 +77,14 @@ public class CaptureSpell extends TargetedSpell implements TargetedEntitySpell {
 		return CAPTURABLE;
 	}
 
-	private boolean capture(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private boolean capture(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
 		ItemStack item = MobUtil.getEggItemForEntityType(target.getType());
 		if (item == null) return false;
 
 		if (powerAffectsQuantity) {
-			int q = Math.round(power);
+			int q = Math.round(data.power());
 			if (q > 1) item.setAmount(q);
 		}
 
@@ -126,7 +112,6 @@ public class CaptureSpell extends TargetedSpell implements TargetedEntitySpell {
 			dropped.setGravity(gravity);
 		}
 
-		SpellData data = new SpellData(caster, target, power, args);
 		if (caster != null) playSpellEffects(caster, target.getLocation(), data);
 		else playSpellEffects(EffectPosition.TARGET, target.getLocation(), data);
 

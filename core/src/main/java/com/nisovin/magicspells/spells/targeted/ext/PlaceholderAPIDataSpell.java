@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted.ext;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
@@ -53,13 +54,13 @@ public class PlaceholderAPIDataSpell extends TargetedSpell implements TargetedEn
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			TargetInfo<Player> targetInfo = getTargetedPlayer(player, power, args);
-			if (targetInfo.noTarget()) return noTarget(player, args, null);
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
+			if (targetInfo.noTarget()) return noTarget(data);
 			Player target = targetInfo.target();
 
-			setPlaceholders(player, target, targetInfo.power(), args);
-			sendMessages(caster, target, args);
+			setPlaceholders(data.builder().power(targetInfo.getPower()).build());
+			sendMessages(data.caster(), target, data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -68,25 +69,18 @@ public class PlaceholderAPIDataSpell extends TargetedSpell implements TargetedEn
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(caster instanceof Player casterPlayer) || !(target instanceof Player targetPlayer)) return false;
-		if (!validTargetList.canTarget(caster, target)) return false;
-		setPlaceholders(casterPlayer, targetPlayer, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!(data.caster() instanceof Player) || !(data.target() instanceof Player)) return false;
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		setPlaceholders(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
+	private void setPlaceholders(SpellData data) {
+		Player target = (Player) data.target();
+		Player caster = (Player) data.caster();
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
-	private void setPlaceholders(Player caster, Player target, float power, String[] args) {
-		String value = MagicSpells.doArgumentSubstitution(placeholderAPITemplate, args);
+		String value = MagicSpells.doArgumentSubstitution(placeholderAPITemplate, data.args());
 
 		Player variableCaster, variableTarget;
 		if (useTargetVariables) {
@@ -102,7 +96,7 @@ public class PlaceholderAPIDataSpell extends TargetedSpell implements TargetedEn
 		value = PlaceholderAPI.setPlaceholders(setTargetPlaceholders ? target : caster, value);
 
 		MagicSpells.getVariableManager().set(variableName, setTargetVariable ? target : caster, value);
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data);
 	}
 
 }

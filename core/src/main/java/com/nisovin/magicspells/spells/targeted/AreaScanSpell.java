@@ -144,42 +144,29 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Location origin;
-			if (pointBlank) origin = caster.getLocation();
+			if (pointBlank) data = data.builder().location(data.caster().getLocation()).build();
 			else {
-				Block target = getTargetedBlock(caster, power, args);
-				if (target == null) return noTarget(caster, args);
+				Block target = getTargetedBlock(data.caster(), data.power(), data.args());
+				if (target == null) return noTarget(data);
 
-				origin = target.getLocation();
+				data = data.builder().location(target.getLocation()).build();
 			}
 
-			if (!scan(caster, origin, power, args)) return noTarget(caster, args);
+			if (!scan(data)) return noTarget(data);
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return scan(caster, target.clone(), power, args);
+	public boolean castAtLocation(SpellData data) {
+		return scan(data);
 	}
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return scan(null, target.clone(), power, args);
-	}
+	private boolean scan(SpellData data) {
+		Location origin = data.location();
+		float power = data.power();
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return scan(caster, target.clone(), power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return scan(null, target.clone(), power, null);
-	}
-
-	private boolean scan(LivingEntity caster, Location origin, float power, String[] args) {
 		if (blockCoords) origin.set(origin.getBlockX(), origin.getBlockY(), origin.getBlockZ());
 
 		if (relativeOffset.getX() != 0 || relativeOffset.getY() != 0 || relativeOffset.getZ() != 0)
@@ -187,14 +174,14 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 
 		origin.add(absoluteOffset);
 
-		int xRadius = this.xRadius.get(caster, null, power, args);
-		int yRadius = this.yRadius.get(caster, null, power, args);
-		int zRadius = this.zRadius.get(caster, null, power, args);
+		int xRadius = this.xRadius.get(data);
+		int yRadius = this.yRadius.get(data);
+		int zRadius = this.zRadius.get(data);
 		if (xRadius < 0 || yRadius < 0 || zRadius < 0) return false;
 
-		int xInnerRadius = this.xInnerRadius.get(caster, null, power, args);
-		int yInnerRadius = this.yInnerRadius.get(caster, null, power, args);
-		int zInnerRadius = this.zInnerRadius.get(caster, null, power, args);
+		int xInnerRadius = this.xInnerRadius.get(data);
+		int yInnerRadius = this.yInnerRadius.get(data);
+		int zInnerRadius = this.zInnerRadius.get(data);
 
 		if (powerAffectsRadius) {
 			xRadius = Math.round(xRadius * power);
@@ -214,12 +201,10 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		yInnerRadius = Math.min(yInnerRadius, MagicSpells.getGlobalRadius());
 		zInnerRadius = Math.min(zInnerRadius, MagicSpells.getGlobalRadius());
 
-		int count = this.maxBlocks.get(caster, null, power, args);
+		int count = this.maxBlocks.get(data);
 		if (powerAffectsMaxBlocks) count = Math.round(count * power);
 
-		SpellData data = new SpellData(caster, power, args);
-
-		Shape shape = this.shape.get(caster, null, power, args);
+		Shape shape = this.shape.get(data);
 		float xRadiusInv = shape == Shape.X_CYLINDER || xRadius == 0 ? 0 : 1f / (xRadius * xRadius);
 		float yRadiusInv = shape == Shape.Y_CYLINDER || yRadius == 0 ? 0 : 1f / (yRadius * yRadius);
 		float zRadiusInv = shape == Shape.Z_CYLINDER || zRadius == 0 ? 0 : 1f / (zRadius * zRadius);
@@ -227,14 +212,14 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		float yInnerRadiusInv = shape == Shape.Y_CYLINDER ? 0 : 1f / (yInnerRadius * yInnerRadius);
 		float zInnerRadiusInv = shape == Shape.Z_CYLINDER ? 0 : 1f / (zInnerRadius * zInnerRadius);
 
-		float tolerance = this.tolerance.get(caster, null, power, args);
-		float innerTolerance = this.innerTolerance.get(caster, null, power, args);
+		float tolerance = this.tolerance.get(data);
+		float innerTolerance = this.innerTolerance.get(data);
 
 		boolean cull = xInnerRadius >= 0 && yInnerRadius >= 0 && zInnerRadius >= 0;
 		boolean boxCull = shape == Shape.BOX && cull;
 
 		VariableManager manager = MagicSpells.getVariableManager();
-		String playerCaster = caster instanceof Player player ? player.getName() : null;
+		String playerCaster = data.caster() instanceof Player player ? player.getName() : null;
 
 		int minRadius = boxCull ? Math.min(xInnerRadius, Math.min(yInnerRadius, zInnerRadius)) : 0;
 		int maxRadius = Math.max(xRadius, Math.max(yRadius, zRadius));
@@ -289,18 +274,18 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 							if (zVariable != null) manager.set(zVariable, playerCaster, target.getZ());
 						}
 
-						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target, power, args);
+						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 						if (!event.callEvent()) continue;
 
 						float subPower = event.getPower();
 						target = event.getTargetLocation();
 						found = true;
 
-						if (spell != null) spell.subcast(caster, target, subPower, args);
+						if (spell != null) spell.subcast(data);
 
-						SpellData effectData = power == subPower ? data : new SpellData(caster, subPower, args);
-						playSpellEffects(EffectPosition.TARGET, target, effectData);
-						playSpellEffectsTrail(origin, target, effectData);
+						data = data.builder().power(subPower).build();
+						playSpellEffects(EffectPosition.TARGET, target, data);
+						playSpellEffectsTrail(origin, target, data);
 
 						if (count == 1) break loop;
 						else if (count > 0) count--;
@@ -310,7 +295,7 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		}
 
 		boolean success = found || !failIfNoTargets;
-		if (success && caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
+		if (success && data.caster() != null) playSpellEffects(EffectPosition.CASTER, data.caster(), data);
 
 		return success;
 	}

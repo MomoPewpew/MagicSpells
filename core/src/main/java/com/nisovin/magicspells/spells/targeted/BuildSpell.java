@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -76,57 +77,48 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			int slot = this.slot.get(caster, null, power, args);
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			int slot = this.slot.get(data);
 			ItemStack item = player.getInventory().getItem(slot);
-			if (item == null || !isAllowed(item.getType())) return noTarget(player, strInvalidBlock, args);
+			if (item == null || !isAllowed(item.getType())) return noTarget(data, strInvalidBlock);
 
 			List<Block> lastBlocks;
 			try {
-				lastBlocks = getLastTwoTargetedBlocks(player, power, args);
+				lastBlocks = getLastTwoTargetedBlocks(player, data.power(), data.args());
 			} catch (IllegalStateException e) {
 				DebugHandler.debugIllegalState(e);
 				lastBlocks = null;
 			}
 
 			if (lastBlocks == null || lastBlocks.size() < 2 || BlockUtils.isAir(lastBlocks.get(1).getType()))
-				return noTarget(player, strCantBuild, args);
+				return noTarget(data, strCantBuild);
 
-			boolean built = build(player, lastBlocks.get(0), lastBlocks.get(1), item, slot, power, args);
-			if (!built) return noTarget(player, strCantBuild, args);
+			boolean built = build(data, lastBlocks.get(0), lastBlocks.get(1), item, slot);
+			if (!built) return noTarget(data, strCantBuild);
 
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player player)) return false;
+	public boolean castAtLocation(SpellData data) {
+		if (!(data.caster() instanceof Player player)) return false;
 
-		int slot = this.slot.get(caster, null, power, args);
+		int slot = this.slot.get(data);
 		ItemStack item = player.getInventory().getItem(slot);
 		if (item == null || !isAllowed(item.getType())) return false;
 
-		Block block = target.getBlock();
+		Block block = data.location().getBlock();
 
-		return build(player, block, block, item, slot, power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
+		return build(data, block, block, item, slot);
 	}
 
 	private boolean isAllowed(Material mat) {
 		return mat.isBlock() && allowedTypes != null && allowedTypes.contains(mat);
 	}
 
-	private boolean build(Player player, Block block, Block against, ItemStack item, int slot, float power, String[] args) {
+	private boolean build(SpellData data, Block block, Block against, ItemStack item, int slot) {
+		Player player = (Player) data.caster();
 		BlockState previousState = block.getState();
 		block.setType(item.getType());
 
@@ -141,7 +133,7 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		if (playBreakEffect) block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType());
 
-		playSpellEffects(player, block.getLocation(), power, args);
+		playSpellEffects(data.builder().location(block.getLocation()).build());
 
 		if (consumeBlock) {
 			int amt = item.getAmount() - 1;

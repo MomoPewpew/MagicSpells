@@ -77,38 +77,29 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
+			LivingEntity caster = data.caster();
+			float power = data.power();
+			String[] args = data.args();
 			List<Block> blocks = getLastTwoTargetedBlocks(caster, power, args);
-			if (blocks.size() != 2) return noTarget(caster, args);
-			if (!blocks.get(1).getType().isSolid()) return noTarget(caster, args);
+			if (blocks.size() != 2) return noTarget(data);
+			if (!blocks.get(1).getType().isSolid()) return noTarget(data);
 
 			Block target = blocks.get(0);
-			boolean ok = bomb(caster, target.getLocation(), power, args);
-			if (!ok) return noTarget(caster, args);
+			boolean ok = bomb(data.builder().location(target.getLocation()).build());
+			if (!ok) return noTarget(data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return bomb(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		return bomb(data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return bomb(caster, target, power, null);
-	}
+	private boolean bomb(SpellData data) {
+		LivingEntity livingEntity = data.caster();
+		Location loc = data.location();
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return bomb(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return bomb(null, target, power, null);
-	}
-
-	private boolean bomb(LivingEntity livingEntity, Location loc, float power, String[] args) {
 		if (material == null) return false;
 		Block block = loc.getBlock();
 		if (!BlockUtils.isAir(block.getType())) return false;
@@ -116,12 +107,11 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 		blocks.add(block);
 		block.setType(material);
 
-		SpellData data = new SpellData(livingEntity, power, args);
 		if (livingEntity != null) playSpellEffects(livingEntity, loc.add(0.5, 0, 0.5), data);
 		else playSpellEffects(EffectPosition.TARGET, loc.add(0.5, 0, 0.5), data);
 
-		final int interval = this.interval.get(livingEntity, null, power, args);
-		final int fuse = this.fuse.get(livingEntity, null, power, args);
+		final int interval = this.interval.get(data);
+		final int fuse = this.fuse.get(data);
 		new SpellAnimation(interval, interval, true, false) {
 
 			private final Location l = block.getLocation().add(0.5, 0, 0.5);
@@ -136,7 +126,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 						blocks.remove(block);
 						block.setType(Material.AIR);
 						playSpellEffects(EffectPosition.DELAYED, l, data);
-						if (targetSpell != null) targetSpell.subcast(livingEntity, l, power, args);
+						if (targetSpell != null) targetSpell.subcast(data.builder().caster(livingEntity).location(l).build());
 					}
 				} else if (!material.equals(block.getType())) stop(true);
 				else playSpellEffects(EffectPosition.SPECIAL, l, data);

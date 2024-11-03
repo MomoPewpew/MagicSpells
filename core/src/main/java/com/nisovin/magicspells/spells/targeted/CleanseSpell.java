@@ -4,17 +4,14 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffectType;
 
 import com.nisovin.magicspells.Spell;
-import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.TargetInfo;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
-import com.nisovin.magicspells.util.ValidTargetChecker;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
@@ -190,11 +187,11 @@ public class CleanseSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, checker, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data, checker);
+			if (target.noTarget()) return noTarget(data);
 
-			cleanse(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+			cleanse(data.builder().target(target.target()).power(target.getPower()).build());
+			sendMessages(data.caster(), target.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -203,30 +200,9 @@ public class CleanseSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		cleanse(caster, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		cleanse(caster, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		cleanse(null, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		cleanse(null, target, power, null);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		cleanse(data);
 		return true;
 	}
 
@@ -235,7 +211,9 @@ public class CleanseSpell extends TargetedSpell implements TargetedEntitySpell {
 		return checker;
 	}
 
-	private void cleanse(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void cleanse(SpellData data) {
+		LivingEntity target = data.target();
+
 		if (fire) target.setFireTicks(0);
 
 		for (PotionEffectType type : potionEffectTypes) {
@@ -250,8 +228,8 @@ public class CleanseSpell extends TargetedSpell implements TargetedEntitySpell {
 		silenceSpells.forEach(spell -> spell.removeSilence(target));
 		levitateSpells.forEach(spell -> spell.removeLevitate(target));
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (data.caster() != null) playSpellEffects(data);
+		else playSpellEffects(EffectPosition.TARGET, data.caster(), data);
 	}
 
 }

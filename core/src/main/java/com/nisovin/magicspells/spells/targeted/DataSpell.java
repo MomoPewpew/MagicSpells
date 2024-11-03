@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import java.util.function.Function;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
@@ -41,16 +42,16 @@ public class DataSpell extends TargetedSpell implements TargetedEntitySpell {
 	
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(player, power, args);
-			if (targetInfo.noTarget()) return noTarget(player, args, targetInfo);
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 			LivingEntity target = targetInfo.target();
 
-			playSpellEffects(player, target, targetInfo.power(), args);
+			playSpellEffects(data.builder().target(target).power(targetInfo.getPower()).build());
 			String value = dataElement.apply(target);
 			MagicSpells.getVariableManager().set(variableName, player, value);
 
-			sendMessages(caster, target, args);
+			sendMessages(data.caster(), target, data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 
@@ -58,22 +59,15 @@ public class DataSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public boolean castAtEntity(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+
 		if (!(caster instanceof Player) || !validTargetList.canTarget(caster, target)) return false;
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data);
 		String value = dataElement.apply(target);
 		MagicSpells.getVariableManager().set(variableName, (Player) caster, value);
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
 	}
 
 }

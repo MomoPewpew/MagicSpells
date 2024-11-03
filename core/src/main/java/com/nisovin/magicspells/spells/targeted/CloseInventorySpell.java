@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
@@ -23,12 +24,12 @@ public class CloseInventorySpell extends TargetedSpell implements TargetedEntity
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<Player> targetInfo = getTargetedPlayer(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 			Player target = targetInfo.target();
 
-			close(caster, target, targetInfo.power(), args);
-			sendMessages(caster, target, args);
+			close(data.builder().target(target).power(targetInfo.getPower()).build());
+			sendMessages(data.caster(), target, data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -37,45 +38,31 @@ public class CloseInventorySpell extends TargetedSpell implements TargetedEntity
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
-		close(caster, player, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), data.target())) return false;
+		close(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
+	private void close(SpellData data) {
+		LivingEntity caster = data.caster();
+		Player target = (Player) data.target();
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
-		close(null, player, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	private void close(LivingEntity caster, Player target, float power, String[] args) {
-		int delay = this.delay.get(caster, target, power, args);
+		int delay = this.delay.get(data);
 
 		if (delay > 0) {
 			MagicSpells.scheduleDelayedTask(() -> {
 				target.closeInventory();
 
-				if (caster != null) playSpellEffects(caster, target, power, args);
-				else playSpellEffects(EffectPosition.TARGET, target, power, args);
+				if (caster != null) playSpellEffects(data);
+				else playSpellEffects(EffectPosition.TARGET, data.caster(), data);
 			}, delay);
 		}
 		else {
 			target.closeInventory();
 
-			if (caster != null) playSpellEffects(caster, target, power, args);
-			else playSpellEffects(EffectPosition.TARGET, target, power, args);
+			if (caster != null) playSpellEffects(data);
+			else playSpellEffects(EffectPosition.TARGET, target, data);
 		}
 	}
 

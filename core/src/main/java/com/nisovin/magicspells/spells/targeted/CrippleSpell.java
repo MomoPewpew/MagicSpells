@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffectType;
@@ -38,11 +39,11 @@ public class CrippleSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+			TargetInfo<LivingEntity> info = getTargetedEntity(data);
+			if (info.noTarget()) return noTarget(data, info);
 
-			cripple(caster, info.target(), info.power(), args);
-			sendMessages(caster, info.target(), args);
+			cripple(data.builder().target(info.target()).power(info.getPower()).build());
+			sendMessages(data.caster(), info.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -51,46 +52,32 @@ public class CrippleSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		cripple(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		cripple(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
+	private void cripple(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		cripple(null, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	private void cripple(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (target == null) return;
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (caster != null) playSpellEffects(data);
+		else playSpellEffects(EffectPosition.TARGET, target, data);
 
 		if (useSlownessEffect) {
-			int strength = this.strength.get(caster, target, power, args);
-			int duration = this.duration.get(caster, target, power, args);
-			if (powerAffectsDuration) duration = Math.round(duration * power);
+			int strength = this.strength.get(data);
+			int duration = this.duration.get(data);
+			if (powerAffectsDuration) duration = Math.round(duration * data.power());
 
 			target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, duration, strength));
 		}
 
 		if (applyPortalCooldown) {
-			int portalCooldown = this.portalCooldown.get(caster, target, power, args);
-			if (powerAffectsPortalCooldown) portalCooldown = Math.round(portalCooldown * power);
+			int portalCooldown = this.portalCooldown.get(data);
+			if (powerAffectsPortalCooldown) portalCooldown = Math.round(portalCooldown * data.power());
 
 			if (target.getPortalCooldown() < portalCooldown) target.setPortalCooldown(portalCooldown);
 		}

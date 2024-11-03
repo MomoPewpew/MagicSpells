@@ -147,10 +147,13 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
+			LivingEntity caster = data.caster();
+			float power = data.power();
+			String[] args = data.args();
+
 			Block b = getTargetedBlock(caster, power, args);
 			if (b != null && !BlockUtils.isAir(b.getType())) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, b.getLocation(), power,
-						args);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 				EventUtil.call(event);
 				if (event.isCancelled())
 					b = null;
@@ -159,7 +162,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			}
 			if (b != null && !BlockUtils.isAir(b.getType())) {
 				Location loc = b.getLocation().add(0.5, 0.5, 0.5);
-				doIt(caster, null, caster.getLocation(), loc, power, args);
+				doIt(data.builder().location(caster.getLocation()).build(), data.target().getLocation());
 				playSpellEffects(caster, loc, power, args);
 			}
 		}
@@ -167,49 +170,25 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		doIt(caster, null, caster.getLocation(), target, power, args);
-		playSpellEffects(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		doIt(data.builder().location(data.caster().getLocation()).build(), data.target().getLocation());
+		playSpellEffects(data);
 		return true;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
-			String[] args) {
-		doIt(caster, target, from, target.getLocation(), power, args);
-		playSpellEffects(caster, from, target, new SpellData(caster, target, power, args));
+	public boolean castAtEntityFromLocation(SpellData data) {
+		doIt(data.builder().location(data.caster().getLocation()).build(), data.target().getLocation());
+		playSpellEffects(data.caster(), data.location(), data.target(), data.builder().build());
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(caster, from, target, power, null);
-	}
+	private void doIt(SpellData data, Location targetLocation) {
+		LivingEntity caster = data.caster();
+		Location source = data.location();
+		float power = data.power();
+		String[] args = data.args();
 
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		doIt(null, target, from, target.getLocation(), power, args);
-		playSpellEffects(from, target, new SpellData(null, target, power, args));
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(from, target, power, null);
-	}
-
-	private void doIt(LivingEntity caster, LivingEntity target, Location source, Location targetLocation, float power,
-			String[] args) {
 		int centerX = targetLocation.getBlockX();
 		int centerY = targetLocation.getBlockY();
 		int centerZ = targetLocation.getBlockZ();
@@ -217,16 +196,16 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		List<Block> blocksToThrow = new ArrayList<>();
 		List<Block> blocksToRemove = new ArrayList<>();
 
-		int vertRadius = this.vertRadius.get(caster, target, power, args);
-		int horizRadius = this.horizRadius.get(caster, target, power, args);
+		int vertRadius = this.vertRadius.get(data);
+		int horizRadius = this.horizRadius.get(data);
 
 		if (powerAffectsRadius) {
 			vertRadius = Math.round(vertRadius * power);
 			horizRadius = Math.round(horizRadius * power);
 		}
 
-		float throwChance = this.throwChance.get(caster, target, power, null) / 100;
-		int duration = this.duration.get(caster, target, power, args);
+		float throwChance = this.throwChance.get(data) / 100;
+		int duration = this.duration.get(data);
 
 		for (int y = centerY - vertRadius; y <= centerY + vertRadius; y++) {
 			for (int x = centerX - horizRadius; x <= centerX + horizRadius; x++) {
@@ -307,12 +286,11 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			b.setType(Material.AIR, false);
 		}
 
-		double velocity = resolveVelocityPerBlock ? 0 : this.velocity.get(caster, target, power, args);
-		float fallingBlockDamage = resolveDamagePerBlock ? 0 : this.fallingBlockDamage.get(caster, target, power, args);
+		double velocity = resolveVelocityPerBlock ? 0 : this.velocity.get(data);
+		float fallingBlockDamage = resolveDamagePerBlock ? 0 : this.fallingBlockDamage.get(data);
 		int fallingBlockHeight = resolveMaxHeightPerBlock ? 0
-				: this.fallingBlockMaxHeight.get(caster, target, power, args);
+				: this.fallingBlockMaxHeight.get(data);
 
-		SpellData data = new SpellData(caster, target, power, args);
 		for (Block b : blocksToThrow) {
 			if (preventLandingBlocks && checkPlugins && caster instanceof Player) {
 				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster);
@@ -367,7 +345,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			Vector v;
 			if (resolveVelocityPerBlock)
-				velocity = this.velocity.get(caster, target, power, args);
+				velocity = this.velocity.get(data);
 			if (velocityType == VelocityType.UP) {
 				v = new Vector(0, velocity, 0);
 				v.setY(v.getY() + ((Math.random() - 0.5) / 4));
@@ -390,10 +368,10 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			fb.setVelocity(v);
 
 			if (resolveDamagePerBlock)
-				fallingBlockDamage = this.fallingBlockDamage.get(caster, target, power, args);
+				fallingBlockDamage = this.fallingBlockDamage.get(data);
 			if (fallingBlockDamage > 0) {
 				if (resolveMaxHeightPerBlock)
-					fallingBlockHeight = this.fallingBlockMaxHeight.get(caster, target, power, args);
+					fallingBlockHeight = this.fallingBlockMaxHeight.get(data);
 				MagicSpells.getVolatileCodeHandler().setFallingBlockHurtEntities(fb, fallingBlockDamage,
 						fallingBlockHeight);
 			}

@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.LivingEntity;
 
@@ -33,20 +34,20 @@ public class CreatureTargetSpell extends InstantSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			castSpells(caster, power, args);
+			castSpells(data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	private void castSpells(LivingEntity caster, float power, String[] args) {
-		if (!(caster instanceof Creature creature)) return;
+	private void castSpells(SpellData data) {
+		if (!(data.caster() instanceof Creature creature)) return;
 
 		LivingEntity target = creature.getTarget();
 		if (target == null || !target.isValid()) return;
 
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data);
 
-		if (targetSpell != null) targetSpell.subcast(caster, caster.getLocation(), target, power, args);
+		if (targetSpell != null) targetSpell.subcast(data.builder().location(data.caster().getLocation()).target(target).build());
 	}
 
 }

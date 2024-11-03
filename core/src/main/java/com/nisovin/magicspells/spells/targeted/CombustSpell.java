@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
@@ -50,13 +51,13 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data);
 
-			boolean combusted = combust(caster, target.target(), target.power(), args);
-			if (!combusted) return noTarget(caster, args);
+			boolean combusted = combust(data.builder().target(target.target()).power(target.getPower()).build());
+			if (!combusted) return noTarget(data);
 
-			sendMessages(caster, target.target(), args);
+			sendMessages(data.caster(), target.target(), data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 
@@ -64,42 +65,29 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		return combust(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		return combust(data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
+	private boolean combust(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		return combust(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	private boolean combust(LivingEntity caster, final LivingEntity target, float power, String[] args) {
 		if (checkPlugins && caster != null) {
 			MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, DamageCause.ENTITY_ATTACK, 1, this);
 			EventUtil.call(event);
 			if (event.isCancelled()) return false;
 		}
 
-		int duration = fireTicks.get(caster, target, power, args);
-		if (powerAffectsFireTicks) duration = Math.round(duration * power);
+		int duration = fireTicks.get(data);
+		if (powerAffectsFireTicks) duration = Math.round(duration * data.power());
 		target.setFireTicks(duration);
 
-		combusting.put(target.getUniqueId(), new CombustData(caster, power, args));
+		combusting.put(target.getUniqueId(), new CombustData(caster, data.power(), data.args()));
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (caster != null) playSpellEffects(data);
+		else playSpellEffects(EffectPosition.TARGET, target, data);
 
 		MagicSpells.scheduleDelayedTask(() -> combusting.remove(target.getUniqueId()), duration + 2);
 

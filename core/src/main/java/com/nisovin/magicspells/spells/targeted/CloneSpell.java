@@ -6,6 +6,7 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
 
@@ -58,6 +59,10 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 
     @Override
     public PostCastAction castSpell(SpellCastState state, SpellData data) {
+		LivingEntity caster = data.caster();
+		float power = data.power();
+		String[] args = data.args();
+
         if(!(caster instanceof Player)) return PostCastAction.NO_MESSAGES;
 
         if(state == SpellCastState.NORMAL) {
@@ -71,9 +76,9 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 				catch (IllegalStateException ignored) {}
 			}
 
-			if (loc == null) return noTarget(caster, args);
+			if (loc == null) return noTarget(data);
 
-			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, loc, power, args);
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 			EventUtil.call(event);
 			if (event.isCancelled()) loc = null;
 			else {
@@ -81,39 +86,28 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 				power = event.getPower();
 			}
 
-			if (loc == null) return noTarget(caster, args);
+			if (loc == null) return noTarget(data.power(data.power()));
 
-			boolean done = createFalsePlayer(caster, loc, power, args);
-			if (!done) return noTarget(caster, args);
+			boolean done = createFalsePlayer(data);
+			if (!done) return noTarget(data);
         }
         return PostCastAction.HANDLE_NORMALLY;
     }
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		Location loc = target.clone();
-		loc.setY(target.getY() + 1);
-		return createFalsePlayer(caster, loc, power, args);
+	public boolean castAtLocation(SpellData data) {
+		Location location = data.location().clone();
+		location.setY(data.location().getY() + 1);
+		return createFalsePlayer(data.builder().location(location).build());
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		Location loc = target.clone();
-		loc.setY(target.getY() + 1);
-		return createFalsePlayer(caster, loc, power, null);
-	}
+    private boolean createFalsePlayer(SpellData data) {
+        final int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer((Player) data.caster(), data.location(), this.pose.get(data).toUpperCase(), this.cloneEquipment.get(data));
 
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
-    private boolean createFalsePlayer(LivingEntity caster, Location loc, float basePower, String[] args) {
-        final int cloneID = MagicSpells.getVolatileCodeHandler().createFalsePlayer((Player) caster, loc, this.pose.get(caster, null, basePower, args).toUpperCase(), this.cloneEquipment.get(caster, null, basePower, args));
-
+		Location loc = data.location();
     	cloneMap.put(cloneID, loc);
 
-        if (!this.permanent.get(caster, null, basePower, args)) {
+        if (!this.permanent.get(data)) {
         	this.temporaryCloneMap.put(cloneID, loc);
         	if (duration > 0) {
     			MagicSpells.scheduleDelayedTask(() -> {

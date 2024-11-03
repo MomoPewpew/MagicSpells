@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import java.util.Set;
 import java.util.List;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
@@ -33,12 +34,12 @@ public class EntityEditSpell extends TargetedSpell implements TargetedEntitySpel
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data, target);
 
 			applyAttributes(target.target());
-			playSpellEffects(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+			playSpellEffects(data.builder().target(target.target()).power(target.getPower()).build());
+			sendMessages(data.caster(), target.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -47,34 +48,10 @@ public class EntityEditSpell extends TargetedSpell implements TargetedEntitySpel
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		playSpellEffects(caster, target, power, args);
-		applyAttributes(target);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		playSpellEffects(caster, target, power, null);
-		applyAttributes(target);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		applyAttributes(target);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		playSpellEffects(EffectPosition.TARGET, target, power, null);
-		applyAttributes(target);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		playSpellEffects(data);
+		applyAttributes(data.target());
 		return true;
 	}
 

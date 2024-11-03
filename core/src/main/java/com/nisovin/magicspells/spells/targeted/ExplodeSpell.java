@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -69,31 +70,37 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		if (state == SpellCastState.NORMAL) {
 			Block target;
 			try {
-				target = getTargetedBlock(caster, power, args);
+				target = getTargetedBlock(data.caster(), data.power(), data.args());
 			} catch (IllegalStateException e) {
 				DebugHandler.debugIllegalState(e);
 				target = null;
 			}
 
 			if (target != null && !BlockUtils.isAir(target.getType())) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power, args);
+				data = data.builder().location(target.getLocation()).build();
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 				EventUtil.call(event);
 				if (event.isCancelled()) target = null;
 				else {
 					target = event.getTargetLocation().getBlock();
-					power = event.getPower();
+					data = data.builder().location(target.getLocation()).power(event.getPower()).build();
 				}
 			}
 
-			if (target == null || BlockUtils.isAir(target.getType())) return noTarget(caster, args);
-			boolean exploded = explode(caster, target.getLocation(), power, args);
-			if (!exploded && !ignoreCanceled) return noTarget(caster, args);
+			if (target == null || BlockUtils.isAir(target.getType())) return noTarget(data);
+			boolean exploded = explode(data);
+			if (!exploded && !ignoreCanceled) return noTarget(data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 	
-	private boolean explode(LivingEntity caster, Location target, float power, String[] args) {
-		float explosionSize = this.explosionSize.get(caster, null, power, args);
+	private boolean explode(SpellData data) {
+		LivingEntity caster = data.caster();
+		Location target = data.location();
+		float power = data.power();
+		String[] args = data.args();
+
+		float explosionSize = this.explosionSize.get(data);
 		if (powerAffectsExplosionSize) explosionSize *= power;
 
 		if (simulateTnt) {
@@ -101,7 +108,7 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 			if (cancelled) return false;
 		}
 
-		int backfireChance = this.backfireChance.get(caster, null, power, args);
+		int backfireChance = this.backfireChance.get(data);
 		if (backfireChance > 0) {
 			Random rand = ThreadLocalRandom.current();
 			if (rand.nextInt(10000) < backfireChance) target = caster.getLocation();
@@ -113,24 +120,14 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		currentArgs = args;
 
 		boolean ret = target.getWorld().createExplosion(target, explosionSize, addFire, !preventBlockDamage, caster);
-		if (ret) playSpellEffects(caster, target, power, args);
+		if (ret) playSpellEffects(data);
 
 		return ret;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return explode(caster, target, power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return explode(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
+	public boolean castAtLocation(SpellData data) {
+		return explode(data);
 	}
 
 	@EventHandler(priority=EventPriority.HIGH, ignoreCancelled = true)

@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.HashMap;
 import java.lang.ref.WeakReference;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
@@ -27,12 +28,13 @@ public class EntitySelectSpell extends TargetedSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
+			data = data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build();
+			if (targetInfo.noTarget()) return noTarget(data);
 
-			targets.put(caster.getUniqueId(), new WeakReference<>(targetInfo.target()));
-			playSpellEffects(caster, targetInfo.target(), targetInfo.power(), args);
-			sendMessages(caster, targetInfo.target(), args);
+			targets.put(data.caster().getUniqueId(), new WeakReference<>(targetInfo.target()));
+			playSpellEffects(data);
+			sendMessages(data.caster(), targetInfo.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}

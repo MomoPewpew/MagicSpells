@@ -99,13 +99,14 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			data = data.builder().target(target.target()).power(target.getPower()).build();
+			if (target.noTarget()) return noTarget(data);
 
-			boolean drained = drain(caster, target.target(), target.power(), args);
-			if (!drained) return noTarget(caster, args);
+			boolean drained = drain(data);
+			if (!drained) return noTarget(data);
 
-			sendMessages(caster, target.target(), args);
+			sendMessages(data.caster(), target.target(), data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 
@@ -113,19 +114,9 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		return drain(caster, target, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		return drain(data);
 	}
 	
 	@Override
@@ -133,12 +124,16 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 		return spellDamageType;
 	}
 	
-	private boolean drain(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private boolean drain(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+		float power = data.power();
+
 		if (caster == null) return false;
 		if (target == null) return false;
 
-		double take = takeAmt.get(caster, target, power, args);
-		double give = giveAmt.get(caster, target, power, args);
+		double take = takeAmt.get(data);
+		double give = giveAmt.get(data);
 		if (powerAffectsAmount) {
 			take *= power;
 			give *= power;
@@ -155,7 +150,7 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 					target.setLastDamageCause(event);
 				}
 
-				SpellApplyDamageEvent event = new SpellApplyDamageEvent(this, caster, target, take, damageType, spellDamageType);
+				SpellApplyDamageEvent event = new SpellApplyDamageEvent(this, data, take, damageType, spellDamageType);
 				EventUtil.call(event);
 				take = event.getFinalDamage();
 				if (ignoreArmor) {
@@ -193,10 +188,10 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 
 		if (instant) {
 			giveToCaster(caster, give);
-			playSpellEffects(caster, target, power, args);
-		} else playSpellEffects(EffectPosition.TARGET, target, new SpellData(caster, target, power, args));
-		
-		if (showSpellEffect) new DrainAnimation(caster, target, target.getLocation(), give, power, args);
+			playSpellEffects(data);
+		} else playSpellEffects(EffectPosition.TARGET, target, data);
+
+		if (showSpellEffect) new DrainAnimation(data.builder().location(target.getLocation()).build(), give);
 		
 		return true;
 	}
@@ -234,27 +229,26 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 
 	private class DrainAnimation extends SpellAnimation {
 
-		private final LivingEntity caster;
 		private final SpellData data;
 		private final Vector current;
 		private final double giveAmt;
 		private final World world;
 		private final int range;
 
-		private DrainAnimation(LivingEntity caster, LivingEntity target, Location start, double giveAmt, float power, String[] args) {
-			super(animationSpeed.get(caster, target, power, args), true);
+		private DrainAnimation(SpellData data, double giveAmt) {
+			super(animationSpeed.get(data), true);
 			
-			this.caster = caster;
+			this.data = data;
 			this.giveAmt = giveAmt;
 
-			data = new SpellData(caster, target, power, args);
-			current = start.toVector();
-			world = caster.getWorld();
-			range = getRange(power);
+			current = data.location().toVector();
+			world = data.caster().getWorld();
+			range = getRange(data.power());
 		}
 
 		@Override
 		protected void onTick(int tick) {
+			LivingEntity caster = data.caster();
 			Vector v = current.clone().subtract(caster.getLocation().toVector()).normalize();
 			current.subtract(v);
 
@@ -263,7 +257,7 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 			if (current.distanceSquared(caster.getLocation().toVector()) < 4 || tick > range * 1.5) {
 				stop(true);
 				playSpellEffects(EffectPosition.DELAYED, caster, data);
-				if (spellOnAnimation != null) spellOnAnimation.subcast(caster, data.power(), data.args());
+				if (spellOnAnimation != null) spellOnAnimation.subcast(data);
 				if (!instant) giveToCaster(caster, giveAmt);
 			}
 		}

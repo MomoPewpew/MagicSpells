@@ -71,11 +71,11 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
-			applyDot(caster, targetInfo.target(), targetInfo.power(), args);
-			sendMessages(caster, targetInfo.target(), args);
+			applyDot(data.builder().target(targetInfo.getTarget()).power(targetInfo.getPower()).build());
+			sendMessages(data.caster(), targetInfo.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -84,30 +84,9 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		applyDot(caster, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		applyDot(caster, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		applyDot(null, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		applyDot(null, target, power, null);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		applyDot(data);
 		return true;
 	}
 
@@ -126,21 +105,26 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 		dot.cancel();
 	}
 
-	private void applyDot(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void applyDot(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+		float power = data.power();
+		String[] args = data.args();
+		
 		Dot dot = activeDots.get(target.getUniqueId());
 		if (dot != null) {
-			dot.caster = caster;
-			dot.power = power;
-			dot.args = args;
+			dot.data.caster(caster);
+			dot.data.power(power);
+			dot.data.args(args);
 
 			dot.init();
 		} else {
-			dot = new Dot(caster, target, power, args);
+			dot = new Dot(data);
 			activeDots.put(target.getUniqueId(), dot);
 		}
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (caster != null) playSpellEffects(data);
+		else playSpellEffects(EffectPosition.TARGET, target, data);
 	}
 
 	@EventHandler
@@ -151,21 +135,15 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 
 	private class Dot implements Runnable {
 
-		private final LivingEntity target;
-		private LivingEntity caster;
-		private String[] args;
-		private float power;
+		private SpellData data
 
 		private int taskId = -1;
 		private int duration;
 		private int interval;
 		private int dur = 0;
 
-		private Dot(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			this.caster = caster;
-			this.target = target;
-			this.power = power;
-			this.args = args;
+		private Dot(SpellData data) {
+			this.data = data;
 
 			init();
 		}
@@ -173,15 +151,19 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 		private void init() {
 			if (taskId != -1) MagicSpells.cancelTask(taskId);
 
-			interval = DotSpell.this.interval.get(caster, target, power, args);
-			duration = DotSpell.this.duration.get(caster, target, power, args);
+			interval = DotSpell.this.interval.get(data);
+			duration = DotSpell.this.duration.get(data);
 			dur = 0;
 
-			taskId = MagicSpells.scheduleRepeatingTask(this, delay.get(caster, target, power, args), interval);
+			taskId = MagicSpells.scheduleRepeatingTask(this, delay.get(data), interval);
 		}
 
 		@Override
 		public void run() {
+			LivingEntity caster = data.caster();
+			LivingEntity target = data.target();
+			float power = data.power();
+
 			dur += interval;
 			if (dur > duration) {
 				cancel();
@@ -193,7 +175,7 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 				return;
 			}
 
-			double localDamage = damage.get(caster, target, power, args);
+			double localDamage = damage.get(data);
 			if (powerAffectsDamage) localDamage *= power;
 
 			if (checkPlugins) {
@@ -204,7 +186,7 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 				target.setLastDamageCause(event);
 			}
 
-			SpellApplyDamageEvent event = new SpellApplyDamageEvent(DotSpell.this, caster, target, localDamage, damageType, spellDamageType);
+			SpellApplyDamageEvent event = new SpellApplyDamageEvent(DotSpell.this, data, localDamage, damageType, spellDamageType);
 			EventUtil.call(event);
 			localDamage = event.getFinalDamage();
 
@@ -232,13 +214,13 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 				else target.damage(localDamage, caster);
 			}
 
-			playSpellEffects(EffectPosition.DELAYED, target, new SpellData(caster, target, power, args));
+			playSpellEffects(EffectPosition.DELAYED, target, data);
 			target.setNoDamageTicks(0);
 		}
 
 		private void cancel() {
 			MagicSpells.cancelTask(taskId);
-			activeDots.remove(target.getUniqueId());
+			activeDots.remove(data.target().getUniqueId());
 		}
 
 	}

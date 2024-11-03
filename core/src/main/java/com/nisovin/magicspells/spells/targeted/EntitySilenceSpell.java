@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.TargetInfo;
@@ -22,13 +23,14 @@ public class EntitySilenceSpell extends TargetedSpell implements TargetedEntityS
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
+			data = data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build();
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 			LivingEntity target = targetInfo.target();
 
 			target.setSilent(targetBooleanState.getBooleanState(target.isSilent()));
-			playSpellEffects(caster, target, targetInfo.power(), args);
-			sendMessages(caster, target, args);
+			playSpellEffects(data);
+			sendMessages(data.caster(), target, data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -37,29 +39,12 @@ public class EntitySilenceSpell extends TargetedSpell implements TargetedEntityS
 	}
 	
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntity(SpellData data) {
+		LivingEntity target = data.target();
+		if (!validTargetList.canTarget(data.caster(), target)) return false;
 		target.setSilent(targetBooleanState.getBooleanState(target.isSilent()));
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		target.setSilent(targetBooleanState.getBooleanState(target.isSilent()));
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 }

@@ -71,15 +71,13 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
-
-			LivingEntity target = targetInfo.target();
-			power = targetInfo.power();
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
+			data = data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build();
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 			
-			createTomb(caster, target, power, args);
-			sendMessages(caster, target, args);
-			playSpellEffects(caster, target, power, args);
+			createTomb(data);
+			sendMessages(data.caster(), data.target(), data.args());
+			playSpellEffects(data);
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -88,32 +86,16 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 	
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		createTomb(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		createTomb(data);
+		playSpellEffects(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
+	private void createTomb(SpellData data) {
+		LivingEntity target = data.target();
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		createTomb(null, target, power, args);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	private void createTomb(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		List<Block> tempBlocks = new ArrayList<>();
 		List<Block> tombBlocks = new ArrayList<>();
 		
@@ -140,7 +122,6 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 			tempBlocks.add(feet.getRelative(0, 2, 0));
 		}
 
-		SpellData data = new SpellData(caster, target, power, args);
 		for (Block b : tempBlocks) {
 			if (!BlockUtils.isAir(b.getType())) continue;
 			tombBlocks.add(b);
@@ -150,9 +131,9 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 		
 		blocks.addAll(tombBlocks);
 
-		int duration = this.duration.get(caster, target, power, args);
+		int duration = this.duration.get(data);
 		if (duration > 0 && !tombBlocks.isEmpty()) {
-			MagicSpells.scheduleDelayedTask(() -> removeTomb(tombBlocks, data), Math.round(duration * power));
+			MagicSpells.scheduleDelayedTask(() -> removeTomb(tombBlocks, data), Math.round(duration * data.power()));
 		}
 	}
 

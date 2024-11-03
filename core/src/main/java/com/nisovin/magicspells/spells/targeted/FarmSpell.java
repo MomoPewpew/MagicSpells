@@ -68,62 +68,48 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
+			LivingEntity caster = data.caster();
+			float power = data.power();
 			Block block;
-			if (targeted) block = getTargetedBlock(caster, power, args);
+			if (targeted) block = getTargetedBlock(caster, power, data.args());
 			else block = caster.getLocation().subtract(0, 1, 0).getBlock();
 
 			if (block != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, block.getLocation(), power, args);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(block.getLocation()).build());
 				EventUtil.call(event);
 				if (event.isCancelled()) block = null;
 				else {
 					block = event.getTargetLocation().getBlock();
-					power = event.getPower();
+					data = data.builder().power(event.getPower()).build();
 				}
 			}
 
 			if (block != null) {
-				boolean farmed = farm(caster, block, power, args);
-				if (!farmed) return noTarget(caster, args);
+				boolean farmed = farm(data, block);
+				if (!farmed) return noTarget(data);
 
-				SpellData data = new SpellData(caster, power, args);
 				playSpellEffects(EffectPosition.CASTER, caster, data);
 				if (targeted) playSpellEffects(EffectPosition.TARGET, block.getLocation(), data);
-			} else return noTarget(caster, args);
+			} else return noTarget(data);
 
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return farm(caster, target.subtract(0, 1, 0).getBlock(), power, args);
+	public boolean castAtLocation(SpellData data) {
+		return farm(data, data.location().subtract(0, 1, 0).getBlock());
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return farm(caster, target.subtract(0, 1, 0).getBlock(), power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return farm(null, target.getBlock(), power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return farm(null, target.getBlock(), power, null);
-	}
-
-	private boolean farm(LivingEntity caster, Block center, float power, String[] args) {
-		int radius = this.radius.get(caster, null, power, args);
-		if (powerAffectsRadius) radius = Math.round(radius * power);
+	private boolean farm(SpellData data, Block center) {
+		int radius = this.radius.get(data);
+		if (powerAffectsRadius) radius = Math.round(radius * data.power());
 
 		int cx = center.getX();
 		int cy = center.getY() - (requiresFarmland ? 0 : 1);
 		int cz = center.getZ();
 
-		int growth = resolveGrowthPerCrop ? 0 : this.growth.get(caster, null, power, args);
+		int growth = resolveGrowthPerCrop ? 0 : this.growth.get(data);
 
 		ArrayList<Block> handledBlocks = new ArrayList<>();
 		for (int y = cy - radius; y <= cy + radius; y++) {
@@ -144,21 +130,21 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 
 					if (BlockUtils.isAir(b.getType())) {
 						if (cropType != null) {
-							if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
+							if (resolveGrowthPerCrop) growth = this.growth.get(data);
 
 							b.setType(cropType, requiresFarmland);
 							if (growth > 1) BlockUtils.setGrowthLevel(b, growth - 1, requiresFarmland);
 							handledBlocks.add(b);
 						}
 					} else if ((isWheat(b) || isCarrot(b) || isPotato(b)) && BlockUtils.getGrowthLevel(b) < 7) {
-						if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
+						if (resolveGrowthPerCrop) growth = this.growth.get(data);
 
 						int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
 						if (newGrowth > 7) newGrowth = 7;
 						BlockUtils.setGrowthLevel(b, newGrowth, requiresFarmland);
 						handledBlocks.add(b);
 					} else if ((isBeetroot(b) || isWart(b)) && BlockUtils.getGrowthLevel(b) < 3) {
-						if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
+						if (resolveGrowthPerCrop) growth = this.growth.get(data);
 
 						int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
 						if (newGrowth > 3) newGrowth = 3;
@@ -167,7 +153,7 @@ public class FarmSpell extends TargetedSpell implements TargetedLocationSpell {
 					} else if (isPitcherPod(b) && BlockUtils.getGrowthLevel(b) < 4) {
 						if (((Bisected) b.getBlockData()).getHalf() == Bisected.Half.TOP) continue;
 
-						if (resolveGrowthPerCrop) growth = this.growth.get(caster, null, power, args);
+						if (resolveGrowthPerCrop) growth = this.growth.get(data);
 
 						int newGrowth = BlockUtils.getGrowthLevel(b) + growth;
 						if (newGrowth > 4) newGrowth = 4;

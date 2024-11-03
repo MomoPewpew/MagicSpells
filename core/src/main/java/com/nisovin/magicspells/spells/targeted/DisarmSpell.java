@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Material;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -65,17 +66,16 @@ public class DisarmSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+			TargetInfo<LivingEntity> info = getTargetedEntity(data);
+			if (info.noTarget()) return noTarget(data, info);
 
-			LivingEntity target = info.target();
-			power = info.power();
+			data = data.builder().target(info.target()).power(info.getPower()).build();
 
-			boolean disarmed = disarm(caster, target, power, args);
-			if (!disarmed) return noTarget(caster, strInvalidItem, args);
+			boolean disarmed = disarm(data);
+			if (!disarmed) return noTarget(data, strInvalidItem);
 
-			playSpellEffects(caster, target, power, args);
-			sendMessages(caster, target, args);
+			playSpellEffects(data);
+			sendMessages(data.caster(), data.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -84,32 +84,16 @@ public class DisarmSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		boolean disarmed =  disarm(caster, target, power, args);
-		if (disarmed) playSpellEffects(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		boolean disarmed =  disarm(data);
+		if (disarmed) playSpellEffects(data);
 		return disarmed;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		boolean disarmed = disarm(null, target, power, args);
-		if (disarmed) playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return disarmed;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	private boolean disarm(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private boolean disarm(SpellData data) {
+		LivingEntity target = data.target();
+		
 		final ItemStack inHand = getItemInHand(target);
 		if (inHand == null) return false;
 
@@ -118,7 +102,7 @@ public class DisarmSpell extends TargetedSpell implements TargetedEntitySpell {
 			if (itemData == null || !contains(itemData)) return false;
 		}
 
-		int disarmDuration = this.disarmDuration.get(caster, target, power, args);
+		int disarmDuration = this.disarmDuration.get(data);
 		if (!dontDrop) {
 			setItemInHand(target, null);
 			Item item = target.getWorld().dropItemNaturally(target.getLocation(), inHand.clone());

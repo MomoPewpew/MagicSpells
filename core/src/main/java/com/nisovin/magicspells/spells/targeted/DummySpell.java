@@ -22,11 +22,12 @@ public class DummySpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			data = data.builder().target(target.target()).power(target.getPower()).build();
+			if (target.noTarget()) return noTarget(data);
 
-			playSpellEffects(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+			playSpellEffects(data);
+			sendMessages(data.caster(), target.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -35,82 +36,22 @@ public class DummySpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		playSpellEffects(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		playSpellEffects(data);
 		return true;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		playSpellEffects(caster, target, power, null);
+	public boolean castAtLocation(SpellData data) {
+		playSpellEffects(data);
 		return true;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		playSpellEffects(EffectPosition.TARGET, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		playSpellEffects(caster, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		playSpellEffects(caster, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		playSpellEffects(EffectPosition.TARGET, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		playSpellEffects(caster, from, target, new SpellData(caster, target, power, args));
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		playSpellEffects(caster, from, target, new SpellData(caster, target, power, null));
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		playSpellEffects(from, target, new SpellData(null, target, power, args));
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		playSpellEffects(from, target, new SpellData(null, target, power, null));
+	public boolean castAtEntityFromLocation(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		playSpellEffects(data.caster(), data.location(), data.target(), data);
 		return true;
 	}
 

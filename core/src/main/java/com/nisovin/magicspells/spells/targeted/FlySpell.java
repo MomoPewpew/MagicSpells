@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.HashSet;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -35,13 +36,13 @@ public class FlySpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<Player> targetInfo = getTargetedPlayer(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 			Player target = targetInfo.target();
 
 			setFlyingState(target);
-			playSpellEffects(caster, target, targetInfo.power(), args);
-			sendMessages(caster, target, args);
+			playSpellEffects(data.caster(), target, targetInfo.getPower(), data.args());
+			sendMessages(data.caster(), target, data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -50,29 +51,11 @@ public class FlySpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntity(SpellData data) {
+		if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), data.target())) return false;
 		setFlyingState(player);
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
-		setFlyingState(player);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	@Override

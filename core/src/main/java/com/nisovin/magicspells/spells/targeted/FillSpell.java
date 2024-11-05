@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector3;
@@ -45,23 +46,19 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
 
     @Override
     public PostCastAction castSpell(SpellCastState state, SpellData data) {
+        LivingEntity caster = data.caster();
         if(castAtCaster){
             fillZone(caster, caster.getLocation());
         }else{
-            fillZone(caster, getTargetedBlock(caster, power, args).getLocation());
+            fillZone(caster, getTargetedBlock(caster, data.power(), data.args()).getLocation());
         }
         return PostCastAction.ALREADY_HANDLED;
     }
 
     @Override
-    public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-        fillZone(caster, target);
-        return castAtLocation(target, power);
-    }
-
-    @Override
-    public boolean castAtLocation(Location target, float power) {
-        return false;
+    public boolean castAtLocation(SpellData data) {
+        fillZone(data.caster(), data.location());
+        return true;
     }
 
     private void fillZone(LivingEntity caster, Location location){

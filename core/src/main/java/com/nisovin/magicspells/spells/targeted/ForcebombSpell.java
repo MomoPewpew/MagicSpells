@@ -50,9 +50,11 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Block block = getTargetedBlock(caster, power, args);
+			LivingEntity caster = data.caster();
+			float power = data.power();
+			Block block = getTargetedBlock(caster, power, data.args());
 			if (block != null && !BlockUtils.isAir(block.getType())) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, block.getLocation(), power, args);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(block.getLocation()).build());
 				EventUtil.call(event);
 				if (event.isCancelled()) block = null;
 				else {
@@ -61,52 +63,37 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 				}
 			}
 
-			if (block == null || BlockUtils.isAir(block.getType())) return noTarget(caster, args);
-			knockback(caster, block.getLocation().add(0.5, 0, 0.5), power, args);
+			if (block == null || BlockUtils.isAir(block.getType())) return noTarget(data);
+			knockback(data.builder().location(block.getLocation().add(0.5, 0, 0.5)).build());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		knockback(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		knockback(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		knockback(caster, target, power, null);
-		return true;
-	}
+	private void knockback(SpellData data) {
+		LivingEntity caster = data.caster();
+		Location location = data.location();
 
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		knockback(null, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		knockback(null, target, power, null);
-		return true;
-	}
-
-	private void knockback(LivingEntity caster, Location location, float basePower, String[] args) {
 		if (location == null) return;
 		if (location.getWorld() == null) return;
 
-		location = location.clone().add(0D, yOffset.get(caster, null, basePower, args), 0D);
+		location = location.clone().add(0D, yOffset.get(data), 0D);
+		data = data.builder().location(location).build();
 
-		double radiusSquared = this.radius.get(caster, null, basePower, args);
+		double radiusSquared = this.radius.get(data);
 		radiusSquared *= radiusSquared;
 
-		SpellData data = new SpellData(caster, basePower, args);
 		if (validTargetList.canTargetOnlyCaster()) {
 			if (caster == null) return;
 			if (!caster.getWorld().equals(location.getWorld())) return;
 			if (caster.getLocation().distanceSquared(location) > radiusSquared) return;
 
-			bomb(caster, caster, location, basePower, args);
+			bomb(data.builder().target(caster).build());
 
 			playSpellEffects(EffectPosition.CASTER, caster, data);
 			playSpellEffects(EffectPosition.SPECIAL, location, data);
@@ -119,17 +106,21 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 			if (!entity.getWorld().equals(location.getWorld())) continue;
 			if (entity.getLocation().distanceSquared(location) > radiusSquared) continue;
 
-			bomb(caster, entity, location, basePower, args);
+			bomb(data);
 		}
 
 		playSpellEffects(EffectPosition.SPECIAL, location, data);
 		if (caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
 	}
 
-	private void bomb(LivingEntity caster, LivingEntity target, Location location, float basePower, String[] args) {
-		float power = basePower;
+	private void bomb(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+		Location location = data.location();
+
+        float power = data.power();
 		if (callTargetEvents && caster != null) {
-			SpellTargetEvent event = new SpellTargetEvent(this, caster, target, power, args);
+			SpellTargetEvent event = new SpellTargetEvent(this, data);
 			EventUtil.call(event);
 			if (event.isCancelled()) return;
 
@@ -137,15 +128,16 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 			power = event.getPower();
 		}
 
-		double force = this.force.get(caster, target, power, args) / 10;
+		data = data.builder().power(power).build();
+		double force = this.force.get(data) / 10;
 		if (powerAffectsForce) force *= power;
 
 		Vector v = target.getLocation().toVector().subtract(location.toVector()).normalize().multiply(force);
 
-		double yForce = this.yForce.get(caster, target, power, args) / 10;
+		double yForce = this.yForce.get(data) / 10;
 		if (powerAffectsForce) yForce *= power;
 
-		double maxYForce = this.maxYForce.get(caster, target, power, args) / 10;
+		double maxYForce = this.maxYForce.get(data) / 10;
 		if (addYForceInstead) v.setY(Math.min(v.getY() + yForce, maxYForce));
 		else v.setY(Math.min(force == 0 ? yForce : v.getY() * yForce, maxYForce));
 
@@ -154,8 +146,7 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 		if (addVelocityInstead) target.setVelocity(target.getVelocity().add(v));
 		else target.setVelocity(v);
 
-		SpellData data = new SpellData(caster, target, power, args);
-		if (caster != null) playSpellEffects(caster, location, target, data);
+		if (caster != null) playSpellEffects(data);
 		else playSpellEffects(EffectPosition.TARGET, target, data);
 	}
 

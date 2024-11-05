@@ -57,22 +57,26 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data, target);
 
-			boolean ok = geyser(caster, target.target(), target.power(), args);
-			if (!ok) return noTarget(caster, args);
+			data = data.builder().target(target.getTarget()).power(target.getPower()).build();
+			boolean ok = geyser(data);
+			if (!ok) return noTarget(data);
 
-			playSpellEffects(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+			playSpellEffects(data);
+			sendMessages(data.caster(), target.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	private boolean geyser(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		double damage = this.damage.get(caster, target, power, args);
+	private boolean geyser(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity  target = data.target();
+		float power = data.power();
+		double damage = this.damage.get(data);
 		if (powerAffectsDamage) damage *= power;
 
 		if (caster != null && checkPlugins && damage > 0) {
@@ -95,10 +99,10 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 			}
 		}
 
-		double velocity = this.velocity.get(caster, target, power, args) / 10;
+		double velocity = this.velocity.get(data) / 10;
 		if (velocity > 0) target.setVelocity(new Vector(0, velocity * power, 0));
 
-		int geyserHeight = this.geyserHeight.get(caster, target, power, args);
+		int geyserHeight = this.geyserHeight.get(data);
 		if (geyserHeight > 0) {
 			List<Entity> allNearby = target.getNearbyEntities(50, 50, 50);
 			allNearby.add(target);
@@ -109,9 +113,9 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 				playersNearby.add((Player) e);
 			}
 
-			int animationSpeed = this.animationSpeed.get(caster, target, power, args);
+			int animationSpeed = this.animationSpeed.get(data);
 
-			BlockData blockType = this.geyserType.get(caster, target, power, args);
+			BlockData blockType = this.geyserType.get(data);
 			new GeyserAnimation(blockType, target.getLocation(), playersNearby, animationSpeed, geyserHeight);
 		}
 
@@ -119,29 +123,11 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		geyser(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		geyser(data);
+		playSpellEffects(data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		geyser(null, target, power, args);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	private static class GeyserAnimation extends SpellAnimation {

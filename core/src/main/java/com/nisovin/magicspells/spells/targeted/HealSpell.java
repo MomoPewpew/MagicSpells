@@ -1,15 +1,12 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import com.nisovin.magicspells.util.*;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 
-import com.nisovin.magicspells.util.Util;
-import com.nisovin.magicspells.util.TargetInfo;
-import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
-import com.nisovin.magicspells.util.ValidTargetChecker;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.events.MagicSpellsEntityRegainHealthEvent;
@@ -45,48 +42,30 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, checker, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data, checker);
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
 			LivingEntity target = targetInfo.target();
-			power = targetInfo.power();
+			data = data.builder().target(target).power(targetInfo.getPower()).build();
 
 			if (cancelIfFull && target.getHealth() == Util.getMaxHealth(target))
-				return noTarget(caster, formatMessage(strMaxHealth, "%t", getTargetName(target)), args);
+				return noTarget(data, formatMessage(strMaxHealth, "%t", getTargetName(target)));
 
-			boolean healed = heal(caster, target, power, args);
-			if (!healed) return noTarget(caster, args);
+			boolean healed = heal(data);
+			if (!healed) return noTarget(data);
 
-			sendMessages(caster, target, args);
+			sendMessages(data.caster(), target, data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (validTargetList.canTarget(caster, target) && (!cancelIfFull || target.getHealth() < Util.getMaxHealth(target)))
-			return heal(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (validTargetList.canTarget(data.caster(), data.target()) && (!cancelIfFull || data.target().getHealth() < Util.getMaxHealth(data.target())))
+			return heal(data);
 
 		return false;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (validTargetList.canTarget(target) && (!cancelIfFull || target.getHealth() < Util.getMaxHealth(target)))
-			return heal(null, target, power, args);
-
-		return false;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	@Override
@@ -94,14 +73,17 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 		return checker;
 	}
 
-	private boolean heal(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private boolean heal(SpellData data) {
+		LivingEntity caster = data.target();
+		LivingEntity target = data.target();
+
 		double health = target.getHealth();
 		double amount;
 
-		double healPercent = this.healPercent.get(caster, target, power, args);
+		double healPercent = this.healPercent.get(data);
 		if (healPercent == 0) {
-			amount = this.healAmount.get(caster, target, power, args);
-			if (powerAffectsHealAmount) amount *= power;
+			amount = this.healAmount.get(data);
+			if (powerAffectsHealAmount) amount *= data.power();
 		} else amount = (Util.getMaxHealth(caster) - health) * (healPercent / 100);
 
 		if (checkPlugins) {
@@ -115,8 +97,8 @@ public class HealSpell extends TargetedSpell implements TargetedEntitySpell {
 		if (health > Util.getMaxHealth(target)) health = Util.getMaxHealth(target);
 		target.setHealth(health);
 
-		if (caster == null) playSpellEffects(EffectPosition.TARGET, target, power, args);
-		else playSpellEffects(caster, target, power, args);
+		if (caster == null) playSpellEffects(EffectPosition.TARGET, target, data);
+		else playSpellEffects(data);
 		return true;
 	}
 

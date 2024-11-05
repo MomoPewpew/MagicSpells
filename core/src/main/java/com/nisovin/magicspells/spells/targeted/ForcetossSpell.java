@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
@@ -46,11 +47,11 @@ public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
-			toss(caster, targetInfo.target(), targetInfo.power(), args);
-			sendMessages(caster, targetInfo.target(), args);
+			toss(data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build());
+			sendMessages(data.caster(), targetInfo.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -59,23 +60,17 @@ public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		toss(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		toss(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
+	private void toss(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+		float power = data.power();
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
-	private void toss(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (target == null) return;
 		if (caster == null) return;
 		if (!caster.getLocation().getWorld().equals(target.getLocation().getWorld())) return;
@@ -94,15 +89,15 @@ public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell
 		if (caster.equals(target)) v = caster.getLocation().getDirection();
 		else v = target.getLocation().toVector().subtract(caster.getLocation().toVector());
 
-		double hForce = this.hForce.get(caster, target, power, args) / 10;
-		double vForce = this.vForce.get(caster, target, power, args) / 10;
+		double hForce = this.hForce.get(data) / 10;
+		double vForce = this.vForce.get(data) / 10;
 		if (powerAffectsForce) {
 			hForce *= power;
 			vForce *= power;
 		}
 		v.setY(0).normalize().multiply(hForce).setY(vForce);
 
-		float rotation = this.rotation.get(caster, target, power, args);
+		float rotation = this.rotation.get(data);
 		if (rotation != 0) Util.rotateVector(v, rotation);
 
 		v = Util.makeFinite(v);
@@ -110,7 +105,7 @@ public class ForcetossSpell extends TargetedSpell implements TargetedEntitySpell
 		if (addVelocityInstead) target.setVelocity(target.getVelocity().add(v));
 		else target.setVelocity(v);
 
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data);
 	}
 
 }

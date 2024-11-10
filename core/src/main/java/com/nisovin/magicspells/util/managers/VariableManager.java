@@ -242,7 +242,7 @@ public class VariableManager {
 			if (bossBarColor == null) bossBarColor = BarColor.PURPLE;
 			if (bossBarNamespaceKey == null || bossBarNamespaceKey.isEmpty()) bossBarNamespaceKey = MagicSpells.getBossBarManager().getNamespaceKeyVariable();
 
-			variable.init(def, min, max, perm, objective, expBar, bossBarTitle, bossBarStyle, bossBarColor, bossBarNamespaceKey);
+			variable.init(var, def, min, max, perm, objective, expBar, bossBarTitle, bossBarStyle, bossBarColor, bossBarNamespaceKey);
 			variable.loadExtraData(varSection);
 			variables.put(var, variable);
 			MagicSpells.debug(2, "Loaded variable " + var);

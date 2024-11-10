@@ -2,6 +2,8 @@ package com.nisovin.magicspells.variables.variabletypes;
 
 import com.nisovin.magicspells.variables.Variable;
 
+import net.coreprotect.CoreProtect;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 
 public class GlobalStringVariable extends Variable {
@@ -38,11 +40,13 @@ public class GlobalStringVariable extends Variable {
 	@Override
 	public void parseAndSet(String player, String textValue) {
 		value = textValue;
+		if (Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + textValue);
 	}
 
 	@Override
 	public void reset(String player) {
 		value = defaultStringValue;
+		if (Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + defaultValue);
 	}
 
 }

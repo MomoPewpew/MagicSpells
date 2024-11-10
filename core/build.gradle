@@ -8,6 +8,10 @@ repositories {
     flatDir {
         dirs '../libs'
     }
+    maven {
+        name = "playpro-repo"
+        url = uri("https://maven.playpro.com")
+    }
 }
 
 dependencies {
@@ -28,6 +32,7 @@ dependencies {
     implementation(group: "com.github.MilkBowl", name: "vault", version: "master-SNAPSHOT") { transitive = false }
     implementation(group: "me.clip", name: "placeholderapi", version: "2.11.6") { transitive = false }
     implementation(group: "com.github.TechFortress", name: "GriefPrevention", version: "17.0.0") { transitive = false }
+    implementation(group: "net.coreprotect", name: "coreprotect", version: "22.4") { transitive = false }
     implementation(group: "com.github.Xezard", name: "XGlow", version: "1.1.0") {
         exclude(module: "XGlowPlugin")
         exclude(module: "XGlowExample")

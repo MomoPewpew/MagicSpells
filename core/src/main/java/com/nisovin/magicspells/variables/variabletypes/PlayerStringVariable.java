@@ -34,14 +34,14 @@ public class PlayerStringVariable extends PlayerVariable {
 
 		data.put(player, textValue);
 		Player p = PlayerNameUtils.getPlayerExact(player);
-		if (current != null && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + " =" + textValue);
+		if (logInCoreprotect && current != null && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + " =" + textValue);
 	}
 	
 	@Override
 	public void reset(String player) {
 		data.remove(player);
 		Player p = PlayerNameUtils.getPlayerExact(player);
-		if (Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + " =" + defaultValue);
+		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + " =" + defaultValue);
 	}
 	
 }

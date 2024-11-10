@@ -40,13 +40,13 @@ public class GlobalStringVariable extends Variable {
 	@Override
 	public void parseAndSet(String player, String textValue) {
 		value = textValue;
-		if (Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + textValue);
+		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + textValue);
 	}
 
 	@Override
 	public void reset(String player) {
 		value = defaultStringValue;
-		if (Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + defaultValue);
+		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + defaultValue);
 	}
 
 }

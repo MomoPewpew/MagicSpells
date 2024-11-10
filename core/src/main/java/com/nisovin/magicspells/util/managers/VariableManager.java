@@ -182,6 +182,7 @@ public class VariableManager {
 			String min = section.getString(path + "min", 0 + "");
 			String max = section.getString(path + "max", Double.MAX_VALUE + "");
 			boolean perm = section.getBoolean(path + "permanent", true);
+			boolean logInCoreprotect = section.getBoolean(path + "log-in-coreprotect", true);
 
 			Variable variable = getVariableType(type);
 			if (variable == null) {
@@ -242,7 +243,7 @@ public class VariableManager {
 			if (bossBarColor == null) bossBarColor = BarColor.PURPLE;
 			if (bossBarNamespaceKey == null || bossBarNamespaceKey.isEmpty()) bossBarNamespaceKey = MagicSpells.getBossBarManager().getNamespaceKeyVariable();
 
-			variable.init(var, def, min, max, perm, objective, expBar, bossBarTitle, bossBarStyle, bossBarColor, bossBarNamespaceKey);
+			variable.init(var, def, min, max, perm, logInCoreprotect, objective, expBar, bossBarTitle, bossBarStyle, bossBarColor, bossBarNamespaceKey);
 			variable.loadExtraData(varSection);
 			variables.put(var, variable);
 			MagicSpells.debug(2, "Loaded variable " + var);

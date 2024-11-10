@@ -22,6 +22,7 @@ public abstract class Variable {
 
 	protected boolean expBar;
 	protected boolean permanent;
+	protected boolean logInCoreprotect;
 
 	protected Objective objective;
 
@@ -34,13 +35,14 @@ public abstract class Variable {
 		// No op
 	}
 
-	public final void init(String name, double defaultValue, String minValue, String maxValue, boolean permanent, Objective objective, boolean expBar, String bossBarTitle, BarStyle bossBarStyle, BarColor bossBarColor, String bossBarNamespacedKey) {
+	public final void init(String name, double defaultValue, String minValue, String maxValue, boolean permanent, boolean logInCoreprotect, Objective objective, boolean expBar, String bossBarTitle, BarStyle bossBarStyle, BarColor bossBarColor, String bossBarNamespacedKey) {
 		this.name = name;
 		this.defaultValue = defaultValue;
 		this.defaultStringValue = defaultValue + "";
 		this.minValue = ConfigDataUtil.getDouble(minValue);
 		this.maxValue = ConfigDataUtil.getDouble(maxValue);
 		this.permanent = permanent;
+		this.logInCoreprotect = logInCoreprotect;
 		this.objective = objective;
 		this.expBar = expBar;
 		this.bossBarTitle = bossBarTitle;

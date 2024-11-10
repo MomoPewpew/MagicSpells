@@ -19,7 +19,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import com.nisovin.magicspells.util.compat.EventUtil;
 import org.bukkit.*;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Player;
@@ -31,6 +38,8 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
+import org.checkerframework.checker.units.qual.C;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.apache.commons.math4.core.jdkmath.AccurateMath;
@@ -137,7 +146,7 @@ public class Util {
 	}
 
 	public static Color[] getColorsFromString(String str) {
-		int[] colors = new int[] { 0xFF0000 };
+		int[] colors = new int[]{0xFF0000};
 		String[] args = str.replace(" ", "").split(",");
 		if (args.length > 0) {
 			colors = new int[args.length];
@@ -291,18 +300,21 @@ public class Util {
 		return splitParams(arrayJoin(split, ' '), 0);
 	}
 
-	public static boolean removeFromInventory(Inventory inventory, Map.Entry<MagicItemData, Integer> item) {
+	public static boolean removeFromInventory(Player player, Inventory inventory, Map.Entry<MagicItemData, Integer> item) {
 		MagicItemData itemData = item.getKey();
 		if (itemData == null) return false;
 
 		int amt = item.getValue();
 		MagicItemData magicData;
 		ItemStack[] items = inventory.getContents();
+		ItemStack stack = null;
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] == null) continue;
 
 			magicData = MagicItems.getMagicItemDataFromItemStack(items[i]);
 			if (magicData == null || !itemData.matches(magicData)) continue;
+
+			stack = items[i].clone();
 
 			if (items[i].getAmount() > amt) {
 				items[i].setAmount(items[i].getAmount() - amt);
@@ -320,7 +332,12 @@ public class Util {
 			items[i] = null;
 		}
 
-		if (amt == 0) {
+		if (amt == 0 && stack != null) {
+			MagicSpells.error("polo");
+			stack.setAmount(item.getValue());
+			PlayerItemBreakEvent event = new PlayerItemBreakEvent(player, stack);
+			EventUtil.call(event);
+
 			inventory.setContents(items);
 			return true;
 		}
@@ -373,7 +390,7 @@ public class Util {
 		return false;
 	}
 
-	public static boolean addToInventory(Inventory inventory, ItemStack item, boolean stackExisting, boolean ignoreMaxStack) {
+	public static boolean addToInventory(Player player, Inventory inventory, ItemStack item, boolean stackExisting, boolean ignoreMaxStack) {
 		int amt = item.getAmount();
 		ItemStack[] items = new ItemStack[inventory.getStorageContents().length];
 
@@ -416,8 +433,16 @@ public class Util {
 		}
 
 		if (amt == 0) {
-			inventory.setStorageContents(items);
-			return true;
+			ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(MagicSpells.getInstance(), "magicspells_craft"), item);
+
+			CraftItemEvent event = new CraftItemEvent(recipe, createInventoryView(player), InventoryType.SlotType.RESULT, 0, ClickType.LEFT, InventoryAction.UNKNOWN);
+			MagicSpells.error(event.getResult().toString());
+			EventUtil.call(event);
+
+			if (!event.isCancelled()) {
+				inventory.setStorageContents(items);
+				return true;
+			} else return false;
 		}
 
 		return false;
@@ -854,6 +879,45 @@ public class Util {
 			}
 		}
 		return nearestEntity;
+	}
+
+	public static InventoryView createInventoryView(Player player) {
+		return new InventoryView() {
+			@Override
+			public Inventory getTopInventory() {
+				return player.getInventory().getHolder().getOpenInventory().getTopInventory();
+			}
+
+			@Override
+			public Inventory getBottomInventory() {
+				return player.getInventory();
+			}
+
+			@Override
+			public HumanEntity getPlayer() {
+				return player;
+			}
+
+			@Override
+			public InventoryType getType() {
+				return InventoryType.CRAFTING;
+			}
+
+			@Override
+			public @NotNull String getTitle() {
+				return "";
+			}
+
+			@Override
+			public @NotNull String getOriginalTitle() {
+				return "";
+			}
+
+			@Override
+			public void setTitle(@NotNull String title) {
+
+			}
+		};
 	}
 
 }

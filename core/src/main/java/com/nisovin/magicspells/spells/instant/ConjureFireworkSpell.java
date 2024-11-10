@@ -125,7 +125,7 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 			ItemMeta meta = item.getItemMeta();
 			if (meta instanceof FireworkMeta fMeta) fMeta.setPower(flight.get(caster, null, power, args));
 
-			if (addToInventory) added = Util.addToInventory(player.getInventory(), item, true, false);
+			if (addToInventory) added = Util.addToInventory(player, player.getInventory(), item, true, false);
 			SpellData data = new SpellData(caster, power, args);
 			if (!added) {
 				Item dropped = player.getWorld().dropItem(player.getLocation(), item);

@@ -308,7 +308,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			}
 
 			if (!added) {
-				if (addToEnderChest) added = Util.addToInventory(player.getEnderChest(), item, stackExisting, ignoreMaxStackSize);
+				if (addToEnderChest) added = Util.addToInventory(player, player.getEnderChest(), item, stackExisting, ignoreMaxStackSize);
 				if (!added && addToInventory) {
 
 					ItemStack preferredItem = null;
@@ -333,7 +333,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 						added = true;
 						updateInv = true;
 					} else {
-						added = Util.addToInventory(inv, item, stackExisting, ignoreMaxStackSize);
+						added = Util.addToInventory(player, inv, item, stackExisting, ignoreMaxStackSize);
 						if (added) updateInv = true;
 					}
 				}

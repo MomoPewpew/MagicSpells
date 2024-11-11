@@ -333,7 +333,6 @@ public class Util {
 		}
 
 		if (amt == 0 && stack != null) {
-			MagicSpells.error("polo");
 			stack.setAmount(item.getValue());
 			PlayerItemBreakEvent event = new PlayerItemBreakEvent(player, stack);
 			EventUtil.call(event);
@@ -436,7 +435,6 @@ public class Util {
 			ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(MagicSpells.getInstance(), "magicspells_craft"), item);
 
 			CraftItemEvent event = new CraftItemEvent(recipe, createInventoryView(player), InventoryType.SlotType.RESULT, 0, ClickType.LEFT, InventoryAction.UNKNOWN);
-			MagicSpells.error(event.getResult().toString());
 			EventUtil.call(event);
 
 			if (!event.isCancelled()) {

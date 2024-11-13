@@ -31,7 +31,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
 
 public class EntityData {
 
@@ -88,6 +87,9 @@ public class EntityData {
 
 	// Villager
 	private final ConfigData<Villager.Profession> profession;
+
+	// Item Display
+	private final ConfigData<MagicItem> item;
 
 	public EntityData(ConfigurationSection config) {
 		entityType = ConfigDataUtil.getEnum(config, "entity", EntityType.class, null);
@@ -282,12 +284,7 @@ public class EntityData {
 			addOptBlockData(transformers, config, "block", BlockDisplay.class, BlockDisplay::setBlock);
 
 			// ItemDisplay
-			MagicItem magicItem = MagicItems.getMagicItemFromString(config.getString("item"));
-			if (magicItem != null) {
-				ItemStack item = magicItem.getItemStack();
-				transformers.put(ItemDisplay.class, new Transformer<>((caster, target, power, args) -> item, ItemDisplay::setItemStack));
-			}
-
+			item = ConfigDataUtil.getMagicItem(config, "item", null);
 			addOptEnum(transformers, config, "item-display-transform", ItemDisplay.class, ItemDisplay.ItemDisplayTransform.class, ItemDisplay::setItemDisplayTransform);
 
 			// TextDisplay
@@ -299,6 +296,8 @@ public class EntityData {
 			addOptBoolean(transformers, config, "see-through", TextDisplay.class, TextDisplay::setSeeThrough);
 			addOptBoolean(transformers, config, "default-background", TextDisplay.class, TextDisplay::setDefaultBackground);
 			//addOptEnum(transformers, config, "alignment", TextDisplay.class, TextDisplay.TextAlignment.class, TextDisplay::setAlignment);
+		} else {
+			item = null;
 		}
 
 		for (EntityType entityType : EntityType.values()) {
@@ -368,6 +367,11 @@ public class EntityData {
 						transformer.apply(e, data);
 
 					if (consumer != null) consumer.accept(e);
+
+					if (EntityType.valueOf("ITEM_DISPLAY") != null && e instanceof ItemDisplay) {
+						MagicItem magicItem = item.get(data);
+						if (magicItem != null) ((ItemDisplay) e).setItemStack(magicItem.getItemStack());
+					}
 
 					if (EntityType.valueOf("BLOCK_DISPLAY") != null && e instanceof Display) {
 						displayHack[0] = true;

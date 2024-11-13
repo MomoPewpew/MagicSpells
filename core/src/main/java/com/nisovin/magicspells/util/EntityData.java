@@ -1,10 +1,13 @@
 package com.nisovin.magicspells.util;
 
+import com.nisovin.magicspells.MagicSpells;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.ApiStatus;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 import org.joml.Vector3f;
@@ -87,6 +90,9 @@ public class EntityData {
 
 	// Villager
 	private final ConfigData<Villager.Profession> profession;
+
+    // Display
+    private final List<DisplayTransformation> transformations = new ArrayList<>();
 
 	// Item Display
 	private final ConfigData<MagicItem> item;
@@ -209,48 +215,56 @@ public class EntityData {
 		addOptEnum(transformers, config, "color", Wolf.class, DyeColor.class, Wolf::setCollarColor);
 
 		if (EntityType.valueOf("BLOCK_DISPLAY") != null) {
-			// Display
-			ConfigData<Quaternionf> leftRotation = getQuaternion(config, "transformation.left-rotation");
-			ConfigData<Quaternionf> rightRotation = getQuaternion(config, "transformation.right-rotation");
-			ConfigData<Vector3f> translation = getVector(config, "transformation.translation");
-			ConfigData<Vector3f> scale = getVector(config, "transformation.scale");
-			ConfigData<Transformation> transformation = (caster, target, power, args) -> null;
-			if (checkNull(leftRotation) && checkNull(rightRotation) && checkNull(translation) && checkNull(scale)) {
-				if (leftRotation.isConstant() && rightRotation.isConstant() && translation.isConstant() && scale.isConstant()) {
-					Quaternionf lr = leftRotation.get(null);
-					Quaternionf rr = rightRotation.get(null);
-					Vector3f t = translation.get(null);
-					Vector3f s = scale.get(null);
 
-					Transformation transform = new Transformation(t, lr, s, rr);
-					transformation = (caster, target, power, args) -> transform;
-				} else {
-					transformation = (caster, target, power, args) -> {
-						Quaternionf lr = leftRotation.get(caster, target, power, args);
-						if (lr == null) return null;
+            for (int i = 0; i < Integer.MAX_VALUE; i++) {
+                String transformationName = "transformation" + ((i == 0) ? "" : "-" + (i + 1));
 
-						Quaternionf rr = rightRotation.get(caster, target, power, args);
-						if (rr == null) return null;
+                if (config.getConfigurationSection(transformationName) == null) break;
 
-						Vector3f t = translation.get(caster, target, power, args);
-						if (t == null) return null;
+                ConfigData<Integer> delay = ConfigDataUtil.getInteger(config, transformationName + ".delay", 0);
+                ConfigData<Integer> duration = ConfigDataUtil.getInteger(config, transformationName + ".duration", 0);
 
-						Vector3f s = scale.get(caster, target, power, args);
-						if (s == null) return null;
+                // Display
+                ConfigData<Quaternionf> leftRotation = getQuaternion(config,transformationName + ".left-rotation");
+                ConfigData<Quaternionf> rightRotation = getQuaternion(config, transformationName + ".right-rotation");
+                ConfigData<Vector3f> translation = getVector(config, transformationName + ".translation");
+                ConfigData<Vector3f> scale = getVector(config, transformationName + ".scale");
+                ConfigData<Transformation> transformation = (caster, target, power, args) -> null;
+                if (checkNull(leftRotation) && checkNull(rightRotation) && checkNull(translation) && checkNull(scale)) {
+                    if (leftRotation.isConstant() && rightRotation.isConstant() && translation.isConstant() && scale.isConstant()) {
+                        Quaternionf lr = leftRotation.get(null);
+                        Quaternionf rr = rightRotation.get(null);
+                        Vector3f t = translation.get(null);
+                        Vector3f s = scale.get(null);
 
-						return new Transformation(t, lr, s, rr);
-					};
-				}
+                        Transformation transform = new Transformation(t, lr, s, rr);
+                        transformation = (caster, target, power, args) -> transform;
+                    } else {
+                        transformation = (caster, target, power, args) -> {
+                            Quaternionf lr = leftRotation.get(caster, target, power, args);
+                            if (lr == null) return null;
+
+                            Quaternionf rr = rightRotation.get(caster, target, power, args);
+                            if (rr == null) return null;
+
+                            Vector3f t = translation.get(caster, target, power, args);
+                            if (t == null) return null;
+
+                            Vector3f s = scale.get(caster, target, power, args);
+                            if (s == null) return null;
+
+                            return new Transformation(t, lr, s, rr);
+                        };
+                    }
+                }
+                transformations.add(new DisplayTransformation(transformation, delay, duration));
 			}
-			transformers.put(Display.class, new Transformer<>(transformation, Display::setTransformation, true));
 
-			addOptInteger(transformers, config, "interpolation-duration", Display.class, Display::setInterpolationDuration);
 			addOptFloat(transformers, config, "view-range", Display.class, Display::setViewRange);
 			addOptFloat(transformers, config, "shadow-radius", Display.class, Display::setShadowRadius);
 			addOptFloat(transformers, config, "shadow-strength", Display.class, Display::setShadowStrength);
 			addOptFloat(transformers, config, "width", Display.class, Display::setDisplayWidth);
 			addOptFloat(transformers, config, "height", Display.class, Display::setDisplayHeight);
-			addOptInteger(transformers, config, "interpolation-delay", Display.class, Display::setInterpolationDelay);
 			addOptEnum(transformers, config, "billboard", Display.class, Display.Billboard.class, Display::setBillboard);
 			addOptARGBColor(transformers, config, "glow-color-override", Display.class, Display::setGlowColorOverride);
 
@@ -386,6 +400,18 @@ public class EntityData {
 		if (displayHack[0]) {
 			entity.teleport(startLoc);
 			entity.setVisibleByDefault(displayHack[1]);
+
+            transformations.forEach(transformation -> {
+                int interpolationDuration = transformation.duration().get(data);
+                Transformation t = transformation.transformation().get(data);
+                MagicSpells.scheduleDelayedTask(() -> {
+					if (entity.isValid()) {
+						((Display) entity).setInterpolationDuration(interpolationDuration);
+						((Display) entity).setInterpolationDelay(0);
+						((Display) entity).setTransformation(t);
+					}
+                }, Math.max(transformation.delay().get(data), 0) + 1);
+            });
 		}
 
 		return entity;
@@ -745,3 +771,5 @@ public class EntityData {
 	}
 
 }
+
+record DisplayTransformation(ConfigData<Transformation> transformation, ConfigData<Integer> delay, ConfigData<Integer> duration) {}

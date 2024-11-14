@@ -519,11 +519,8 @@ public class ConfigDataUtil {
 		String value = config.getString(path);
 		if (value == null) return (caster, target, power, args) -> MagicItems.getMagicItemFromString(def);
 
-		Material val = Util.getMaterial(value);
-		if (val != null) return (caster, target, power, args) -> MagicItems.getMagicItemFromString(def);
-
 		ConfigData<String> supplier = getString(value);
-		if (supplier.isConstant()) return (caster, target, power, args) -> MagicItems.getMagicItemFromString(def);
+		if (supplier.isConstant()) return (caster, target, power, args) -> MagicItems.getMagicItemFromString(value);
 
 		return new ConfigData<>() {
 

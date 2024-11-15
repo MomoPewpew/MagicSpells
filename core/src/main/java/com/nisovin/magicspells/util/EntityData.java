@@ -1,6 +1,9 @@
 package com.nisovin.magicspells.util;
 
 import com.nisovin.magicspells.MagicSpells;
+import org.bukkit.*;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,10 +21,6 @@ import com.google.common.collect.MultimapBuilder;
 
 import net.kyori.adventure.text.Component;
 
-import org.bukkit.Color;
-import org.bukkit.DyeColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.*;
 import org.bukkit.util.Vector;
 import org.bukkit.util.Consumer;
@@ -217,18 +216,20 @@ public class EntityData {
 		if (EntityType.valueOf("BLOCK_DISPLAY") != null) {
 
             for (int i = 0; i < Integer.MAX_VALUE; i++) {
-                String transformationName = "transformation" + ((i == 0) ? "" : "-" + (i + 1));
+				ConfigurationSection transConf = config.getConfigurationSection("transformation" + ((i == 0) ? "" : "-" + (i + 1)));
 
-                if (config.getConfigurationSection(transformationName) == null) break;
+                if (transConf == null) break;
 
-                ConfigData<Integer> delay = ConfigDataUtil.getInteger(config, transformationName + ".delay", 0);
-                ConfigData<Integer> duration = ConfigDataUtil.getInteger(config, transformationName + ".duration", 0);
+                ConfigData<Integer> interpolationDelay = ConfigDataUtil.getInteger(transConf, "interpolation-delay", 0);
+                ConfigData<Integer> interpolationDuration = ConfigDataUtil.getInteger(transConf, "interpolation-duration", 0);
+				ConfigData<Integer> loopDelay = ConfigDataUtil.getInteger(transConf, "loop-delay", 0);
+				ConfigData<Integer> loopDuration = ConfigDataUtil.getInteger(transConf, "loop-interval", 0);
 
                 // Display
-                ConfigData<Quaternionf> leftRotation = getQuaternion(config,transformationName + ".left-rotation");
-                ConfigData<Quaternionf> rightRotation = getQuaternion(config, transformationName + ".right-rotation");
-                ConfigData<Vector3f> translation = getVector(config, transformationName + ".translation");
-                ConfigData<Vector3f> scale = getVector(config, transformationName + ".scale");
+                ConfigData<Quaternionf> leftRotation = getQuaternion(transConf,"left-rotation");
+                ConfigData<Quaternionf> rightRotation = getQuaternion(transConf, "right-rotation");
+                ConfigData<Vector3f> translation = getVector(transConf, "translation");
+                ConfigData<Vector3f> scale = getVector(transConf, "scale");
                 ConfigData<Transformation> transformation = (caster, target, power, args) -> null;
                 if (checkNull(leftRotation) && checkNull(rightRotation) && checkNull(translation) && checkNull(scale)) {
                     if (leftRotation.isConstant() && rightRotation.isConstant() && translation.isConstant() && scale.isConstant()) {
@@ -257,7 +258,7 @@ public class EntityData {
                         };
                     }
                 }
-                transformations.add(new DisplayTransformation(transformation, delay, duration));
+                transformations.add(new DisplayTransformation(transformation, interpolationDelay, interpolationDuration, loopDelay, loopDuration));
 			}
 
 			addOptFloat(transformers, config, "view-range", Display.class, Display::setViewRange);
@@ -402,15 +403,22 @@ public class EntityData {
 			entity.setVisibleByDefault(displayHack[1]);
 
             transformations.forEach(transformation -> {
-                int interpolationDuration = transformation.duration().get(data);
-                Transformation t = transformation.transformation().get(data);
-                MagicSpells.scheduleDelayedTask(() -> {
-					if (entity.isValid()) {
-						((Display) entity).setInterpolationDuration(interpolationDuration);
-						((Display) entity).setInterpolationDelay(0);
-						((Display) entity).setTransformation(t);
+				int interpolationDelay = transformation.interpolationDelay().get(data);
+				int loopInterval = transformation.loopInterval().get(data);
+
+				if (interpolationDelay > 0 || loopInterval > 0) {
+					TransformationRunnable transformationRunnable = new TransformationRunnable(data, transformation, (Display) entity);
+
+					if (loopInterval > 0) {
+						transformationRunnable.task = transformationRunnable.runTaskTimer(MagicSpells.getInstance(), transformation.loopDelay().get(data), loopInterval);
+					} else {
+						transformationRunnable.runTaskLater(MagicSpells.getInstance(), interpolationDelay);
 					}
-                }, Math.max(transformation.delay().get(data), 0) + 1);
+				} else {
+					((Display) entity).setInterpolationDuration(transformation.interpolationDuration().get(data));
+					((Display) entity).setInterpolationDelay(transformation.interpolationDelay().get(data));
+					((Display) entity).setTransformation(transformation.transformation().get(data));
+				}
             });
 		}
 
@@ -772,4 +780,36 @@ public class EntityData {
 
 }
 
-record DisplayTransformation(ConfigData<Transformation> transformation, ConfigData<Integer> delay, ConfigData<Integer> duration) {}
+record DisplayTransformation(
+		ConfigData<Transformation> transformation,
+		ConfigData<Integer> interpolationDelay,
+		ConfigData<Integer> interpolationDuration,
+		ConfigData<Integer> loopDelay,
+		ConfigData<Integer> loopInterval
+) {}
+
+class TransformationRunnable extends BukkitRunnable {
+
+	private  final  SpellData data;
+	private final DisplayTransformation displayTransformation;
+	private final Display entity;
+	BukkitTask task = null;
+
+	public TransformationRunnable(SpellData data, DisplayTransformation displayTransformation, Display entity) {
+		this.data = data;
+		this.displayTransformation = displayTransformation;
+		this.entity = entity;
+	}
+
+	@Override
+	public void run() {
+		if (entity == null || !entity.isValid()) {
+            if (task != null) task.cancel();
+        } else {
+            entity.setInterpolationDuration(displayTransformation.interpolationDuration().get(data));
+			entity.setInterpolationDelay(task == null ? 0 : displayTransformation.interpolationDelay().get(data));
+			entity.setTransformation(displayTransformation.transformation().get(data));
+		}
+	}
+
+}

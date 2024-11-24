@@ -129,6 +129,7 @@ public class MagicSpells extends JavaPlugin {
 	private NoMagicZoneManager zoneManager;
 	private PaperCommandManager commandManager;
 	private ExperienceBarManager expBarManager;
+	private AlteredBlockManager alteredBlockManager;
 
 	private MagicConfig config;
 	private MagicLogger magicLogger;
@@ -362,6 +363,7 @@ public class MagicSpells extends JavaPlugin {
 		expBarManager = new ExperienceBarManager();
 		bossBarManager = new BossBarManager();
 		attributeManager = new AttributeManager();
+		alteredBlockManager = new AlteredBlockManager();
 		if (CompatBasics.pluginEnabled("Vault")) moneyHandler = new MoneyHandler();
 		lifeLengthTracker = new LifeLengthTracker();
 
@@ -1278,6 +1280,10 @@ public class MagicSpells extends JavaPlugin {
 
 	public static ExperienceBarManager getExpBarManager() {
 		return plugin.expBarManager;
+	}
+
+	public static AlteredBlockManager getAlteredBlockManager() {
+		return plugin.alteredBlockManager;
 	}
 
 	public static BossBarManager getBossBarManager() {

@@ -56,6 +56,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean resolveVelocityPerBlock;
 	private boolean resolveMaxHeightPerBlock;
 	private boolean powerAffectsRadius;
+	private boolean affectsContainers;
 
 	private VelocityType velocityType;
 
@@ -81,6 +82,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		resolveVelocityPerBlock = getConfigBoolean("resolve-velocity-per-block", false);
 		resolveMaxHeightPerBlock = getConfigBoolean("resolve-max-height-per-block", false);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
+		affectsContainers = getConfigBoolean("affects-containers", false);
 
 		String vType = getConfigString("velocity-type", "none");
 
@@ -254,6 +256,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 						continue;
 					}
 
+					if (!affectsContainers && BlockUtils.isContainer(b)) continue;
 					if (b.getType().isSolid()) {
 						if (throwChance < 1 && random.nextFloat() > throwChance) {
 							blocksToRemove.add(b);

@@ -51,6 +51,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean resolveDurationPerBlock;
 	private boolean circleShape;
 	private boolean mergeBlockData;
+	private boolean affectsContainers;
 
 	public ReplaceSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -74,6 +75,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		resolveDurationPerBlock = getConfigBoolean("resolve-duration-per-block", false);
 		circleShape = getConfigBoolean("circle-shape", false);
 		mergeBlockData = getConfigBoolean("merge-block-data", true);
+		affectsContainers = getConfigBoolean("affects-containers", false);
 
 		List<String> list = getConfigStringList("replace-blocks", null);
 		if (list != null) {
@@ -258,7 +260,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 									cont = true;
 								}
 							}
-							if (cont) continue;
+							if (cont || (!affectsContainers && BlockUtils.isContainer(block))) continue;
 						}
 
 						if (replaceBlacklisted(data)) continue;

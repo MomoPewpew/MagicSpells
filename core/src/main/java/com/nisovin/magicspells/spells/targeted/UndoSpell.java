@@ -14,47 +14,46 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 
-public class UndoReplaceSpell extends TargetedSpell implements TargetedLocationSpell {
+public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 
-	private ConfigData<Float> radius;
+	private ConfigData<Integer> radius;
 
 	private boolean pointBlank;
 	private boolean powerAffectsRadius;
 	private boolean applyPhysics;
 
-	private List<String> replaceSpellNames;
-	private List<ReplaceSpell> replaceSpells;
+	private List<String> spellNames;
+	private List<Spell> spells;
 
-	public UndoReplaceSpell(MagicConfig config, String spellName) {
+	public UndoSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
-		radius = getConfigDataFloat("radius", 10F);
+		radius = getConfigDataInt("radius", 10);
 		pointBlank = getConfigBoolean("point-blank", true);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", true);
 		applyPhysics = getConfigBoolean("apply-physics", true);
-		replaceSpellNames = getConfigStringList("replace-spells", null);
-		replaceSpells = new ArrayList<>();
+		spellNames = getConfigStringList("spells", null);
+		spells = new ArrayList<>();
 	}
 
 	@Override
 	public void initialize() {
 		super.initialize();
 
-		if (replaceSpellNames != null) {
-			for (String replaceSpellName : replaceSpellNames) {
-				Spell spell = MagicSpells.getSpellByInternalName(replaceSpellName);
-				if (spell instanceof ReplaceSpell) {
-					replaceSpells.add((ReplaceSpell) spell);
+		if (spellNames != null) {
+			for (String spellName : spellNames) {
+				Spell spell = MagicSpells.getSpellByInternalName(spellName);
+				if (spell instanceof ReplaceSpell || spell instanceof DestroySpell) {
+					spells.add(spell);
 				} else {
 					MagicSpells.error(
-							"UndoReplaceSpell '" + internalName + "' has an invalid spell defined in replace-spells!");
+							"UndoSpell '" + internalName + "' has an invalid spell defined in spells!");
 					return;
 				}
 			}
@@ -68,69 +67,63 @@ public class UndoReplaceSpell extends TargetedSpell implements TargetedLocationS
 			if (loc == null) {
 				return noTarget(caster, args);
 			}
-			undoReplaces(caster, loc, power, args);
+			undo(caster, loc, power, args);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		undoReplaces(caster, target, power, args);
+		undo(caster, target, power, args);
 		return true;
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		undoReplaces(caster, target, power, null);
+		undo(caster, target, power, null);
 		return true;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		undoReplaces(null, target, power, args);
+		undo(null, target, power, args);
 		return true;
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power) {
-		undoReplaces(null, target, power, null);
+		undo(null, target, power, null);
 		return true;
 	}
 
-	private void undoReplaces(LivingEntity caster, Location loc, float power, String[] args) {
-		float radSq = radius.get(caster, null, power, args);
+	private void undo(LivingEntity caster, Location loc, float power, String[] args) {
+		int rad = radius.get(caster, null, power, args);
 		if (powerAffectsRadius)
-			radSq *= power;
-		radSq *= radSq;
+			rad *= power;
 
 		World locWorld = loc.getWorld();
 		if (locWorld == null) {
-			MagicSpells.error("Location world is null for UndoReplaceSpell.");
+			MagicSpells.error("Location world is null for UndoSpell.");
 			return;
 		}
 
-		List<ReplaceSpell> replaceSpellsTemp = replaceSpells.isEmpty()
+		List<Spell> spellsTemp = spells.isEmpty()
 				? MagicSpells.spells().stream()
-						.filter(ReplaceSpell.class::isInstance)
-						.map(ReplaceSpell.class::cast)
-						.collect(Collectors.toList())
-				: new ArrayList<>(replaceSpells);
+						.filter(spell -> spell instanceof ReplaceSpell || spell instanceof DestroySpell)
+						.toList()
+				: new ArrayList<>(spells);
 
-		for (ReplaceSpell replaceSpell : replaceSpellsTemp) {
-			Iterator<Entry<Block, BlockData>> iterator = replaceSpell.blocks.entrySet().iterator();
-			while (iterator.hasNext()) {
-				Entry<Block, BlockData> entry = iterator.next();
-				Block block = entry.getKey();
-				BlockData blockData = entry.getValue();
-
-				if (!block.getWorld().equals(locWorld))
-					continue;
-				if (block.getLocation().distanceSquared(loc) > radSq)
-					continue;
-
-				block.setBlockData(blockData, applyPhysics);
-				iterator.remove();
-				playSpellEffects(EffectPosition.TARGET, block.getLocation(), power, args);
+		for (Spell spell : spellsTemp) {
+			for (int y = loc.getBlockY() - rad; y <= loc.getBlockY() + rad; y++) {
+				for (int x = loc.getBlockX() - rad; x <= loc.getBlockX() + rad; x++) {
+					for (int z = loc.getBlockZ() - rad; z <= loc.getBlockZ() + rad; z++) {
+						Block block = loc.getWorld().getBlockAt(x, y, z);
+						MagicSpells.getAlteredBlockManager().getByBlockAndInternalName(block, spell.getInternalName()).forEach(it -> {
+							it.undo(applyPhysics);
+							playSpellEffects(EffectPosition.TARGET, block.getLocation(), power, args);
+						});
+					}
+				}
 			}
 		}
 

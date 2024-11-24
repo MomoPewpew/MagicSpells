@@ -38,7 +38,7 @@ public class AlteredBlockManager {
 
         List<Change> result = new ArrayList<>();
         for (Change change : alteredBlock.changes) {
-            if (internalName == null || change.internalName().equals(internalName)) {
+            if (change.internalName().equals(internalName)) {
                 result.add(change);
             }
         }

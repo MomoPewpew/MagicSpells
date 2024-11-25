@@ -182,6 +182,7 @@ public class ConditionManager {
 		addCondition("velocityactive", VelocityActiveCondition.class);
 		addCondition("charactertag", CharacterTagCondition.class);
 		addCondition("expression", ExpressionCondition.class);
+		addCondition("expressionstringcontains", ExpressionStringContainsCondition.class);
 		addCondition("expressionstringequals", ExpressionStringEqualsCondition.class);
 		addCondition("pathfinding", PathfinderPathfindingCondition.class);
 		addCondition("locationmatchesschematic", LocationMatchesSchematicCondition.class);

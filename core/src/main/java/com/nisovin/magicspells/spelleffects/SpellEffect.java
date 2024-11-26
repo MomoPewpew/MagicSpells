@@ -198,7 +198,6 @@ public abstract class SpellEffect {
 	}
 
 	public Location applyOffsets(Location loc, Vector offset, Vector relativeOffset, double zOffset, double heightOffset, double forwardOffset, float pitch, float yaw) {
-		loc = loc.clone();
 		if (offset.getX() != 0 || offset.getY() != 0 || offset.getZ() != 0) loc.add(offset);
 		if (relativeOffset.getX() != 0 || relativeOffset.getY() != 0 || relativeOffset.getZ() != 0)
 			loc.add(VectorUtils.rotateVector(relativeOffset, loc));

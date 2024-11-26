@@ -6,10 +6,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.spelleffects.SpellEffect;
+import com.nisovin.magicspells.spelleffects.effecttypes.EntityEffect;
 import org.bukkit.Material;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
@@ -325,6 +328,8 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		private final double maxDistanceSq;
 		private final int totalPulses;
 
+		private List<Entity> effectEntities = new ArrayList<>();
+
 		private enum ActivationType {
 			TICK, CLICK;
 		}
@@ -344,6 +349,14 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 			double maxDistance = PulserSpell.this.maxDistance.get(caster, null, power, args);
 			maxDistanceSq = maxDistance * maxDistance;
+
+			if (effects == null) return;
+			List<SpellEffect> effectsList = effects.get(EffectPosition.SPECIAL);
+			if (effectsList == null) return;
+			for (SpellEffect effect : effectsList) {
+				if (effect instanceof EntityEffect) effectEntities.add(effect.playEntityEffect(location, data));
+				else effect.playEffect(location,data);
+			}
 		}
 
 		private boolean pulse(ActivationType activationType, @Nullable LivingEntity caster) {
@@ -394,6 +407,10 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		}
 
 		public void stop() {
+			for (Entity effect : effectEntities) {
+				effect.remove();
+			}
+
 			if (!block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) block.getChunk().load();
 			block.setType(Material.AIR);
 			playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, block.getLocation(), data);

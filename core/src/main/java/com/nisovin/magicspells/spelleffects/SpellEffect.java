@@ -37,8 +37,8 @@ public abstract class SpellEffect {
 	private ConfigData<Double> zOffset;
 	private ConfigData<Double> heightOffset;
 	private ConfigData<Double> forwardOffset;
-	private ConfigData<Float> pitch;
-	private ConfigData<Float> yaw;
+	private ConfigData<Float> addPitch;
+	private ConfigData<Float> addYaw;
 
 	private Vector offset;
 	private Vector relativeOffset;
@@ -84,6 +84,8 @@ public abstract class SpellEffect {
 		zOffset = ConfigDataUtil.getDouble(config, "z-offset", 0);
 		heightOffset = ConfigDataUtil.getDouble(config, "height-offset", 0);
 		forwardOffset = ConfigDataUtil.getDouble(config, "forward-offset", 0);
+		addPitch = ConfigDataUtil.getFloat(config, "add-pitch", 0F);
+		addYaw = ConfigDataUtil.getFloat(config, "add-yaw", 0F);
 
 		String[] offsetStr = config.getString("offset", "0,0,0").split(",");
 		String[] relativeStr = config.getString("relative-offset", "0,0,0").split(",");
@@ -192,7 +194,7 @@ public abstract class SpellEffect {
 	}
 
 	public Location applyOffsets(Location loc, SpellData data) {
-		return applyOffsets(loc, offset, relativeOffset, zOffset.get(data), heightOffset.get(data), forwardOffset.get(data), pitch.get(data), yaw.get(data));
+		return applyOffsets(loc, offset, relativeOffset, zOffset.get(data), heightOffset.get(data), forwardOffset.get(data), addPitch.get(data), addYaw.get(data));
 	}
 
 	public Location applyOffsets(Location loc, Vector offset, Vector relativeOffset, double zOffset, double heightOffset, double forwardOffset, float pitch, float yaw) {

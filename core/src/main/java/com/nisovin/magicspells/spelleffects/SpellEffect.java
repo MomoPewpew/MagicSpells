@@ -37,6 +37,8 @@ public abstract class SpellEffect {
 	private ConfigData<Double> zOffset;
 	private ConfigData<Double> heightOffset;
 	private ConfigData<Double> forwardOffset;
+	private ConfigData<Float> pitch;
+	private ConfigData<Float> yaw;
 
 	private Vector offset;
 	private Vector relativeOffset;
@@ -190,10 +192,11 @@ public abstract class SpellEffect {
 	}
 
 	public Location applyOffsets(Location loc, SpellData data) {
-		return applyOffsets(loc, offset, relativeOffset, zOffset.get(data), heightOffset.get(data), forwardOffset.get(data));
+		return applyOffsets(loc, offset, relativeOffset, zOffset.get(data), heightOffset.get(data), forwardOffset.get(data), pitch.get(data), yaw.get(data));
 	}
 
-	public Location applyOffsets(Location loc, Vector offset, Vector relativeOffset, double zOffset, double heightOffset, double forwardOffset) {
+	public Location applyOffsets(Location loc, Vector offset, Vector relativeOffset, double zOffset, double heightOffset, double forwardOffset, float pitch, float yaw) {
+		loc = loc.clone();
 		if (offset.getX() != 0 || offset.getY() != 0 || offset.getZ() != 0) loc.add(offset);
 		if (relativeOffset.getX() != 0 || relativeOffset.getY() != 0 || relativeOffset.getZ() != 0)
 			loc.add(VectorUtils.rotateVector(relativeOffset, loc));
@@ -204,6 +207,8 @@ public abstract class SpellEffect {
 		}
 		if (heightOffset != 0) loc.setY(loc.getY() + heightOffset);
 		if (forwardOffset != 0) loc.add(loc.getDirection().setY(0).normalize().multiply(forwardOffset));
+		if (pitch != 0) loc.setPitch(pitch);
+		if (yaw != 0) loc.setYaw(yaw);
 		return loc;
 	}
 

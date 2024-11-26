@@ -207,8 +207,8 @@ public abstract class SpellEffect {
 		}
 		if (heightOffset != 0) loc.setY(loc.getY() + heightOffset);
 		if (forwardOffset != 0) loc.add(loc.getDirection().setY(0).normalize().multiply(forwardOffset));
-		if (pitch != 0) loc.setPitch(pitch);
-		if (yaw != 0) loc.setYaw(yaw);
+		if (pitch != 0) loc.setPitch(loc.getPitch() + pitch);
+		if (yaw != 0) loc.setYaw(loc.getYaw() + yaw);
 		return loc;
 	}
 

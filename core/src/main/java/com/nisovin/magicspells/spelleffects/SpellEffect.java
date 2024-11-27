@@ -333,7 +333,7 @@ public abstract class SpellEffect {
 		if (delay <= 0) return playEntityEffectLocationReal(location, data);
 
 		SpellData finalData = data;
-		MagicSpells.scheduleDelayedTask(() -> playEffectLibLocationReal(location, finalData), delay);
+		MagicSpells.scheduleDelayedTask(() -> playEntityEffectLocationReal(location, finalData), delay);
 
 		return null;
 	}

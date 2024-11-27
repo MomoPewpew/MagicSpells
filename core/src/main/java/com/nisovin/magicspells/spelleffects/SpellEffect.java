@@ -163,7 +163,7 @@ public abstract class SpellEffect {
 		return result == null ? new ModifierResult(data, true) : result;
 	}
 
-	protected ModifierResult checkModifiers(SpellData data, Location location) {
+	public ModifierResult checkModifiers(SpellData data, Location location) {
 		if (data == null) return new ModifierResult(null, true);
 
 		ModifierResult result = null;
@@ -375,7 +375,7 @@ public abstract class SpellEffect {
 		return playEffectLibLocation(loc, data);
 	}
 
-	private Entity playEntityEffectLocationReal(Location location, SpellData data) {
+	public Entity playEntityEffectLocationReal(Location location, SpellData data) {
 		if (location == null) return playEntityEffectLocation(null, data);
 		Location loc = location.clone();
 		applyOffsets(loc, data);

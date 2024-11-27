@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.spelleffects.effecttypes.EntityEffect;
+import com.nisovin.magicspells.util.*;
 import org.bukkit.Material;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -27,10 +28,6 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.SpellData;
-import com.nisovin.magicspells.util.BlockUtils;
-import com.nisovin.magicspells.util.MagicConfig;
-import com.nisovin.magicspells.util.LocationUtil;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -329,6 +326,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		private final int totalPulses;
 
 		private List<Entity> effectEntities = new ArrayList<>();
+		private List<Integer> effectTasks = new ArrayList<>();
 
 		private enum ActivationType {
 			TICK, CLICK;
@@ -354,9 +352,26 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			List<SpellEffect> effectsList = effects.get(EffectPosition.SPECIAL);
 			if (effectsList == null) return;
 			for (SpellEffect effect : effectsList) {
-				if (effect instanceof EntityEffect) effectEntities.add(effect.playEntityEffect(location, data));
+				if (effect instanceof EntityEffect entityEffect) {
+					int delay = effect.getDelay().get(data);
+
+					if (delay <= 0) effectEntities.add(effect.playEntityEffect(location, data));
+					else effectTasks.add(playEntityEffectDelayed(entityEffect, location, data, effectEntities, delay));
+				}
 				else effect.playEffect(location,data);
 			}
+		}
+
+		private static int playEntityEffectDelayed(EntityEffect effect, Location location, SpellData data, List<Entity> list, Integer delay) {
+			double chance = effect.getChance().get(data);
+			if (chance > 0 && chance < 1 && random.nextDouble() > chance) return -1;
+
+			ModifierResult result = effect.checkModifiers(data, location);
+			if (!result.check()) return -1;
+			data = result.data();
+
+			SpellData finalData = data;
+			return MagicSpells.scheduleDelayedTask(() -> list.add(effect.playEntityEffectLocationReal(location, finalData)), delay);
 		}
 
 		private boolean pulse(ActivationType activationType, @Nullable LivingEntity caster) {
@@ -409,6 +424,9 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		public void stop() {
 			for (Entity effect : effectEntities) {
 				if (effect != null) effect.remove();
+			}
+			for (Integer taskID : effectTasks) {
+				if (taskID != null && taskID >= 0) MagicSpells.cancelTask(taskID);
 			}
 
 			if (!block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) block.getChunk().load();

@@ -435,11 +435,9 @@ public class Util {
 
 			CraftItemEvent event = new CraftItemEvent(recipe, createInventoryView(player), InventoryType.SlotType.RESULT, 0, ClickType.LEFT, InventoryAction.UNKNOWN);
 			EventUtil.call(event);
-
-			if (!event.isCancelled()) {
-				inventory.setStorageContents(items);
-				return true;
-			} else return false;
+			event.setCancelled(false);
+			inventory.setStorageContents(items);
+			return true;
 		}
 
 		return false;

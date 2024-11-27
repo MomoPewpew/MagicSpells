@@ -292,7 +292,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 						// Break block.
 						if (resolveDurationPerBlock) replaceDuration = this.replaceDuration.get(caster, null, power, args);
 						if (replaceDuration > 0) {
-							AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, block, block.getBlockData());
+							AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, block, data);
 							MagicSpells.getAlteredBlockManager().add(change);
 
 							MagicSpells.scheduleDelayedTask(() -> {

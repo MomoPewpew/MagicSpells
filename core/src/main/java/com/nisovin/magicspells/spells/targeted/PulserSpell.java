@@ -408,7 +408,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 		public void stop() {
 			for (Entity effect : effectEntities) {
-				effect.remove();
+				if (effect != null) effect.remove();
 			}
 
 			if (!block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) block.getChunk().load();

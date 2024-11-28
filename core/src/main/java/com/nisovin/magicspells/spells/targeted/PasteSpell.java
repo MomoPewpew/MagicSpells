@@ -400,12 +400,14 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    boolean stop = false;
 	    private LivingEntity caster;
 		private boolean onlyReplaceAir;
+		private boolean pasteAir;
 
 		public Builder(LivingEntity caster, Location target, float power, String[] args) {
 			this.target = target.clone();
 			this.clipboard = PasteSpell.this.clipboard;
 			this.caster = caster;
 			this.onlyReplaceAir = PasteSpell.this.onlyReplaceAir.get(caster, null, power, args);
+			this.pasteAir = PasteSpell.this.pasteAir;
 
             this.undoDelay = PasteSpell.this.undoDelay.get(caster, null, power, args);
             this.blocksPerCast = PasteSpell.this.blocksPerCast.get(caster, null, power, args);
@@ -422,7 +424,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 			BlockVector3 origin = this.clipboard.getOrigin();
 
-			if (PasteSpell.this.dismantleFirst && PasteSpell.this.pasteAir) {
+			if (PasteSpell.this.dismantleFirst && this.pasteAir) {
 				for (BlockVector3 pos : this.blockVectors) {
 					Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
 					if (!bl.getBlockData().getMaterial().isAir()) {
@@ -435,7 +437,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 			} else {
 				if (this.blockVectors.size() > 0) this.firstBuildInit(origin);
-				if (PasteSpell.this.pasteAir && this.airVectors.size() > 0) this.firstWithdrawInit(origin);
+				if (this.pasteAir && this.airVectors.size() > 0) this.firstWithdrawInit(origin);
 			}
 		}
 
@@ -508,7 +510,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				if (!data.matches(bl.getBlockData())) {
 					if (data.getMaterial().isAir()) {
-						this.airVectors.add(pos_);
+						if (this.pasteAir) this.airVectors.add(pos_);
 					} else {
 						this.blockVectors.add(pos_);
 					}
@@ -605,6 +607,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		private void finalise() {
 			if (this.built) this.undone = true;
 			this.built = true;
+			this.pasteAir = true;
 
 			this.blockDisplays = new ArrayList<BlockDisplay>();
 
@@ -805,7 +808,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
                 Operation operation = new ClipboardHolder(this.clipboard)
                         .createPaste(editSession)
                         .to(BlockVector3.at(target.getX(), target.getY(), target.getZ()))
-                        .ignoreAirBlocks(!pasteAir)
                         .build();
                 Operations.complete(operation);
             } catch (WorldEditException e) {

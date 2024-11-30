@@ -283,7 +283,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 		SpellData data = new SpellData(caster, target, power, args);
 		for (Block b : blocksToThrow) {
-			if (preventLandingBlocks && checkPlugins && caster instanceof Player) {
+			if (checkPlugins && caster instanceof Player) {
 				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster, bypassDippGen);
 				EventUtil.call(event);
 				if (event.isCancelled())

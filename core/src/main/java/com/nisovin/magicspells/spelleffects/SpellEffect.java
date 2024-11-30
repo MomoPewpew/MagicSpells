@@ -39,6 +39,10 @@ public abstract class SpellEffect {
 	private ConfigData<Double> forwardOffset;
 	private ConfigData<Float> addPitch;
 	private ConfigData<Float> addYaw;
+	private ConfigData<Float> setPitch;
+	private boolean doSetPitch;
+	private ConfigData<Float> setYaw;
+	private  boolean doSetYaw;
 
 	private Vector offset;
 	private Vector relativeOffset;
@@ -86,6 +90,10 @@ public abstract class SpellEffect {
 		forwardOffset = ConfigDataUtil.getDouble(config, "forward-offset", 0);
 		addPitch = ConfigDataUtil.getFloat(config, "add-pitch", 0F);
 		addYaw = ConfigDataUtil.getFloat(config, "add-yaw", 0F);
+		doSetPitch = !config.getString("set-pitch", "").isEmpty();
+		setPitch = ConfigDataUtil.getFloat(config, "set-pitch", 0F);
+		doSetYaw = !config.getString("set-yaw", "").isEmpty();
+		setYaw = ConfigDataUtil.getFloat(config, "set-yaw", 0F);
 
 		String[] offsetStr = config.getString("offset", "0,0,0").split(",");
 		String[] relativeStr = config.getString("relative-offset", "0,0,0").split(",");
@@ -194,7 +202,7 @@ public abstract class SpellEffect {
 	}
 
 	public Location applyOffsets(Location loc, SpellData data) {
-		return applyOffsets(loc, offset, relativeOffset, zOffset.get(data), heightOffset.get(data), forwardOffset.get(data), addPitch.get(data), addYaw.get(data));
+		return applyOffsets(loc, offset, relativeOffset, zOffset.get(data), heightOffset.get(data), forwardOffset.get(data), (doSetPitch) ? setPitch.get(data) : loc.getPitch() + addPitch.get(data), (doSetYaw) ? setYaw.get(data) : loc.getYaw() + addYaw.get(data));
 	}
 
 	public Location applyOffsets(Location loc, Vector offset, Vector relativeOffset, double zOffset, double heightOffset, double forwardOffset, float pitch, float yaw) {
@@ -208,8 +216,8 @@ public abstract class SpellEffect {
 		}
 		if (heightOffset != 0) loc.setY(loc.getY() + heightOffset);
 		if (forwardOffset != 0) loc.add(loc.getDirection().setY(0).normalize().multiply(forwardOffset));
-		if (pitch != 0) loc.setPitch(loc.getPitch() + pitch);
-		if (yaw != 0) loc.setYaw(loc.getYaw() + yaw);
+		loc.setPitch(pitch);
+		loc.setYaw(yaw);
 		return loc;
 	}
 

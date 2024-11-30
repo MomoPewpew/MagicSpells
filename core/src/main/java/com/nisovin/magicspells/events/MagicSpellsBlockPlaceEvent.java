@@ -7,7 +7,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.event.block.BlockPlaceEvent;
 
-public class MagicSpellsBlockPlaceEvent extends BlockPlaceEvent implements IMagicSpellsCompatEvent {
+public class MagicSpellsBlockPlaceEvent extends BlockPlaceEvent implements IMagicSpellsCompatEvent, IDippGenBypass {
+
+	private boolean bypassDippGen = false;
 
 	public MagicSpellsBlockPlaceEvent(Block placedBlock, BlockState replacedBlockState, Block placedAgainst, ItemStack itemInHand, Player thePlayer, boolean canBuild) {
 		super(placedBlock, replacedBlockState, placedAgainst, itemInHand, thePlayer, canBuild, EquipmentSlot.HAND);
@@ -15,6 +17,16 @@ public class MagicSpellsBlockPlaceEvent extends BlockPlaceEvent implements IMagi
 
 	public MagicSpellsBlockPlaceEvent(Block placedBlock, BlockState replacedBlockState, Block placedAgainst, ItemStack itemInHand, Player thePlayer, boolean canBuild, EquipmentSlot equipmentSlot) {
 		super(placedBlock, replacedBlockState, placedAgainst, itemInHand, thePlayer, canBuild, equipmentSlot);
+	}
+
+	@Override
+	public boolean getBypassDippGen() {
+		return this.bypassDippGen;
+	}
+
+	@Override
+	public void setBypassDippGenField(boolean bypass) {
+		this.bypassDippGen = bypass;
 	}
 
 }

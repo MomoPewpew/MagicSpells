@@ -323,7 +323,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 
 		if (checkPlugins && player != null) {
 			block.setType(material, false);
-			MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, blockState, against, player.getEquipment().getItemInMainHand(), player, true);
+			MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, blockState, against, player.getEquipment().getItemInMainHand(), player, true, bypassDippGen);
 			EventUtil.call(event);
 			blockState.update(true);
 			if (event.isCancelled()) return false;
@@ -348,7 +348,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 					blocks.remove(block);
 					playSpellEffects(EffectPosition.DELAYED, block.getLocation(), data);
 					if (checkPlugins && player != null) {
-						MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player);
+						MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player, bypassDippGen);
 						EventUtil.call(event);
 						if (event.isCancelled()) return;
 					}

@@ -164,7 +164,7 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 			BlockState eventBlockState = target.getState();
 			target.setType(materials.get(0), false);
 
-			MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(target, eventBlockState, target, player.getInventory().getItemInMainHand(), player, true);
+			MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(target, eventBlockState, target, player.getInventory().getItemInMainHand(), player, true, bypassDippGen);
 			EventUtil.call(event);
 
 			if (event.isCancelled()) {
@@ -186,7 +186,7 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 			}
 		}
 
-		TemporaryBlockSet blockSet = new TemporaryBlockSet(Material.AIR, materials, checkPluginsPerBlock, caster);
+		TemporaryBlockSet blockSet = new TemporaryBlockSet(Material.AIR, materials, checkPluginsPerBlock, caster, bypassDippGen);
 		Location loc = target.getLocation();
 		Vector dir = direction.clone();
 

@@ -11,12 +11,14 @@ public class MagicSpellsBlockPlaceEvent extends BlockPlaceEvent implements IMagi
 
 	private boolean bypassDippGen = false;
 
-	public MagicSpellsBlockPlaceEvent(Block placedBlock, BlockState replacedBlockState, Block placedAgainst, ItemStack itemInHand, Player thePlayer, boolean canBuild) {
+	public MagicSpellsBlockPlaceEvent(Block placedBlock, BlockState replacedBlockState, Block placedAgainst, ItemStack itemInHand, Player thePlayer, boolean canBuild, boolean bypassDippGen) {
 		super(placedBlock, replacedBlockState, placedAgainst, itemInHand, thePlayer, canBuild, EquipmentSlot.HAND);
+		this.bypassDippGen = bypassDippGen;
 	}
 
-	public MagicSpellsBlockPlaceEvent(Block placedBlock, BlockState replacedBlockState, Block placedAgainst, ItemStack itemInHand, Player thePlayer, boolean canBuild, EquipmentSlot equipmentSlot) {
+	public MagicSpellsBlockPlaceEvent(Block placedBlock, BlockState replacedBlockState, Block placedAgainst, ItemStack itemInHand, Player thePlayer, boolean canBuild, EquipmentSlot equipmentSlot, boolean bypassDippGen) {
 		super(placedBlock, replacedBlockState, placedAgainst, itemInHand, thePlayer, canBuild, equipmentSlot);
+		this.bypassDippGen = bypassDippGen;
 	}
 
 	@Override

@@ -549,7 +549,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	            if (this.caster instanceof Player player) {
 					BlockState previousState = startingBlock.getState();
-					MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(startingBlock, previousState, startingBlock.getRelative(BlockFace.DOWN), player.getInventory().getItemInMainHand(), player, true);
+					MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(startingBlock, previousState, startingBlock.getRelative(BlockFace.DOWN), player.getInventory().getItemInMainHand(), player, true, bypassDippGen);
 					EventUtil.call(event);
 	            }
 
@@ -730,7 +730,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	        if (!keepOld) {
 	        	if (this.caster instanceof Player player) {
-					MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player);
+					MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player, bypassDippGen);
 					EventUtil.call(event);
 					if (!event.isCancelled()) {
 			        	block.setType(Material.AIR);
@@ -766,7 +766,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		            if(!this.stop){
 						if (this.caster instanceof Player player) {
 							BlockState previousState = b.getState();
-							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(b, previousState, block, player.getInventory().getItemInMainHand(), player, true);
+							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(b, previousState, block, player.getInventory().getItemInMainHand(), player, true, bypassDippGen);
 							EventUtil.call(event);
 							if (!event.isCancelled()) {
 								b.setBlockData(data, false);

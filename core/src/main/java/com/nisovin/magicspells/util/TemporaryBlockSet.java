@@ -27,11 +27,14 @@ public class TemporaryBlockSet implements Runnable {
 	private List<Material> replaceMaterials;
 
 	private BlockSetRemovalCallback callback;
+
+	private boolean bypassDippGen;
 	
-	public TemporaryBlockSet(Material original, Material replaceWith, boolean callPlaceEvent, LivingEntity livingEntity) {
+	public TemporaryBlockSet(Material original, Material replaceWith, boolean callPlaceEvent, LivingEntity livingEntity, boolean bypassDippGen) {
 		this.original = original;
 		this.callPlaceEvent = callPlaceEvent;
 		this.livingEntity = livingEntity;
+		this.bypassDippGen = bypassDippGen;
 
 		random = ThreadLocalRandom.current();
 		blocks = new ArrayList<>();
@@ -40,11 +43,12 @@ public class TemporaryBlockSet implements Runnable {
 		replaceMaterials.add(replaceWith);
 	}
 
-	public TemporaryBlockSet(Material original, List<Material> replaceMaterials, boolean callPlaceEvent, LivingEntity livingEntity) {
+	public TemporaryBlockSet(Material original, List<Material> replaceMaterials, boolean callPlaceEvent, LivingEntity livingEntity, boolean bypassDippGen) {
 		this.original = original;
 		this.replaceMaterials = replaceMaterials;
 		this.callPlaceEvent = callPlaceEvent;
 		this.livingEntity = livingEntity;
+		this.bypassDippGen = bypassDippGen;
 
 		random = new Random();
 		blocks = new ArrayList<>();
@@ -62,7 +66,7 @@ public class TemporaryBlockSet implements Runnable {
 		BlockState state = block.getState();
 		block.setType(replaceMaterials.get(r), false);
 		MagicSpellsBlockPlaceEvent event = null;
-		if (livingEntity instanceof Player) event = new MagicSpellsBlockPlaceEvent(block, state, block, livingEntity.getEquipment().getItemInMainHand(), (Player) livingEntity, true);
+		if (livingEntity instanceof Player) event = new MagicSpellsBlockPlaceEvent(block, state, block, livingEntity.getEquipment().getItemInMainHand(), (Player) livingEntity, true, bypassDippGen);
 		if (event != null) EventUtil.call(event);
 		if (event != null && event.isCancelled()) BlockUtils.setTypeAndData(block, original, original.createBlockData(), false);
 		else blocks.add(block);

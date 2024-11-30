@@ -119,6 +119,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected boolean ignoreGlobalCooldown;
 	protected boolean spellPowerAffectsRange;
 	protected boolean requireCastItemOnCommand;
+	protected boolean bypassDippGen;
 
 	protected CastItem[] castItems;
 	protected CastItem[] consumeCastItems;
@@ -259,6 +260,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 		danceCastSequence = config.getString(path + "dance-cast-sequence", null);
 		requireCastItemOnCommand = config.getBoolean(path + "require-cast-item-on-command", false);
+		bypassDippGen = config.getBoolean(path + "bypass-dippgen", false);
 		bindable = config.getBoolean(path + "bindable", true);
 		List<String> bindables = config.getStringList(path + "bindable-items", null);
 		if (bindables != null) {

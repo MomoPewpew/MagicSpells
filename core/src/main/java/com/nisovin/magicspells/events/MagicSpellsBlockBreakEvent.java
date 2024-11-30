@@ -8,8 +8,9 @@ public class MagicSpellsBlockBreakEvent extends BlockBreakEvent implements IMagi
 
 	private boolean bypassDippGen = false;
 
-	public MagicSpellsBlockBreakEvent(Block theBlock, Player player) {
+	public MagicSpellsBlockBreakEvent(Block theBlock, Player player, boolean bypassDippGen) {
 		super(theBlock, player);
+		this.bypassDippGen = bypassDippGen;
 	}
 
 	@Override

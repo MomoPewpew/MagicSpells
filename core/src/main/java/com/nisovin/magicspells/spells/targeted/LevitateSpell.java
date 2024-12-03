@@ -86,15 +86,16 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
+		LivingEntity caster = data.caster();
 		if (toggle && isLevitating(caster)) {
 			levitating.remove(caster.getUniqueId()).stop();
 			return PostCastAction.ALREADY_HANDLED;
 		} else if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data);
 
-			levitate(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+			levitate(data.builder().target(target.target()).power(target.getPower()).build());
+			sendMessages(caster, target.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -102,22 +103,10 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		levitate(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		levitate(data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		levitate(caster, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
 	}
 
 	public boolean isBeingLevitated(LivingEntity entity) {
@@ -144,16 +133,17 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 		return levitating.containsKey(entity.getUniqueId());
 	}
 
-	private void levitate(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		int duration = this.duration.get(caster, target, power, args);
-		int tickRate = this.tickRate.get(caster, target, power, args);
+	private void levitate(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
+
+		int duration = this.duration.get(data);
+		int tickRate = this.tickRate.get(data);
 		if (duration < tickRate) duration = tickRate;
 
 		double distance = caster.getLocation().distance(target.getLocation());
-		Levitator lev = new Levitator(caster, target, duration / tickRate, tickRate, distance, power, args);
+		Levitator lev = new Levitator(caster, target, duration / tickRate, tickRate, distance, data.power(), data.args());
 		levitating.put(caster.getUniqueId(), lev);
-
-		SpellData data = new SpellData(caster, target, power, args);
 
 		playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, caster.getLocation(), target.getLocation(), caster, target, data);
 		playSpellEffects(caster, target, data);

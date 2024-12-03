@@ -2,6 +2,7 @@ package com.nisovin.magicspells.spells.targeted;
 
 import java.util.List;
 
+import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
@@ -48,36 +49,38 @@ public class LightningSpell extends TargetedSpell implements TargetedLocationSpe
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
+			LivingEntity caster = data.caster();
+			String[] args = data.args();
 			Block target;
 			LivingEntity entityTarget = null;
 			if (requireEntityTarget) {
-				TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-				if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+				TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
+				if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
 				entityTarget = targetInfo.target();
-				power = targetInfo.power();
+				data.power(targetInfo.getPower());
 
-				double additionalDamage = this.additionalDamage.get(caster, entityTarget, power, args);
+				double additionalDamage = this.additionalDamage.get(data.builder().target(entityTarget).build());
 
 				if (checkPlugins) {
 					MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, entityTarget, DamageCause.ENTITY_ATTACK, 1 + additionalDamage, this);
-					if (!event.callEvent()) return noTarget(caster, args);
+					if (!event.callEvent()) return noTarget(data);
 				}
 
 				target = entityTarget.getLocation().getBlock();
-				if (additionalDamage > 0) entityTarget.damage(additionalDamage * power, caster);
+				if (additionalDamage > 0) entityTarget.damage(additionalDamage * data.power(), caster);
 			} else {
-				target = getTargetedBlock(caster, power, args);
-				if (target == null) return noTarget(caster, args);
+				target = getTargetedBlock(caster, data.power(), args);
+				if (target == null) return noTarget(data);
 
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power, args);
-				if (!event.callEvent()) return noTarget(caster, args);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(target.getLocation()).build());
+				if (!event.callEvent()) return noTarget(data);
 
 				target = event.getTargetLocation().getBlock();
 			}
 
 			lightning(target.getLocation());
-			playSpellEffects(caster, target.getLocation(), power, args);
+			playSpellEffects(data.builder().location(target.getLocation()).build());
 
 			if (entityTarget != null) {
 				sendMessages(caster, entityTarget, args);
@@ -89,30 +92,9 @@ public class LightningSpell extends TargetedSpell implements TargetedLocationSpe
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		lightning(target);
-		playSpellEffects(caster, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		lightning(target);
-		playSpellEffects(caster, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		lightning(target);
-		playSpellEffects(EffectPosition.CASTER, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		lightning(target);
-		playSpellEffects(EffectPosition.CASTER, target, power, null);
+	public boolean castAtLocation(SpellData data) {
+		lightning(data.location());
+		playSpellEffects(data);
 		return true;
 	}
 

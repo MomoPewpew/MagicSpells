@@ -291,7 +291,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 			this.caster = caster;
 			this.target = target;
 			this.power = power;
-			this.heightFromSurface = HomingMissileSpell.this.heightFromSurface.get(caster, target, power, args);
+			if (hugSurface) this.heightFromSurface = HomingMissileSpell.this.heightFromSurface.get(caster, target, power, args);
 			this.args = args;
 
 			data = new SpellData(caster, target, power, args);

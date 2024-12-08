@@ -62,7 +62,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		super(config, spellName);
 
 		title = getConfigString("title", "Window Title " + spellName);
-		delay = getConfigInt("delay", 0);
+		delay = getConfigInt("delay", 1);
 		filler = createItem("filler");
 		stayOpenNonOption = getConfigBoolean("stay-open-non-option", false);
 		bypassNormalCast = getConfigBoolean("bypass-normal-cast", true);

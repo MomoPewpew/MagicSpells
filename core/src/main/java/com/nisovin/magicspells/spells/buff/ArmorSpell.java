@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -184,6 +185,7 @@ public class ArmorSpell extends BuffSpell {
 		EquipStore eStore = new EquipStore();
 		if (helmet != null) {
 			eStore.helmet = inv.getHelmet();
+			if (eStore.helmet == null) eStore.helmet = new ItemStack(Material.AIR);
 			if (replace) inv.setHelmet(null);
 			ItemStack stack = helmet.clone();
 			if (duration > 0) {
@@ -197,6 +199,7 @@ public class ArmorSpell extends BuffSpell {
 
 		if (chestplate != null) {
 			eStore.chest = inv.getChestplate();
+			if (eStore.chest == null) eStore.chest = new ItemStack(Material.AIR);
 			if (replace) inv.setChestplate(null);
 			ItemStack stack = chestplate.clone();
 			if (duration > 0) {
@@ -210,6 +213,7 @@ public class ArmorSpell extends BuffSpell {
 
 		if (leggings != null) {
 			eStore.legs = inv.getLeggings();
+			if (eStore.legs == null) eStore.legs = new ItemStack(Material.AIR);
 			if (replace) inv.setLeggings(null);
 			ItemStack stack = leggings.clone();
 			if (duration > 0) {
@@ -223,6 +227,7 @@ public class ArmorSpell extends BuffSpell {
 
 		if (boots != null) {
 			eStore.boots = inv.getBoots();
+			if (eStore.boots == null) eStore.boots = new ItemStack(Material.AIR);
 			if (replace) inv.setBoots(null);
 			ItemStack stack = boots.clone();
 			if (duration > 0) {

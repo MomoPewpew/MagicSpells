@@ -331,7 +331,7 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 			armorStand.setMetadata("MSBlockBeam", new FixedMetadataValue(MagicSpells.getInstance(), "MSBlockBeam"));
 
 			if (hpFix) {
-				armorStand.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(health);
+				armorStand.getAttribute(Attribute.MAX_HEALTH).setBaseValue(health);
 				armorStand.setHealth(health);
 			}
 			armorStand.setSmall(small);

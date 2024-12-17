@@ -23,13 +23,11 @@ import com.google.gson.JsonSyntaxException;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.HashMultimap;
 
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.text.Component;
 
-import org.bukkit.Color;
-import org.bukkit.Bukkit;
-import org.bukkit.DyeColor;
-import org.bukkit.Material;
-import org.bukkit.FireworkEffect;
+import org.bukkit.*;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 import org.bukkit.potion.PotionEffect;
@@ -341,19 +339,18 @@ public class MagicItemDataParser {
 								String[] pattern = patternString.split(" ");
 
 								if (pattern.length == 2) {
-									PatternType patternType;
+									PatternType patternType = null;
 									DyeColor dyeColor;
 
-									try {
-										patternType = PatternType.valueOf(pattern[0]);
-									} catch (IllegalArgumentException e) {
-										DebugHandler.debugBadEnumValue(PatternType.class, pattern[0]);
+									NamespacedKey namespacedKey = NamespacedKey.fromString(pattern[0]);
+									if (namespacedKey != null) patternType = RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).get(namespacedKey);
+									if (patternType == null) {
 										MagicSpells.error("'" + patternString + "' could not be connected to a pattern.");
 										continue;
 									}
 
 									try {
-										dyeColor = DyeColor.valueOf(pattern[1]);
+										dyeColor = DyeColor.valueOf(pattern[1].toUpperCase());
 									} catch (IllegalArgumentException e) {
 										DebugHandler.debugBadEnumValue(DyeColor.class, pattern[1]);
 										MagicSpells.error("'" + patternString + "' could not be connected to a pattern.");

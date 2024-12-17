@@ -1,6 +1,8 @@
 package com.nisovin.magicspells.util;
 
 import com.nisovin.magicspells.MagicSpells;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.*;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -141,7 +143,7 @@ public class EntityData {
 		addOptEnum(transformers, config, "type", Axolotl.class, Axolotl.Variant.class, Axolotl::setVariant);
 
 		// Cat
-		addOptEnum(transformers, config, "type", Cat.class, Cat.Type.class, Cat::setCatType);
+		addOptRegistryEntry(transformers, config, "type", Cat.class, Registry.CAT_VARIANT, Cat::setCatType);
 
 		// ChestedHorse
 		chested = addBoolean(transformers, config, "chested", false, ChestedHorse.class, ChestedHorse::setCarryingChest);
@@ -162,7 +164,7 @@ public class EntityData {
 		addOptEnum(transformers, config, "type", Fox.class, Fox.Type.class, Fox::setFoxType);
 
 		// Frog
-		addOptEnum(transformers, config, "type", Frog.class, Frog.Variant.class, Frog::setVariant);
+		addOptRegistryEntry(transformers, config, "type", Frog.class, Registry.FROG_VARIANT, Frog::setVariant);
 
 		// Horse
 		horseColor = addOptEnum(transformers, config, "color", Horse.class, Horse.Color.class, Horse::setColor);
@@ -207,7 +209,7 @@ public class EntityData {
 		tropicalFishPattern = addOptEnum(transformers, config, "type", TropicalFish.class, TropicalFish.Pattern.class, TropicalFish::setPattern);
 
 		// Villager
-		profession = addOptEnum(transformers, config, "type", Villager.class, Villager.Profession.class, Villager::setProfession);
+		profession = addOptRegistryEntry(transformers, config, "type", Villager.class, Registry.VILLAGER_PROFESSION, Villager::setProfession);
 
 		// Wolf
 		addBoolean(transformers, config, "angry", false, Wolf.class, Wolf::setAngry);
@@ -497,6 +499,17 @@ public class EntityData {
 	private <T> void addOptBlockData(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, BlockData> setter) {
 		ConfigData<BlockData> supplier = ConfigDataUtil.getBlockData(config, name, null);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
+	}
+
+	private <T, R extends Keyed> void addOptRegistryEntry(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, RegistryKey<R> key, BiConsumer<T, R> setter) {
+		addOptRegistryEntry(transformers, config, name, type, RegistryAccess.registryAccess().getRegistry(key), setter);
+	}
+
+	private <T, R extends Keyed> ConfigData<R> addOptRegistryEntry(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, Registry<R> registry, BiConsumer<T, R> setter) {
+		ConfigData<R> supplier = ConfigDataUtil.getRegistryEntry(config, name, registry, null);
+		transformers.put(type, new Transformer<>(supplier, setter, true));
+
+		return supplier;
 	}
 
 	public ConfigData<Vector3f> getVector(ConfigurationSection config, String path) {

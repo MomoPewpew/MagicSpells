@@ -607,11 +607,11 @@ public class Util {
 	}
 
 	public static double getMaxHealth(LivingEntity entity) {
-		return entity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+		return entity.getAttribute(Attribute.MAX_HEALTH).getValue();
 	}
 
 	public static void setMaxHealth(LivingEntity entity, double maxHealth) {
-		entity.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth);
+		entity.getAttribute(Attribute.MAX_HEALTH).setBaseValue(maxHealth);
 	}
 
 	public static Vector makeFinite(Vector vector) {
@@ -902,6 +902,57 @@ public class Util {
 			@Override
 			public InventoryType getType() {
 				return InventoryType.CRAFTING;
+			}
+
+			@Override
+			public void setItem(int i, @Nullable ItemStack itemStack) {
+
+			}
+
+			@Override
+			public @Nullable ItemStack getItem(int i) {
+				return null;
+			}
+
+			@Override
+			public void setCursor(@Nullable ItemStack itemStack) {
+
+			}
+
+			@Override
+			public @NotNull ItemStack getCursor() {
+				return null;
+			}
+
+			@Override
+			public @Nullable Inventory getInventory(int i) {
+				return null;
+			}
+
+			@Override
+			public int convertSlot(int i) {
+				return 0;
+			}
+
+			@NotNull
+			@Override
+			public InventoryType.SlotType getSlotType(int i) {
+				return null;
+			}
+
+			@Override
+			public void close() {
+
+			}
+
+			@Override
+			public int countSlots() {
+				return 0;
+			}
+
+			@Override
+			public boolean setProperty(@NotNull Property property, int i) {
+				return false;
 			}
 
 			@Override

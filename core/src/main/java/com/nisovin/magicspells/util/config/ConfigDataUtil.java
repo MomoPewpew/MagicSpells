@@ -2,7 +2,7 @@ package com.nisovin.magicspells.util.config;
 
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,10 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import org.bukkit.Color;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.Particle;
 import org.bukkit.util.Vector;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.entity.LivingEntity;
@@ -634,6 +630,41 @@ public class ConfigDataUtil {
 
 			};
 		}
+	}
+
+	public static <T extends Keyed> ConfigData<T> getRegistryEntry(@NotNull ConfigurationSection config, @NotNull String path, @NotNull Registry<T> registry, @Nullable T def) {
+		String value = config.getString(path);
+		if (value == null) return (caster, target, power, args) -> def;
+
+		NamespacedKey key = NamespacedKey.fromString(value);
+		if (key != null) {
+			T val = registry.get(key);
+			if (val != null) return (caster, target, power, args) -> val;
+		}
+
+		ConfigData<String> supplier = getString(value);
+		if (supplier.isConstant()) return (caster, target, power, args) -> def;
+
+		return new ConfigData<>() {
+
+			@Override
+			public T get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+				String val = supplier.get(caster, target, power, args);
+				if (val == null) return def;
+
+				NamespacedKey key = NamespacedKey.fromString(val);
+				if (key == null) return def;
+
+				T entry = registry.get(key);
+				return entry == null ? def : entry;
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+
+		};
 	}
 
 	@NotNull

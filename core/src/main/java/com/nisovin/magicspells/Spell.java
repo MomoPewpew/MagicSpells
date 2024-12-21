@@ -776,6 +776,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return ConfigDataUtil.getEnum(config.getMainConfig(), "spells." + internalName + '.' + key, type, def);
 	}
 
+	protected ConfigData<MagicItem> getConfigDataMagicItem(String key, String def) {
+		return ConfigDataUtil.getMagicItem(config.getMainConfig(), "spells." + internalName + '.' + key, def);
+	}
+
 	protected ConfigData<BlockData> getConfigDataBlockData(String key, BlockData def) {
 		return ConfigDataUtil.getBlockData(config.getMainConfig(), "spells." + internalName + '.' + key, def);
 	}

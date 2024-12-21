@@ -35,7 +35,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	private final String spellOnHitEntityName;
 	private final String spellOnHitGroundName;
 
-	private ItemStack item;
+	private ConfigData<MagicItem> item;
 
 	private Component itemName;
 
@@ -74,8 +74,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 		trackerSet = new HashSet<>();
 
-		MagicItem magicItem = MagicItems.getMagicItemFromString(getConfigString("item", "iron_sword"));
-		if (magicItem != null) item = magicItem.getItemStack();
+		item = getConfigDataMagicItem("item", "iron_sword");
 
 		spellDelay = getConfigDataInt("spell-delay", 40);
 		pickupDelay = getConfigDataInt("pickup-delay", 100);
@@ -178,7 +177,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 		tracker.setSpell(this);
 
 		tracker.setItemName(itemName);
-		tracker.setItem(item);
+		tracker.setItem(item.get(caster, null, power, args).getItemStack());
 
 		tracker.setSpellDelay(spellDelay.get(caster, null, power, args));
 		tracker.setPickupDelay(pickupDelay.get(caster, null, power, args));
@@ -220,14 +219,6 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 	public static Set<ItemProjectileTracker> getProjectileTrackers() {
 		return trackerSet;
-	}
-
-	public ItemStack getItem() {
-		return item;
-	}
-
-	public void setItem(ItemStack item) {
-		this.item = item;
 	}
 
 	public Component getItemName() {

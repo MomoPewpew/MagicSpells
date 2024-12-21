@@ -37,7 +37,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 	private ConfigData<MagicItem> item;
 
-	private Component itemName;
+	private ConfigData<String> itemName;
 
 	private ConfigData<Integer> spellDelay;
 	private ConfigData<Integer> pickupDelay;
@@ -99,7 +99,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 		relativeOffset = getConfigVector("relative-offset", "0,0,0");
 
-		itemName = Util.getMiniMessage(getConfigString("item-name", null));
+		itemName = getConfigDataString("item-name", null);
 		spellOnTickName = getConfigString("spell-on-tick", "");
 		spellOnDelayName = getConfigString("spell-on-delay", "");
 		spellOnHitEntityName = getConfigString("spell-on-hit-entity", "");
@@ -176,8 +176,8 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	private void setupTracker(ItemProjectileTracker tracker, LivingEntity caster, float power, String[] args) {
 		tracker.setSpell(this);
 
-		tracker.setItemName(itemName);
-		tracker.setItem(item.get(caster, null, power, args).getItemStack());
+		tracker.setItemName(Util.getMiniMessage((itemName.get(caster, power, args))));
+		tracker.setItem(item.get(caster, power, args).getItemStack());
 
 		tracker.setSpellDelay(spellDelay.get(caster, null, power, args));
 		tracker.setPickupDelay(pickupDelay.get(caster, null, power, args));
@@ -219,14 +219,6 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 	public static Set<ItemProjectileTracker> getProjectileTrackers() {
 		return trackerSet;
-	}
-
-	public Component getItemName() {
-		return itemName;
-	}
-
-	public void setItemName(Component itemName) {
-		this.itemName = itemName;
 	}
 
 	public boolean shouldCheckPlugins() {

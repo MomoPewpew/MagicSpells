@@ -14,6 +14,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.SpellFilter;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.events.SpellCastEvent;
@@ -43,11 +44,14 @@ public class MagicBondSpell extends TargetedSpell implements TargetedEntitySpell
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data, target);
 
-			bond(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+			bond(data.builder()
+				.target(target.target())
+				.power(target.getPower())
+				.build());
+			sendMessages(data.caster(), target.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -55,71 +59,54 @@ public class MagicBondSpell extends TargetedSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		bond(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		bond(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		bond(caster, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
-	private void bond(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		bondTarget.put(caster, target);
-		playSpellEffects(caster, target, power, args);
-		SpellMonitor monitorBond = new SpellMonitor(caster, target, power);
+	private void bond(SpellData data) {
+		bondTarget.put(data.caster(), data.target());
+		playSpellEffects(data.caster(), data.target(), data);
+		SpellMonitor monitorBond = new SpellMonitor(data);
 		MagicSpells.registerEvents(monitorBond);
 
 		MagicSpells.scheduleDelayedTask(() -> {
 			if (!strDurationEnd.isEmpty()) {
-				if (caster instanceof Player) MagicSpells.sendMessage((Player) caster, strDurationEnd);
-				if (target instanceof Player) MagicSpells.sendMessage((Player) target, strDurationEnd);
+				if (data.caster() instanceof Player) MagicSpells.sendMessage((Player) data.caster(), strDurationEnd);
+				if (data.target() instanceof Player) MagicSpells.sendMessage((Player) data.target(), strDurationEnd);
 			}
-			bondTarget.remove(caster);
+			bondTarget.remove(data.caster());
 
 			HandlerList.unregisterAll(monitorBond);
-		}, duration.get(caster, target, power, args));
+		}, duration.get(data));
 	}
 
 	private class SpellMonitor implements Listener {
 
-		private LivingEntity caster;
-		private LivingEntity target;
-		private float power;
+		private final SpellData data;
 
-		private SpellMonitor(LivingEntity caster, LivingEntity target, float power) {
-			this.caster = caster;
-			this.target = target;
-			this.power = power;
+		private SpellMonitor(SpellData data) {
+			this.data = data;
 		}
 
 		@EventHandler
 		public void onPlayerLeave(PlayerQuitEvent e) {
 			if (bondTarget.containsKey(e.getPlayer()) || bondTarget.containsValue(e.getPlayer())) {
-				bondTarget.remove(caster);
+				bondTarget.remove(data.caster());
 			}
 		}
 
 		@EventHandler
 		public void onPlayerSpellCast(SpellCastEvent e) {
 			Spell spell = e.getSpell();
-			if (e.getCaster() != caster || spell instanceof MagicBondSpell) return;
-			if (spell.onCooldown(caster)) return;
-			if (!bondTarget.containsKey(caster) && !bondTarget.containsValue(target)) return;
-			if (target.isDead()) return;
+			if (e.getCaster() != data.caster() || spell instanceof MagicBondSpell) return;
+			if (spell.onCooldown(data.caster())) return;
+			if (!bondTarget.containsKey(data.caster()) && !bondTarget.containsValue(data.target())) return;
+			if (data.target().isDead()) return;
 			if (!filter.check(spell)) return;
 
-			spell.cast(target);
-
+			spell.cast(data.builder().caster(data.target()).build());
 		}
 
 		@Override
@@ -127,10 +114,7 @@ public class MagicBondSpell extends TargetedSpell implements TargetedEntitySpell
 			if (other == null) return false;
 			if (!getClass().getName().equals(other.getClass().getName())) return false;
 			SpellMonitor otherMonitor = (SpellMonitor)other;
-			if (otherMonitor.caster != caster) return false;
-			if (otherMonitor.target != target) return false;
-			if (otherMonitor.power != power) return false;
-			return true;
+			return data.equals(otherMonitor.data);
 		}
 
 	}

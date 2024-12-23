@@ -98,68 +98,42 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 	}
 	
 	@Override
-	public PostCastAction castSpell(LivingEntity caster, SpellCastState spellCastState, float power, String[] strings) {
-		if (spellCastState == SpellCastState.NORMAL) {
+	public PostCastAction castSpell(SpellCastState state, SpellData data) {
+		if (state == SpellCastState.NORMAL) {
 			Location loc;
-			if (pointBlank) loc = caster.getLocation();
-			else loc = getTargetedBlock(caster, power, strings).getLocation();
+			if (pointBlank) loc = data.caster().getLocation();
+			else loc = getTargetedBlock(data.caster(), data.power()).getLocation();
 			
-			createNova(caster, null, loc, power, strings);
+			createNova(data.builder().location(loc).build());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 	
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		createNova(caster, target, target.getLocation(), power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		createNova(data.builder().location(data.target().getLocation()).build());
 		return true;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		createNova(caster, target, target.getLocation(), power, null);
+	public boolean castAtLocation(SpellData data) {
+		createNova(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity livingEntity, float v) {
-		return false;
-	}
-	
-	@Override
-	public boolean castAtLocation(LivingEntity livingEntity, Location location, float v, String[] args) {
-		createNova(livingEntity, null, location, v, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		createNova(caster, null, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location location, float v) {
-		return false;
-	}
-
-	private void createNova(LivingEntity caster, LivingEntity target, Location loc, float power, String[] args) {
+	private void createNova(SpellData data) {
 		if (blockData == null) return;
 		// Relative offset
-		Location startLoc = loc.clone();
-		Vector direction = caster.getLocation().getDirection().normalize();
+		Location startLoc = data.location().clone();
+		Vector direction = data.caster().getLocation().getDirection().normalize();
 		Vector horizOffset = new Vector(-direction.getZ(), 0.0, direction.getX()).normalize();
 		startLoc.add(horizOffset.multiply(relativeOffset.getZ())).getBlock().getLocation();
 		startLoc.add(direction.setY(0).normalize().multiply(relativeOffset.getX()));
 		startLoc.add(0, relativeOffset.getY(), 0);
 
-		SpellData data = new SpellData(caster, target, power, args);
-		
 		// Get nearby players
 		double visibleRange = Math.min(Math.max(this.visibleRange.get(data), 20), MagicSpells.getGlobalRadius());
-
 		Collection<Player> nearbyPlayers = startLoc.getWorld().getNearbyPlayers(startLoc, visibleRange, visibleRange, visibleRange);
 
 		int radius = this.radius.get(data);
@@ -169,39 +143,38 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		int expandingRadiusChange = this.expandingRadiusChange.get(data);
 		BlockData blockData = this.blockData.get(data);
 		if (expandingRadiusChange < 1) expandingRadiusChange = 1;
-
 		// Start tracker
-		if (!circleShape) new NovaTrackerSquare(nearbyPlayers, startLoc.getBlock(), blockData, caster, radius, startRadius, heightPerTick, novaTickInterval, expandingRadiusChange, power, args);
-		else new NovaTrackerCircle(nearbyPlayers, startLoc.getBlock(), blockData, caster, radius, startRadius, heightPerTick, novaTickInterval, expandingRadiusChange, power, args);
+		NovaTracker tracker;
+		if (!circleShape) {
+			tracker = new NovaTrackerSquare(nearbyPlayers, startLoc.getBlock(), blockData, data, radius, startRadius, heightPerTick, novaTickInterval, expandingRadiusChange);
+		} else {
+			tracker = new NovaTrackerCircle(nearbyPlayers, startLoc.getBlock(), blockData, data, radius, startRadius, heightPerTick, novaTickInterval, expandingRadiusChange);
+		}
 	}
 	
-	private class NovaTrackerSquare implements Runnable {
-		
+	private interface NovaTracker extends Runnable {}
+	private class NovaTrackerSquare implements NovaTracker {
 		private BlockData blockData;
 		private Collection<Player> nearby;
 		private Set<Block> blocks;
-		private LivingEntity caster;
+		private SpellData data;
 		private Block center;
-		private float power;
-		private String[] args;
 		private int radiusNova;
 		private int startRadius;
 		private int heightPerTick;
-		private int radiusChange;
+		private int expandingRadiusChange;
 		private int taskId;
 		private int count;
 		private int temp;
 
-		private NovaTrackerSquare(Collection<Player> nearby, Block center, BlockData blockData, LivingEntity caster, int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange, float power, String[] args) {
+		private NovaTrackerSquare(Collection<Player> nearby, Block center, BlockData blockData, SpellData data, int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange) {
 			this.nearby = nearby;
 			this.center = center;
 			this.blockData = blockData;
-			this.caster = caster;
-			this.power = power;
-			this.args = args;
+			this.data = data;
 			this.radiusNova = radius;
 			this.blocks = new HashSet<>();
-			this.radiusChange = activeRadiusChange;
+			this.expandingRadiusChange = activeRadiusChange;
 			this.startRadius = startRadius;
 			this.heightPerTick = heightPerTick;
 
@@ -215,13 +188,13 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		public void run() {
 			temp = count;
 			temp += startRadius;
-			temp *= radiusChange;
+			temp *= expandingRadiusChange;
 			count++;
 			
 			if (removePreviousBlocks) {
 				for (Block b : blocks) {
 					for (Player p : nearby) p.sendBlockChange(b.getLocation(), b.getBlockData());
-					if (spellOnWaveRemove != null) spellOnWaveRemove.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+					if (spellOnWaveRemove != null) spellOnWaveRemove.subcast(data.builder().location(b.getLocation().add(0.5, 0, 0.5)).build());
 				}
 				blocks.clear();
 			}
@@ -257,7 +230,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 					if (blocks.contains(b)) continue;
 					for (Player p : nearby) p.sendBlockChange(b.getLocation(), blockData);
 					blocks.add(b);
-					if (locationSpell != null) locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+					if (locationSpell != null) locationSpell.subcast(data.builder().location(b.getLocation().add(0.5, 0, 0.5)).build());
 				}
 			}
 			
@@ -266,7 +239,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		private void stop() {
 			for (Block b : blocks) {
 				for (Player p : nearby) p.sendBlockChange(b.getLocation(), b.getBlockData());
-				if (spellOnEnd != null) spellOnEnd.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+				if (spellOnEnd != null) spellOnEnd.subcast(data.builder().location(b.getLocation().add(0.5, 0, 0.5)).build());
 			}
 			blocks.clear();
 			MagicSpells.cancelTask(taskId);
@@ -274,15 +247,12 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		
 	}
 	
-	private class NovaTrackerCircle implements Runnable {
-
+	private class NovaTrackerCircle implements NovaTracker {
 		private BlockData blockData;
 		private Collection<Player> nearby;
 		private Set<Block> blocks;
-		private LivingEntity caster;
+		private SpellData data;
 		private Block center;
-		private float power;
-		private String[] args;
 		private int radiusNova;
 		private int startRadius;
 		private int heightPerTick;
@@ -291,13 +261,11 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		private int count;
 		private int temp;
 
-		private NovaTrackerCircle(Collection<Player> nearby, Block center, BlockData blockData, LivingEntity caster, int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange, float power, String[] args) {
+		private NovaTrackerCircle(Collection<Player> nearby, Block center, BlockData blockData, SpellData data, int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange) {
 			this.nearby = nearby;
 			this.center = center;
 			this.blockData = blockData;
-			this.caster = caster;
-			this.power = power;
-			this.args = args;
+			this.data = data;
 			this.radiusNova = radius;
 			this.blocks = new HashSet<>();
 			this.startRadius = startRadius;
@@ -321,7 +289,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 			if (removePreviousBlocks) {
 				for (Block b : blocks) {
 					for (Player p : nearby) p.sendBlockChange(b.getLocation(), b.getBlockData());
-					if (spellOnWaveRemove != null) spellOnWaveRemove.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+					if (spellOnWaveRemove != null) spellOnWaveRemove.subcast(data.builder().location(b.getLocation().add(0.5, 0, 0.5)).build());
 				}
 				blocks.clear();
 			}
@@ -355,7 +323,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 				if (blocks.contains(b)) return;
 				for (Player p : nearby) p.sendBlockChange(b.getLocation(), blockData);
 				blocks.add(b);
-				if (locationSpell != null) locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+				if (locationSpell != null) locationSpell.subcast(data.builder().location(b.getLocation().add(0.5, 0, 0.5)).build());
 			}
 			
 			// Generate the circle
@@ -383,7 +351,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 				if (blocks.contains(b)) continue;
 				for (Player p : nearby) p.sendBlockChange(b.getLocation(), blockData);
 				blocks.add(b);
-				if (locationSpell != null) locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+				if (locationSpell != null) locationSpell.subcast(data.builder().location(b.getLocation().add(0.5, 0, 0.5)).build());
 			}
 			
 		}
@@ -391,7 +359,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		private void stop() {
 			for (Block b : blocks) {
 				for (Player p : nearby) p.sendBlockChange(b.getLocation(), b.getBlockData());
-				if (spellOnEnd != null) spellOnEnd.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+				if (spellOnEnd != null) spellOnEnd.subcast(data.builder().location(b.getLocation().add(0.5, 0, 0.5)).build());
 			}
 			blocks.clear();
 			MagicSpells.cancelTask(taskId);

@@ -144,29 +144,29 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
 			List<Block> lastTwo;
 			try {
-				lastTwo = getLastTwoTargetedBlocks(player, power, args);
+				lastTwo = getLastTwoTargetedBlocks(player, data.power(), data.args());
 			} catch (IllegalStateException e) {
 				DebugHandler.debugIllegalState(e);
 				lastTwo = null;
 			}
 
-			if (lastTwo == null || lastTwo.size() != 2) return noTarget(player, args);
-			if (!BlockUtils.isAir(lastTwo.get(0).getType()) || BlockUtils.isAir(lastTwo.get(1).getType())) return noTarget(player, args);
+			if (lastTwo == null || lastTwo.size() != 2) return noTarget(data);
+			if (!BlockUtils.isAir(lastTwo.get(0).getType()) || BlockUtils.isAir(lastTwo.get(1).getType())) return noTarget(data);
 
 			Block block = lastTwo.get(0);
 			Block against = lastTwo.get(1);
-			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, player, block.getLocation(), power, args);
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(block.getLocation()).build());
 			EventUtil.call(event);
-			if (event.isCancelled()) return noTarget(player, strFailed, args);
+			if (event.isCancelled()) return noTarget(data);
 			block = event.getTargetLocation().getBlock();
-			power = event.getPower();
+			data = data.builder().power(event.getPower()).build();
 
 			if (!hasMiddle) {
-				boolean done = materialize(player, block, against, power, args);
-				if (!done) return noTarget(player, strFailed, args);
+				boolean done = materialize(block, against, data);
+				if (!done) return noTarget(data);
 				return PostCastAction.HANDLE_NORMALLY;
 			}
 
@@ -187,7 +187,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 			when placing the new block.*/
 			int rowPosition = 0;
 
-			int height = this.height.get(caster, null, power, args);
+			int height = this.height.get(data.caster(), null, data.power(), data.args());
 
 			//If height is 0, the code ceases to function. Lets not have that.
 			if (height == 0) height = 1;
@@ -229,8 +229,8 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 						rowPosition++;
 
 						//As soon as a block can't be spawned, it will return an error.
-						boolean done = materialize(player, air, ground, power, args);
-						if (!done) return noTarget(player, strFailed, args);
+						boolean done = materialize(air, ground, data);
+						if (!done) return noTarget(data);
 
 						//Done with placing that one block? Move on to the next one.
 						spawnBlock.setX((ground.getX() + 1));
@@ -245,32 +245,14 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player player)) return false;
-		Block block = target.getBlock();
-		Block against = target.clone().add(target.getDirection()).getBlock();
+	public boolean castAtLocation(SpellData data) {
+		Block block = data.location().getBlock();
+		Block against = data.location().clone().add(data.location().getDirection()).getBlock();
 		if (block.equals(against)) against = block.getRelative(BlockFace.DOWN);
-		if (block.getType() == Material.AIR) return materialize(player, block, against, power, args);
-		return false;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		Block block = target.getBlock();
-		if (block.getType() == Material.AIR) return materialize(null, block, block, power, args);
+		if (block.getType() == Material.AIR) return materialize(block, against, data);
 		Block block2 = block.getRelative(BlockFace.UP);
-		if (block2.getType() == Material.AIR) return materialize(null, block2, block, power, args);
+		if (block2.getType() == Material.AIR) return materialize(block2, block, data);
 		return false;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
 	}
 
 	private int getRowLength(int patternPosition) {
@@ -318,25 +300,24 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		return mat;
 	}
 
-	private boolean materialize(Player player, Block block, Block against, float power, String[] args) {
+	private boolean materialize(Block block, Block against, SpellData data) {
 		BlockState blockState = block.getState();
 
-		if (checkPlugins && player != null) {
+		if (checkPlugins && data.caster() instanceof Player player) {
 			block.setType(material, false);
 			MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, blockState, against, player.getEquipment().getItemInMainHand(), player, true);
 			EventUtil.call(event);
 			blockState.update(true);
 			if (event.isCancelled()) return false;
 		}
-		if (!falling) block.setType(material, applyPhysics);
-		else
-			block.getLocation().getWorld().spawnFallingBlock(block.getLocation().add(0.5, fallHeight.get(player, null, power, args), 0.5), material.createBlockData());
 
-		SpellData data = new SpellData(player, power, args);
+		if (!falling) block.setType(material, applyPhysics);
+		else block.getLocation().getWorld().spawnFallingBlock(block.getLocation().add(0.5, fallHeight.get(data), 0.5), material.createBlockData());
+
 		playSpellEffects(EffectPosition.TARGET, block.getLocation(), data);
-		if (player != null) {
-			playSpellEffects(EffectPosition.CASTER, player, data);
-			playSpellEffectsTrail(player.getLocation(), block.getLocation(), data);
+		if (data.caster() != null) {
+			playSpellEffects(EffectPosition.CASTER, data.caster(), data);
+			playSpellEffectsTrail(data.caster().getLocation(), block.getLocation(), data);
 		}
 
 		if (playBreakEffect) block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType());
@@ -347,7 +328,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 				if (materials.contains(block.getType())) {
 					blocks.remove(block);
 					playSpellEffects(EffectPosition.DELAYED, block.getLocation(), data);
-					if (checkPlugins && player != null) {
+					if (checkPlugins && data.caster() instanceof Player player) {
 						MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player);
 						EventUtil.call(event);
 						if (event.isCancelled()) return;

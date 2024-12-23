@@ -226,35 +226,38 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 			if (targeted) {
 				if (requireEntityTarget) {
-					TargetInfo<LivingEntity> info = getTargetedEntity(caster, power);
-					if (info.noTarget()) return noTarget(caster, args, info);
+					TargetInfo<LivingEntity> info = getTargetedEntity(data);
+					if (info.noTarget()) return noTarget(data, info);
 
 					entityTarget = info.target();
-					power = info.power();
+					data = data.builder().power(info.getPower()).build();
 				} else if (pointBlank) {
-					locationTarget = caster.getLocation();
+					locationTarget = data.caster().getLocation();
 				} else {
-					Block block = getTargetedBlock(caster, power, args);
+					Block block = getTargetedBlock(data.caster(), data.power());
 
 					if (block != null) {
 						locationTarget = block.getLocation();
 						locationTarget.add(0.5, yOffset + 0.5, 0.5);
 
-						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, locationTarget, power, args);
-						if (!event.callEvent()) return noTarget(caster, args);
+						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(locationTarget).build());
+						if (!event.callEvent()) return noTarget(data);
 
 						locationTarget = event.getTargetLocation();
-						power = event.getPower();
+						data = data.builder().power(event.getPower()).build();
 					}
 				}
 
-				if (entityTarget == null && locationTarget == null) return noTarget(caster, args);
+				if (entityTarget == null && locationTarget == null) return noTarget(data);
 			}
 
-			initLoop(caster, entityTarget, locationTarget, power, args);
+			initLoop(data.builder()
+				.target(entityTarget)
+				.location(locationTarget)
+				.build());
 
 			if (entityTarget != null) {
-				sendMessages(caster, entityTarget, args);
+				sendMessages(data.caster(), entityTarget, data.args());
 				return PostCastAction.NO_MESSAGES;
 			}
 		}
@@ -263,54 +266,15 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		initLoop(caster, target, null, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		initLoop(data.builder().location(null).build());
 		return true;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		initLoop(caster, target, null, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		initLoop(null, target, null, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		initLoop(null, target, null, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		initLoop(caster, null, target.clone().add(0, yOffset, 0), power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		initLoop(caster, null, target.clone().add(0, yOffset, 0), power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		initLoop(null, null, target.clone().add(0, yOffset, 0), power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		initLoop(null, null, target.clone().add(0, yOffset, 0), power, null);
+	public boolean castAtLocation(SpellData data) {
+		initLoop(data.builder().target(null).location(data.location().add(0, yOffset, 0)).build());
 		return true;
 	}
 
@@ -338,8 +302,10 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		activeLoops.clear();
 	}
 
-	private void initLoop(LivingEntity caster, LivingEntity targetEntity, Location targetLocation, float power, String[] args) {
-		Loop loop = new Loop(caster, targetEntity, targetLocation, power, args);
+	private void initLoop(SpellData data) {
+		Loop loop = new Loop(data);
+		LivingEntity caster = data.caster();
+		LivingEntity targetEntity = data.target();
 
 		if (targetEntity != null) activeLoops.put(targetEntity.getUniqueId(), loop);
 		else if (caster != null) activeLoops.put(caster.getUniqueId(), loop);
@@ -348,11 +314,6 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	public class Loop implements Runnable {
 
-		private final LivingEntity caster;
-
-		private final LivingEntity targetEntity;
-		private final Location targetLocation;
-
 		private final long iterations;
 		private final int taskId;
 
@@ -360,14 +321,8 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		private long count;
 		private boolean cancelled;
 
-		private Loop(LivingEntity caster, LivingEntity targetEntity, Location targetLocation, float power, String[] args) {
-			this.caster = caster;
-
-			this.targetLocation = targetLocation;
-			this.targetEntity = targetEntity;
-
-			data = new SpellData(caster, targetEntity, power, args);
-			iterations = LoopSpell.this.iterations.get(caster, targetEntity, power, args);
+		private Loop(SpellData data) {
+			iterations = LoopSpell.this.iterations.get(data);
 
 			long interval = LoopSpell.this.interval.get(data);
 			long delay = LoopSpell.this.delay.get(data);
@@ -395,26 +350,25 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		@Override
 		public void run() {
-			if (targetEntity != null && (cancelOnDeath || !(targetEntity instanceof Player)) && !targetEntity.isValid()) {
+			if (data.target() != null && (cancelOnDeath || !(data.target() instanceof Player)) && !data.target().isValid()) {
 				cancel();
 				return;
 			}
 
-			if (variableModsLoop != null && (!skipFirstVariableModsLoop || count > 0) && caster instanceof Player playerCaster) {
+			if (variableModsLoop != null && (!skipFirstVariableModsLoop || count > 0) && data.caster() instanceof Player playerCaster) {
 				VariableManager variableManager = MagicSpells.getVariableManager();
-				Player playerTarget = targetEntity instanceof Player t ? t : null;
-
+				
 				for (Map.Entry<String, VariableMod> entry : variableModsLoop.entries()) {
 					VariableMod mod = entry.getValue();
 					if (mod == null) continue;
 
-					variableManager.processVariableMods(entry.getKey(), mod, playerCaster, playerCaster, playerTarget, data.power(), data.args());
+					variableManager.processVariableMods(entry.getKey(), mod, playerCaster, playerCaster, null, data.power(), data.args());
 				}
 			}
 
-			if (variableModsTargetLoop != null && (!skipFirstVariableModsTargetLoop || count > 0) && targetEntity instanceof Player playerTarget) {
+			if (variableModsTargetLoop != null && (!skipFirstVariableModsTargetLoop || count > 0) && data.target() instanceof Player playerTarget) {
 				VariableManager variableManager = MagicSpells.getVariableManager();
-				Player playerCaster = caster instanceof Player p ? p : null;
+				Player playerCaster = data.caster() instanceof Player p ? p : null;
 
 				for (Map.Entry<String, VariableMod> entry : variableModsTargetLoop.entries()) {
 					VariableMod mod = entry.getValue();
@@ -425,7 +379,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			}
 
 			if (loopModifiers != null && (!skipFirstLoopModifiers || count > 0)) {
-				ModifierResult result = loopModifiers.apply(caster, data);
+				ModifierResult result = loopModifiers.apply(data.caster(), data);
 				data = result.data();
 
 				if (!result.check()) {
@@ -434,8 +388,8 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				}
 			}
 
-			if (targetEntity != null && loopTargetModifiers != null && (!skipFirstLoopTargetModifiers || count > 0)) {
-				ModifierResult result = loopTargetModifiers.apply(caster, targetEntity, data);
+			if (data.target() != null && loopTargetModifiers != null && (!skipFirstLoopTargetModifiers || count > 0)) {
+				ModifierResult result = loopTargetModifiers.apply(data.caster(), data.target(), data);
 				data = result.data();
 
 				if (!result.check()) {
@@ -444,8 +398,8 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				}
 			}
 
-			if (targetLocation != null && loopLocationModifiers != null && (!skipFirstLoopLocationModifiers || count > 0)) {
-				ModifierResult result = loopLocationModifiers.apply(caster, targetLocation, data);
+			if (data.location() != null && loopLocationModifiers != null && (!skipFirstLoopLocationModifiers || count > 0)) {
+				ModifierResult result = loopLocationModifiers.apply(data.caster(), data.location(), data);
 				data = result.data();
 
 				if (!result.check()) {
@@ -465,13 +419,13 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				}
 			}
 
-			if (caster != null) {
-				if (targetEntity != null) playSpellEffects(caster, targetEntity, data);
-				else if (targetLocation != null) playSpellEffects(caster, targetLocation, data);
-				else playSpellEffects(EffectPosition.CASTER, caster, data);
+			if (data.caster() != null) {
+				if (data.target() != null) playSpellEffects(data.caster(), data.target(), data);
+				else if (data.location() != null) playSpellEffects(data.caster(), data.location(), data);
+				else playSpellEffects(EffectPosition.CASTER, data.caster(), data);
 			} else {
-				if (targetEntity != null) playSpellEffects(EffectPosition.TARGET, targetEntity, data);
-				else if (targetLocation != null) playSpellEffects(EffectPosition.TARGET, targetLocation, data);
+				if (data.target() != null) playSpellEffects(EffectPosition.TARGET, data.target(), data);
+				else if (data.location() != null) playSpellEffects(EffectPosition.TARGET, data.location(), data);
 			}
 
 			count++;
@@ -481,9 +435,13 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		private boolean cast(Subspell spell) {
 			boolean success;
 
-			if (targetEntity != null) success = spell.subcast(caster, targetEntity, data.power(), data.args(), passTargeting);
-			else if (targetLocation != null) success = spell.subcast(caster, targetLocation, data.power(), data.args());
-			else success = spell.subcast(caster, data.power(), data.args());
+			if (data.target() != null) {
+				success = spell.subcast(data, passTargeting);
+			} else if (data.location() != null) {
+				success = spell.subcast(data);
+			} else {
+				success = spell.subcast(data);
+			}
 
 			if (stopOnSuccess && success || stopOnFail && !success) {
 				cancel();
@@ -498,7 +456,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		}
 
 		public LivingEntity getCaster() {
-			return caster;
+			return data.caster();
 		}
 
 		private void cancel() {
@@ -514,28 +472,28 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 			if (remove) {
 				UUID key = null;
-				if (targetEntity != null) key = targetEntity.getUniqueId();
-				else if (caster != null) key = caster.getUniqueId();
+				if (data.target() != null) key = data.target().getUniqueId();
+				else if (data.caster() != null) key = data.caster().getUniqueId();
 
 				activeLoops.remove(key, this);
 			}
 
-			if (targetEntity != null) playSpellEffects(EffectPosition.DELAYED, targetEntity, data);
-			else if (targetLocation != null) playSpellEffects(EffectPosition.DELAYED, targetLocation, data);
-			else if (caster != null) playSpellEffects(EffectPosition.DELAYED, caster, data);
+			if (data.target() != null) playSpellEffects(EffectPosition.DELAYED, data.target(), data);
+			else if (data.location() != null) playSpellEffects(EffectPosition.DELAYED, data.location(), data);
+			else if (data.caster() != null) playSpellEffects(EffectPosition.DELAYED, data.caster(), data);
 
-			if (caster != null || targetEntity != null) {
-				String casterName = caster != null ? getTargetName(caster) : "";
-				String targetName = targetEntity != null ? getTargetName(targetEntity) : "";
+			if (data.caster() != null || data.target() != null) {
+				String casterName = data.caster() != null ? getTargetName(data.caster()) : "";
+				String targetName = data.target() != null ? getTargetName(data.target()) : "";
 
-				sendMessage(strFadeSelf, caster, caster, targetEntity, data.args(), "%a", casterName, "%t", targetName);
-				sendMessage(strFadeTarget, targetEntity, caster, targetEntity, data.args(), "%a", casterName, "%t", targetName);
+				sendMessage(strFadeSelf, data.caster(), data.caster(), data.target(), data.args(), "%a", casterName, "%t", targetName);
+				sendMessage(strFadeTarget, data.target(), data.caster(), data.target(), data.args(), "%a", casterName, "%t", targetName);
 			}
 
 			if (spellOnEnd != null) {
-				if (targetEntity != null) spellOnEnd.subcast(caster, targetEntity, data.power(), data.args(), passTargeting);
-				else if (targetLocation != null) spellOnEnd.subcast(caster, targetLocation, data.power(), data.args());
-				else if (caster != null) spellOnEnd.subcast(caster, data.power(), data.args());
+				if (data.target() != null) spellOnEnd.subcast(data, passTargeting);
+				else if (data.location() != null) spellOnEnd.subcast(data);
+				else if (data.caster() != null) spellOnEnd.subcast(data);
 			}
 		}
 

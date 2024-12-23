@@ -15,6 +15,7 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class MountSpell extends TargetedSpell implements TargetedEntitySpell {
 
@@ -33,12 +34,14 @@ public class MountSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
-			LivingEntity target = targetInfo.target();
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
-			mount(caster, target, power, args);
-			sendMessages(caster, target, args);
+			mount(data.builder()
+				.target(targetInfo.target())
+				.power(targetInfo.getPower())
+				.build());
+			sendMessages(data.caster(), targetInfo.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -47,50 +50,38 @@ public class MountSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		mount(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		mount(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		mount(caster, target, power, null);
-		return true;
-	}
+	private void mount(SpellData data) {
+		if (data.caster() == null || data.target() == null) return;
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
-	private void mount(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (caster == null || target == null) return;
-
-		int duration = this.duration.get(caster, target, power, args);
+		int duration = this.duration.get(data);
 
 		if (reverse) {
-			if (!caster.getPassengers().isEmpty()) caster.eject();
-			if (caster.getVehicle() != null) caster.getVehicle().eject();
-			if (target.getVehicle() != null) target.getVehicle().eject();
+			if (!data.caster().getPassengers().isEmpty()) data.caster().eject();
+			if (data.caster().getVehicle() != null) data.caster().getVehicle().eject();
+			if (data.target().getVehicle() != null) data.target().getVehicle().eject();
 
-			caster.addPassenger(target);
+			data.caster().addPassenger(data.target());
 			if (duration > 0) {
-				LivingEntity finalTarget = target;
-				MagicSpells.scheduleDelayedTask(() -> caster.removePassenger(finalTarget), duration);
+				final SpellData finalData = data;
+				MagicSpells.scheduleDelayedTask(() -> finalData.caster().removePassenger(finalData.target()), duration);
 			}
-			sendMessages(caster, target, args);
+			sendMessages(data.caster(), data.target(), data.args());
 			return;
 		}
 
-		if (caster.getVehicle() != null) {
-			Entity veh = caster.getVehicle();
+		if (data.caster().getVehicle() != null) {
+			Entity veh = data.caster().getVehicle();
 			veh.eject();
-			List<Entity> passengers = caster.getPassengers();
+			List<Entity> passengers = data.caster().getPassengers();
 			if (passengers.isEmpty()) return;
 
-			caster.eject();
+			data.caster().eject();
 			for (Entity e : passengers) {
 				veh.addPassenger(e);
 				if (duration > 0) {
@@ -100,20 +91,20 @@ public class MountSpell extends TargetedSpell implements TargetedEntitySpell {
 			return;
 		}
 
-		for (Entity e : target.getPassengers()) {
+		for (Entity e : data.target().getPassengers()) {
 			if (!(e instanceof LivingEntity)) continue;
-			target = (LivingEntity) e;
+			data = data.builder().target((LivingEntity) e).build();
 			break;
 		}
 
-		caster.eject();
-		target.addPassenger(caster);
+		data.caster().eject();
+		data.target().addPassenger(data.caster());
 		if (duration > 0) {
-			LivingEntity finalTarget1 = target;
-			MagicSpells.scheduleDelayedTask(() -> finalTarget1.removePassenger(caster), duration);
+			final SpellData finalData = data;
+			MagicSpells.scheduleDelayedTask(() -> finalData.target().removePassenger(finalData.caster()), duration);
 		}
 
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data.caster(), data.target(), data);
 	}
 
 	@EventHandler

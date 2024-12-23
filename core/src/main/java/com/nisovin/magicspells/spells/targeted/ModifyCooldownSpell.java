@@ -6,6 +6,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.SpellFilter;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -37,65 +38,46 @@ public class ModifyCooldownSpell extends TargetedSpell implements TargetedEntity
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data, target);
 
-			modifyCooldowns(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+			modifyCooldowns(data.builder()
+				.target(target.target())
+				.power(target.getPower())
+				.build());
+			sendMessages(data.caster(), target.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
-
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		modifyCooldowns(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		modifyCooldowns(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		modifyCooldowns(caster, target, power, null);
-		return true;
-	}
+	private void modifyCooldowns(SpellData data) {
+		float sec = seconds.get(data);
+		if (powerAffectsSeconds) sec *= data.power();
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		modifyCooldowns(null, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
-		modifyCooldowns(null, target, power, null);
-		return true;
-	}
-
-	private void modifyCooldowns(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		float sec = seconds.get(caster, target, power, args);
-		if (powerAffectsSeconds) sec *= power;
-
-		float mult = multiplier.get(caster, target, power, args);
-		if (powerAffectsMultiplier) mult /= power;
+		float mult = multiplier.get(data);
+		if (powerAffectsMultiplier) mult /= data.power();
 
 		for (Spell spell : MagicSpells.spells()) {
-			if (!spell.onCooldown(target)) continue;
+			if (!spell.onCooldown(data.target())) continue;
 			if (!filter.check(spell)) continue;
 
-			float cd = spell.getCooldown(target) - sec;
+			float cd = spell.getCooldown(data.target()) - sec;
 			cd *= mult;
 			if (cd < 0) cd = 0;
-			spell.setCooldown(target, cd, false);
+			spell.setCooldown(data.target(), cd, false);
 		}
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (data.caster() != null) playSpellEffects(data.caster(), data.target(), data);
+		else playSpellEffects(EffectPosition.TARGET, data.target(), data);
 	}
 
 }

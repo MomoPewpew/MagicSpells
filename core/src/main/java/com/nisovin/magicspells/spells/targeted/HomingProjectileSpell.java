@@ -182,6 +182,13 @@ public class HomingProjectileSpell extends TargetedSpell implements TargetedEnti
 	}
 
 	@Override
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		new HomingProjectileMonitor(data);
+		return true;
+	}
+
+	@Override
 	public boolean castAtEntityFromLocation(SpellData data) {
 		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
 		new HomingProjectileMonitor(data);

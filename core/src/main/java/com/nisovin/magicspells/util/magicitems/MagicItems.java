@@ -177,10 +177,17 @@ public class MagicItems {
 		return MagicItemDataParser.parseMagicItemData(str);
 	}
 
+	public static MagicItem getMagicItemFromString(String str) {
+		return getMagicItemFromString(str, null);
+	}
+
 	public static MagicItem getMagicItemFromString(String str, SpellData spellData) {
 		if (str == null) return null;
 
-		if (str.equals("cast-item") && spellData != null && spellData.castItem() != null) return new MagicItem(spellData.castItem(), new MagicItemData());
+		if (str.equals("cast-item")) {
+			if (spellData != null && spellData.castItem() != null) return new MagicItem(spellData.castItem(), new MagicItemData());
+			else return null;
+		}
 
 		if (magicItems.containsKey(str)) return magicItems.get(str);
 

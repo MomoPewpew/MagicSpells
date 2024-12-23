@@ -11,6 +11,7 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.ValidTargetChecker;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
+import com.nisovin.magicspells.util.SpellData;
 
 //This spell currently support the shearing of sheep at the moment.
 //Future tweaks for the shearing of other mobs will be added.
@@ -48,13 +49,13 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, SHEEP, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data, SHEEP);
+			if (target.noTarget()) return noTarget(data, target);
 
-			boolean done = grow(caster, (Sheep) target.target(), power, args);
-			if (!done) return noTarget(caster, args);
+			boolean done = grow(data);
+			if (!done) return noTarget(data);
 
-			sendMessages(caster, target.target(), args);
+			sendMessages(data.caster(), target.target(), data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 
@@ -62,41 +63,24 @@ public class RegrowSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Sheep sheep) || !validTargetList.canTarget(caster, target)) return false;
-		return grow(caster, sheep, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!(data.target() instanceof Sheep) || !validTargetList.canTarget(data.caster(), data.target())) return false;
+		return grow(data);
 	}
 
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Sheep sheep) || !validTargetList.canTarget(target)) return false;
-		return grow(null, sheep, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	private boolean grow(LivingEntity caster, Sheep target, float power, String[] args) {
+	private boolean grow(SpellData data) {
 		if (!configuredCorrectly) return false;
-		if (!target.isSheared()) return false;
-		if (!target.isAdult()) return false;
+		if (!(data.target() instanceof Sheep)) return false;
+		if (!((Sheep) data.target()).isSheared()) return false;
+		if (!((Sheep) data.target()).isAdult()) return false;
 
 		//If we are forcing a specific random wool color, lets set its color to this.
-		if (forceWoolColor && randomWoolColor) target.setColor(randomizeDyeColor());
-		else if (forceWoolColor && dye != null) target.setColor(dye);
+		if (forceWoolColor && randomWoolColor) ((Sheep) data.target()).setColor(randomizeDyeColor());
+		else if (forceWoolColor && dye != null) ((Sheep) data.target()).setColor(dye);
 
-		target.setSheared(false);
+		((Sheep) data.target()).setSheared(false);
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		playSpellEffects(EffectPosition.TARGET, data.target(), data);
 
 		return true;
 	}

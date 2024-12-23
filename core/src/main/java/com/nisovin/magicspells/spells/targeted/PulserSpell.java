@@ -137,95 +137,71 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			if (capPerPlayer > 0) {
 				int count = 0;
 				for (Pulser pulser : pulsers.values()) {
-					if (!pulser.caster.equals(caster)) continue;
+					if (!pulser.caster.equals(data.caster())) continue;
 
 					count++;
 					if (count >= capPerPlayer) {
-						sendMessage(strAtCap, caster, args);
+						sendMessage(strAtCap, data.caster(), data.args());
 						return PostCastAction.ALREADY_HANDLED;
 					}
 				}
 			}
-			List<Block> lastTwo = getLastTwoTargetedBlocks(caster, power, args);
+			List<Block> lastTwo = getLastTwoTargetedBlocks(data.caster(), data.power(), data.args());
 			Block target = null;
 
 			if (lastTwo != null && lastTwo.size() == 2) target = lastTwo.get(0);
-			if (target == null) return noTarget(caster, args);
+			if (target == null) return noTarget(data);
 
-			int yOffset = this.yOffset.get(caster, null, power, args);
+			int yOffset = this.yOffset.get(data);
 			if (yOffset > 0) target = target.getRelative(BlockFace.UP, yOffset);
 			else if (yOffset < 0) target = target.getRelative(BlockFace.DOWN, yOffset);
-			if (!BlockUtils.isAir(target.getType())) return noTarget(caster, args);
+			if (!BlockUtils.isAir(target.getType())) return noTarget(data);
 
 			if (target != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power, args);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(target.getLocation()).build());
 				EventUtil.call(event);
-				if (event.isCancelled()) return noTarget(caster, args);
+				if (event.isCancelled()) return noTarget(data);
 				target = event.getTargetLocation().getBlock();
-				power = event.getPower();
+				data = data.builder().power(event.getPower()).build();
 			}
-			createPulser(caster, target, caster.getLocation(), power, args);
+			createPulser(data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(SpellData data) {
 		if (capPerPlayer > 0) {
 			int count = 0;
 			for (Pulser pulser : pulsers.values()) {
-				if (!pulser.caster.equals(caster)) continue;
+				if (!pulser.caster.equals(data.caster())) continue;
 
 				count++;
 				if (count >= capPerPlayer) {
-					sendMessage(strAtCap, caster);
+					sendMessage(strAtCap, data.caster(), data.args());
 					return false;
 				}
 			}
 		}
 
-		Block block = target.getBlock();
-		int yOffset = this.yOffset.get(caster, null, power, args);
-		if (yOffset > 0) block = block.getRelative(BlockFace.UP, yOffset);
-		else if (yOffset < 0) block = block.getRelative(BlockFace.DOWN, yOffset);
+		Block block = data.location().getBlock();
+		if (block == null) return false;
+		if (!BlockUtils.isAir(block.getType())) return false;
 
-		if (BlockUtils.isAir(block.getType())) {
-			createPulser(caster, block, target, power, args);
-			return true;
-		}
-
-		if (checkFace) {
-			block = block.getRelative(BlockFace.UP);
-			if (BlockUtils.isAir(block.getType())) {
-				createPulser(caster, block, target, power, args);
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(null, target, power, null);
-	}
-
-	private void createPulser(LivingEntity caster, Block block, Location from, float power, String[] args) {
-		if (blockData == null) return;
-		block.setBlockData(blockData, false);
-		pulsers.put(block, new Pulser(caster, block, from, power, args));
+		block.setBlockData(blockData);
+		Pulser pulser = new Pulser(data);
+		pulsers.put(block, pulser);
 		ticker.start();
-		if (caster != null) playSpellEffects(caster, block.getLocation().add(0.5, 0.5, 0.5), power, args);
-		else playSpellEffects(EffectPosition.TARGET, block.getLocation().add(0.5, 0.5, 0.5), power, args);
+		return true;
+	}
+
+	private void createPulser(SpellData data) {
+		if (blockData == null) return;
+		Block block = data.location().getBlock();
+		block.setBlockData(blockData, false);
+		pulsers.put(block, new Pulser(data));
+		ticker.start();
+		playSpellEffects(EffectPosition.TARGET, block.getLocation().add(0.5, 0.5, 0.5), data);
 	}
 
 	private boolean interactionDebounce = false;
@@ -317,8 +293,6 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		private final Block block;
 		private final Location location;
 		private final SpellData data;
-		private final String[] args;
-		private final float power;
 		private int pulseCount;
 		private boolean cancelOnDeath;
 
@@ -329,20 +303,17 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			TICK, CLICK;
 		}
 
-		private Pulser(LivingEntity caster, Block block, Location from, float power, String[] args) {
-			this.caster = caster;
-			this.block = block;
+		private Pulser(SpellData data) {
+			this.data = data;
+			this.caster = data.caster();
+			this.block = data.location().getBlock();
 			this.location = block.getLocation().add(0.5, 0.5, 0.5);
-			this.power = power;
-			this.args = args;
 			this.pulseCount = 0;
 			this.cancelOnDeath = PulserSpell.this.cancelOnDeath;
 
-			data = new SpellData(caster, power, args);
+			totalPulses = PulserSpell.this.totalPulses.get(data);
 
-			totalPulses = PulserSpell.this.totalPulses.get(caster, null, power, args);
-
-			double maxDistance = PulserSpell.this.maxDistance.get(caster, null, power, args);
+			double maxDistance = PulserSpell.this.maxDistance.get(data);
 			maxDistanceSq = maxDistance * maxDistance;
 		}
 
@@ -371,15 +342,14 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		public boolean activate(ActivationType activationType, @Nullable LivingEntity _caster) {
 			boolean activated = false;
 			LivingEntity spellCaster = caster;
-			if(_caster != null)
-				spellCaster = _caster;
-			if(activationType.equals(ActivationType.TICK)){
+			if(_caster != null) spellCaster = _caster;
+			if(activationType.equals(ActivationType.TICK)) {
 				for (Subspell spell : spells) {
-					activated = spell.subcast(spellCaster, location, power, args) || activated;
+					activated = spell.subcast(data.builder().caster(spellCaster).location(location).build()) || activated;
 				}
-			}else{
-				for (Subspell spell : spellsOnRightClick){
-					activated = spell.subcast(spellCaster, location, power, args) || activated;
+			} else {
+				for (Subspell spell : spellsOnRightClick) {
+					activated = spell.subcast(data.builder().caster(spellCaster).location(location).build()) || activated;
 				}
 			}
 			playSpellEffects(EffectPosition.DELAYED, location, data);
@@ -397,7 +367,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			if (!block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) block.getChunk().load();
 			block.setType(Material.AIR);
 			playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, block.getLocation(), data);
-			if (spellOnBreak != null) spellOnBreak.subcast(caster, location, power, args);
+			if (spellOnBreak != null) spellOnBreak.subcast(data);
 		}
 
 	}

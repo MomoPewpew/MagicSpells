@@ -48,6 +48,8 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
 
+import com.nisovin.magicspells.util.SpellData;
+
 public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	public class PasteSpellRecord {
@@ -277,49 +279,35 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Block target = pasteAtCaster ? caster.getLocation().getBlock() : getTargetedBlock(caster, power, args);
-			if (target == null) return noTarget(caster, args);
+			Block target = pasteAtCaster ? data.caster().getLocation().getBlock() : getTargetedBlock(data.caster(), data.power());
+			if (target == null) return noTarget(data);
 			Location loc = target.getLocation();
-			boolean ok = castAtLocation(caster, loc, power, args);
-			if (!ok) return noTarget(caster, args);
+			boolean ok = castAtLocation(data.builder().location(loc).build());
+			if (!ok) return noTarget(data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(SpellData data) {
 		boolean ok;
 
 		if (buildInterval < 1) {
-			ok = pasteInstant(caster, target, power, args);
+			ok = pasteInstant(data);
 		} else {
-			ok = pasteOverTime(caster, target, power, args);
+			ok = pasteOverTime(data);
 		}
 		if (!ok) return false;
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (data.caster() != null) playSpellEffects(data.caster(), data.location(), data);
+		else playSpellEffects(EffectPosition.TARGET, data.location(), data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(null, target, power, null);
-	}
-
-	private boolean pasteInstant(LivingEntity caster, Location target, float power, String[] args) {
+	private boolean pasteInstant(SpellData data) {
 		if (clipboard == null) return false;
 
-		int yOffset = this.yOffset.get(caster, null, power, args);
+		int yOffset = this.yOffset.get(data);
+		Location target = data.location();
 		target.add(0, yOffset, 0);
 
 		try (EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(BukkitAdapter.adapt(target.getWorld()), -1)) {
@@ -330,16 +318,16 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					.build();
 			Operations.complete(operation);
 
-			int undoDelay = this.undoDelay.get(caster, null, power, args);
+			int undoDelay = this.undoDelay.get(data);
 
 			if (removePaste) sessions.add(editSession);
-			spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), editSession);
+			if (data.caster() instanceof Player) spellRecords.get(this.spellName).addPlayerSession(data.caster().getUniqueId().toString(), editSession);
 
 			if (undoDelay > 0) {
 				MagicSpells.scheduleDelayedTask(() -> {
 					editSession.undo(editSession);
 					sessions.remove(editSession);
-					spellRecords.get(this.spellName).removePlayerSession(caster.getUniqueId().toString(), editSession);
+					if (data.caster() instanceof Player) spellRecords.get(this.spellName).removePlayerSession(data.caster().getUniqueId().toString(), editSession);
 				}, undoDelay);
 			}
 		} catch (WorldEditException e) {
@@ -350,11 +338,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		return true;
 	}
 
-	private boolean pasteOverTime(LivingEntity caster, Location target, float power, String[] args) {
+	private boolean pasteOverTime(SpellData data) {
 		try {
-			Builder builder = new Builder(caster, target, power, args);
+			Builder builder = new Builder(data);
 			builders.add(builder);
-			spellRecords.get(this.spellName).addPlayerPaste(caster.getUniqueId().toString(), builder);
+			if (data.caster() instanceof Player) spellRecords.get(this.spellName).addPlayerPaste(data.caster().getUniqueId().toString(), builder);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -379,8 +367,6 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	class Builder {
 		private static List<BlockFace> CARDINAL_BLOCK_FACES = new ArrayList<BlockFace>(Arrays.asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
 
-		private Location target;
-
 	    private Clipboard clipboard;
 	    private Clipboard ogClipboard;
 
@@ -398,23 +384,19 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    private List<BlockDisplay> blockDisplays;
 
 	    boolean stop = false;
-	    private LivingEntity caster;
+	    private SpellData data;
 		private boolean onlyReplaceAir;
 
-		public Builder(LivingEntity caster, Location target, float power, String[] args) {
-			this.target = target.clone();
+		public Builder(SpellData data) {
+			this.data = data;
 			this.clipboard = PasteSpell.this.clipboard;
-			this.caster = caster;
-			this.onlyReplaceAir = PasteSpell.this.onlyReplaceAir.get(caster, null, power, args);
-
-            this.undoDelay = PasteSpell.this.undoDelay.get(caster, null, power, args);
-            this.blocksPerCast = PasteSpell.this.blocksPerCast.get(caster, null, power, args);
-            this.instantUndo = PasteSpell.this.instantUndo;
+			this.onlyReplaceAir = PasteSpell.this.onlyReplaceAir.get(data);
+			this.undoDelay = PasteSpell.this.undoDelay.get(data);
+			this.blocksPerCast = PasteSpell.this.blocksPerCast.get(data);
+			this.instantUndo = PasteSpell.this.instantUndo;
 
 			this.storeStartRegion();
-
 			this.parseClipboard();
-
 			startBuilder();
 		}
 
@@ -424,7 +406,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 			if (PasteSpell.this.dismantleFirst && PasteSpell.this.pasteAir) {
 				for (BlockVector3 pos : this.blockVectors) {
-					Block bl = this.target.getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
+					Block bl = this.data.location().getBlock().getRelative(pos.getX() - origin.getX(), pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
 					if (!bl.getBlockData().getMaterial().isAir()) {
 						this.airVectors.add(pos);
 					}
@@ -446,10 +428,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			BlockVector3 maxPos = region.getMaximumPoint();
 			BlockVector3 origin = this.clipboard.getOrigin();
 
-			Block minBlock = this.target.getBlock().getRelative(minPos.getX() - origin.getX(), minPos.getY() - origin.getY(), minPos.getZ() - origin.getZ());
-			Block maxBlock = this.target.getBlock().getRelative(maxPos.getX() - origin.getX(), maxPos.getY() - origin.getY(), maxPos.getZ() - origin.getZ());
+			Block minBlock = this.data.location().getBlock().getRelative(minPos.getX() - origin.getX(), minPos.getY() - origin.getY(), minPos.getZ() - origin.getZ());
+			Block maxBlock = this.data.location().getBlock().getRelative(maxPos.getX() - origin.getX(), maxPos.getY() - origin.getY(), maxPos.getZ() - origin.getZ());
 
-			CuboidRegion cuboidRegion = new CuboidRegion(BukkitAdapter.adapt(this.target.getWorld()),
+			CuboidRegion cuboidRegion = new CuboidRegion(BukkitAdapter.adapt(this.data.location().getWorld()),
 					BlockVector3.at(minBlock.getX(), minBlock.getY(), minBlock.getZ()),
 					BlockVector3.at(maxBlock.getX(), maxBlock.getY(), maxBlock.getZ()));
 
@@ -462,7 +444,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			} catch (WorldEditException e) {
 				throw new RuntimeException(e);
 			}
-			bAClipboard.setOrigin(BlockVector3.at(this.target.getX(), this.target.getY(), this.target.getZ()));
+			bAClipboard.setOrigin(BlockVector3.at(this.data.location().getX(), this.data.location().getY(), this.data.location().getZ()));
 			this.ogClipboard = bAClipboard;
 		}
 
@@ -502,7 +484,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos_));
 
-				Block bl = this.target.getBlock().getRelative(pos_.getX() - origin.getX(), pos_.getY() - origin.getY(), pos_.getZ() - origin.getZ());
+				Block bl = this.data.location().getBlock().getRelative(pos_.getX() - origin.getX(), pos_.getY() - origin.getY(), pos_.getZ() - origin.getZ());
 
 				if (this.onlyReplaceAir && !bl.getBlockData().getMaterial().isAir()) continue;
 
@@ -521,9 +503,9 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        int y = pos.getY() - this.clipboard.getOrigin().getY();
 	        int z = pos.getZ() - this.clipboard.getOrigin().getZ();
 
-	        Location loc = this.target.clone().add(x, y, z);
+	        Location loc = this.data.location().clone().add(x, y, z);
 			Block startingBlock = loc.getBlock();
-			BlockData data = BukkitAdapter.adapt(this.clipboard.getBlock(pos));
+			BlockData bdata = BukkitAdapter.adapt(this.clipboard.getBlock(pos));
 			Block animatorBlock = null;
 			BlockFace face = null;
 
@@ -533,7 +515,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				if (bd.getMaterial().isSolid()) {
 					animatorBlock = b;
 					face = f;
-					if (data.matches(bd)) break;
+					if (bdata.matches(bd)) break;
 				}
 			}
 
@@ -542,10 +524,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				this.changedBlocks++;
 
-				if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(startingBlock, data, 0, 0, 0, 0);
-				startingBlock.setBlockData(data, false);
+				if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(startingBlock, bdata, 0, 0, 0, 0);
+				startingBlock.setBlockData(bdata, false);
 
-	            if (this.caster instanceof Player player) {
+				if (data.caster() instanceof Player player) {
 					BlockState previousState = startingBlock.getState();
 					MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(startingBlock, previousState, startingBlock.getRelative(BlockFace.DOWN), player.getInventory().getItemInMainHand(), player, true);
 					EventUtil.call(event);
@@ -562,7 +544,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        int y = pos.getY() - this.clipboard.getOrigin().getY();
 	        int z = pos.getZ() - this.clipboard.getOrigin().getZ();
 
-	        Location loc = this.target.clone().add(x, y, z);
+	        Location loc = this.data.location().clone().add(x, y, z);
 			Block startingBlock = loc.getBlock();
 
 			BlockFace face = null;
@@ -721,12 +703,12 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			}
 		}
 
-		private void moveBlock(Block block, BlockData data, int x, int y, int z, int duration, boolean keepOld) {
+		private void moveBlock(Block block, BlockData bdata, int x, int y, int z, int duration, boolean keepOld) {
 	        BlockDisplay ent = (BlockDisplay)block.getWorld().spawnEntity(block.getLocation(), EntityType.BLOCK_DISPLAY);
 	        Block b = block.getRelative(x, y, z);
 
 	        if (!keepOld) {
-	        	if (this.caster instanceof Player player) {
+				if (data.caster() instanceof Player player) {
 					MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player);
 					EventUtil.call(event);
 					if (!event.isCancelled()) {
@@ -737,7 +719,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				}
 	        }
 
-	        ent.setBlock(data);
+	        ent.setBlock(bdata);
 
 	        Block lightBlock = null;
 
@@ -761,17 +743,17 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (keepOld) {
 				MagicSpells.scheduleDelayedTask(() -> {
 		            if(!this.stop){
-						if (this.caster instanceof Player player) {
+						if (data.caster() instanceof Player player) {
 							BlockState previousState = b.getState();
 							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(b, previousState, block, player.getInventory().getItemInMainHand(), player, true);
 							EventUtil.call(event);
 							if (!event.isCancelled()) {
-								b.setBlockData(data, false);
-								b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
+								b.setBlockData(bdata, false);
+								b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), bdata.getSoundGroup().getPlaceSound(), 0.2f, bdata.getSoundGroup().getPitch());
 							}
 						} else {
-							b.setBlockData(data, false);
-							b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
+							b.setBlockData(bdata, false);
+							b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), bdata.getSoundGroup().getPlaceSound(), 0.2f, bdata.getSoundGroup().getPitch());
 						}
 					}
 				}, duration + 2);
@@ -801,10 +783,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
         	for (BlockDisplay ent : this.blockDisplays) {
         		if (ent != null && ent.isValid()) ent.remove();
         	}
-            try (EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(BukkitAdapter.adapt(target.getWorld()), -1)) {
+            	try (EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(BukkitAdapter.adapt(data.location().getWorld()), -1)) {
                 Operation operation = new ClipboardHolder(this.clipboard)
                         .createPaste(editSession)
-                        .to(BlockVector3.at(target.getX(), target.getY(), target.getZ()))
+                        .to(BlockVector3.at(data.location().getX(), data.location().getY(), data.location().getZ()))
                         .ignoreAirBlocks(!pasteAir)
                         .build();
                 Operations.complete(operation);

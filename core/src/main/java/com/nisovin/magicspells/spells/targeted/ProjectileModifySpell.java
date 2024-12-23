@@ -244,49 +244,33 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			Location loc = null;
-			if (pointBlank) loc = caster.getLocation();
-			else {
+			if (pointBlank) {
+				loc = data.caster().getLocation();
+			} else {
 				try {
-					Block block = getTargetedBlock(caster, power, args);
+					Block block = getTargetedBlock(data.caster(), data.power());
 					if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation();
 				} catch (IllegalStateException ignored) {}
 			}
-			if (loc == null) return noTarget(caster, args);
+			if (loc == null) return noTarget(data);
 
-			modify(caster, loc, power, args);
+			modify(data.builder().location(loc).build());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return modify(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		return modify(data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return modify(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return modify(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return modify(null, target, power, null);
-	}
-
-	private boolean modify(LivingEntity caster, Location location, float power, String[] args) {
+	private boolean modify(SpellData data) {
 		int count = 0;
 
-		SpellData data = new SpellData(caster, power, args);
+		Vector facing = data.caster() != null ? data.caster().getLocation().getDirection() : data.location().getDirection();
+		Vector vLoc = data.caster() != null ? data.caster().getLocation().toVector() : data.location().toVector();
 
-		Vector facing = caster != null ? caster.getLocation().getDirection() : location.getDirection();
-		Vector vLoc = caster != null ? caster.getLocation().toVector() : location.toVector();
-
-		BoundingBox box = new BoundingBox(location, hRadius.get(data), vRadius.get(data));
+		BoundingBox box = new BoundingBox(data.location(), hRadius.get(data), vRadius.get(data));
 		double hRadiusSquared = box.getHorizontalRadius() * box.getHorizontalRadius();
 		double vRadiusSquared = box.getVerticalRadius() * box.getVerticalRadius();
 
@@ -304,17 +288,17 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 			if (tracker == null || tracker.isStopped()) continue;
 			currentLoc = tracker.getCurrentLocation();
 			if (currentLoc == null) continue;
-			if (!currentLoc.getWorld().equals(location.getWorld())) continue;
+			if (!currentLoc.getWorld().equals(data.location().getWorld())) continue;
 			if (!box.contains(currentLoc)) continue;
 			if (tracker.getSpell() != null && !filter.check(tracker.getSpell())) continue;
 
-			if (!affectOwnedProjectiles.get(data) && tracker.getCaster() != null && tracker.getCaster().equals(caster)) continue;
-			if (!affectEnemyProjectiles.get(data) && (tracker.getCaster() == null || !tracker.getCaster().equals(caster))) continue;
+			if (!affectOwnedProjectiles.get(data) && tracker.getCaster() != null && tracker.getCaster().equals(data.caster())) continue;
+			if (!affectEnemyProjectiles.get(data) && (tracker.getCaster() == null || !tracker.getCaster().equals(data.caster()))) continue;
 
 			if (circleShape.get(data)) {
-				double hDistance = NumberConversions.square(currentLoc.getX() - location.getX()) + NumberConversions.square(currentLoc.getZ() - location.getZ());
+				double hDistance = NumberConversions.square(currentLoc.getX() - data.location().getX()) + NumberConversions.square(currentLoc.getZ() - data.location().getZ());
 				if (hDistance > hRadiusSquared) continue;
-				double vDistance = NumberConversions.square(currentLoc.getY() - location.getY());
+				double vDistance = NumberConversions.square(currentLoc.getY() - data.location().getY());
 				if (vDistance > vRadiusSquared) continue;
 			}
 
@@ -323,12 +307,12 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 				if (AccurateMath.abs(dir.angle(facing)) > cone) continue;
 			}
 
-			if (projectileSpell != null) projectileSpell.subcast(caster, currentLoc, power, args);
+			if (projectileSpell != null) projectileSpell.subcast(data.builder().location(currentLoc).build());
 
 			if (stop.get(data)) {
 				playSpellEffects(EffectPosition.TARGET, currentLoc, data);
-				playSpellEffectsTrail(location, currentLoc, data);
-				if (caster != null) playSpellEffectsTrail(caster.getLocation(), currentLoc, data);
+				playSpellEffectsTrail(data.location(), currentLoc, data);
+				if (data.caster() != null) playSpellEffectsTrail(data.caster().getLocation(), currentLoc, data);
 
 				count++;
 
@@ -338,7 +322,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 				continue;
 			}
 
-			if (claimProjectiles) tracker.setCaster(caster);
+			if (claimProjectiles) tracker.setCaster(data.caster());
 
 			tracker.setAcceleration(acceleration.get(data));
 			tracker.setAccelerationDelay(accelerationDelay.get(data));
@@ -381,16 +365,16 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 			tracker.getCurrentVelocity().multiply(velocity.get(data));
 
 			playSpellEffects(EffectPosition.TARGET, currentLoc, data);
-			playSpellEffectsTrail(location, currentLoc, data);
-			if (caster != null) playSpellEffectsTrail(caster.getLocation(), currentLoc, data);
+			playSpellEffectsTrail(data.location(), currentLoc, data);
+			if (data.caster() != null) playSpellEffectsTrail(data.caster().getLocation(), currentLoc, data);
 
 			count++;
 
 			if (maxTargets > 0 && count >= maxTargets) break;
 		}
 
-		if (caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
-		playSpellEffects(EffectPosition.SPECIAL, location, data);
+		if (data.caster() != null) playSpellEffects(EffectPosition.CASTER, data.caster(), data);
+		playSpellEffects(EffectPosition.SPECIAL, data.location(), data);
 
 		return count > 0;
 	}

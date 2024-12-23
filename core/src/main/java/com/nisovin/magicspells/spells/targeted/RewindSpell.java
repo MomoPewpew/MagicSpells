@@ -74,15 +74,15 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+			TargetInfo<LivingEntity> info = getTargetedEntity(data);
+			if (info.noTarget()) return noTarget(data, info);
 
 			LivingEntity target = info.target();
-			power = info.power();
+			data = data.builder().power(info.getPower()).build();
 
-			new Rewinder(caster, target, power, args);
-			playSpellEffects(caster, target, power, args);
-			sendMessages(caster, target, args);
+			new Rewinder(data);
+			playSpellEffects(data.caster(), target, data);
+			sendMessages(data.caster(), target, data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -91,27 +91,10 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		new Rewinder(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		new Rewinder(data);
+		playSpellEffects(data.caster(), data.target(), data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		new Rewinder(null, target, power, args);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -148,14 +131,13 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 		private final int startDuration;
 		private final int specialEffectInterval;
 
-		private Rewinder(LivingEntity caster, LivingEntity entity, float power, String[] args) {
+		private Rewinder(SpellData data) {
 			this.locations = new ArrayList<>();
-			this.entity = entity;
-			this.caster = caster;
-			this.power = power;
-			this.args = args;
-
-			data = new SpellData(caster, entity, power, args);
+			this.entity = data.target();
+			this.caster = data.caster();
+			this.power = data.power();
+			this.args = data.args();
+			this.data = data;
 
 			entities.put(entity, this);
 
@@ -165,9 +147,9 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 				if (handler != null) this.startMana = handler.getMana(player);
 			}
 
-			int tickInterval = RewindSpell.this.tickInterval.get(caster, entity, power, args);
-			startDuration = RewindSpell.this.startDuration.get(caster, entity, power, args) / tickInterval;
-			specialEffectInterval = RewindSpell.this.specialEffectInterval.get(caster, entity, power, args);
+			int tickInterval = RewindSpell.this.tickInterval.get(data);
+			startDuration = RewindSpell.this.startDuration.get(data) / tickInterval;
+			specialEffectInterval = RewindSpell.this.specialEffectInterval.get(data);
 
 			this.taskId = MagicSpells.scheduleRepeatingTask(this, 0, tickInterval);
 		}
@@ -186,8 +168,8 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 		private void rewind() {
 			MagicSpells.cancelTask(taskId);
 			entities.remove(entity);
-			if (rewindSpell != null) rewindSpell.subcast(caster, power, args);
-			new ForceRewinder(caster, entity, locations, startHealth, startMana, power, args);
+			if (rewindSpell != null) rewindSpell.subcast(data);
+			new ForceRewinder(data, locations, startHealth, startMana);
 		}
 
 		private void stop() {
@@ -212,18 +194,17 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 
 		private final int delayedEffectInterval;
 
-		private ForceRewinder(LivingEntity caster, LivingEntity entity, List<Location> locations, double startHealth, int startMana, float power, String[] args) {
+		private ForceRewinder(SpellData data, List<Location> locations, double startHealth, int startMana) {
 			this.locations = locations;
-			this.entity = entity;
+			this.entity = data.target();
 			this.startMana = startMana;
 			this.startHealth = startHealth;
 			this.counter = locations.size();
+			this.data = data;
 
-			data = new SpellData(caster, entity, power, args);
+			delayedEffectInterval = RewindSpell.this.delayedEffectInterval.get(data);
 
-			delayedEffectInterval = RewindSpell.this.delayedEffectInterval.get(caster, entity, power, args);
-
-			int rewindInterval = RewindSpell.this.rewindInterval.get(caster, entity, power, args);
+			int rewindInterval = RewindSpell.this.rewindInterval.get(data);
 			this.taskId = MagicSpells.scheduleRepeatingTask(this, 0, rewindInterval);
 		}
 

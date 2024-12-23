@@ -10,12 +10,10 @@ public record TargetInfo<T>(T target, SpellData spellData, boolean cancelled) {
 		return cancelled || target == null;
 	}
 
-	@Deprecated
 	public T getTarget() {
 		return target;
 	}
 
-	@Deprecated
 	public float getPower() {
 		return spellData.power();
 	}

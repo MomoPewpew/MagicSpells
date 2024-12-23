@@ -15,6 +15,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.ValidTargetChecker;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
+import com.nisovin.magicspells.util.SpellData;
 
 //This spell currently support the shearing of sheep at the moment.
 //Future tweaks for the shearing of other mobs will be added.
@@ -62,13 +63,14 @@ public class ShearSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, SHEEP, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data, SHEEP);
+			if (target.noTarget()) return noTarget(data, target);
 
-			boolean done = shear(caster, (Sheep) target.target(), target.power(), args);
-			if (!done) return noTarget(caster, args);
+			data = data.builder().power(target.getPower()).build();
+			boolean done = shear(data);
+			if (!done) return noTarget(data);
 
-			sendMessages(caster, target.target(), args);
+			sendMessages(data.caster(), target.target(), data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 
@@ -76,23 +78,8 @@ public class ShearSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return target instanceof Sheep sheep && validTargetList.canTarget(caster, target) && shear(caster, sheep, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return target instanceof Sheep sheep && validTargetList.canTarget(caster, target) && shear(caster, sheep, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return target instanceof Sheep sheep && validTargetList.canTarget(target) && shear(null, sheep, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return target instanceof Sheep sheep && validTargetList.canTarget(target) && shear(null, sheep, power, null);
+	public boolean castAtEntity(SpellData data) {
+		return data.target() instanceof Sheep sheep && validTargetList.canTarget(data.caster(), data.target()) && shear(data);
 	}
 
 	private boolean parseSpell() {
@@ -108,8 +95,8 @@ public class ShearSpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
-	private boolean shear(LivingEntity caster, Sheep sheep, float power, String[] args) {
-		if (!configuredCorrectly || sheep.isSheared() || !sheep.isAdult()) return false;
+	private boolean shear(SpellData data) {
+		if (!configuredCorrectly || !(data.target() instanceof Sheep sheep) || sheep.isSheared() || !sheep.isAdult()) return false;
 
 		DyeColor color = null;
 		if (forceWoolColor) {
@@ -120,17 +107,17 @@ public class ShearSpell extends TargetedSpell implements TargetedEntitySpell {
 		Material woolColor = Material.getMaterial(color.name() + "_WOOL");
 		if (woolColor == null) woolColor = Material.WHITE_WOOL;
 
-		int maxWool = this.maxWool.get(caster, sheep, power, args);
-		int minWool = this.minWool.get(caster, sheep, power, args);
+		int maxWool = this.maxWool.get(data);
+		int minWool = this.minWool.get(data);
 		int count;
 		if (maxWool != 0) count = random.nextInt((maxWool - minWool) + 1) + minWool;
 		else count = random.nextInt(minWool + 1);
 
 		sheep.setSheared(true);
-		sheep.getWorld().dropItemNaturally(sheep.getLocation().add(0, dropOffset.get(caster, sheep, power, args), 0), new ItemStack(woolColor, count));
+		sheep.getWorld().dropItemNaturally(sheep.getLocation().add(0, dropOffset.get(data), 0), new ItemStack(woolColor, count));
 
-		if (caster != null) playSpellEffects(caster, sheep, power, args);
-		else playSpellEffects(EffectPosition.TARGET, sheep, power, args);
+		if (data.caster() != null) playSpellEffects(data.caster(), sheep, data);
+		else playSpellEffects(EffectPosition.TARGET, sheep, data);
 
 		return true;
 	}

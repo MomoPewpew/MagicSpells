@@ -41,13 +41,14 @@ public class ShadowstepSpell extends TargetedSpell implements TargetedEntitySpel
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data, target);
 
-			boolean done = shadowstep(caster, target.target(), target.power(), args);
-			if (!done) return noTarget(caster, strNoLandingSpot, args);
+			data = data.builder().power(target.getPower()).build();
+			boolean done = shadowstep(data);
+			if (!done) return noTarget(data, strNoLandingSpot);
 
-			sendMessages(caster, target.target(), args);
+			sendMessages(data.caster(), target.target(), data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 
@@ -55,43 +56,33 @@ public class ShadowstepSpell extends TargetedSpell implements TargetedEntitySpel
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		return shadowstep(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		return shadowstep(data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
-	private boolean shadowstep(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		Location targetLoc = target.getLocation().clone();
+	private boolean shadowstep(SpellData data) {
+		Location targetLoc = data.target().getLocation().clone();
 		targetLoc.setPitch(0);
 
 		Vector startDir = targetLoc.getDirection().setY(0).normalize();
 		Vector horizOffset = new Vector(-startDir.getZ(), 0, startDir.getX()).normalize();
 
-		double distance = this.distance.get(caster, target, power, args);
+		double distance = this.distance.get(data);
 		Vector relativeOffset = distance != -1 ? this.relativeOffset.clone().setX(distance) : this.relativeOffset;
 
 		targetLoc.add(horizOffset.multiply(relativeOffset.getZ())).getBlock().getLocation();
 		targetLoc.add(targetLoc.getDirection().setY(0).multiply(relativeOffset.getX()));
 		targetLoc.setY(targetLoc.getY() + relativeOffset.getY());
 
-		targetLoc.setPitch(pitch.get(caster, target, power, args));
-		targetLoc.setYaw(targetLoc.getYaw() + yaw.get(caster, target, power, args));
+		targetLoc.setPitch(pitch.get(data));
+		targetLoc.setYaw(targetLoc.getYaw() + yaw.get(data));
 
 		Block b = targetLoc.getBlock();
 		if (!BlockUtils.isPathable(b.getType()) || !BlockUtils.isPathable(b.getRelative(BlockFace.UP))) return false;
 
-		playSpellEffects(caster.getLocation(), targetLoc, new SpellData(caster, target, power, args));
-		caster.teleportAsync(targetLoc);
+		playSpellEffects(data.caster().getLocation(), targetLoc, data);
+		data.caster().teleportAsync(targetLoc);
 
 		return true;
 	}

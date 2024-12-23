@@ -13,6 +13,7 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;
+import com.nisovin.magicspells.util.SpellData;
 
 public class ScoreboardDataSpell extends TargetedSpell implements TargetedEntitySpell {
 
@@ -52,13 +53,14 @@ public class ScoreboardDataSpell extends TargetedSpell implements TargetedEntity
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			TargetInfo<LivingEntity> info = getTargetedEntity(player, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
+			TargetInfo<LivingEntity> info = getTargetedEntity(data);
+			if (info.noTarget()) return noTarget(data, info);
 
+			data = data.builder().power(info.getPower()).build();
 			setScore(player, info.target());
-			playSpellEffects(player, info.target(), info.power(), args);
-			sendMessages(caster, info.target(), args);
+			playSpellEffects(player, info.target(), data);
+			sendMessages(data.caster(), info.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -67,23 +69,13 @@ public class ScoreboardDataSpell extends TargetedSpell implements TargetedEntity
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(caster instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntity(SpellData data) {
+		if (!(data.caster() instanceof Player player) || !validTargetList.canTarget(data.caster(), data.target())) return false;
 
-		setScore(player, target);
-		playSpellEffects(caster, target, power, args);
+		setScore(player, data.target());
+		playSpellEffects(data.caster(), data.target(), data);
 
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
 	}
 
 	private void setScore(Player caster, LivingEntity target) {

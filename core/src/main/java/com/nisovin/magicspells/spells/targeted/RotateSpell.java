@@ -12,6 +12,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, TargetedLocationSpell {
 
@@ -40,12 +41,13 @@ public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, T
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+			TargetInfo<LivingEntity> info = getTargetedEntity(data);
+			if (info.noTarget()) return noTarget(data, info);
 
-			spinFace(caster, info.target(), info.power(), args);
-			playSpellEffects(caster, info.target(), info.power(), args);
-			sendMessages(caster, info.target(), args);
+			data = data.builder().power(info.getPower()).build();
+			spinFace(data);
+			playSpellEffects(data.caster(), info.target(), data);
+			sendMessages(data.caster(), info.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -54,82 +56,54 @@ public class RotateSpell extends TargetedSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		spinFace(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		spinFace(data);
+		playSpellEffects(data.caster(), data.target(), data);
 		return true;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		spinTarget(null, target, power, args);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		spin(data.caster(), data.location());
+		playSpellEffects(data.caster(), data.location(), data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		spin(caster, target);
-		playSpellEffects(caster, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
-	}
-
-	private void spinTarget(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		Location loc = target.getLocation();
+	private void spinTarget(SpellData data) {
+		Location loc = data.target().getLocation();
 		if (random) {
 			loc.setYaw(Util.getRandomInt(360));
 			if (affectPitch) loc.setPitch(Util.getRandomInt(181) - 90);
 		} else {
-			loc.setYaw(loc.getYaw() + rotationYaw.get(caster, target, power, args));
-			if (affectPitch) loc.setPitch(loc.getPitch() + rotationPitch.get(caster, target, power, args));
+			loc.setYaw(loc.getYaw() + rotationYaw.get(data));
+			if (affectPitch) loc.setPitch(loc.getPitch() + rotationPitch.get(data));
 		}
-		target.teleportAsync(loc);
+		data.target().teleportAsync(loc);
 	}
 
-	private void spinFace(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		Location targetLoc = target.getLocation();
-		Location casterLoc = caster.getLocation();
+	private void spinFace(SpellData data) {
+		Location targetLoc = data.target().getLocation();
+		Location casterLoc = data.caster().getLocation();
 
 		if (face.isEmpty()) {
-			spinTarget(caster, target, power, args);
+			spinTarget(data);
 			return;
 		}
 
 		Location loc;
 		switch (face) {
-			case "target" -> caster.teleportAsync(changeDirection(casterLoc, targetLoc));
-			case "caster" -> target.teleportAsync(changeDirection(targetLoc, casterLoc));
+			case "target" -> data.caster().teleportAsync(changeDirection(casterLoc, targetLoc));
+			case "caster" -> data.target().teleportAsync(changeDirection(targetLoc, casterLoc));
 			case "away-from-caster" -> {
 				loc = changeDirection(targetLoc, casterLoc);
-				loc.setYaw(loc.getYaw() + 180);
-				target.teleportAsync(loc);
+					loc.setYaw(loc.getYaw() + 180);
+				data.target().teleportAsync(loc);
 			}
 			case "away-from-target" -> {
 				loc = changeDirection(casterLoc, targetLoc);
 				loc.setYaw(loc.getYaw() + 180);
-				caster.teleportAsync(loc);
+				data.caster().teleportAsync(loc);
 			}
 		}
 

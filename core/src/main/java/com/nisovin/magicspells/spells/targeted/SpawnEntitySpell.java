@@ -55,6 +55,7 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.util.managers.AttributeManager;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationSpell, TargetedEntityFromLocationSpell {
 
@@ -330,111 +331,47 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		if (state == SpellCastState.NORMAL) {
 			Location loc = null;
 			LivingEntity target = null;
+			TargetInfo<LivingEntity> targetInfo = null;
 
-			switch (location.toLowerCase()) {
-				case "focus" -> {
-					loc = getRandomLocationFrom(caster.getLocation(), 3);
-					TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-					if (info.noTarget()) return noTarget(caster, args, info);
-					target = info.target();
-					power = info.power();
+			if (location.equalsIgnoreCase("target")) {
+				Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+				if (block != null && !BlockUtils.isAir(block.getType())) {
+					loc = block.getLocation();
+					loc.setY(loc.getY() + 1);
 				}
-				case "target" -> {
-					Block block = getTargetedBlock(caster, power, args);
-					if (block != null && block.getType() != Material.AIR) {
-						if (BlockUtils.isPathable(block)) loc = block.getLocation();
-						else if (BlockUtils.isPathable(block.getRelative(BlockFace.UP))) loc = block.getLocation().add(0, 1, 0);
-					}
+			} else if (location.equalsIgnoreCase("caster")) {
+				loc = data.caster().getLocation();
+			} else if (location.equalsIgnoreCase("targetentity")) {
+				targetInfo = getTargetedEntity(data);
+				if (targetInfo.noTarget()) {
+					return noTarget(data, targetInfo);
 				}
-				case "caster" -> loc = caster.getLocation();
-				case "random" -> loc = getRandomLocationFrom(caster.getLocation(), getRange(power));
-				case "casteroffset" -> {
-					String[] split = location.split(":");
-					float y = Float.parseFloat(split[1]);
-					loc = caster.getLocation().add(0, y, 0);
-					loc.setPitch(0);
-				}
+				target = targetInfo.target();
+				loc = target.getLocation();
 			}
 
-			if (loc == null) return noTarget(caster, args);
-			spawnMob(caster, caster.getLocation(), loc, target, power, args);
+			if (loc == null) {
+				return noTarget(data);
+			}
+
+			data = data.builder().power(targetInfo != null ? targetInfo.getPower() : data.power()).build();
+			spawnMob(data);
+			sendMessages(data.caster(), target, data.args());
+
+			return PostCastAction.NO_MESSAGES;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		switch (location.toLowerCase()) {
-			case "target" -> spawnMob(caster, caster.getLocation(), target, null, power, args);
-			case "caster" -> spawnMob(caster, caster.getLocation(), caster.getLocation(), null, power, args);
-			case "random" -> {
-				Location loc = getRandomLocationFrom(target, getRange(power));
-				if (loc != null) spawnMob(caster, caster.getLocation(), loc, null, power, args);
-			}
-			case "offset" -> {
-				String[] split = location.split(":");
-				float y = Float.parseFloat(split[1]);
-				Location loc = target.clone().add(0, y, 0);
-				loc.setPitch(0);
-				spawnMob(caster, caster.getLocation(), loc, null, power, args);
-			}
-		}
+	public boolean castAtLocation(SpellData data) {
+		spawnMob(data);
 		return true;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		switch (location.toLowerCase()) {
-			case "target", "caster" -> spawnMob(null, target, target, null, power, args);
-			case "random" -> {
-				Location loc = getRandomLocationFrom(target, getRange(power));
-				if (loc != null) spawnMob(null, target, loc, null, power, args);
-			}
-			case "offset" -> {
-				String[] split = location.split(":");
-				float y = Float.parseFloat(split[1]);
-				Location loc = target.clone().add(0, y, 0);
-				loc.setPitch(0);
-				spawnMob(null, target, loc, null, power, args);
-			}
-		}
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		if (location.equals("focus")) spawnMob(caster, from, from, target, power, args);
-		else castAtLocation(caster, from, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(caster, from, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		if (location.equals("focus")) spawnMob(null, from, from, target, power, args);
-		else castAtLocation(from, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		return castAtEntityFromLocation(from, target, power, null);
+	public boolean castAtEntityFromLocation(SpellData data) {
+		return castAtLocation(data.builder().location(data.target().getLocation()).build());
 	}
 
 	private Location getRandomLocationFrom(Location location, int range) {
@@ -469,17 +406,18 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		return null;
 	}
 
-	private void spawnMob(LivingEntity caster, Location source, Location loc, LivingEntity target, float power, String[] args) {
+	private void spawnMob(SpellData data) {
 		if (entityData == null || entityData.getEntityType() == null) return;
 
+		Location loc = data.location();
 		loc.setYaw((float) (JdkMath.random() * 360));
 		LivingEntity entity = (LivingEntity) entityData.spawn(
-			loc.add(0.5, yOffset.get(caster, target, power, args), 0.5),
+			loc.add(0.5, yOffset.get(data), 0.5),
 			e -> {
 				LivingEntity preSpawned = (LivingEntity) e;
-				prepMob(caster, target, preSpawned, power, args);
+				prepMob(data, preSpawned);
 
-				int fireTicks = this.fireTicks.get(caster, target, power, args);
+				int fireTicks = this.fireTicks.get(data);
 				if (fireTicks > 0) preSpawned.setFireTicks(fireTicks);
 				if (potionEffects != null) preSpawned.addPotionEffects(potionEffects);
 
@@ -500,28 +438,27 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				preSpawned.setAI(!noAI);
 				preSpawned.setInvulnerable(invulnerable);
 
-				if (target != null) MobUtil.setTarget(preSpawned, target);
+				if (data.target() != null) MobUtil.setTarget(preSpawned, data.target());
 			}
 		);
 
-		if(mountList != null && !mountList.isEmpty()) createMounts(caster, target, power, args, entity);
+		if(mountList != null && !mountList.isEmpty()) createMounts(data, entity);
 
-		int targetInterval = this.targetInterval.get(caster, null, power, args);
-		if (targetInterval > 0) new Targeter(caster, entity, power, args);
+		int targetInterval = this.targetInterval.get(data);
+		if (targetInterval > 0) new Targeter(data, entity);
 
-		int duration = this.duration.get(caster, target, power, args);
+		int duration = this.duration.get(data);
 
-		AttackMonitor monitor = new AttackMonitor(caster, entity, target, power, args);
+		AttackMonitor monitor = new AttackMonitor(data, entity);
 		MagicSpells.registerEvents(monitor);
 
 		MagicSpells.scheduleDelayedTask(() -> HandlerList.unregisterAll(monitor), duration > 0 ? duration : 12000);
 
 		if (spellOnSpawn != null) {
-			spellOnSpawn.subcast(caster, entity, power, args);
+			spellOnSpawn.subcast(data);
 		}
 
-		if (caster != null) playSpellEffects(caster, source, entity, power, args);
-		else playSpellEffects(source, entity, power, args);
+		if (data.caster() != null) playSpellEffects(data);
 
 		entities.add(entity);
 		if (duration > 0) {
@@ -539,7 +476,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				}
 
 				if (spellOnDeath != null) {
-					spellOnDeath.subcast(entity, entity, power, args);
+					spellOnDeath.subcast(data);
 				}
 
 				entity.remove();
@@ -549,7 +486,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		}
 		if (intervalSpell != null && spellInterval > 0) {
 			ticker.start();
-			pulsers.put(entity, new EntityPulser(caster, entity, power, args));
+			pulsers.put(entity, new EntityPulser(data, entity));
 			if (duration > 0) {
 				MagicSpells.scheduleDelayedTask(() -> {
 					pulsers.remove(entity);
@@ -560,10 +497,10 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		totalEntities++;
 	}
 
-	private void prepMob(LivingEntity caster, LivingEntity target, LivingEntity entity, float power, String[] args) {
+	private void prepMob(SpellData data, LivingEntity entity) {
 		entity.setGravity(gravity);
 
-		if (setOwner && entity instanceof Tameable tameable && tameable.isTamed() && caster instanceof AnimalTamer tamer)
+		if (setOwner && entity instanceof Tameable tameable && tameable.isTamed() && data.caster() instanceof AnimalTamer tamer)
 			tameable.setOwner(tamer);
 
 		if (entity instanceof Enderman) {
@@ -574,11 +511,11 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			EntityEquipment entityEquipment = ((LivingEntity) entity).getEquipment();
 			if (mainHandItem != null && !BlockUtils.isAir(mainHandItem.getType())) {
 				entityEquipment.setItemInMainHand(mainHandItem);
-				entityEquipment.setItemInMainHandDropChance(mainHandItemDropChance.get(caster, target, power, args) / 100f);
+				entityEquipment.setItemInMainHandDropChance(mainHandItemDropChance.get(data) / 100f);
 			}
 			if (offHandItem != null && !BlockUtils.isAir(offHandItem.getType())) {
 				entityEquipment.setItemInOffHand(offHandItem);
-				entityEquipment.setItemInOffHandDropChance(offHandItemDropChance.get(caster, target, power, args) / 100f);
+				entityEquipment.setItemInOffHandDropChance(offHandItemDropChance.get(data) / 100f);
 			}
 		}
 
@@ -588,15 +525,15 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		equip.setLeggings(leggings);
 		equip.setBoots(boots);
 		if (!(entity instanceof ArmorStand)) {
-			equip.setHelmetDropChance(helmetDropChance.get(caster, target, power, args) / 100f);
-			equip.setChestplateDropChance(chestplateDropChance.get(caster, target, power, args) / 100f);
-			equip.setLeggingsDropChance(leggingsDropChance.get(caster, target, power, args) / 100f);
-			equip.setBootsDropChance(bootsDropChance.get(caster, target, power, args) / 100f);
+			equip.setHelmetDropChance(helmetDropChance.get(data) / 100f);
+			equip.setChestplateDropChance(chestplateDropChance.get(data) / 100f);
+			equip.setLeggingsDropChance(leggingsDropChance.get(data) / 100f);
+			equip.setBootsDropChance(bootsDropChance.get(data) / 100f);
 		}
 
-		if (useCasterName && caster != null) {
-			if (caster instanceof Player player) entity.customName(player.displayName());
-			else entity.customName(caster.name());
+		if (useCasterName && data.caster() != null) {
+			if (data.caster() instanceof Player player) entity.customName(player.displayName());
+			else entity.customName(data.caster().name());
 			entity.setCustomNameVisible(true);
 		} else if (nameplateText != null) {
 			entity.customName(nameplateText);
@@ -607,7 +544,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
     	entity.setRemoveWhenFarAway(false);
 	}
 
-	private void createMounts(LivingEntity caster, LivingEntity target, float power, String[] args, LivingEntity head){
+	private void createMounts(SpellData data, LivingEntity head){
 
 		List<Entity> ents = new ArrayList<>();
 
@@ -618,9 +555,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			Entity mount = mountData.spawn(head.getLocation(), e -> {
 				{
 					LivingEntity preSpawned = (LivingEntity) e;
-					prepMob(caster, target, preSpawned, power, args);
+					prepMob(data, preSpawned);
 
-					int fireTicks = this.fireTicks.get(caster, target, power, args);
+					int fireTicks = this.fireTicks.get(data);
 					if (fireTicks > 0) preSpawned.setFireTicks(fireTicks);
 					if (potionEffects != null) preSpawned.addPotionEffects(potionEffects);
 
@@ -641,7 +578,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					preSpawned.setAI(!noAI);
 					preSpawned.setInvulnerable(invulnerable);
 
-					if (target != null) MobUtil.setTarget(preSpawned, target);
+					if (data.target() != null) MobUtil.setTarget(preSpawned, data.target());
 				}
 			});
 			ents.add(mount);
@@ -703,7 +640,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			if (pulsers.containsKey(entity)) pulsers.remove(entity);
 
 			if (spellOnDeath != null) {
-				spellOnDeath.subcast(entity, entity, 1F, new String[0]);
+				spellOnDeath.subcast(new SpellData(entity, entity, 1F, new String[0]));
 			}
 			totalEntities--;
 		}
@@ -711,24 +648,19 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private class AttackMonitor implements Listener {
 
-		private final LivingEntity caster;
-		private final LivingEntity monster;
-		private final String[] args;
-		private final float power;
-
+		private SpellData data;
+		private LivingEntity monster;
 		private LivingEntity target;
 
-		private AttackMonitor(LivingEntity caster, LivingEntity monster, LivingEntity target, float power, String[] args) {
-			this.caster = caster;
+		private AttackMonitor(SpellData data, LivingEntity monster) {
+			this.data = data;
 			this.monster = monster;
-			this.target = target;
-			this.power = power;
-			this.args = args;
+			this.target = data.target();
 		}
 
 		@EventHandler(ignoreCancelled = true)
 		private void onDamage(EntityDamageByEntityEvent event) {
-			if (attackSpell == null || attackSpell.getSpell() == null || attackSpell.getSpell().onCooldown(caster))
+			if (attackSpell == null || attackSpell.getSpell() == null || attackSpell.getSpell().onCooldown(data.caster()))
 				return;
 
 			Entity damager = event.getDamager();
@@ -741,7 +673,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			if (damager != monster) return;
 
 			if (attackSpell != null && event.getEntity() instanceof LivingEntity damaged) {
-				attackSpell.subcast(caster, monster.getLocation(), damaged, power, args);
+				attackSpell.subcast(data.builder().location(monster.getLocation()).target(damaged).build());
 				event.setCancelled(cancelAttack);
 			}
 		}
@@ -749,7 +681,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		@EventHandler
 		private void onTarget(EntityTargetEvent event) {
 			if (event.getEntity() == monster) {
-				if (!validTargetList.canTarget(caster, event.getTarget()) || (targetModifiers != null && !targetModifiers.check(monster, (LivingEntity) event.getTarget()))) event.setCancelled(true);
+				if (!validTargetList.canTarget(data.caster(), event.getTarget()) || (targetModifiers != null && !targetModifiers.check(monster, (LivingEntity) event.getTarget()))) event.setCancelled(true);
 				else if (event.getTarget() == null) retarget(null);
 				else if (target != null && event.getTarget() != target) event.setTarget(target);
 			}
@@ -765,12 +697,12 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		private void retarget(LivingEntity ignore) {
 			LivingEntity t = null;
 
-			double retargetRange = SpawnEntitySpell.this.retargetRange.get(caster, null, power, args);
+			double retargetRange = SpawnEntitySpell.this.retargetRange.get(data);
 			double r = retargetRange * retargetRange;
 
 			for (Entity e : monster.getNearbyEntities(retargetRange, retargetRange, retargetRange)) {
 				if (!(e instanceof LivingEntity)) continue;
-				if (!validTargetList.canTarget(caster, e)) continue;
+				if (!validTargetList.canTarget(data.caster(), e)) continue;
 				if (e == ignore) continue;
 				if (targetModifiers != null && !targetModifiers.check(monster, (LivingEntity) e)) continue;
 
@@ -794,19 +726,14 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private class Targeter implements Runnable {
 
-		private final LivingEntity caster;
+		private final SpellData data;
 		private final LivingEntity entity;
-		private final String[] args;
-		private final float power;
 		private final int taskId;
 
-		private Targeter(LivingEntity caster, LivingEntity entity, float power, String[] args) {
-			this.caster = caster;
+		private Targeter(SpellData data, LivingEntity entity) {
+			this.data = data;
 			this.entity = entity;
-			this.power = power;
-			this.args = args;
-
-			this.taskId = MagicSpells.scheduleRepeatingTask(this, 1, targetInterval.get(caster, null, power, args));
+			this.taskId = MagicSpells.scheduleRepeatingTask(this, 1, targetInterval.get(data));
 		}
 
 		@Override
@@ -816,11 +743,11 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				return;
 			}
 
-			double targetRangeSq = SpawnEntitySpell.this.targetRange.get(caster, null, power, args);
+			double targetRangeSq = SpawnEntitySpell.this.targetRange.get(data);
 			targetRangeSq *= targetRangeSq;
-			double targetPriorityRangeSq = SpawnEntitySpell.this.targetPriorityRange.get(caster, null, power, args);
+			double targetPriorityRangeSq = SpawnEntitySpell.this.targetPriorityRange.get(data);
 			targetPriorityRangeSq *= targetPriorityRangeSq;
-			int targetPriorityLimit = SpawnEntitySpell.this.targetPriorityLimit.get(caster, null, power, args);
+			int targetPriorityLimit = SpawnEntitySpell.this.targetPriorityLimit.get(data);
 
 			List<LivingEntity> targetable = new ArrayList<>();
 			List<LivingEntity> priorityTargetable = new ArrayList<>();
@@ -846,7 +773,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					}
 				}
 
-				if (!validTargetList.canTarget(caster, e)) continue;
+				if (!validTargetList.canTarget(data.caster(), e)) continue;
 				if (targetModifiers != null && !targetModifiers.check(entity, e)) continue;
 
 				targetable.add(e);
@@ -886,15 +813,13 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private class EntityPulser {
 
-		private final LivingEntity caster;
+		private final SpellData data;
 		private final LivingEntity entity;
-		private final float power;
 		private final int delay = random.nextInt(SpawnEntitySpell.this.spellInterval);
 
-		private EntityPulser(LivingEntity caster, LivingEntity entity, float power, String[] args) {
-			this.caster = caster;
+		private EntityPulser(SpellData data, LivingEntity entity) {
+			this.data = data;
 			this.entity = entity;
-			this.power = power;
 		}
 
 		private void pulse() {
@@ -910,18 +835,18 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			if (entity instanceof Mob) target = ((Mob) entity).getTarget();
 
 			if (intervalSpell.isTargetedEntityFromLocationSpell()) {
-				if (target != null) intervalSpell.castAtEntityFromLocation(caster, entity.getLocation(), target, power);
+				if (target != null) intervalSpell.castAtEntityFromLocation(data.builder().target(target).build());
 			} else if (intervalSpell.isTargetedEntitySpell()) {
-				if (target != null) intervalSpell.castAtEntity(caster, (LivingEntity) target, power);
+				if (target != null) intervalSpell.castAtEntity(data.builder().target(target).build());
 			} else if (intervalSpell.isTargetedLocationSpell()) {
 				Location location = entity.getLocation();
 				if (target != null && !(intervalSpell.getSpell() instanceof InstantSpell)) {
 					location = target.getLocation();
 				}
 
-				intervalSpell.castAtLocation(caster, location, power);
+				intervalSpell.castAtLocation(data.builder().location(location).build());
 			} else {
-				intervalSpell.cast(entity, power);
+				intervalSpell.cast(data.builder().target(entity).build());
 			}
 		}
 	}

@@ -26,6 +26,7 @@ import com.nisovin.magicspells.events.SpellCastEvent;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 
@@ -99,12 +100,13 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data, target);
 
-			silence(caster, target.target(), target.power(), args);
-			playSpellEffects(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+			data = data.builder().power(target.getPower()).build();
+			silence(data);
+			playSpellEffects(data.caster(), target.target(), data);
+			sendMessages(data.caster(), target.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -113,37 +115,20 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		silence(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		silence(data);
+		playSpellEffects(data.caster(), data.target(), data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		silence(null, target, power, args);
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	private void silence(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void silence(SpellData data) {
+		LivingEntity target = data.target();
 		Unsilencer u = silenced.get(target.getUniqueId());
 		if (u != null) u.cancel();
 
-		int duration = this.duration.get(caster, target, power, args);
-		if (powerAffectsDuration) duration = Math.round(duration * power);
+		int duration = this.duration.get(data);
+		if (powerAffectsDuration) duration = Math.round(duration * data.power());
 
 		silenced.put(target.getUniqueId(), new Unsilencer(target, duration));
 	}
@@ -169,7 +154,10 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 			if (filter.check(spell)) return;
 			event.setCancelled(true);
 			Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, () -> {
-				if (preventCastSpell != null) preventCastSpell.subcast(event.getCaster(), 1, null);
+				if (preventCastSpell != null) {
+					SpellData spellData = new SpellData(event.getCaster(), event.getCaster(), 1, event.getSpellArgs());
+					preventCastSpell.subcast(spellData);
+				}
 				if (spell.isHelperSpell() && !notifyHelperSpells) return;
 				if (spell instanceof PassiveSpell && !notifyPassiveSpells) return;
 				sendMessage(strSilenced, event.getCaster(), event.getSpellArgs());
@@ -184,7 +172,10 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		public void onChat(AsyncChatEvent event) {
 			if (!silenced.containsKey(event.getPlayer().getUniqueId())) return;
 			event.setCancelled(true);
-			if (preventChatSpell != null) preventChatSpell.subcast(event.getPlayer(), 1, null);
+			if (preventChatSpell != null) {
+				SpellData spellData = new SpellData(event.getPlayer(), event.getPlayer(), 1, new String[0]);
+				preventChatSpell.subcast(spellData);
+			}
 			sendMessage(strSilenced, event.getPlayer(), new String[0]);
 		}
 
@@ -196,7 +187,10 @@ public class SilenceSpell extends TargetedSpell implements TargetedEntitySpell {
 		public void onCommand(PlayerCommandPreprocessEvent event) {
 			if (!silenced.containsKey(event.getPlayer().getUniqueId())) return;
 			event.setCancelled(true);
-			if (preventCommandSpell != null) preventCommandSpell.subcast(event.getPlayer(), 1, null);
+			if (preventCommandSpell != null) {
+				SpellData spellData = new SpellData(event.getPlayer(), event.getPlayer(), 1, new String[0]);
+				preventCommandSpell.subcast(spellData);
+			}
 			sendMessage(strSilenced, event.getPlayer(), new String[0]);
 		}
 

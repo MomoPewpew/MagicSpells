@@ -9,6 +9,7 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class SlotSelectSpell extends TargetedSpell implements TargetedEntitySpell {
 
@@ -38,13 +39,14 @@ public class SlotSelectSpell extends TargetedSpell implements TargetedEntitySpel
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			TargetInfo<Player> info = getTargetedPlayer(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
+			TargetInfo<Player> info = getTargetedPlayer(data);
+			if (info.noTarget()) return noTarget(data, info);
 
-			if (!slotChange(caster, info.target(), info.power(), args)) return noTarget(caster, args);
+			data = data.builder().power(info.getPower()).build();
+			if (!slotChange(data)) return noTarget(data);
 
-			sendMessages(caster, info.target(), args);
+			sendMessages(data.caster(), info.target(), data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 
@@ -52,27 +54,12 @@ public class SlotSelectSpell extends TargetedSpell implements TargetedEntitySpel
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return validTargetList.canTarget(caster, target) && slotChange(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		return validTargetList.canTarget(data.caster(), data.target()) && slotChange(data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return validTargetList.canTarget(caster, target) && slotChange(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		return validTargetList.canTarget(target) && slotChange(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return validTargetList.canTarget(target) && slotChange(null, target, power, null);
-	}
-
-	private boolean slotChange(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player)) return false;
+	private boolean slotChange(SpellData data) {
+		if (!(data.target() instanceof Player player)) return false;
 
 		int newSlot = -1;
 		if (isVariable) {
@@ -89,8 +76,8 @@ public class SlotSelectSpell extends TargetedSpell implements TargetedEntitySpel
 			}
 		}
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (data.caster() != null) playSpellEffects(data.caster(), data.target(), data);
+		else playSpellEffects(EffectPosition.TARGET, data.target(), data);
 
 		return true;
 	}

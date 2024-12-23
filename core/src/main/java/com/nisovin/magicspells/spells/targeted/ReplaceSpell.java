@@ -165,49 +165,33 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Block target = pointBlank ? caster.getLocation().getBlock() : getTargetedBlock(caster, power, args);
-			if (target == null) return noTarget(caster, args);
-			replace(caster, target.getLocation(), power, args);
+			Block target = pointBlank ? data.caster().getLocation().getBlock() : getTargetedBlock(data.caster(), data.power());
+			if (target == null) return noTarget(data);
+			replace(data.builder().location(target.getLocation()).build());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return replace(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		return replace(data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return replace(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return replace(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return replace(null, target, power, null);
-	}
-
-	private boolean replace(LivingEntity caster, Location target, float power, String[] args) {
+	private boolean replace(SpellData data) {
 		boolean replaced = false;
 		Block block;
 
-		int d = radiusDown.get(caster, null, power, args);
-		int u = radiusUp.get(caster, null, power, args);
-		int h = radiusHoriz.get(caster, null, power, args);
+		int d = radiusDown.get(data);
+		int u = radiusUp.get(data);
+		int h = radiusHoriz.get(data);
 		if (powerAffectsRadius) {
-			d = Math.round(d * power);
-			u = Math.round(u * power);
-			h = Math.round(h * power);
+			d = Math.round(d * data.power());
+			u = Math.round(u * data.power());
+			h = Math.round(h * data.power());
 		}
 
-		SpellData spellData = new SpellData(caster, power, args);
-		int yOffset = this.yOffset.get(caster, null, power, args);
-		int replaceDuration = resolveDurationPerBlock ? 0 : this.replaceDuration.get(caster, null, power, args);
+		int yOffset = this.yOffset.get(data);
+		int replaceDuration = resolveDurationPerBlock ? 0 : this.replaceDuration.get(data);
 
 		List<BlockData> allReplaceWithBlocks = new ArrayList<BlockData>();
 
@@ -219,6 +203,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 			}
 		}
 
+		Location target = data.location();
 		for (int y = target.getBlockY() - d + yOffset; y <= target.getBlockY() + u + yOffset; y++) {
 			for (int x = target.getBlockX() - h; x <= target.getBlockX() + h; x++) {
 				for (int z = target.getBlockZ() - h; z <= target.getBlockZ() + h; z++) {
@@ -235,14 +220,14 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 					block = target.getWorld().getBlockAt(x, y, z);
 					for (int i = 0; i < replace.size(); i++) {
-						BlockData data = block.getBlockData();
+						BlockData bdata = block.getBlockData();
 
 						// If specific blocks are being replaced, skip if the block isn't replaceable.
 						if (!replaceAll) {
 							Boolean cont = true;
 
 							for (BlockData replaceData : replace.get(i)) {
-								if (data.matches(replaceData)) {
+								if (bdata.matches(replaceData)) {
 									cont = false;
 								}
 							}
@@ -254,14 +239,14 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 							Boolean cont = false;
 
 							for (BlockData replaceData : replaceWith.get(i)) {
-								if (data.matches(replaceData)) {
+								if (bdata.matches(replaceData)) {
 									cont = true;
 								}
 							}
 							if (cont) continue;
 						}
 
-						if (replaceBlacklisted(data)) continue;
+						if (replaceBlacklisted(bdata)) continue;
 
 						Block finalBlock = block;
 						BlockState previousState = block.getState();
@@ -273,10 +258,10 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 						if (newBlockData == null) continue;
 
-						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData, applyPhysics);
+						BlockUtils.setBlockData(block, bdata, newBlockData, mergeBlockData, applyPhysics);
 
-						if (checkPlugins && caster instanceof Player player) {
-							Block against = target.clone().add(target.getDirection()).getBlock();
+						if (checkPlugins && data.caster() instanceof Player player) {
+							Block against = data.location().clone().add(data.location().getDirection()).getBlock();
 							if (block.equals(against)) against = block.getRelative(BlockFace.DOWN);
 							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, previousState, against, player.getInventory().getItemInMainHand(), player, true);
 							EventUtil.call(event);
@@ -285,23 +270,23 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 								return false;
 							}
 						}
-						playSpellEffects(EffectPosition.SPECIAL, finalBlock.getLocation(), spellData);
+						playSpellEffects(EffectPosition.SPECIAL, finalBlock.getLocation(), data);
 
 						// Break block.
-						if (resolveDurationPerBlock) replaceDuration = this.replaceDuration.get(caster, null, power, args);
+						if (resolveDurationPerBlock) replaceDuration = this.replaceDuration.get(data);
 						if (replaceDuration > 0) {
-							blocks.put(block, data);
+							blocks.put(block, bdata);
 
 							MagicSpells.scheduleDelayedTask(() -> {
 								BlockData previous = blocks.remove(finalBlock);
 								if (previous == null) return;
-								if (checkPlugins && caster instanceof Player) {
-									MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(finalBlock, (Player) caster);
+								if (checkPlugins && data.caster() instanceof Player) {
+									MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(finalBlock, (Player) data.caster());
 									EventUtil.call(event);
 									if (event.isCancelled()) return;
 								}
 								finalBlock.setBlockData(previous, applyPhysics);
-								playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, finalBlock.getLocation(), spellData);
+								playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, finalBlock.getLocation(), data);
 							}, replaceDuration);
 						}
 
@@ -312,8 +297,8 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 			}
 		}
 
-		if (caster != null) playSpellEffects(caster, target, spellData);
-		else playSpellEffects(EffectPosition.TARGET, target, spellData);
+		if (data.caster() != null) playSpellEffects(data.caster(), target, data);
+		else playSpellEffects(EffectPosition.TARGET, target, data);
 
 		return replaced;
 	}

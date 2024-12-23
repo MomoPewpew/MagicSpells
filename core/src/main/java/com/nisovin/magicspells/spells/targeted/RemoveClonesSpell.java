@@ -9,6 +9,7 @@ import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.SpellData;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -60,60 +61,50 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 
     @Override
     public PostCastAction castSpell(SpellCastState state, SpellData data) {
-        if(!(caster instanceof Player)) return PostCastAction.NO_MESSAGES;
+        if(!(data.caster() instanceof Player)) return PostCastAction.NO_MESSAGES;
 
         if(state == SpellCastState.NORMAL) {
-			Location loc = null;
-			if (pointBlank) loc = caster.getLocation();
-			else {
-				try {
-					Block block = getTargetedBlock(caster, power, args);
-					if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation().add(0.5, 0, 0.5);
+				Location loc = null;
+				if (pointBlank) loc = data.caster().getLocation();
+				else {
+					try {
+						Block block = getTargetedBlock(data.caster(), data.power());
+						if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation().add(0.5, 0, 0.5);
+					}
+					catch (IllegalStateException ignored) {}
 				}
-				catch (IllegalStateException ignored) {}
-			}
 
-			if (loc == null) return noTarget(caster, args);
+				if (loc == null) return noTarget(data);
 
-			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, loc, power, args);
-			EventUtil.call(event);
-			if (event.isCancelled()) loc = null;
-			else {
-				loc = event.getTargetLocation();
-				power = event.getPower();
-			}
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(loc).build());
+				EventUtil.call(event);
+				if (event.isCancelled()) loc = null;
+				else {
+					loc = event.getTargetLocation();
+					data = data.builder().power(event.getPower()).build();
+				}
 
-			if (loc == null) return noTarget(caster, args);
+				if (loc == null) return noTarget(data);
 
-			boolean done = removeClones(caster, loc, power, args);
-			if (!done) return noTarget(caster, args);
+				boolean done = removeClones(data.builder().location(loc).build());
+				if (!done) return noTarget(data);
         }
         return PostCastAction.HANDLE_NORMALLY;
     }
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		return removeClones(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		return removeClones(data);
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return removeClones(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return removeClones(null, target, power, null);
-	}
-
-    private boolean removeClones(LivingEntity caster, Location loc, float power, String[] args) {
-		float radSq = radius.get(caster, null, power, args);
-		if (powerAffectsRadius) radSq *= power;
+    private boolean removeClones(SpellData data) {
+		float radSq = radius.get(data);
+		if (powerAffectsRadius) radSq *= data.power();
 
 		radSq *= radSq;
 
 		boolean succes = false;
-		World locWorld = loc.getWorld();
+		World locWorld = data.location().getWorld();
 
 		if (!this.cloneSpells.isEmpty()) {
 		    for (CloneSpell cloneSpell : cloneSpells) {
@@ -123,7 +114,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 		            Location location = cloneSpell.getTemporaryCloneMap().get(cloneID);
 
 					if (!location.getWorld().getName().equals(locWorld.getName())) continue;
-			        if (location.distanceSquared(loc) < radSq) {
+			        if (location.distanceSquared(data.location()) < radSq) {
 		        		MagicSpells.getVolatileCodeHandler().removeFalsePlayer(cloneID);
 	    				CloneSpell.getCloneMap().remove(cloneID);
 	    				iterator.remove();
@@ -146,7 +137,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 		        Location location = CloneSpell.getCloneMap().get(cloneID);
 
 				if (!location.getWorld().getName().equals(locWorld.getName())) continue;
-		        if (location.distanceSquared(loc) < radSq) {
+		        if (location.distanceSquared(data.location()) < radSq) {
 		            for (CloneSpell cloneSpell : cloneSpellsTemp) {
 		                if (cloneSpell.getTemporaryCloneMap().containsKey(cloneID)) {
 		                    cloneSpell.getTemporaryCloneMap().remove(cloneID);

@@ -8,7 +8,6 @@ import java.util.Iterator;
 import org.bukkit.World;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
@@ -19,6 +18,7 @@ import com.nisovin.magicspells.spells.targeted.PulserSpell.Pulser;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class RemovePulsersSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -68,51 +68,33 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 		if (state == SpellCastState.NORMAL) {
 			Location loc = null;
 			if (pointBlank)
-				loc = caster.getLocation();
+				loc = data.caster().getLocation();
 			else {
-				Block b = getTargetedBlock(caster, power, args);
+				Block b = getTargetedBlock(data.caster(), data.power());
 				if (b != null && !BlockUtils.isAir(b.getType()))
 					loc = b.getLocation();
 			}
 			if (loc == null)
-				return noTarget(caster, args);
-			removePulsers(caster, loc, power, args);
+				return noTarget(data);
+			removePulsers(data.builder().location(loc).build());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		removePulsers(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		removePulsers(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		removePulsers(caster, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		removePulsers(null, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		removePulsers(null, target, power, null);
-		return true;
-	}
-
-	private void removePulsers(LivingEntity caster, Location loc, float power, String[] args) {
-		float radSq = radius.get(caster, null, power, args);
+	private void removePulsers(SpellData data) {
+		float radSq = radius.get(data);
 		if (powerAffectsRadius)
-			radSq *= power;
+			radSq *= data.power();
 
 		radSq *= radSq;
 
-		World locWorld = loc.getWorld();
+		World locWorld = data.location().getWorld();
 
 		List<PulserSpell> pulserSpellsTemp = new ArrayList<>();
 
@@ -136,19 +118,19 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 
 				if (!block.getWorld().equals(locWorld))
 					continue;
-				if (block.getLocation().distanceSquared(loc) > radSq)
+				if (block.getLocation().distanceSquared(data.location()) > radSq)
 					continue;
-				if (ownedPulsersOnly && !pulser.caster.equals(caster))
+				if (ownedPulsersOnly && !pulser.caster.equals(data.caster()))
 					continue;
 
 				pulser.stop();
 				iterator.remove();
-				playSpellEffects(EffectPosition.TARGET, block.getLocation(), power, args);
+				playSpellEffects(EffectPosition.TARGET, block.getLocation(), data);
 			}
 		}
 
-		if (caster != null) playSpellEffects(EffectPosition.CASTER, caster.getLocation(), power, args);
-		playSpellEffects(EffectPosition.SPECIAL, loc, power, args);
+		if (data.caster() != null) playSpellEffects(EffectPosition.CASTER, data.caster().getLocation(), data);
+		playSpellEffects(EffectPosition.SPECIAL, data.location(), data);
 	}
 
 }

@@ -14,6 +14,7 @@ import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
@@ -75,8 +76,8 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			this.parseHashVariable();
-			TargetInfo<Player> info = getTargetedPlayer(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+			TargetInfo<Player> info = getTargetedPlayer(data);
+			if (info.noTarget()) return noTarget(data, info);
 			Player target = info.target();
 
 			try {
@@ -86,8 +87,8 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 				return PostCastAction.ALREADY_HANDLED;
 			}
 
-			playSpellEffects(caster, target, info.power(), args);
-			sendMessages(caster, target, args);
+			playSpellEffects(data.caster(), target, data);
+			sendMessages(data.caster(), target, data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -96,8 +97,8 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntity(SpellData data) {
+		if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), data.target())) return false;
 		
 		this.parseHashVariable();
 
@@ -108,35 +109,8 @@ public class ResourcePackSpell extends TargetedSpell implements TargetedEntitySp
 			return false;
 		}
 
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data.caster(), data.target(), data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
-		
-		this.parseHashVariable();
-
-		try {
-			player.setResourcePack(url, hash, player.hasPermission("magicspells.bypassresourcepacks") ? false : required, prompt);
-		} catch (IllegalArgumentException e) {
-			DebugHandler.debugIllegalArgumentException(e);
-			return false;
-		}
-
-		playSpellEffects(EffectPosition.TARGET, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
 	}
 
 }

@@ -135,7 +135,7 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 
 	private class Dot implements Runnable {
 
-		private SpellData data
+		private SpellData data;
 
 		private int taskId = -1;
 		private int duration;

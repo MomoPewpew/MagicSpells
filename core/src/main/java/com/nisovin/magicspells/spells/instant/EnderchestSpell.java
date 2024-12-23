@@ -2,7 +2,6 @@ package com.nisovin.magicspells.spells.instant;
 
 import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.InstantSpell;
@@ -32,18 +31,13 @@ public class EnderchestSpell extends InstantSpell implements TargetedEntitySpell
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-
-		if (!(caster instanceof Player playerCaster) || !(target instanceof Player playerTarget)) return false;
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		
+		if (!(data.caster() instanceof Player playerCaster) || !(data.target() instanceof Player playerTarget)) return false;
 		playerCaster.openInventory(playerTarget.getEnderChest());
-
+		
 		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
 	}
 
 }

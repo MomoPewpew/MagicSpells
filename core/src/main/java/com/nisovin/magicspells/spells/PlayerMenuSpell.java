@@ -124,7 +124,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
 			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
-			if (targetInfo.noTarget()) return noTarget(data.caster(), data.args(), targetInfo);
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 			Player target = targetInfo.target();
 
 			openDelay(data.caster(), target, data.power(), data.args());

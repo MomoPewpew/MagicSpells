@@ -231,20 +231,20 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			if (requireEntityTarget) {
 				if (targetOpensMenuInstead) {
 					TargetInfo<Player> info = getTargetedPlayer(data);
-					if (info.noTarget()) return noTarget(player, args, info);
+					if (info.noTarget()) return noTarget(data, info);
 
 					opener = info.target();
 					power = info.getPower();
 				} else {
 					TargetInfo<LivingEntity> info = getTargetedEntity(data);
-					if (info.noTarget()) return noTarget(player, args, info);
+					if (info.noTarget()) return noTarget(data, info);
 
 					target = info.target();
 					power = info.getPower();
 				}
 			} else if (requireLocationTarget) {
 				Block block = getTargetedBlock(player, power, args);
-				if (block == null || BlockUtils.isAir(block.getType())) return noTarget(data.caster(), args);
+				if (block == null || BlockUtils.isAir(block.getType())) return noTarget(data);
 
 				locTarget = block.getLocation();
 			}
@@ -364,7 +364,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				if (magicItem != null) itemData = magicItem.getItemStack();
 			}
 			else if (option.itemString != null) {
-				MagicItem magicItem = MagicItems.getMagicItemFromString(option.itemString.get(spellData));
+				MagicItem magicItem = MagicItems.getMagicItemFromString(option.itemString.get(spellData), spellData);
 				if (magicItem != null) itemData = magicItem.getItemStack();
 			}
 

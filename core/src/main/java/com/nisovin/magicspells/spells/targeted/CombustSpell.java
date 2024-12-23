@@ -24,7 +24,7 @@ import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
 
 public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 
-	private Map<UUID, CombustData> combusting;
+	private Map<UUID, SpellData> combusting;
 
 	private ConfigData<Integer> fireTicks;
 	private ConfigData<Double> fireTickDamage;
@@ -84,7 +84,7 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 		if (powerAffectsFireTicks) duration = Math.round(duration * data.power());
 		target.setFireTicks(duration);
 
-		combusting.put(target.getUniqueId(), new CombustData(caster, data.power(), data.args()));
+		combusting.put(target.getUniqueId(), data);
 
 		if (caster != null) playSpellEffects(data);
 		else playSpellEffects(EffectPosition.TARGET, target, data);
@@ -101,18 +101,16 @@ public class CombustSpell extends TargetedSpell implements TargetedEntitySpell {
 		Entity entity = event.getEntity();
 		if (!(entity instanceof LivingEntity target)) return;
 
-		CombustData data = combusting.get(target.getUniqueId());
+		SpellData data = combusting.get(target.getUniqueId()).builder().target(target).build();
 		if (data == null) return;
 
-		double fireTickDamage = this.fireTickDamage.get(data.caster, target, data.power, data.args);
-		if (powerAffectsFireTickDamage) fireTickDamage = fireTickDamage * data.power;
+		double fireTickDamage = this.fireTickDamage.get(data);
+		if (powerAffectsFireTickDamage) fireTickDamage = fireTickDamage * data.power();
 
-		EventUtil.call(new SpellApplyDamageEvent(this, data.caster, target, fireTickDamage, DamageCause.FIRE_TICK, ""));
+		EventUtil.call(new SpellApplyDamageEvent(this, data, fireTickDamage, DamageCause.FIRE_TICK, ""));
 		event.setDamage(fireTickDamage);
 
 		if (preventImmunity) MagicSpells.scheduleDelayedTask(() -> target.setNoDamageTicks(0), 0);
 	}
-
-	private record CombustData(LivingEntity caster, float power, String[] args) {}
 
 }

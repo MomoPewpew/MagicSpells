@@ -411,7 +411,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		// Cast spell mid air
 		if (hitAirDuring && counter % spellInterval == 0 && tickSpell != null) {
 			if (tickSpellLimit <= 0 || ticks < tickSpellLimit) {
-				tickSpell.subcast(new SpellData(caster, currentLocation.clone(), power, args));
+				tickSpell.subcast(data.builder().location(currentLocation.clone()).build());
 				ticks++;
 			}
 		}
@@ -425,7 +425,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			if (!groundMaterials.contains(b.getType()) || disallowedGroundMaterials.contains(b.getType())) continue;
 			if (hitGround && groundSpell != null) {
 				Util.setLocationFacingFromVector(previousLocation, currentVelocity);
-				groundSpell.subcast(caster, previousLocation, power, args);
+				groundSpell.subcast(data.builder().location(currentLocation.clone()).build());
 				if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLocation, data);
 			}
 			if (stopOnHitGround) {
@@ -436,7 +436,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 		if (currentLocation.distanceSquared(startLocation) >= maxDistanceSquared) {
 			if (hitAirAtEnd && airSpell != null) {
-				airSpell.subcast(caster, currentLocation.clone(), power, args);
+				airSpell.subcast(data.builder().location(currentLocation.clone()).build());
 				if (spell != null) spell.playEffects(EffectPosition.TARGET, currentLocation, data);
 			}
 			stop();
@@ -466,7 +466,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 			double z = (tracker.currentLocation.getZ() + collisionTracker.currentLocation.getZ()) / 2D;
 
 			Location middleLoc = new Location(tracker.currentLocation.getWorld(), x, y, z);
-			collisionSpell.subcast(tracker.caster, middleLoc, tracker.power, tracker.args);
+			collisionSpell.subcast(data.builder().location(middleLoc.clone()).power(tracker.data.power()).args(tracker.data.args()).build());
 			toRemove.add(collisionTracker);
 			toRemove.add(tracker);
 			collisionTracker.stop(false);
@@ -531,7 +531,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		for (LivingEntity target : currentLoc.getNearbyLivingEntities(horizontalHitRadius, verticalHitRadius)) {
 			if (!target.isValid() || immune.contains(target) || !targetList.canTarget(data.caster(), target)) continue;
 
-			ParticleProjectileHitEvent hitEvent = new ParticleProjectileHitEvent(data.caster(), data.target(), tracker, spell, data.power());
+			ParticleProjectileHitEvent hitEvent = new ParticleProjectileHitEvent(tracker, spell, data);
 			hitEvent.callEvent();
 
 			if (stopped) return;

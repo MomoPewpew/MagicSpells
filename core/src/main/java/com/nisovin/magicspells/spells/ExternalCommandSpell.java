@@ -114,11 +114,11 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 
 			LivingEntity caster = data.caster();
 			String[] args = data.args();
-			if (data.target() == null || !(data.target() instanceof Player target)) return noTarget(caster, args, targetInfo);
+			if (data.target() == null || !(data.target() instanceof Player target)) return noTarget(data, targetInfo);
 			Float power = data.power();
 
 			if (requirePlayerTarget) {
-				if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+				if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
 				target = targetInfo.target();
 				power = targetInfo.getPower();

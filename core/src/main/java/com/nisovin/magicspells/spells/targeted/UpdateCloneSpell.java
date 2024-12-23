@@ -11,7 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
+import com.nisovin.magicspells.util.SpellData;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,12 +33,12 @@ public class UpdateCloneSpell extends TargetedSpell implements TargetedLocationS
     @Override
     public PostCastAction castSpell(SpellCastState state, SpellData data) {
 
-        Block block = getTargetedBlock(caster, power, args);
+        Block block = getTargetedBlock(data.caster(), data.power(), data.args());
 
         Collection<Entity> nearbyEntities = block.getLocation().getNearbyEntities(
-                maxX.get(caster, null, power, args),
-                maxY.get(caster, null, power, args),
-                maxZ.get(caster, null, power, args));
+                maxX.get(data),
+                maxY.get(data),
+                maxZ.get(data));
 
         Bukkit.getLogger().info("I am checking for nearby block entities! " + nearbyEntities.size());
         Bukkit.getLogger().info("Position: " + block.getX() + " | " + block.getY() + " | " + block.getZ());
@@ -54,26 +54,17 @@ public class UpdateCloneSpell extends TargetedSpell implements TargetedLocationS
 
 
     @Override
-    public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-        updateDisplays(caster, target, power);
+    public boolean castAtLocation(SpellData data) {
+        updateDisplays(data);
         return true;
     }
 
-    @Override
-    public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-        return castAtLocation(caster, target, power, null);
-    }
-
-    @Override
-    public boolean castAtLocation(Location target, float power) {return false;}
-
-
-    private void updateDisplays(LivingEntity caster, Location location, float power){
+    private void updateDisplays(SpellData data){
         Bukkit.getScheduler().scheduleSyncDelayedTask(MagicSpells.getInstance(), () ->{
-            Collection<Entity> nearbyEntities = location.getNearbyEntities(
-                    maxX.get(caster, null, power, null),
-                    maxY.get(caster, null, power, null),
-                    maxZ.get(caster, null, power, null));
+            Collection<Entity> nearbyEntities = data.location().getNearbyEntities(
+                    maxX.get(data),
+                    maxY.get(data),
+                    maxZ.get(data));
 
             for(Entity entity : nearbyEntities){
                 if(entity instanceof Display

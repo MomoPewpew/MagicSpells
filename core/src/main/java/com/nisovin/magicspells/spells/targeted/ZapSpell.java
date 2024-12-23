@@ -11,7 +11,6 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
@@ -71,69 +70,50 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
 			Block target;
 			try {
-				target = getTargetedBlock(caster, power, args);
+				target = getTargetedBlock(data.caster(), data.power(), data.args());
 			} catch (IllegalStateException e) {
 				target = null;
 			}
 			if (target != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 				EventUtil.call(event);
 				if (event.isCancelled()) target = null;
 				else target = event.getTargetLocation().getBlock();
 			}
-			if (target == null) return noTarget(caster, strCantZap, args);
+			if (target == null) return noTarget(data, strCantZap);
 
-			if (!canZap(target)) return noTarget(caster, strCantZap, args);
-			boolean ok = zap(target, (Player) caster, power, args);
-			if (!ok) return noTarget(caster, strCantZap, args);
+			if (!canZap(target)) return noTarget(data, strCantZap);
+			boolean ok = zap(target, data);
+			if (!ok) return noTarget(data, strCantZap);
 
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player)) return false;
-		Block block = target.getBlock();
+	public boolean castAtLocation(SpellData data) {
+		if (!(data.caster() instanceof Player)) return false;
+		Block block = data.location().getBlock();
 		if (canZap(block)) {
-			zap(block, (Player) caster, power, args);
+			zap(block, data);
 			return true;
 		}
 
-		Vector v = target.getDirection();
-		block = target.clone().add(v).getBlock();
+		Vector v = data.location().getDirection();
+		block = data.location().clone().add(v).getBlock();
 
 		if (canZap(block)) {
-			zap(block, (Player) caster, power, args);
-			return true;
-		}
-		return false;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		Block block = target.getBlock();
-		if (canZap(block)) {
-			zap(block, null, power, args);
+			zap(block, data);
 			return true;
 		}
 		return false;
 	}
 
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
-	}
-
-	private boolean zap(Block target, Player player, float power, String[] args) {
+	private boolean zap(Block target, SpellData data) {
+		Player player = data.caster() instanceof Player ? (Player) data.caster() : null;
 		boolean playerNull = player == null;
 
 		if (checkPlugins && !playerNull) {
@@ -149,7 +129,6 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		if (playBreakEffect) target.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
 
-		SpellData data = new SpellData(player, power, args);
 		if (!playerNull) playSpellEffects(EffectPosition.CASTER, player, data);
 		playSpellEffects(EffectPosition.TARGET, target.getLocation(), data);
 		if (!playerNull) playSpellEffectsTrail(player.getLocation(), target.getLocation(), data);

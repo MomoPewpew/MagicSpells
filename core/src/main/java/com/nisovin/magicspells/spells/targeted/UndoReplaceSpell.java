@@ -10,16 +10,15 @@ import org.bukkit.World;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class UndoReplaceSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -64,43 +63,26 @@ public class UndoReplaceSpell extends TargetedSpell implements TargetedLocationS
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Location loc = pointBlank ? caster.getLocation() : getTargetedBlock(caster, power, args).getLocation();
+			Location loc = pointBlank ? data.caster().getLocation() : getTargetedBlock(data.caster(), data.power(), data.args()).getLocation();
 			if (loc == null) {
-				return noTarget(caster, args);
+				return noTarget(data);
 			}
-			undoReplaces(caster, loc, power, args);
+			undoReplaces(data.builder().location(loc).build());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		undoReplaces(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		undoReplaces(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		undoReplaces(caster, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		undoReplaces(null, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		undoReplaces(null, target, power, null);
-		return true;
-	}
-
-	private void undoReplaces(LivingEntity caster, Location loc, float power, String[] args) {
-		float radSq = radius.get(caster, null, power, args);
+	private void undoReplaces(SpellData data) {
+		Location loc = data.location();
+		float radSq = radius.get(data);
 		if (powerAffectsRadius)
-			radSq *= power;
+			radSq *= data.power();
 		radSq *= radSq;
 
 		World locWorld = loc.getWorld();
@@ -130,13 +112,13 @@ public class UndoReplaceSpell extends TargetedSpell implements TargetedLocationS
 
 				block.setBlockData(blockData, applyPhysics);
 				iterator.remove();
-				playSpellEffects(EffectPosition.TARGET, block.getLocation(), power, args);
+				playSpellEffects(EffectPosition.TARGET, block.getLocation(), data);
 			}
 		}
 
-		if (caster != null)
-			playSpellEffects(EffectPosition.CASTER, caster.getLocation(), power, args);
+		if (data.caster() != null)
+			playSpellEffects(EffectPosition.CASTER, data.caster().getLocation(), data);
 
-		playSpellEffects(EffectPosition.SPECIAL, loc, power, args);
+		playSpellEffects(EffectPosition.SPECIAL, loc, data);
 	}
 }

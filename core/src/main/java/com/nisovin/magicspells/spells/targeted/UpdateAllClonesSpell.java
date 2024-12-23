@@ -1,12 +1,9 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.MagicConfig;
-import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.LivingEntity;
+import com.nisovin.magicspells.util.SpellData;
 
 public class UpdateAllClonesSpell extends TargetedSpell {
 

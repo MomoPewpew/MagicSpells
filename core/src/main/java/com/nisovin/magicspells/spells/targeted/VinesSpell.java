@@ -8,13 +8,13 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.MultipleFacing;
 
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellAnimation;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.SpellData;
 
 public class VinesSpell extends TargetedSpell {
 
@@ -35,17 +35,17 @@ public class VinesSpell extends TargetedSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			List<Block> target = getLastTwoTargetedBlocks(caster, power, args);
-			if (target == null || target.size() != 2) return noTarget(caster, args);
-			if (target.get(0).getType() != Material.AIR || !target.get(1).getType().isSolid()) return noTarget(caster, args);
+			List<Block> target = getLastTwoTargetedBlocks(data.caster(), data.power(), data.args());
+			if (target == null || target.size() != 2) return noTarget(data);
+			if (target.get(0).getType() != Material.AIR || !target.get(1).getType().isSolid()) return noTarget(data);
 
-			boolean success = growVines(caster, target.get(0), target.get(1), power, args);
-			if (!success) return noTarget(caster, args);
+			boolean success = growVines(data, target.get(0), target.get(1));
+			if (!success) return noTarget(data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 	
-	private boolean growVines(LivingEntity caster, Block air, Block solid, float power, String[] args) {
+	private boolean growVines(SpellData data, Block air, Block solid) {
 		BlockFace face = air.getFace(solid);
 		int x = 0;
 		int z = 0;
@@ -57,11 +57,11 @@ public class VinesSpell extends TargetedSpell {
 		TreeSet<VineBlock> blocks = new TreeSet<>();
 
 		blocks.add(new VineBlock(air, air));
-		int up = this.up.get(caster, null, power, args);
-		int down = this.down.get(caster, null, power, args);
+		int up = this.up.get(data);
+		int down = this.down.get(data);
 		growVinesVert(blocks, air, solid, air, up, down);
 
-		int width = this.width.get(caster, null, power, args);
+		int width = this.width.get(data);
 		if (width > 1) {
 			for (int i = 1; i <= width / 2; i++) {
 				Block a = air.getRelative(x * i, 0, z * i);
@@ -83,7 +83,7 @@ public class VinesSpell extends TargetedSpell {
 		
 		if (blocks.isEmpty()) return false;
 
-		int animateInterval = this.animateInterval.get(caster, null, power, args);
+		int animateInterval = this.animateInterval.get(data);
 		if (animateInterval <= 0) {
 			for (VineBlock vine : blocks) setBlockToVine(vine.block, face);
 		} else new VineAnimation(face, blocks, animateInterval);

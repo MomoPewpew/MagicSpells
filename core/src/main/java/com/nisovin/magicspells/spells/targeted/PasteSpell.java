@@ -391,11 +391,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		public Builder(SpellData data) {
 			this.data = data;
 			this.clipboard = PasteSpell.this.clipboard;
-			this.caster = caster;
-			this.onlyReplaceAir = PasteSpell.this.onlyReplaceAir.get(caster, null, power, args);
+			this.onlyReplaceAir = PasteSpell.this.onlyReplaceAir.get(data);
+			this.pasteAir = PasteSpell.this.pasteAir;
 
-            this.undoDelay = PasteSpell.this.undoDelay.get(caster, null, power, args);
-            this.blocksPerCast = PasteSpell.this.blocksPerCast.get(caster, null, power, args);
+            this.undoDelay = PasteSpell.this.undoDelay.get(data);
+            this.blocksPerCast = PasteSpell.this.blocksPerCast.get(data);
             this.instantUndo = PasteSpell.this.instantUndo;
 
 			this.storeStartRegion();
@@ -712,8 +712,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        Block b = block.getRelative(x, y, z);
 
 	        if (!keepOld) {
-	        	if (this.caster instanceof Player player) {
-					MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player);
+	        	if (data.caster() instanceof Player player) {
+					MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player, bypassDippGen);
 					EventUtil.call(event);
 					if (!event.isCancelled()) {
 			        	block.setType(Material.AIR);
@@ -790,8 +790,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
             	try (EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(BukkitAdapter.adapt(data.location().getWorld()), -1)) {
                 Operation operation = new ClipboardHolder(this.clipboard)
                         .createPaste(editSession)
-                        .to(BlockVector3.at(target.getX(), target.getY(), target.getZ()))
-                        .ignoreAirBlocks(!pasteAir)
+                        .to(BlockVector3.at(data.location().getX(), data.location().getY(), data.location().getZ()))
                         .build();
                 Operations.complete(operation);
             } catch (WorldEditException e) {

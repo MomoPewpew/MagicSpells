@@ -138,7 +138,7 @@ public class ReplaceBlockDataSpell extends TargetedSpell implements TargetedLoca
 						if (checkPlugins && data.caster() instanceof Player player) {
 							Block against = target.clone().add(target.getDirection()).getBlock();
 
-							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, block.getState(), against, player.getInventory().getItemInMainHand(), player, true);
+							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, block.getState(), against, player.getInventory().getItemInMainHand(), player, true, bypassDippGen);
 
 							EventUtil.call(event);
 							if (event.isCancelled()) {

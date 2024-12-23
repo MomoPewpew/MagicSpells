@@ -1,10 +1,10 @@
 package com.nisovin.magicspells.spells.targeted;
 
-import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
 import java.util.ArrayList;
 
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -30,8 +30,6 @@ import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
 
 public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell {
 
-	Map<Block, BlockData> blocks;
-
 	private boolean replaceAll;
 	private List<List<BlockData>> replace;
 	private List<List<BlockData>> replaceWith;
@@ -51,11 +49,11 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean resolveDurationPerBlock;
 	private boolean circleShape;
 	private boolean mergeBlockData;
+	private boolean affectsContainers;
 
 	public ReplaceSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
-		blocks = new HashMap<>();
 		replace = new ArrayList<>();
 		replaceWith = new ArrayList<>();
 		replaceBlacklist = new ArrayList<>();
@@ -74,6 +72,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		resolveDurationPerBlock = getConfigBoolean("resolve-duration-per-block", false);
 		circleShape = getConfigBoolean("circle-shape", false);
 		mergeBlockData = getConfigBoolean("merge-block-data", true);
+		affectsContainers = getConfigBoolean("affects-containers", false);
 
 		List<String> list = getConfigStringList("replace-blocks", null);
 		if (list != null) {
@@ -158,8 +157,9 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 	@Override
 	public void turnOff() {
-		for (Block b : blocks.keySet()) b.setBlockData(blocks.get(b), applyPhysics);
-		blocks.clear();
+		for (AlteredBlockManager.Change change : MagicSpells.getAlteredBlockManager().getByInternalName(internalName)) {
+			change.undo(applyPhysics);
+		}
 	}
 
 	@Override
@@ -243,7 +243,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 									cont = true;
 								}
 							}
-							if (cont) continue;
+							if (cont || (!affectsContainers && BlockUtils.isContainer(block))) continue;
 						}
 
 						if (replaceBlacklisted(bdata)) continue;
@@ -258,12 +258,14 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 						if (newBlockData == null) continue;
 
+						if (!newBlockData.isSupported(block.getLocation())) continue;
+
 						BlockUtils.setBlockData(block, bdata, newBlockData, mergeBlockData, applyPhysics);
 
 						if (checkPlugins && data.caster() instanceof Player player) {
 							Block against = data.location().clone().add(data.location().getDirection()).getBlock();
 							if (block.equals(against)) against = block.getRelative(BlockFace.DOWN);
-							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, previousState, against, player.getInventory().getItemInMainHand(), player, true);
+							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, previousState, against, player.getInventory().getItemInMainHand(), player, true, bypassDippGen);
 							EventUtil.call(event);
 							if (event.isCancelled()) {
 								previousState.update(true);
@@ -275,17 +277,11 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 						// Break block.
 						if (resolveDurationPerBlock) replaceDuration = this.replaceDuration.get(data);
 						if (replaceDuration > 0) {
-							blocks.put(block, bdata);
+							AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, block, bdata);
+							MagicSpells.getAlteredBlockManager().add(change);
 
 							MagicSpells.scheduleDelayedTask(() -> {
-								BlockData previous = blocks.remove(finalBlock);
-								if (previous == null) return;
-								if (checkPlugins && data.caster() instanceof Player) {
-									MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(finalBlock, (Player) data.caster());
-									EventUtil.call(event);
-									if (event.isCancelled()) return;
-								}
-								finalBlock.setBlockData(previous, applyPhysics);
+								change.undo(applyPhysics);
 								playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, finalBlock.getLocation(), data);
 							}, replaceDuration);
 						}

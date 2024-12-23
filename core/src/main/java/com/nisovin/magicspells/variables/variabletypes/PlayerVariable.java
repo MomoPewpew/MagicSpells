@@ -2,6 +2,8 @@ package com.nisovin.magicspells.variables.variabletypes;
 
 import java.util.Map;
 
+import net.coreprotect.CoreProtect;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
@@ -15,6 +17,8 @@ public class PlayerVariable extends Variable {
 
 	@Override
 	public void set(String player, double amount) {
+		Double current = map.get(player);
+
 		Player p = PlayerNameUtils.getPlayerExact(player);
 
 		double min = getMinValue(p);
@@ -23,6 +27,14 @@ public class PlayerVariable extends Variable {
 		if (amount > max) amount = max;
 		else if (amount < min) amount = min;
 		map.put(player, amount);
+
+		if (current != null) {
+			double change = amount - current;
+
+			if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect"))
+				CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +" + change));
+		}
+
 		if (objective == null) return;
 		objective.getScore(player).setScore((int) amount);
 	}
@@ -34,7 +46,15 @@ public class PlayerVariable extends Variable {
 
 	@Override
 	public void reset(String player) {
+		double current = map.getOrDefault(player, defaultValue);
+
+		Player p = PlayerNameUtils.getPlayerExact(player);
+
 		map.remove(player);
+
+		double change = defaultValue - current;
+		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +" + change));
+
 		if (objective == null) return;
 		objective.getScore(player).setScore((int) defaultValue);
 	}

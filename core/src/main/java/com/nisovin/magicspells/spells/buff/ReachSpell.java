@@ -119,7 +119,7 @@ public class ReachSpell extends BuffSpell {
 			if (disallowedBreakBlocks.contains(targetBlock.getType())) return;
 			
 			// Call break event
-			MagicSpellsBlockBreakEvent evt = new MagicSpellsBlockBreakEvent(targetBlock, player);
+			MagicSpellsBlockBreakEvent evt = new MagicSpellsBlockBreakEvent(targetBlock, player, bypassDippGen);
 			EventUtil.call(evt);
 			if (evt.isCancelled()) return;
 			// Remove block
@@ -148,7 +148,7 @@ public class ReachSpell extends BuffSpell {
 				state.update(true);
 				
 				// Call event
-				MagicSpellsBlockPlaceEvent evt = new MagicSpellsBlockPlaceEvent(airBlock, prevState, targetBlock, inHand, player, true);
+				MagicSpellsBlockPlaceEvent evt = new MagicSpellsBlockPlaceEvent(airBlock, prevState, targetBlock, inHand, player, true, bypassDippGen);
 				EventUtil.call(evt);
 				if (evt.isCancelled()) {
 					// Cancelled, revert

@@ -1,5 +1,8 @@
 package com.nisovin.magicspells.util.config;
 
+import com.nisovin.magicspells.util.magicitems.MagicItem;
+import com.nisovin.magicspells.util.magicitems.MagicItems;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -502,6 +505,32 @@ public class ConfigDataUtil {
 
 				Material material = Util.getMaterial(val);
 				return material == null ? def : material;
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+
+		};
+	}
+
+	public static ConfigData<MagicItem> getMagicItem(@NotNull ConfigurationSection config, @NotNull String path, @Nullable String def) {
+		String value = config.getString(path);
+		if (value == null) return (caster, target, power, args) -> MagicItems.getMagicItemFromString(def);
+
+		ConfigData<String> supplier = getString(value);
+		if (supplier.isConstant()) return (caster, target, power, args) -> MagicItems.getMagicItemFromString(value);
+
+		return new ConfigData<>() {
+
+			@Override
+			public MagicItem get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+				String val = supplier.get(caster, target, power, args);
+				if (val == null) return MagicItems.getMagicItemFromString(def);
+
+				MagicItem material = MagicItems.getMagicItemFromString(val);
+				return material == null ? MagicItems.getMagicItemFromString(def) : material;
 			}
 
 			@Override

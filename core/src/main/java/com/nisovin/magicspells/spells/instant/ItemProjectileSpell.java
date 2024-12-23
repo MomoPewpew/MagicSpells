@@ -36,9 +36,9 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	private final String spellOnHitEntityName;
 	private final String spellOnHitGroundName;
 
-	private ConfigData<String> magicItemName;
+	private ConfigData<MagicItem> item;
 
-	private Component itemName;
+	private ConfigData<String> itemName;
 
 	private ConfigData<Integer> spellDelay;
 	private ConfigData<Integer> pickupDelay;
@@ -75,7 +75,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 		trackerSet = new HashSet<>();
 
-		magicItemName = getConfigDataString("item", "iron_sword");
+		item = getConfigDataMagicItem("item", "iron_sword");
 
 		spellDelay = getConfigDataInt("spell-delay", 40);
 		pickupDelay = getConfigDataInt("pickup-delay", 100);
@@ -100,7 +100,7 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 		relativeOffset = getConfigVector("relative-offset", "0,0,0");
 
-		itemName = Util.getMiniMessage(getConfigString("item-name", null));
+		itemName = getConfigDataString("item-name", null);
 		spellOnTickName = getConfigString("spell-on-tick", "");
 		spellOnDelayName = getConfigString("spell-on-delay", "");
 		spellOnHitEntityName = getConfigString("spell-on-hit-entity", "");
@@ -168,8 +168,8 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 	private void setupTracker(ItemProjectileTracker tracker, SpellData data) {
 		tracker.setSpell(this);
 
-		tracker.setItemName(itemName);
-		tracker.setItem(MagicItems.getMagicItemFromString(magicItemName.get(data), data).getItemStack());
+		tracker.setItemName(Util.getMiniMessage((itemName.get(data))));
+		tracker.setItem(item.get(data).getItemStack());
 
 		tracker.setSpellDelay(spellDelay.get(data));
 		tracker.setPickupDelay(pickupDelay.get(data));
@@ -211,6 +211,10 @@ public class ItemProjectileSpell extends InstantSpell implements TargetedLocatio
 
 	public static Set<ItemProjectileTracker> getProjectileTrackers() {
 		return trackerSet;
+	}
+
+	public boolean shouldCheckPlugins() {
+		return checkPlugins;
 	}
 
 	public void setCheckPlugins(boolean checkPlugins) {

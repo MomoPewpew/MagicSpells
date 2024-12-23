@@ -310,7 +310,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			}
 
 			if (!added) {
-				if (addToEnderChest) added = Util.addToInventory(player.getEnderChest(), item, stackExisting, ignoreMaxStackSize);
+				if (addToEnderChest) added = Util.addToInventory(player, player.getEnderChest(), item, stackExisting, ignoreMaxStackSize);
 				if (!added && addToInventory) {
 
 					ItemStack preferredItem = null;
@@ -335,7 +335,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 						added = true;
 						updateInv = true;
 					} else {
-						added = Util.addToInventory(inv, item, stackExisting, ignoreMaxStackSize);
+						added = Util.addToInventory(player, inv, item, stackExisting, ignoreMaxStackSize);
 						if (added) updateInv = true;
 					}
 				}
@@ -347,12 +347,17 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 						Item i = player.getWorld().dropItem(loc, drop);
 
-						i.setItemStack(drop);
-						i.setPickupDelay(pickupDelay);
-						i.setGravity(itemHasGravity);
-						UUID uuid = player.getUniqueId();
-						i.setThrower(uuid);
-						playSpellEffects(EffectPosition.SPECIAL, i);
+						PlayerDropItemEvent event = new PlayerDropItemEvent(player, i);
+						EventUtil.call(event);
+
+						if (!event.isCancelled()) {
+							i.setItemStack(drop);
+							i.setPickupDelay(pickupDelay);
+							i.setGravity(itemHasGravity);
+							UUID uuid = player.getUniqueId();
+							i.setThrower(uuid);
+							playSpellEffects(EffectPosition.SPECIAL, i);
+						}
 
 						amt -= drop.getMaxStackSize();
 					}
@@ -428,23 +433,36 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		if (!BlockUtils.isAir(loc.getBlock().getType())) loc.add(0, 1, 0);
 		if (!BlockUtils.isAir(loc.getBlock().getType())) loc.add(0, 1, 0);
 		for (ItemStack item : items) {
-			Item dropped = loc.getWorld().dropItem(loc, item);
-			dropped.setItemStack(item);
-			dropped.setPickupDelay(pickupDelay);
-			if (randomVelocity > 0) {
-				Vector v = new Vector(random.nextDouble() - 0.5, random.nextDouble() / 2, random.nextDouble() - 0.5);
-				v.normalize().multiply(randomVelocity);
-				dropped.setVelocity(v);
-			}
-			dropped.setGravity(itemHasGravity);
+			int amt = item.getAmount();
+			while (amt > 0) {
+				ItemStack drop = item.clone();
+				drop.setAmount(Math.min(drop.getMaxStackSize(), amt));
 
-			if (player != null) {
-				UUID uuid = player.getUniqueId();
-				dropped.setThrower(uuid);
-			}
+				Item i = player.getWorld().dropItem(loc, drop);
 
-			playSpellEffects(EffectPosition.SPECIAL, dropped);
-			EventUtil.call(new ConjureItemEvent(player, item));
+				PlayerDropItemEvent event = null;
+
+				if (player != null && player instanceof Player pl) {
+					event = new PlayerDropItemEvent(pl, i);
+					EventUtil.call(event);
+				}
+
+				if (event == null || !event.isCancelled()) {
+					i.setItemStack(drop);
+					i.setPickupDelay(pickupDelay);
+					if (randomVelocity > 0) {
+						Vector v = new Vector(random.nextDouble() - 0.5, random.nextDouble() / 2, random.nextDouble() - 0.5);
+						v.normalize().multiply(randomVelocity);
+						i.setVelocity(v);
+					}
+					i.setGravity(itemHasGravity);
+					if (player != null) i.setThrower(player.getUniqueId());
+					playSpellEffects(EffectPosition.SPECIAL, i);
+					EventUtil.call(new ConjureItemEvent(player, item));
+				}
+
+				amt -= drop.getMaxStackSize();
+			}
 		}
 		return true;
 	}
@@ -639,7 +657,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		}
 
 		@EventHandler(priority = EventPriority.LOWEST)
-		private void onJoin(LoadCharacterEvent event) {
+		private void onCharacterLoad(LoadCharacterEvent event) {
 			if (!event.isCancelled()) {
 				MagicSpells.scheduleDelayedTask(() -> {
 					expirationHandler.joinOrLoadCharacter(event.getPlayer());

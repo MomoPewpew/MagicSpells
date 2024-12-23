@@ -65,7 +65,7 @@ public class ConjureBookSpell extends InstantSpell implements TargetedLocationSp
 					if (BlockUtils.isAir(player.getEquipment().getItemInMainHand().getType())) {
 						player.getEquipment().setItemInMainHand(item);
 						added = true;
-					} else added = Util.addToInventory(player.getInventory(), item, false, false);
+					} else added = Util.addToInventory(player, player.getInventory(), item, false, false);
 				}
 				if (!added) {
 					Item dropped = player.getWorld().dropItem(player.getLocation(), item);

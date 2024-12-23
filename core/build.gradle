@@ -8,11 +8,15 @@ repositories {
     flatDir {
         dirs '../libs'
     }
+    maven {
+        name = "playpro-repo"
+        url = uri("https://maven.playpro.com")
+    }
 }
 
 dependencies {
     shadow(group: "org.apache.commons", name: "commons-math4-core", version: "4.0-beta1")
-    shadow(group: "com.github.Chronoken", name: "EffectLib", version: "d28b6e2")
+    shadow(group: "com.github.Chronoken", name: "EffectLib", version: "477d459")
     shadow(group: "co.aikar", name: "acf-paper", version: "0.5.1-SNAPSHOT")
     shadow(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: "1.9.20")
 
@@ -27,8 +31,9 @@ dependencies {
     implementation(group: "com.github.libraryaddict", name: "LibsDisguises", version: "v10.0.25") { transitive = false }
     implementation(group: "com.github.MilkBowl", name: "vault", version: "master-SNAPSHOT") { transitive = false }
     implementation(group: "me.clip", name: "placeholderapi", version: "2.11.6") { transitive = false }
-    implementation(group: "com.github.TechFortress", name: "GriefPrevention", version: "master-SNAPSHOT") { transitive = false }
-    implementation(group: "com.github.Xezard", name: "XGlow", version: "master-SNAPSHOT") {
+    implementation(group: "com.github.TechFortress", name: "GriefPrevention", version: "17.0.0") { transitive = false }
+    implementation(group: "net.coreprotect", name: "coreprotect", version: "22.4") { transitive = false }
+    implementation(group: "com.github.Xezard", name: "XGlow", version: "1.1.0") {
         exclude(module: "XGlowPlugin")
         exclude(module: "XGlowExample")
     }

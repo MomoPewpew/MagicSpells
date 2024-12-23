@@ -121,6 +121,8 @@ public class MagicItems {
 		}
 		data.setAttribute(HIDE_TOOLTIP, tooltip);
 
+		data.setAttribute(INVISIBLE_TOOLTIP, meta.isHideTooltip());
+
 		// color
 		LeatherArmorHandler.processMagicItemData(meta, data);
 
@@ -494,6 +496,12 @@ public class MagicItems {
 
 				if (hideTooltip) meta.addItemFlags(ItemFlag.values());
 				itemData.setAttribute(HIDE_TOOLTIP, hideTooltip);
+			}
+
+			if (section.isBoolean("invisible-tooltip")) {
+				boolean invisibleTooltip = section.getBoolean("invisible-tooltip");
+				meta.setHideTooltip(invisibleTooltip);
+				itemData.setAttribute(INVISIBLE_TOOLTIP, invisibleTooltip);
 			}
 
 			// Set meta

@@ -19,7 +19,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import com.nisovin.magicspells.util.compat.EventUtil;
 import org.bukkit.*;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.util.Vector;
 import org.bukkit.entity.Player;
@@ -31,6 +38,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.apache.commons.math4.core.jdkmath.AccurateMath;
@@ -137,7 +145,7 @@ public class Util {
 	}
 
 	public static Color[] getColorsFromString(String str) {
-		int[] colors = new int[] { 0xFF0000 };
+		int[] colors = new int[]{0xFF0000};
 		String[] args = str.replace(" ", "").split(",");
 		if (args.length > 0) {
 			colors = new int[args.length];
@@ -291,18 +299,21 @@ public class Util {
 		return splitParams(arrayJoin(split, ' '), 0);
 	}
 
-	public static boolean removeFromInventory(Inventory inventory, Map.Entry<MagicItemData, Integer> item) {
+	public static boolean removeFromInventory(Player player, Inventory inventory, Map.Entry<MagicItemData, Integer> item) {
 		MagicItemData itemData = item.getKey();
 		if (itemData == null) return false;
 
 		int amt = item.getValue();
 		MagicItemData magicData;
 		ItemStack[] items = inventory.getContents();
+		ItemStack stack = null;
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] == null) continue;
 
 			magicData = MagicItems.getMagicItemDataFromItemStack(items[i]);
 			if (magicData == null || !itemData.matches(magicData)) continue;
+
+			stack = items[i].clone();
 
 			if (items[i].getAmount() > amt) {
 				items[i].setAmount(items[i].getAmount() - amt);
@@ -320,7 +331,11 @@ public class Util {
 			items[i] = null;
 		}
 
-		if (amt == 0) {
+		if (amt == 0 && stack != null) {
+			stack.setAmount(item.getValue());
+			PlayerItemBreakEvent event = new PlayerItemBreakEvent(player, stack);
+			EventUtil.call(event);
+
 			inventory.setContents(items);
 			return true;
 		}
@@ -373,7 +388,7 @@ public class Util {
 		return false;
 	}
 
-	public static boolean addToInventory(Inventory inventory, ItemStack item, boolean stackExisting, boolean ignoreMaxStack) {
+	public static boolean addToInventory(Player player, Inventory inventory, ItemStack item, boolean stackExisting, boolean ignoreMaxStack) {
 		int amt = item.getAmount();
 		ItemStack[] items = new ItemStack[inventory.getStorageContents().length];
 
@@ -416,6 +431,11 @@ public class Util {
 		}
 
 		if (amt == 0) {
+			ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(MagicSpells.getInstance(), "magicspells_craft"), item);
+
+			CraftItemEvent event = new CraftItemEvent(recipe, createInventoryView(player), InventoryType.SlotType.RESULT, 0, ClickType.LEFT, InventoryAction.UNKNOWN);
+			EventUtil.call(event);
+			event.setCancelled(false);
 			inventory.setStorageContents(items);
 			return true;
 		}
@@ -854,6 +874,300 @@ public class Util {
 			}
 		}
 		return nearestEntity;
+	}
+
+	public static InventoryView createInventoryView(Player player) {
+		return new InventoryView() {
+			final CraftingInventory craftingInventory = new MockCraftingInventory();
+
+			@NotNull
+			@Override
+			public Inventory getTopInventory() {
+				return craftingInventory;
+			}
+
+			@NotNull
+			@Override
+			public Inventory getBottomInventory() {
+				return player.getInventory();
+			}
+
+			@NotNull
+			@Override
+			public HumanEntity getPlayer() {
+				return player;
+			}
+
+			@NotNull
+			@Override
+			public InventoryType getType() {
+				return InventoryType.CRAFTING;
+			}
+
+			@Override
+			public @NotNull String getTitle() {
+				return "";
+			}
+
+			@Override
+			public @NotNull String getOriginalTitle() {
+				return "";
+			}
+
+			@Override
+			public void setTitle(@NotNull String title) {
+
+			}
+		};
+	}
+
+	private static class MockCraftingInventory implements CraftingInventory {
+		ListIterator<ItemStack> listIterator =  new ListIterator<>() {
+			@Override
+			public boolean hasNext() {
+				return false;
+			}
+
+			@Override
+			public ItemStack next() {
+				return null;
+			}
+
+			@Override
+			public boolean hasPrevious() {
+				return false;
+			}
+
+			@Override
+			public ItemStack previous() {
+				return null;
+			}
+
+			@Override
+			public int nextIndex() {
+				return 0;
+			}
+
+			@Override
+			public int previousIndex() {
+				return 0;
+			}
+
+			@Override
+			public void remove() {
+
+			}
+
+			@Override
+			public void set(ItemStack itemStack) {
+
+			}
+
+			@Override
+			public void add(ItemStack itemStack) {
+
+			}
+		};
+
+		@Override
+		public @Nullable ItemStack getResult() {
+			return null;
+		}
+
+		@Override
+		public @Nullable ItemStack[] getMatrix() {
+			return new ItemStack[0];
+		}
+
+		@Override
+		public void setResult(@Nullable ItemStack newResult) {
+
+		}
+
+		@Override
+		public void setMatrix(@Nullable ItemStack[] contents) {
+
+		}
+
+		@Override
+		public @Nullable Recipe getRecipe() {
+			return null;
+		}
+
+		@Override
+		public int getSize() {
+			return 0;
+		}
+
+		@Override
+		public int getMaxStackSize() {
+			return 0;
+		}
+
+		@Override
+		public void setMaxStackSize(int size) {
+
+		}
+
+		@Override
+		public @Nullable ItemStack getItem(int index) {
+			return null;
+		}
+
+		@Override
+		public void setItem(int index, @Nullable ItemStack item) {
+
+		}
+
+		@Override
+		public @NotNull HashMap<Integer, ItemStack> addItem(@NotNull ItemStack... items) throws IllegalArgumentException {
+			return new HashMap<>();
+		}
+
+		@Override
+		public @NotNull HashMap<Integer, ItemStack> removeItem(@NotNull ItemStack... items) throws IllegalArgumentException {
+			return new HashMap<>();
+		}
+
+		@Override
+		public @NotNull HashMap<Integer, ItemStack> removeItemAnySlot(@NotNull ItemStack... items) throws IllegalArgumentException {
+			return new HashMap<>();
+		}
+
+		@Override
+		public @Nullable ItemStack[] getContents() {
+			return new ItemStack[0];
+		}
+
+		@Override
+		public void setContents(@Nullable ItemStack[] items) throws IllegalArgumentException {
+
+		}
+
+		@Override
+		public @Nullable ItemStack[] getStorageContents() {
+			return new ItemStack[0];
+		}
+
+		@Override
+		public void setStorageContents(@Nullable ItemStack[] items) throws IllegalArgumentException {
+
+		}
+
+		@Override
+		public boolean contains(@NotNull Material material) throws IllegalArgumentException {
+			return false;
+		}
+
+		@Override
+		public boolean contains(@Nullable ItemStack item) {
+			return false;
+		}
+
+		@Override
+		public boolean contains(@NotNull Material material, int amount) throws IllegalArgumentException {
+			return false;
+		}
+
+		@Override
+		public boolean contains(@Nullable ItemStack item, int amount) {
+			return false;
+		}
+
+		@Override
+		public boolean containsAtLeast(@Nullable ItemStack item, int amount) {
+			return false;
+		}
+
+		@Override
+		public @NotNull HashMap<Integer, ? extends ItemStack> all(@NotNull Material material) throws IllegalArgumentException {
+			return new HashMap<>();
+		}
+
+		@Override
+		public @NotNull HashMap<Integer, ? extends ItemStack> all(@Nullable ItemStack item) {
+			return new HashMap<>();
+		}
+
+		@Override
+		public int first(@NotNull Material material) throws IllegalArgumentException {
+			return 0;
+		}
+
+		@Override
+		public int first(@NotNull ItemStack item) {
+			return 0;
+		}
+
+		@Override
+		public int firstEmpty() {
+			return 0;
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return false;
+		}
+
+		@Override
+		public void remove(@NotNull Material material) throws IllegalArgumentException {
+
+		}
+
+		@Override
+		public void remove(@NotNull ItemStack item) {
+
+		}
+
+		@Override
+		public void clear(int index) {
+
+		}
+
+		@Override
+		public void clear() {
+
+		}
+
+		@Override
+		public int close() {
+			return 0;
+		}
+
+		@Override
+		public @NotNull List<HumanEntity> getViewers() {
+			return List.of();
+		}
+
+		@Override
+		public @NotNull InventoryType getType() {
+			return InventoryType.CRAFTING;
+		}
+
+		@Override
+		public @Nullable InventoryHolder getHolder() {
+			return null;
+		}
+
+		@Override
+		public @Nullable InventoryHolder getHolder(boolean useSnapshot) {
+			return null;
+		}
+
+		@Override
+		public @NotNull ListIterator<ItemStack> iterator() {
+			return listIterator;
+		}
+
+		@Override
+		public @NotNull ListIterator<ItemStack> iterator(int index) {
+			return listIterator;
+		}
+
+		@Override
+		public @Nullable Location getLocation() {
+			return null;
+		}
 	}
 
 }

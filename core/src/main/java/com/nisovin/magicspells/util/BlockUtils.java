@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.MultipleFacing;
@@ -240,5 +241,13 @@ public class BlockUtils {
 		}
 
 		block.setBlockData(clone, applyPhysics);
+	}
+
+	public static boolean isContainer(Block block) {
+		if (block == null) {
+			return false;
+		}
+		BlockState state = block.getState();
+		return state instanceof Container;
 	}
 }

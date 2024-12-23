@@ -123,7 +123,7 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 		block.setType(item.getType());
 
 		if (checkPlugins) {
-			MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, previousState, against, player.getEquipment().getItemInMainHand(), player, true);
+			MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, previousState, against, player.getEquipment().getItemInMainHand(), player, true, bypassDippGen);
 			EventUtil.call(event);
 			if (event.isCancelled() && block.getType() == item.getType()) {
 				previousState.update(true);

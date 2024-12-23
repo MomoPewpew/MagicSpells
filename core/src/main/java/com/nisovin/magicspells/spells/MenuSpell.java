@@ -56,12 +56,13 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	private final ItemStack previousPageItem;
 	private final ItemStack nextPageItem;
+	private final ItemStack spacerItem;
 
 	public MenuSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
 		title = getConfigString("title", "Window Title " + spellName);
-		delay = getConfigInt("delay", 0);
+		delay = getConfigInt("delay", 1);
 		filler = createItem("filler");
 		stayOpenNonOption = getConfigBoolean("stay-open-non-option", false);
 		bypassNormalCast = getConfigBoolean("bypass-normal-cast", true);
@@ -72,6 +73,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		autoArrange = getConfigBoolean("auto-arrange", false);
 		previousPageItem = createItem("previous-page-item", "Previous Page");
 		nextPageItem = createItem("next-page-item", "Next Page");
+		spacerItem = createItem("spacer-item", null);
 
 		Set<String> optionKeys = getConfigKeys("options");
 		if (optionKeys == null) {
@@ -297,6 +299,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		ItemStack magicItem = createItem(path);
 		if (magicItem != null) return magicItem.clone();
 
+		if (defaultName == null) return  null;
+
 		ItemStack item = new ItemStack(Material.GREEN_WOOL);
 		ItemMeta meta = item.getItemMeta();
 
@@ -399,7 +403,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			if (inv.getItem(i) != null) continue;
 
 			if (autoArrange && i >= 50) {
-				ItemStack item = (i == 52 && mData.page() > 0) ? previousPageItem : (i == 53 && itemStacks.size() > 50 * (mData.page() + 1)) ? nextPageItem : null;
+				ItemStack item = (i == 51) ? spacerItem : (i == 52 && mData.page() > 0) ? previousPageItem : (i == 53 && itemStacks.size() > 50 * (mData.page() + 1)) ? nextPageItem : null;
 				if (item != null) inv.setItem(i, item);
 			} else {
 				ItemStack item = itemStacks.get(i + mData.page() * 50);

@@ -37,6 +37,12 @@ public abstract class SpellEffect {
 	private ConfigData<Double> zOffset;
 	private ConfigData<Double> heightOffset;
 	private ConfigData<Double> forwardOffset;
+	private ConfigData<Float> addPitch;
+	private ConfigData<Float> addYaw;
+	private ConfigData<Float> setPitch;
+	private boolean doSetPitch;
+	private ConfigData<Float> setYaw;
+	private  boolean doSetYaw;
 
 	private Vector offset;
 	private Vector relativeOffset;
@@ -82,6 +88,12 @@ public abstract class SpellEffect {
 		zOffset = ConfigDataUtil.getDouble(config, "z-offset", 0);
 		heightOffset = ConfigDataUtil.getDouble(config, "height-offset", 0);
 		forwardOffset = ConfigDataUtil.getDouble(config, "forward-offset", 0);
+		addPitch = ConfigDataUtil.getFloat(config, "add-pitch", 0F);
+		addYaw = ConfigDataUtil.getFloat(config, "add-yaw", 0F);
+		doSetPitch = !config.getString("set-pitch", "").isEmpty();
+		setPitch = ConfigDataUtil.getFloat(config, "set-pitch", 0F);
+		doSetYaw = !config.getString("set-yaw", "").isEmpty();
+		setYaw = ConfigDataUtil.getFloat(config, "set-yaw", 0F);
 
 		String[] offsetStr = config.getString("offset", "0,0,0").split(",");
 		String[] relativeStr = config.getString("relative-offset", "0,0,0").split(",");
@@ -159,7 +171,7 @@ public abstract class SpellEffect {
 		return result == null ? new ModifierResult(data, true) : result;
 	}
 
-	protected ModifierResult checkModifiers(SpellData data, Location location) {
+	public ModifierResult checkModifiers(SpellData data, Location location) {
 		if (data == null) return new ModifierResult(null, true);
 
 		ModifierResult result = null;
@@ -190,10 +202,10 @@ public abstract class SpellEffect {
 	}
 
 	public Location applyOffsets(Location loc, SpellData data) {
-		return applyOffsets(loc, offset, relativeOffset, zOffset.get(data), heightOffset.get(data), forwardOffset.get(data));
+		return applyOffsets(loc, offset, relativeOffset, zOffset.get(data), heightOffset.get(data), forwardOffset.get(data), (doSetPitch) ? setPitch.get(data) : loc.getPitch() + addPitch.get(data), (doSetYaw) ? setYaw.get(data) : loc.getYaw() + addYaw.get(data));
 	}
 
-	public Location applyOffsets(Location loc, Vector offset, Vector relativeOffset, double zOffset, double heightOffset, double forwardOffset) {
+	public Location applyOffsets(Location loc, Vector offset, Vector relativeOffset, double zOffset, double heightOffset, double forwardOffset, float pitch, float yaw) {
 		if (offset.getX() != 0 || offset.getY() != 0 || offset.getZ() != 0) loc.add(offset);
 		if (relativeOffset.getX() != 0 || relativeOffset.getY() != 0 || relativeOffset.getZ() != 0)
 			loc.add(VectorUtils.rotateVector(relativeOffset, loc));
@@ -204,6 +216,8 @@ public abstract class SpellEffect {
 		}
 		if (heightOffset != 0) loc.setY(loc.getY() + heightOffset);
 		if (forwardOffset != 0) loc.add(loc.getDirection().setY(0).normalize().multiply(forwardOffset));
+		loc.setPitch(pitch);
+		loc.setYaw(yaw);
 		return loc;
 	}
 
@@ -327,7 +341,7 @@ public abstract class SpellEffect {
 		if (delay <= 0) return playEntityEffectLocationReal(location, data);
 
 		SpellData finalData = data;
-		MagicSpells.scheduleDelayedTask(() -> playEffectLibLocationReal(location, finalData), delay);
+		MagicSpells.scheduleDelayedTask(() -> playEntityEffectLocationReal(location, finalData), delay);
 
 		return null;
 	}
@@ -369,7 +383,7 @@ public abstract class SpellEffect {
 		return playEffectLibLocation(loc, data);
 	}
 
-	private Entity playEntityEffectLocationReal(Location location, SpellData data) {
+	public Entity playEntityEffectLocationReal(Location location, SpellData data) {
 		if (location == null) return playEntityEffectLocation(null, data);
 		Location loc = location.clone();
 		applyOffsets(loc, data);

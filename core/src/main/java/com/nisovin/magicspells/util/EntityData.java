@@ -1,10 +1,16 @@
 package com.nisovin.magicspells.util;
 
+import com.nisovin.magicspells.MagicSpells;
+import org.bukkit.*;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.ApiStatus;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 import org.joml.Vector3f;
@@ -15,10 +21,6 @@ import com.google.common.collect.MultimapBuilder;
 
 import net.kyori.adventure.text.Component;
 
-import org.bukkit.Color;
-import org.bukkit.DyeColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.*;
 import org.bukkit.util.Vector;
 import org.bukkit.util.Consumer;
@@ -31,7 +33,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
-import com.nisovin.magicspells.util.magicitems.MagicItems;
 
 public class EntityData {
 
@@ -88,6 +89,12 @@ public class EntityData {
 
 	// Villager
 	private final ConfigData<Villager.Profession> profession;
+
+    // Display
+    private final List<DisplayTransformation> transformations = new ArrayList<>();
+
+	// Item Display
+	private final ConfigData<MagicItem> item;
 
 	public EntityData(ConfigurationSection config) {
 		entityType = ConfigDataUtil.getEnum(config, "entity", EntityType.class, null);
@@ -207,48 +214,57 @@ public class EntityData {
 		addOptEnum(transformers, config, "color", Wolf.class, DyeColor.class, Wolf::setCollarColor);
 
 		if (EntityType.valueOf("BLOCK_DISPLAY") != null) {
-			// Display
-			ConfigData<Quaternionf> leftRotation = getQuaternion(config, "transformation.left-rotation");
-			ConfigData<Quaternionf> rightRotation = getQuaternion(config, "transformation.right-rotation");
-			ConfigData<Vector3f> translation = getVector(config, "transformation.translation");
-			ConfigData<Vector3f> scale = getVector(config, "transformation.scale");
-			ConfigData<Transformation> transformation = (caster, target, power, args) -> null;
-			if (checkNull(leftRotation) && checkNull(rightRotation) && checkNull(translation) && checkNull(scale)) {
-				if (leftRotation.isConstant() && rightRotation.isConstant() && translation.isConstant() && scale.isConstant()) {
-					Quaternionf lr = leftRotation.get(null);
-					Quaternionf rr = rightRotation.get(null);
-					Vector3f t = translation.get(null);
-					Vector3f s = scale.get(null);
 
-					Transformation transform = new Transformation(t, lr, s, rr);
-					transformation = (caster, target, power, args) -> transform;
-				} else {
-					transformation = (caster, target, power, args) -> {
-						Quaternionf lr = leftRotation.get(caster, target, power, args);
-						if (lr == null) return null;
+            for (int i = 0; i < Integer.MAX_VALUE; i++) {
+				ConfigurationSection transConf = config.getConfigurationSection("transformation" + ((i == 0) ? "" : "-" + (i + 1)));
 
-						Quaternionf rr = rightRotation.get(caster, target, power, args);
-						if (rr == null) return null;
+                if (transConf == null) break;
 
-						Vector3f t = translation.get(caster, target, power, args);
-						if (t == null) return null;
+                ConfigData<Integer> interpolationDelay = ConfigDataUtil.getInteger(transConf, "interpolation-delay", 0);
+                ConfigData<Integer> interpolationDuration = ConfigDataUtil.getInteger(transConf, "interpolation-duration", 0);
+				ConfigData<Integer> loopInterval = ConfigDataUtil.getInteger(transConf, "loop-interval", 0);
 
-						Vector3f s = scale.get(caster, target, power, args);
-						if (s == null) return null;
+                // Display
+                ConfigData<Quaternionf> leftRotation = getQuaternion(transConf,"left-rotation");
+                ConfigData<Quaternionf> rightRotation = getQuaternion(transConf, "right-rotation");
+                ConfigData<Vector3f> translation = getVector(transConf, "translation");
+                ConfigData<Vector3f> scale = getVector(transConf, "scale");
+                ConfigData<Transformation> transformation = (caster, target, power, args) -> null;
+                if (checkNull(leftRotation) && checkNull(rightRotation) && checkNull(translation) && checkNull(scale)) {
+                    if (leftRotation.isConstant() && rightRotation.isConstant() && translation.isConstant() && scale.isConstant()) {
+                        Quaternionf lr = leftRotation.get(null);
+                        Quaternionf rr = rightRotation.get(null);
+                        Vector3f t = translation.get(null);
+                        Vector3f s = scale.get(null);
 
-						return new Transformation(t, lr, s, rr);
-					};
-				}
+                        Transformation transform = new Transformation(t, lr, s, rr);
+                        transformation = (caster, target, power, args) -> transform;
+                    } else {
+                        transformation = (caster, target, power, args) -> {
+                            Quaternionf lr = leftRotation.get(caster, target, power, args);
+                            if (lr == null) return null;
+
+                            Quaternionf rr = rightRotation.get(caster, target, power, args);
+                            if (rr == null) return null;
+
+                            Vector3f t = translation.get(caster, target, power, args);
+                            if (t == null) return null;
+
+                            Vector3f s = scale.get(caster, target, power, args);
+                            if (s == null) return null;
+
+                            return new Transformation(t, lr, s, rr);
+                        };
+                    }
+                }
+                transformations.add(new DisplayTransformation(transformation, interpolationDelay, interpolationDuration, loopInterval));
 			}
-			transformers.put(Display.class, new Transformer<>(transformation, Display::setTransformation, true));
 
-			addOptInteger(transformers, config, "interpolation-duration", Display.class, Display::setInterpolationDuration);
 			addOptFloat(transformers, config, "view-range", Display.class, Display::setViewRange);
 			addOptFloat(transformers, config, "shadow-radius", Display.class, Display::setShadowRadius);
 			addOptFloat(transformers, config, "shadow-strength", Display.class, Display::setShadowStrength);
 			addOptFloat(transformers, config, "width", Display.class, Display::setDisplayWidth);
 			addOptFloat(transformers, config, "height", Display.class, Display::setDisplayHeight);
-			addOptInteger(transformers, config, "interpolation-delay", Display.class, Display::setInterpolationDelay);
 			addOptEnum(transformers, config, "billboard", Display.class, Display.Billboard.class, Display::setBillboard);
 			addOptARGBColor(transformers, config, "glow-color-override", Display.class, Display::setGlowColorOverride);
 
@@ -282,12 +298,7 @@ public class EntityData {
 			addOptBlockData(transformers, config, "block", BlockDisplay.class, BlockDisplay::setBlock);
 
 			// ItemDisplay
-			MagicItem magicItem = MagicItems.getMagicItemFromString(config.getString("item"));
-			if (magicItem != null) {
-				ItemStack item = magicItem.getItemStack();
-				transformers.put(ItemDisplay.class, new Transformer<>((caster, target, power, args) -> item, ItemDisplay::setItemStack));
-			}
-
+			item = ConfigDataUtil.getMagicItem(config, "item", null);
 			addOptEnum(transformers, config, "item-display-transform", ItemDisplay.class, ItemDisplay.ItemDisplayTransform.class, ItemDisplay::setItemDisplayTransform);
 
 			// TextDisplay
@@ -298,7 +309,9 @@ public class EntityData {
 			addOptBoolean(transformers, config, "shadow", TextDisplay.class, TextDisplay::setShadowed);
 			addOptBoolean(transformers, config, "see-through", TextDisplay.class, TextDisplay::setSeeThrough);
 			addOptBoolean(transformers, config, "default-background", TextDisplay.class, TextDisplay::setDefaultBackground);
-			//addOptEnum(transformers, config, "alignment", TextDisplay.class, TextDisplay.TextAlignment.class, TextDisplay::setAlignment);
+			addOptEnum(transformers, config, "alignment", TextDisplay.class, TextDisplay.TextAlignment.class, TextDisplay::setAlignment);
+		} else {
+			item = null;
 		}
 
 		for (EntityType entityType : EntityType.values()) {
@@ -369,6 +382,11 @@ public class EntityData {
 
 					if (consumer != null) consumer.accept(e);
 
+					if (EntityType.valueOf("ITEM_DISPLAY") != null && e instanceof ItemDisplay) {
+						MagicItem magicItem = item.get(data);
+						if (magicItem != null) ((ItemDisplay) e).setItemStack(magicItem.getItemStack());
+					}
+
 					if (EntityType.valueOf("BLOCK_DISPLAY") != null && e instanceof Display) {
 						displayHack[0] = true;
 						displayHack[1] = e.isVisibleByDefault();
@@ -382,6 +400,27 @@ public class EntityData {
 		if (displayHack[0]) {
 			entity.teleport(startLoc);
 			entity.setVisibleByDefault(displayHack[1]);
+
+            transformations.forEach(transformation -> {
+				Transformation t = transformation.transformation().get(data);
+				int interpolationDelay = transformation.interpolationDelay().get(data);
+				int interpolationDuration = transformation.interpolationDuration().get(data);
+				int loopInterval = transformation.loopInterval().get(data);
+
+				if (interpolationDelay > 0 || loopInterval > 0) {
+					TransformationRunnable transformationRunnable = new TransformationRunnable((Display) entity, t, interpolationDuration);
+
+					if (loopInterval > 0) {
+						transformationRunnable.task = transformationRunnable.runTaskTimer(MagicSpells.getInstance(), interpolationDelay, loopInterval);
+					} else {
+						transformationRunnable.runTaskLater(MagicSpells.getInstance(), interpolationDelay);
+					}
+				} else {
+					((Display) entity).setInterpolationDuration(interpolationDuration);
+					((Display) entity).setInterpolationDelay(interpolationDelay);
+					((Display) entity).setTransformation(t);
+				}
+            });
 		}
 
 		return entity;
@@ -738,6 +777,39 @@ public class EntityData {
 			if (!optional || value != null) setter.accept(entity, value);
 		}
 
+	}
+
+}
+
+record DisplayTransformation(
+		ConfigData<Transformation> transformation,
+		ConfigData<Integer> interpolationDelay,
+		ConfigData<Integer> interpolationDuration,
+		ConfigData<Integer> loopInterval
+) {}
+
+class TransformationRunnable extends BukkitRunnable {
+
+	private final Display entity;
+	private final Transformation transformation;
+	private final int interpolationDuration;
+	BukkitTask task = null;
+
+	public TransformationRunnable(Display entity, Transformation transformation, int interpolationDuration) {
+		this.entity = entity;
+		this.transformation = transformation;
+		this.interpolationDuration = interpolationDuration;
+	}
+
+	@Override
+	public void run() {
+		if (entity == null || !entity.isValid()) {
+            if (task != null) task.cancel();
+        } else {
+            entity.setInterpolationDuration(interpolationDuration);
+			entity.setInterpolationDelay(0);
+			entity.setTransformation(transformation);
+		}
 	}
 
 }

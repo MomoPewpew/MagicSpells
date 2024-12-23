@@ -267,6 +267,7 @@ public class MagicItemData {
 		POWER(Integer.class),
 		UNBREAKABLE(Boolean.class),
 		HIDE_TOOLTIP(Boolean.class),
+		INVISIBLE_TOOLTIP(Boolean.class),
 		FAKE_GLINT(Boolean.class),
 		POTION_DATA(PotionData.class),
 		COLOR(Color.class),
@@ -408,6 +409,17 @@ public class MagicItemData {
 			output
 				.append("\"hide-tooltip\":")
 				.append((boolean) getAttribute(MagicItemAttribute.HIDE_TOOLTIP));
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.INVISIBLE_TOOLTIP)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+					.append("\"invisible-tooltip\":")
+					.append((boolean) getAttribute(MagicItemAttribute.INVISIBLE_TOOLTIP));
 
 			previous = true;
 		}

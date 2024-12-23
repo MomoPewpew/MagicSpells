@@ -117,7 +117,7 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 		boolean playerNull = player == null;
 
 		if (checkPlugins && !playerNull) {
-			MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(target, player);
+			MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(target, player, bypassDippGen);
 			MagicSpells.plugin.getServer().getPluginManager().callEvent(event);
 			if (event.isCancelled()) return false;
 		}

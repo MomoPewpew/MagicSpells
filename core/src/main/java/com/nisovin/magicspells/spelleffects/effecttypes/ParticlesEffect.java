@@ -133,17 +133,17 @@ public class ParticlesEffect extends SpellEffect {
 					if (caster == null) yield null;
 
 					yield staticDestination ? new BlockDestination(applyOffsets(caster.getLocation(), vibrationOffset,
-						vibrationRelativeOffset, 0, 0, 0)) : new EntityDestination(caster);
+						vibrationRelativeOffset, 0, 0, 0, 0, 0)) : new EntityDestination(caster);
 				}
 				case TARGET -> {
 					LivingEntity target = data == null ? null : data.target();
 					if (target == null) yield null;
 
 					yield staticDestination ? new BlockDestination(applyOffsets(target.getLocation(), vibrationOffset,
-						vibrationRelativeOffset, 0, 0, 0)) : new EntityDestination(target);
+						vibrationRelativeOffset, 0, 0, 0, 0, 0)) : new EntityDestination(target);
 				}
 				case POSITION -> staticDestination ? new BlockDestination(applyOffsets(location, vibrationOffset,
-					vibrationRelativeOffset, 0, 0, 0)) : new EntityDestination(entity);
+					vibrationRelativeOffset, 0, 0, 0, 0, 0)) : new EntityDestination(entity);
 			};
 			if (destination == null) return null;
 
@@ -175,7 +175,7 @@ public class ParticlesEffect extends SpellEffect {
 			if (targetLocation == null) return null;
 
 			Destination destination = new BlockDestination(applyOffsets(targetLocation, vibrationOffset,
-				vibrationRelativeOffset, 0, 0, 0));
+				vibrationRelativeOffset, 0, 0, 0, 0, 0));
 
 			return new Vibration(destination, arrivalTime.get(data));
 		}

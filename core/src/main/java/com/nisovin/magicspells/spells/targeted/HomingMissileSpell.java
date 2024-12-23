@@ -240,7 +240,7 @@ public class HomingMissileSpell extends TargetedSpell implements TargetedEntityS
 		}
 
 		private void init(SpellData data) {
-			this.heightFromSurface = HomingMissileSpell.this.heightFromSurface.get(data);
+			if (hugSurface) this.heightFromSurface = HomingMissileSpell.this.heightFromSurface.get(data);
 
 			startTime = System.currentTimeMillis();
 

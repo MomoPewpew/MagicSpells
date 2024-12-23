@@ -58,7 +58,7 @@ public class ItemReagent extends Reagent {
         if (!itemMap.isEmpty()) {
             for (Map.Entry<MagicItemData, Integer> item : itemMap.entrySet()) {
                 if (item == null) continue;
-                if (livingEntity instanceof Player player) Util.removeFromInventory(player.getInventory(), item);
+                if (livingEntity instanceof Player player) Util.removeFromInventory(player, player.getInventory(), item);
                 else if (livingEntity.getEquipment() != null) Util.removeFromInventory(livingEntity.getEquipment(), item);
             }
         }

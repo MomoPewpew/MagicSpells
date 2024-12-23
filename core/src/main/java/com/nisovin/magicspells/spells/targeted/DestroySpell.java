@@ -2,8 +2,8 @@ package com.nisovin.magicspells.spells.targeted;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -32,13 +32,11 @@ import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
 
 public class DestroySpell extends TargetedSpell implements TargetedLocationSpell, TargetedEntityFromLocationSpell {
 
-	public static List<DestroyedBlock> destroyedBlocks;
-	public Map<FallingBlock, DestroyedBlock> fallingDestroyedBlocks;
-
 	private final Random random = ThreadLocalRandom.current();
 
 	private Set<Material> blockTypesToThrow;
 	private Set<Material> blockTypesToRemove;
+	private Map<FallingBlock, Long> fallingBlocks;
 
 	private ConfigData<Integer> vertRadius;
 	private ConfigData<Integer> horizRadius;
@@ -56,14 +54,14 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean resolveVelocityPerBlock;
 	private boolean resolveMaxHeightPerBlock;
 	private boolean powerAffectsRadius;
+	private boolean affectsContainers;
 
 	private VelocityType velocityType;
 
 	public DestroySpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
-		destroyedBlocks = new ArrayList<>();
-		fallingDestroyedBlocks = new HashMap<>();
+		fallingBlocks = new HashMap<>();
 
 		vertRadius = getConfigDataInt("vert-radius", 3);
 		horizRadius = getConfigDataInt("horiz-radius", 3);
@@ -81,6 +79,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		resolveVelocityPerBlock = getConfigBoolean("resolve-velocity-per-block", false);
 		resolveMaxHeightPerBlock = getConfigBoolean("resolve-max-height-per-block", false);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
+		affectsContainers = getConfigBoolean("affects-containers", false);
 
 		String vType = getConfigString("velocity-type", "none");
 
@@ -118,30 +117,22 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 		registerEvents(new FallingBlockListener());
 		MagicSpells.scheduleRepeatingTask(() -> {
-			if (fallingDestroyedBlocks.isEmpty())
+			if (fallingBlocks.isEmpty())
 				return;
-			fallingDestroyedBlocks.keySet().removeIf(fallingBlock -> !fallingBlock.isValid());
+			fallingBlocks.keySet().removeIf(fallingBlock -> !fallingBlock.isValid());
 		}, 600, 600);
 	}
 
 	@Override
 	public void turnOff() {
-		for (FallingBlock fb : fallingDestroyedBlocks.keySet()) {
+		for (FallingBlock fb : fallingBlocks.keySet()) {
 			fb.remove();
 		}
+		fallingBlocks.clear();
 
-		fallingDestroyedBlocks.clear();
-
-		for (DestroyedBlock b : destroyedBlocks) {
-			b.undo(destroyedBlocks);
-
-			destroyedBlocks.forEach(destroyedBlock -> {
-				if (destroyedBlock.targetBlock != null && b.sourceBlock != null
-						&& destroyedBlock.targetBlock.getLocation().equals(b.sourceBlock.getLocation()))
-					destroyedBlock.targetBlock = null;
-			});
+		for (AlteredBlockManager.Change change : MagicSpells.getAlteredBlockManager().getByInternalName(internalName)) {
+			change.undo(false);
 		}
-		destroyedBlocks.clear();
 	}
 
 	@Override
@@ -233,6 +224,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 						continue;
 					}
 
+					if (!affectsContainers && BlockUtils.isContainer(b)) continue;
 					if (b.getType().isSolid()) {
 						if (throwChance < 1 && random.nextFloat() > throwChance) {
 							blocksToRemove.add(b);
@@ -245,42 +237,19 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			}
 		}
 
-		Map<Block, DestroyedBlock> destroyedBlocksByThis = new HashMap<>();
-
 		for (Block b : blocksToRemove) {
 			if (checkPlugins && caster instanceof Player) {
-				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster);
+				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster, bypassDippGen);
 				EventUtil.call(event);
 				if (event.isCancelled())
 					continue;
 			}
 
-			DestroyedBlock db = new DestroyedBlock(internalName, b, b.getBlockData());
-
-			destroyedBlocks.forEach(destroyedBlock -> {
-				if (destroyedBlock.targetBlock != null
-						&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation())) {
-					destroyedBlock.targetBlock = null;
-					db.sourceBlock = null;
-				}
-			});
-
 			if (duration > 0) {
-				destroyedBlocks.add(db);
-				destroyedBlocksByThis.put(b, db);
+				AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, b, b.getBlockData());
+				MagicSpells.getAlteredBlockManager().add(change);
 
-				MagicSpells.scheduleDelayedTask(() -> {
-					if (destroyedBlocks.contains(db))
-						db.undo(destroyedBlocks);
-
-					destroyedBlocks.remove(b);
-
-					destroyedBlocks.forEach(destroyedBlock -> {
-						if (destroyedBlock.targetBlock != null
-								&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation()))
-							destroyedBlock.targetBlock = null;
-					});
-				}, duration);
+				MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
 			}
 
 			b.setType(Material.AIR, false);
@@ -292,8 +261,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 				: this.fallingBlockMaxHeight.get(data);
 
 		for (Block b : blocksToThrow) {
-			if (preventLandingBlocks && checkPlugins && caster instanceof Player) {
-				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster);
+			if (checkPlugins && caster instanceof Player) {
+				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster, bypassDippGen);
 				EventUtil.call(event);
 				if (event.isCancelled())
 					continue;
@@ -301,42 +270,18 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 			BlockData blockData = b.getBlockData();
 
-			DestroyedBlock db = new DestroyedBlock(internalName, b, blockData);
-
-			destroyedBlocks.forEach(destroyedBlock -> {
-				if (destroyedBlock.targetBlock != null
-						&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation())) {
-					destroyedBlock.targetBlock = null;
-					db.sourceBlock = null;
-				}
-			});
-
 			if (duration > 0) {
-				destroyedBlocks.add(db);
-				destroyedBlocksByThis.put(b, db);
+				AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, b, b.getBlockData());
+				MagicSpells.getAlteredBlockManager().add(change);
 
-				MagicSpells.scheduleDelayedTask(() -> {
-					if (destroyedBlocks.contains(db)) {
-						if (db.undo(destroyedBlocks) && db.targetBlock != null)
-							playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, db.targetBlock.getLocation(), power,
-									args);
-
-						destroyedBlocks.remove(b);
-
-						destroyedBlocks.forEach(destroyedBlock -> {
-							if (destroyedBlock.targetBlock != null
-									&& destroyedBlock.targetBlock.getLocation().equals(b.getLocation()))
-								destroyedBlock.targetBlock = null;
-						});
-					}
-				}, duration);
+				MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
 			}
 
 			Location l = b.getLocation().clone().add(0.5, 0.5, 0.5);
 			FallingBlock fb = b.getWorld().spawn(l, FallingBlock.class);
 			fb.setBlockData(blockData);
 
-			fallingDestroyedBlocks.put(fb, destroyedBlocksByThis.get(b));
+			fallingBlocks.put(fb, duration > 0 ? System.currentTimeMillis() + (duration * 50L) : null);
 
 			fb.setDropItem(false);
 			playSpellEffects(EffectPosition.PROJECTILE, fb, data);
@@ -384,21 +329,29 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 		@EventHandler
 		public void onBlockLand(EntityChangeBlockEvent event) {
-			DestroyedBlock db = fallingDestroyedBlocks.get(event.getEntity());
-			boolean removed = fallingDestroyedBlocks.keySet().remove(event.getEntity());
+			if (event.getEntity() instanceof FallingBlock fallingBlock) {
+				if (fallingBlocks.containsKey(fallingBlock)) {
+					Long endTime = fallingBlocks.get(fallingBlock);
+					fallingBlocks.remove(fallingBlock);
 
-			if (removed) {
-				event.getEntity().remove();
-				event.setCancelled(true);
-				if (!preventLandingBlocks && event.getBlock().getType() == Material.AIR) {
-					event.getBlock().setBlockData(event.getBlockData(), false);
-					if (db != null)
-						db.targetBlock = event.getBlock();
+					event.getEntity().remove();
+					event.setCancelled(true);
+					if (!preventLandingBlocks && event.getBlock().getType() == Material.AIR) {
+						if (endTime != null) {
+							long duration = (endTime - System.currentTimeMillis()) / 50;
+
+							if (duration < 1) return;
+
+							AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, event.getBlock(), event.getBlock().getBlockData());
+							MagicSpells.getAlteredBlockManager().add(change);
+
+							MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
+						}
+						event.getBlock().setBlockData(event.getBlockData(), false);
+					}
 				}
 			}
-
 		}
-
 	}
 
 	public enum VelocityType {
@@ -411,45 +364,6 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		TOWARD,
 		AWAY
 
-	}
-
-	public class DestroyedBlock {
-
-		public final String spellInternalName;
-		public Block sourceBlock;
-		public final BlockData blockData;
-		public Block targetBlock;
-
-		public DestroyedBlock(String spellInternalName, Block sourceBlock, BlockData blockData) {
-			this.spellInternalName = spellInternalName;
-			this.sourceBlock = sourceBlock;
-			this.blockData = blockData;
-		}
-
-		public boolean undo(List<DestroyedBlock> destroyedBlocks) {
-			List<DestroyedBlock> destroyedBlocksLandedOnSource = destroyedBlocks.stream()
-					.filter(Objects::nonNull)
-					.filter(destroyedBlock -> this.sourceBlock != null && destroyedBlock.targetBlock != null
-							&& destroyedBlock.targetBlock.getLocation().equals(this.sourceBlock.getLocation()))
-					.collect(Collectors.toList());
-
-			if (sourceBlock != null
-					&& ((sourceBlock.getBlockData() != null && (sourceBlock.getBlockData().getMaterial().isAir()
-							|| sourceBlock.getBlockData().getMaterial().equals(Material.WATER)
-							|| sourceBlock.getBlockData().getMaterial().equals(Material.LAVA)))
-							|| !destroyedBlocksLandedOnSource.isEmpty())) {
-				sourceBlock.setBlockData(blockData, false);
-
-				destroyedBlocksLandedOnSource.forEach(destroyedBlock -> destroyedBlock.targetBlock = null);
-			}
-
-			if (targetBlock != null && targetBlock.getBlockData() != null
-					&& targetBlock.getBlockData().equals(blockData)) {
-				targetBlock.setType(Material.AIR, false);
-				return true;
-			}
-			return false;
-		}
 	}
 
 }

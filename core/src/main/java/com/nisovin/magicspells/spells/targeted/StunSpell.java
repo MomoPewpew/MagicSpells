@@ -71,14 +71,12 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
+			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
-			LivingEntity target = targetInfo.target();
-			power = targetInfo.power();
-
-			stunLivingEntity(caster, target, power, args);
-			sendMessages(caster, target, args);
+			data = data.builder().power(targetInfo.getPower()).build();
+			stunLivingEntity(data);
+			sendMessages(data.caster(), targetInfo.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -87,42 +85,23 @@ public class StunSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		stunLivingEntity(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		stunLivingEntity(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
+	private void stunLivingEntity(SpellData data) {
+		long duration = this.duration.get(data) * TimeUtil.MILLISECONDS_PER_SECOND / 20;
+		if (powerAffectsDuration) duration = Math.round(duration * data.power());
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		stunLivingEntity(null, target, power, args);
-		return true;
-	}
+		StunnedInfo info = new StunnedInfo(data.caster(), data.target(), System.currentTimeMillis() + duration, data.target().getLocation());
+		stunnedLivingEntities.put(data.target().getUniqueId(), info);
 
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
+		if (data.caster() != null) playSpellEffects(data.caster(), data.target(), data);
+		else playSpellEffects(EffectPosition.TARGET, data.target(), data);
 
-	private void stunLivingEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		long duration = this.duration.get(caster, target, power, args) * TimeUtil.MILLISECONDS_PER_SECOND / 20;
-		if (powerAffectsDuration) duration = Math.round(duration * power);
-
-		StunnedInfo info = new StunnedInfo(caster, target, System.currentTimeMillis() + duration, target.getLocation());
-		stunnedLivingEntities.put(target.getUniqueId(), info);
-
-		SpellData data = new SpellData(caster, target, power, args);
-
-		if (caster != null) playSpellEffects(caster, target, data);
-		else playSpellEffects(EffectPosition.TARGET, target, data);
-
-		playSpellEffectsBuff(target, entity -> {
+		playSpellEffectsBuff(data.target(), entity -> {
 			if (!(entity instanceof LivingEntity)) return false;
 			return isStunned((LivingEntity) entity);
 		}, data);

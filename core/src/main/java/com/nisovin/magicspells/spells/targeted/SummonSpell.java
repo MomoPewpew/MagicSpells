@@ -59,32 +59,30 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
 			// Get target name and landing location
 			String targetName = "";
-			Location landLoc = null;
-			if (args != null && args.length > 0) {
-				targetName = args[0];
-				landLoc = caster.getLocation().add(0, .25, 0);
+			
+			if (data.args() != null && data.args().length > 0) {
+				targetName = data.args()[0];
 			} else {
-				Block block = getTargetedBlock(caster, 10, args);
+				Block block = getTargetedBlock(data.caster(), 10, data.args());
 				if (block != null && (block.getType().name().contains("SIGN"))) {
 					Sign sign = (Sign) block.getState();
 					targetName = Util.getStringFromComponent(sign.line(0));
-					landLoc = block.getLocation().add(.5, .25, .5);
 				}
 			}
 			
 			// Check usage
 			if (targetName.isEmpty()) {
 				// Fail -- show usage
-				sendMessage(strUsage, caster, args);
+				sendMessage(strUsage, data.caster(), data.args());
 				return PostCastAction.ALREADY_HANDLED;
 			}
 			
 			// Check location
-			if (!BlockUtils.isSafeToStand(landLoc.clone())) {
-				sendMessage(strUsage, caster, args);
+			if (!BlockUtils.isSafeToStand(data.caster().getLocation().add(0, .25, 0).clone())) {
+				sendMessage(strUsage, data.caster(), data.args());
 				return PostCastAction.ALREADY_HANDLED;
 			}
 			
@@ -99,20 +97,20 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 					target = players.get(0);
 				}
 			}
-			if (target == null) return noTarget(caster, args);
+			if (target == null) return noTarget(data);
 
 			// Teleport player
 			String displayName = Util.getStringFromComponent(player.displayName());
 			if (requireAcceptance) {
-				pendingSummons.put(target, landLoc);
+				pendingSummons.put(target, data.caster().getLocation().add(0, .25, 0));
 				pendingTimes.put(target, System.currentTimeMillis());
-				sendMessage(strSummonPending, target, args, "%a", displayName);
+				sendMessage(strSummonPending, target, data.args(), "%a", displayName);
 			} else {
-				target.teleportAsync(landLoc);
-				sendMessage(strSummonAccepted, target, args, "%a", displayName);
+				target.teleportAsync(data.caster().getLocation().add(0, .25, 0));
+				sendMessage(strSummonAccepted, target, data.args(), "%a", displayName);
 			}
 
-			sendMessages(caster, target, args);
+			sendMessages(data.caster(), target, data.args());
 			return PostCastAction.NO_MESSAGES;
 			
 		}
@@ -120,26 +118,15 @@ public class SummonSpell extends TargetedSpell implements TargetedEntitySpell, T
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		return target.teleport(caster);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		return data.target().teleport(data.caster());
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		target.teleportAsync(from);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		target.teleportAsync(from);
+	public boolean castAtEntityFromLocation(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		data.target().teleportAsync(data.location());
 		return true;
 	}
 

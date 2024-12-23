@@ -9,6 +9,7 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class SwitchSpell extends TargetedSpell implements TargetedEntitySpell {
 
@@ -23,11 +24,12 @@ public class SwitchSpell extends TargetedSpell implements TargetedEntitySpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data, target);
 			
-			switchPlaces(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+			data = data.builder().power(target.getPower()).build();
+			switchPlaces(data);
+			sendMessages(data.caster(), target.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}
@@ -36,35 +38,28 @@ public class SwitchSpell extends TargetedSpell implements TargetedEntitySpell {
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		switchPlaces(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		switchPlaces(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, float power) {
-		return false;
-	}
-
-	private void switchPlaces(LivingEntity caster, final LivingEntity target, float power, String[] args) {
+	private void switchPlaces(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
 		Location targetLoc = target.getLocation();
 		Location casterLoc = caster.getLocation();
 		caster.teleportAsync(targetLoc);
 		target.teleportAsync(casterLoc);
 
-		int switchBack = this.switchBack.get(caster, target, power, args);
+		int switchBack = this.switchBack.get(data);
 		if (switchBack <= 0) return;
 
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(caster, target, data);
 
 		MagicSpells.scheduleDelayedTask(() -> {
 			if (caster.isDead() || target.isDead()) return;
+			
 			Location targetLoc1 = target.getLocation();
 			Location casterLoc1 = caster.getLocation();
 			caster.teleportAsync(targetLoc1);

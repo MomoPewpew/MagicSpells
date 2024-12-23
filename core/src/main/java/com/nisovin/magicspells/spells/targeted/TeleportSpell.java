@@ -36,34 +36,27 @@ public class TeleportSpell extends TargetedSpell implements TargetedEntitySpell 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			TargetInfo<LivingEntity> target = getTargetedEntity(data);
+			if (target.noTarget()) return noTarget(data, target);
 
-			if (!teleport(caster, target.target(), target.power(), args)) return noTarget(caster, strCantTeleport, args);
+			data = data.builder().power(target.getPower()).build();
+			if (!teleport(data)) return noTarget(data, strCantTeleport);
 
-			sendMessages(caster, target.target(), args);
+			sendMessages(data.caster(), target.target(), data.args());
 			return PostCastAction.NO_MESSAGES;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		return teleport(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		return teleport(data);
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
-	private boolean teleport(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private boolean teleport(SpellData data) {
+		LivingEntity caster = data.caster();
+		LivingEntity target = data.target();
 		Location targetLoc = target.getLocation();
 		Location startLoc = caster.getLocation();
 
@@ -73,16 +66,14 @@ public class TeleportSpell extends TargetedSpell implements TargetedEntitySpell 
 		targetLoc.add(startLoc.getDirection().multiply(relativeOffset.getX()));
 		targetLoc.setY(targetLoc.getY() + relativeOffset.getY());
 
-		targetLoc.setPitch(startLoc.getPitch() - pitch.get(caster, target, power, args));
-		targetLoc.setYaw(startLoc.getYaw() + yaw.get(caster, target, power, args));
+		targetLoc.setPitch(startLoc.getPitch() - pitch.get(data));
+		targetLoc.setYaw(startLoc.getYaw() + yaw.get(data));
 
 		if (!BlockUtils.isPathable(targetLoc.getBlock())) return false;
 
-		SpellData data = new SpellData(caster, target, power, args);
 		playSpellEffects(EffectPosition.CASTER, caster, data);
 		playSpellEffects(EffectPosition.TARGET, target, data);
-		playSpellEffectsTrail(startLoc, targetLoc, data);
-
+		
 		caster.teleportAsync(targetLoc);
 		return true;
 	}

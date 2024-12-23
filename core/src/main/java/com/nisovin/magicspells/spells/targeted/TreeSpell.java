@@ -22,6 +22,7 @@ import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
+import com.nisovin.magicspells.util.SpellData;
 
 public class TreeSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -45,32 +46,33 @@ public class TreeSpell extends TargetedSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Block target = getTargetedBlock(caster, power, args);
+			Block target = getTargetedBlock(data.caster(), data.power(), data.args());
 
 			if (target != null && !BlockUtils.isAir(target.getType())) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 				EventUtil.call(event);
 				if (event.isCancelled()) target = null;
 				else target = event.getTargetLocation().getBlock();
 			}
 			
-			if (target == null || BlockUtils.isAir(target.getType())) return noTarget(caster, args);
+			if (target == null || BlockUtils.isAir(target.getType())) return noTarget(data);
 			
-			boolean grown = growTree(caster, target, power, args);
-			if (!grown) return noTarget(caster, args);
+			boolean grown = growTree(data);
+			if (!grown) return noTarget(data);
 
-			playSpellEffects(caster, target.getLocation(), power, args);
+			playSpellEffects(data.caster(), target.getLocation(), data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
-	private boolean growTree(LivingEntity caster, Block target, float power, String[] args) {
+	private boolean growTree(SpellData data) {
+		Block target = data.location().getBlock();
 		target = target.getRelative(BlockFace.UP);
 		if (!BlockUtils.isAir(target.getType())) return false;
 		
 		Location loc = target.getLocation();
 
-		int speed = this.speed.get(caster, null, power, args);
+		int speed = this.speed.get(data);
 		if (speed > 0) {
 			List<BlockState> blockStates = new ArrayList<>();
 			target.getWorld().generateTree(loc, treeType, new TreeWatch(loc, blockStates));
@@ -85,25 +87,10 @@ public class TreeSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 	
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		boolean ret = growTree(caster, target.getBlock(), power, args);
-		if (ret) playSpellEffects(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		boolean ret = growTree(data);
+		if (ret) playSpellEffects(data.caster(), data.location(), data);
 		return ret;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return growTree(null, target.getBlock(), power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(target, power, null);
 	}
 
 	private static class GrowAnimation extends SpellAnimation {

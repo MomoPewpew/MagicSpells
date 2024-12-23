@@ -6,7 +6,6 @@ import java.util.Iterator;
 import org.bukkit.World;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
@@ -16,6 +15,7 @@ import com.nisovin.magicspells.spells.targeted.DestroySpell.DestroyedBlock;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class UndoDestroySpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -70,43 +70,26 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Location loc = pointBlank ? caster.getLocation() : getTargetedBlock(caster, power, args).getLocation();
+			Location loc = pointBlank ? data.caster().getLocation() : getTargetedBlock(data.caster(), data.power(), data.args()).getLocation();
 			if (loc == null) {
-				return noTarget(caster, args);
+				return noTarget(data);
 			}
-			undoDestroys(caster, loc, power, args);
+			undoDestroys(data.builder().location(loc).build());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		undoDestroys(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		undoDestroys(data);
 		return true;
 	}
 
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		undoDestroys(caster, target, power, null);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		undoDestroys(null, target, power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		undoDestroys(null, target, power, null);
-		return true;
-	}
-
-	private void undoDestroys(LivingEntity caster, Location loc, float power, String[] args) {
-		float radSq = radius.get(caster, null, power, args);
+	private void undoDestroys(SpellData data) {
+		Location loc = data.location();
+		float radSq = radius.get(data);
 		if (powerAffectsRadius)
-			radSq *= power;
+			radSq *= data.power();
 		radSq *= radSq;
 
 		World locWorld = loc.getWorld();
@@ -140,8 +123,7 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 							&& (target != null && target.getLocation().distanceSquared(loc) < radSq))) {
 
 				if (db.undo(DestroySpell.destroyedBlocks) && db.targetBlock != null)
-					playSpellEffects(EffectPosition.TARGET, db.targetBlock.getLocation(), power,
-							args);
+					playSpellEffects(EffectPosition.TARGET, db.targetBlock.getLocation(), data);
 
 				iterator.remove();
 
@@ -153,10 +135,10 @@ public class UndoDestroySpell extends TargetedSpell implements TargetedLocationS
 			}
 		}
 
-		if (caster != null)
-			playSpellEffects(EffectPosition.CASTER, caster.getLocation(), power, args);
+		if (data.caster() != null)
+			playSpellEffects(EffectPosition.CASTER, data.caster().getLocation(), data);
 
-		playSpellEffects(EffectPosition.SPECIAL, loc, power, args);
+		playSpellEffects(EffectPosition.SPECIAL, loc, data);
 	}
 }
 

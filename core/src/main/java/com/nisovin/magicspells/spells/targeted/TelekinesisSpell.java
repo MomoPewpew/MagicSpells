@@ -18,6 +18,7 @@ import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 import com.nisovin.magicspells.events.MagicSpellsPlayerInteractEvent;
+import com.nisovin.magicspells.util.SpellData;
 
 public class TelekinesisSpell extends TargetedSpell implements TargetedLocationSpell {
 	
@@ -40,39 +41,29 @@ public class TelekinesisSpell extends TargetedSpell implements TargetedLocationS
 	
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			Block target = getTargetedBlock(caster, power, args);
-			if (target == null) return noTarget(caster, args);
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
+			Block target = getTargetedBlock(data.caster(), data.power(), data.args());
+			if (target == null) return noTarget(data);
 
-			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power, args);
-			if (!event.callEvent()) return noTarget(caster, args);
+			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
+			if (!event.callEvent()) return noTarget(data);
 			
 			target = event.getTargetLocation().getBlock();
 
-			boolean activated = activate((Player) caster, target);
-			if (!activated) return noTarget(caster, args);
+			boolean activated = activate((Player) data.caster(), target);
+			if (!activated) return noTarget(data);
 
-			playSpellEffects(caster, target.getLocation(), power, args);
+			playSpellEffects(data.caster(), target.getLocation(), data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player)) return false;
-		boolean activated = activate((Player) caster, target.getBlock());
-		if (activated) playSpellEffects(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		if (!(data.caster() instanceof Player)) return false;
+		boolean activated = activate((Player) data.caster(), data.location().getBlock());
+		if (activated) playSpellEffects(data.caster(), data.location(), data);
 		return activated;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
 	}
 
 	private boolean checkPlugins(Player caster, Block target) {

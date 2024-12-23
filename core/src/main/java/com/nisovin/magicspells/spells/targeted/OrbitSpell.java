@@ -137,30 +137,33 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			if (requireEntityTarget) {
-				TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-				if (target.noTarget()) return noTarget(caster, args, target);
+				TargetInfo<LivingEntity> target = getTargetedEntity(data);
+				if (target.noTarget()) return noTarget(data, target);
 
-				new OrbitTracker(caster, target.target(), target.power(), args);
-				playSpellEffects(caster, target.target(), target.power(), args);
-				sendMessages(caster, target.target(), args);
+				new OrbitTracker(data.builder()
+					.target(target.target())
+					.power(target.getPower())
+					.build());
+				playSpellEffects(data.caster(), target.target(), data);
+				sendMessages(data.caster(), target.target(), data.args());
 
 				return PostCastAction.NO_MESSAGES;
 			}
 
-			Block block = getTargetedBlock(caster, power, args);
+			Block block = getTargetedBlock(data.caster(), data.power());
 			if (block != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, block.getLocation(), power, args);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(block.getLocation()).build());
 				EventUtil.call(event);
 				if (event.isCancelled()) block = null;
 				else {
 					block = event.getTargetLocation().getBlock();
-					power = event.getPower();
+					data = data.builder().power(event.getPower()).build();
 				}
 			}
 
-			if (block == null) return noTarget(caster, args);
+			if (block == null) return noTarget(data);
 
-			new OrbitTracker(caster, block.getLocation().add(0.5, 0, 0.5), power, args);
+			new OrbitTracker(data.builder().location(block.getLocation().add(0.5, 0, 0.5)).build());
 			return PostCastAction.HANDLE_NORMALLY;
 		}
 
@@ -168,43 +171,18 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		new OrbitTracker(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
+	public boolean castAtEntity(SpellData data) {
+		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
+		new OrbitTracker(data);
+		playSpellEffects(data.caster(), data.target(), data);
 		return true;
 	}
 
 	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		new OrbitTracker(caster, target, power, null);
-		playSpellEffects(caster, target, power, null);
-		return false;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return false;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		new OrbitTracker(caster, target, power, args);
-		playSpellEffects(caster, target, power, args);
+	public boolean castAtLocation(SpellData data) {
+		new OrbitTracker(data);
+		playSpellEffects(data.caster(), data.location(), data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		new OrbitTracker(caster, target, power, null);
-		playSpellEffects(caster, target, power, null);
-		return false;
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return false;
 	}
 
 	public boolean hasOrbit(LivingEntity target) {
@@ -260,27 +238,18 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 		private long startTime;
 
-		private OrbitTracker(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			this.caster = caster;
-			this.target = target;
-			this.power = power;
-			this.args = args;
+		private OrbitTracker(SpellData data) {
+			this.data = data;
+			this.caster = data.caster();
+			this.target = data.target();
+			this.power = data.power();
+			this.args = data.args();
 
-			targetLoc = target.getLocation();
-			initialize(caster, target, power, args);
+			targetLoc = data.target() != null ? data.target().getLocation() : data.location();
+			initialize();
 		}
 
-		private OrbitTracker(LivingEntity caster, Location targetLoc, float power, String[] args) {
-			this.caster = caster;
-			this.targetLoc = targetLoc;
-			this.power = power;
-
-			initialize(caster, null, power, args);
-		}
-
-		private void initialize(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			data = new SpellData(caster, target, power, args);
-
+		private void initialize() {
 			internalName = OrbitSpell.this.internalName;
 			startTime = System.currentTimeMillis();
 			currentPosition = targetLoc.getDirection().setY(0).normalize();
@@ -335,7 +304,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			Location loc = getLocation();
 
 			if (!isTransparent(loc.getBlock())) {
-				if (groundSpell != null) groundSpell.subcast(caster, loc, power, args);
+				if (groundSpell != null) groundSpell.subcast(data);
 				if (stopOnHitGround) {
 					stop(true);
 					return;
@@ -374,7 +343,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				}
 			}
 
-			if (orbitSpell != null) orbitSpell.subcast(caster, loc, power, args);
+			if (orbitSpell != null) orbitSpell.subcast(data);
 
 			box.setCenter(loc);
 
@@ -385,12 +354,12 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				if (!box.contains(e)) continue;
 				if (entityTargetList != null && !entityTargetList.canTarget(e)) continue;
 
-				SpellTargetEvent event = new SpellTargetEvent(OrbitSpell.this, caster, e, power, args);
+				SpellTargetEvent event = new SpellTargetEvent(OrbitSpell.this, data.builder().target(e).build());
 				EventUtil.call(event);
 				if (event.isCancelled()) continue;
 
 				immune.add(event.getTarget());
-				if (entitySpell != null) entitySpell.subcast(event.getCaster(), event.getTarget(), event.getPower(), args);
+				if (entitySpell != null) entitySpell.subcast(data.builder().target(event.getTarget()).build());
 
 				SpellData data = new SpellData(caster, event.getTarget(), event.getPower(), args);
 				playSpellEffects(EffectPosition.TARGET, event.getTarget(), data);

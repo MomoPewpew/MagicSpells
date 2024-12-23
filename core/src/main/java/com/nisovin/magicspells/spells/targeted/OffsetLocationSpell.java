@@ -11,6 +11,7 @@ import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class OffsetLocationSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -52,58 +53,41 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			Location baseTargetLocation;
-			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
+			TargetInfo<LivingEntity> info = getTargetedEntity(data);
 			if (info.cancelled()) return PostCastAction.ALREADY_HANDLED;
 
 			if (!info.empty()) baseTargetLocation = info.target().getLocation();
-			else baseTargetLocation = getTargetedBlock(caster, power, args).getLocation();
+			else baseTargetLocation = getTargetedBlock(data.caster(), data.power()).getLocation();
 
-			Location loc = null;
-
+			Location loc;
 			if (forcePitch) {
 				loc = Util.applyOffsets(baseTargetLocation.clone(), relativeOffset, absoluteOffset, forcedPitch);
 			} else {
 				loc = Util.applyOffsets(baseTargetLocation.clone(), relativeOffset, absoluteOffset);
 			}
 
-			if (spellToCast != null) spellToCast.subcast(caster, loc, power, args);
-			playSpellEffects(caster, loc, power, args);
+			if (spellToCast != null) spellToCast.subcast(data.builder().location(loc).build());
+			playSpellEffects(data.caster(), loc, data);
 
 			if (!info.empty()) {
-				sendMessages(caster, info.target(), args);
+				sendMessages(data.caster(), info.target(), data.args());
 				return PostCastAction.NO_MESSAGES;
 			}
 		}
-
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(SpellData data) {
 		if (spellToCast != null) {
 			if (forcePitch) {
-				spellToCast.subcast(caster, Util.applyOffsets(target.clone(), relativeOffset, absoluteOffset, forcedPitch), power, args);
+				spellToCast.subcast(data.builder().location(Util.applyOffsets(data.location().clone(), relativeOffset, absoluteOffset, forcedPitch)).build());
 			} else {
-				spellToCast.subcast(caster, Util.applyOffsets(target.clone(), relativeOffset, absoluteOffset), power, args);
+				spellToCast.subcast(data.builder().location(Util.applyOffsets(data.location().clone(), relativeOffset, absoluteOffset)).build());
 			}
 		}
-		playSpellEffects(caster, target, power, args);
+		playSpellEffects(data.caster(), data.location(), data);
 		return true;
-	}
-
-	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(null, target, power, null);
 	}
 
 }

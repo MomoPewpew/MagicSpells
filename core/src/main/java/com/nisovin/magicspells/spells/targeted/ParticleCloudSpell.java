@@ -31,6 +31,7 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class ParticleCloudSpell extends TargetedSpell implements TargetedLocationSpell, TargetedEntitySpell {
 
@@ -166,83 +167,51 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 			LivingEntity target = null;
 
 			if (canTargetEntities) {
-				TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
+				TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
 				if (targetInfo.cancelled()) return PostCastAction.ALREADY_HANDLED;
 
 				if (!targetInfo.empty()) {
-					power = targetInfo.power();
+					data = data.builder().power(targetInfo.getPower()).build();
 					target = targetInfo.target();
 					locToSpawn = target.getLocation();
 				}
 			}
 
 			if (canTargetLocation && locToSpawn == null) {
-				Block targetBlock = getTargetedBlock(caster, power, args);
+				Block targetBlock = getTargetedBlock(data.caster(), data.power());
 				if (targetBlock != null) locToSpawn = targetBlock.getLocation().add(0.5, 1, 0.5);
 			}
 
-			if (locToSpawn == null) return noTarget(caster, args);
+			if (locToSpawn == null) return noTarget(data);
 
-			locToSpawn.setDirection(caster.getLocation().getDirection());
+			locToSpawn.setDirection(data.caster().getLocation().getDirection());
 
-			AreaEffectCloud cloud = spawnCloud(caster, target, locToSpawn, power, args);
-			cloud.setSource(caster);
+			AreaEffectCloud cloud = spawnCloud(data.builder().location(locToSpawn).target(target).build());
+			cloud.setSource(data.caster());
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
+	public boolean castAtLocation(SpellData data) {
 		if (!canTargetLocation) return false;
-		AreaEffectCloud cloud = spawnCloud(caster, null, target, power, args);
-		cloud.setSource(caster);
+		AreaEffectCloud cloud = spawnCloud(data);
+		cloud.setSource(data.caster());
 		return true;
 	}
 
 	@Override
-	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		return castAtLocation(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power, String[] args) {
-		return castAtLocation(null, target, power, args);
-	}
-
-	@Override
-	public boolean castAtLocation(Location target, float power) {
-		return castAtLocation(null, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!canTargetEntities || !validTargetList.canTarget(caster, target)) return false;
-		AreaEffectCloud cloud = spawnCloud(caster, target, target.getLocation(), power, args);
-		cloud.setSource(caster);
+	public boolean castAtEntity(SpellData data) {
+		if (!canTargetEntities || !validTargetList.canTarget(data.caster(), data.target())) return false;
+		AreaEffectCloud cloud = spawnCloud(data.builder().location(data.target().getLocation()).build());
+		cloud.setSource(data.caster());
 		return true;
 	}
 
-	@Override
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		return castAtEntity(caster, target, power, null);
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!canTargetEntities || !validTargetList.canTarget(target)) return false;
-		spawnCloud(null, target, target.getLocation(), power, args);
-		return true;
-	}
-
-	@Override
-	public boolean castAtEntity(LivingEntity target, float power) {
-		return castAtEntity(target, power, null);
-	}
-
-	private AreaEffectCloud spawnCloud(LivingEntity caster, LivingEntity target, Location loc, float power, String[] args) {
-		Location location = loc.clone();
-		Vector startDir = loc.getDirection().normalize();
+	private AreaEffectCloud spawnCloud(SpellData data) {
+		Location location = data.location().clone();
+		Vector startDir = location.getDirection().normalize();
 
 		//apply relative offset
 		Vector horizOffset = new Vector(-startDir.getZ(), 0, startDir.getX()).normalize();
@@ -256,15 +225,15 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 		else if (dust) cloud.setParticle(particle, dustOptions);
 		else if (none) cloud.setParticle(particle);
 
-		cloud.setColor(Color.fromRGB(color.get(caster, target, power, args)));
-		cloud.setRadius(radius.get(caster, target, power, args));
+		cloud.setColor(Color.fromRGB(color.get(data)));
+		cloud.setRadius(radius.get(data));
 		cloud.setGravity(useGravity);
-		cloud.setWaitTime(waitTime.get(caster, target, power, args));
-		cloud.setDuration(ticksDuration.get(caster, target, power, args));
-		cloud.setDurationOnUse(durationOnUse.get(caster, target, power, args));
-		cloud.setRadiusOnUse(radiusOnUse.get(caster, target, power, args));
-		cloud.setRadiusPerTick(radiusPerTick.get(caster, target, power, args));
-		cloud.setReapplicationDelay(reapplicationDelay.get(caster, target, power, args));
+		cloud.setWaitTime(waitTime.get(data));
+		cloud.setDuration(ticksDuration.get(data));
+		cloud.setDurationOnUse(durationOnUse.get(data));
+		cloud.setRadiusOnUse(radiusOnUse.get(data));
+		cloud.setRadiusPerTick(radiusPerTick.get(data));
+		cloud.setReapplicationDelay(reapplicationDelay.get(data));
 
 		for (PotionEffect eff : potionEffects) {
 			cloud.addCustomEffect(eff, true);

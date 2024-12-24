@@ -253,7 +253,7 @@ public class Subspell {
 				spell instanceof TargetedEntityFromLocationSpell && castAtEntityFromLocation(data, passTargeting);
 			case ENTITY -> spell instanceof TargetedEntitySpell && castAtEntity(data, passTargeting);
 			case LOCATION ->
-				spell instanceof TargetedLocationSpell && castAtLocation(data.builder().location(useTargetForLocation ? data.target().getLocation() : data.location()).build());
+				spell instanceof TargetedLocationSpell && castAtLocation(data.builder().location(useTargetForLocation && data.target() != null ? data.target().getLocation() : data.location()).build());
 			case NONE -> {
 				if (data.caster() == null) yield false;
 

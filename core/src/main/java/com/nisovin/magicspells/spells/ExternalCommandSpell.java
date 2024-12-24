@@ -115,16 +115,14 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 			LivingEntity caster = data.caster();
 			String[] args = data.args();
 			if (data.target() == null || !(data.target() instanceof Player target)) return noTarget(data, targetInfo);
-			Float power = data.power();
 
 			if (requirePlayerTarget) {
 				if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
-				target = targetInfo.target();
-				power = targetInfo.getPower();
+				data = data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build();
 			}
 
-			process(caster, target, power, args);
+			process(data);
 
 			if (target != null) sendMessages(caster, target, args);
 			else sendMessages(caster, args);
@@ -135,15 +133,16 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 	
-	private void process(CommandSender sender, Player target, float power, String[] args) {
+	private void process(SpellData data) {
 		// Get actual sender
+		CommandSender sender = data.caster();
 		CommandSender actualSender;
-		if (executeAsTargetInstead) actualSender = target;
+		if (executeAsTargetInstead) actualSender = data.target();
 		else if (executeOnConsoleInstead) actualSender = Bukkit.getConsoleSender();
-		else actualSender = sender;
+		else actualSender = data.caster();
 		if (actualSender == null) return;
 		
-		SpellData data = new SpellData(actualSender instanceof Player ? (Player) actualSender : null, power, args);
+		data = data.builder().caster(actualSender instanceof Player ? (Player) actualSender : null).build();
 
 		commandToExecute = commandToExecuteData.get(data);
 		commandToExecuteLater = commandToExecuteLaterData.get(data);
@@ -180,23 +179,23 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 				int delay = 0;
 				LivingEntity varOwner, varTarget;
 				if (useTargetVariablesInstead) {
-					varOwner = target;
+					varOwner = data.target();
 					varTarget = sender instanceof Player player ? player : null;
 				} else {
 					varOwner = sender instanceof Player player ? player : null;
-					varTarget = target;
+					varTarget = data.target();
 				}
 
 				for (String comm : commandToExecute) {
 					if (comm == null || comm.isEmpty()) continue;
-					if (doVariableReplacement) comm = MagicSpells.doReplacements(comm, varOwner, varTarget, args);
-					if (args != null && args.length > 0) {
-						for (int i = 0; i < args.length; i++) {
-							comm = comm.replace("%" + (i + 1), args[i]);
+					if (doVariableReplacement) comm = MagicSpells.doReplacements(comm, varOwner, varTarget, data.args());
+					if (data.args() != null && data.args().length > 0) {
+						for (int i = 0; i < data.args().length; i++) {
+							comm = comm.replace("%" + (i + 1), data.args()[i]);
 						}
 					}
 					if (sender != null) comm = comm.replace("%a", sender.getName());
-					if (target != null) comm = comm.replace("%t", target.getName());
+					if (data.target() != null) comm = comm.replace("%t", data.target().getName());
 					if (comm.startsWith("DELAY ")) {
 						String[] split = comm.split(" ");
 						delay += Integer.parseInt(split[1]);
@@ -221,14 +220,14 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		
 		// Effects
 		if (sender instanceof Player player) {
-			if (target != null) playSpellEffects(player, target, data);
+			if (data.target() != null) playSpellEffects(player, data.target(), data);
 			else playSpellEffects(EffectPosition.CASTER, player, data);
 		} else if (sender instanceof BlockCommandSender commandBlock) {
-			playSpellEffects(EffectPosition.CASTER, commandBlock.getBlock().getLocation(), new SpellData(null, target, power, args));
+			playSpellEffects(EffectPosition.CASTER, commandBlock.getBlock().getLocation(), data);
 		}
 		// Add delayed command
 		if (commandToExecuteLater != null && !commandToExecuteLater.isEmpty() && !commandToExecuteLater.get(0).isEmpty()) {
-			MagicSpells.scheduleDelayedTask(new DelayedCommand(sender, target, power, args), commandDelay);
+			MagicSpells.scheduleDelayedTask(new DelayedCommand(data), commandDelay);
 		}
 	}
 
@@ -237,7 +236,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
 
 		if (requirePlayerTarget && data.target() instanceof Player player) {
-			process(data.caster(), player, data.power(), data.args());
+			process(data);
 			return true;
 		}
 
@@ -247,7 +246,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {
 		if (!requirePlayerTarget) {
-			process(sender, null, 1f, args);
+			process(new SpellData(null));
 			return true;
 		}
 		return false;
@@ -276,21 +275,18 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 	
 	private class DelayedCommand implements Runnable {
 
-		private final CommandSender sender;
 		private final SpellData data;
-		private final Player target;
 
-		private DelayedCommand(CommandSender sender, Player target, float power, String[] args) {
-			this.sender = sender;
-			this.target = target;
-			data = new SpellData(sender instanceof LivingEntity le ? le : null, target, power, args);
+		private DelayedCommand(SpellData data) {
+			this.data = data;
 		}
 		
 		@Override
 		public void run() {
+			CommandSender sender = data.caster();
 			// Get actual sender
 			CommandSender actualSender;
-			if (executeAsTargetInstead) actualSender = target;
+			if (executeAsTargetInstead) actualSender = data.target();
 			else if (executeOnConsoleInstead) actualSender = Bukkit.getConsoleSender();
 			else actualSender = sender;
 			if (actualSender == null) return;
@@ -324,11 +320,11 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 
 				LivingEntity varOwner, varTarget;
 				if (useTargetVariablesInstead) {
-					varOwner = target;
+					varOwner = data.target();
 					varTarget = sender instanceof Player player ? player : null;
 				} else {
 					varOwner = sender instanceof Player player ? player : null;
-					varTarget = target;
+					varTarget = data.target();
 				}
 
 				String[] args = data.args();
@@ -342,7 +338,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 						}
 					}
 					if (sender != null) comm = comm.replace("%a", sender.getName());
-					if (target != null) comm = comm.replace("%t", target.getName());
+					if (data.target() != null) comm = comm.replace("%t", data.target().getName());
 					Bukkit.dispatchCommand(actualSender, comm);
 				}
 				if (blockChatOutput && messageBlocker != null && sender instanceof Player player) messageBlocker.removePlayer(player);

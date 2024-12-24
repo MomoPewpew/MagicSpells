@@ -62,7 +62,7 @@ public class SoundPersonalEffect extends SoundEffect {
 
 		Player target = getTarget(null, data);
 		if (target != null) {
-			if (useListenerAsTarget && data != null) data = new SpellData(data.caster(), target, data.power(), data.args());
+			if (useListenerAsTarget && data != null) data = data.builder().target(target).build();
 			target.playSound(location, sound.get(data), category.get(data), volume.get(data), pitch.get(data));
 		}
 
@@ -95,7 +95,7 @@ public class SoundPersonalEffect extends SoundEffect {
 
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			if (useListenerAsTarget && data != null)
-				data = new SpellData(data.caster(), player, data.power(), data.args());
+				data = data.builder().target(player).build();
 
 			if (resolveSoundPerPlayer) sound = this.sound.get(data);
 			if (resolvePitchPerPlayer) pitch = this.pitch.get(data);

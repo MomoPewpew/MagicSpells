@@ -242,9 +242,9 @@ public class Subspell {
 
 		CastTargeting targeting = this.targeting;
 		if (targeting == CastTargeting.NORMAL) {
-			if (spell instanceof TargetedEntityFromLocationSpell) targeting = CastTargeting.ENTITY_FROM_LOCATION;
-			else if (spell instanceof TargetedEntitySpell) targeting = CastTargeting.ENTITY;
-			else if (spell instanceof TargetedLocationSpell) targeting = CastTargeting.LOCATION;
+			if (spell instanceof TargetedEntityFromLocationSpell && data.target() != null) targeting = CastTargeting.ENTITY_FROM_LOCATION;
+			else if (spell instanceof TargetedEntitySpell && data.target() != null) targeting = CastTargeting.ENTITY;
+			else if (spell instanceof TargetedLocationSpell && data.location() != null) targeting = CastTargeting.LOCATION;
 			else targeting = CastTargeting.NONE;
 		}
 

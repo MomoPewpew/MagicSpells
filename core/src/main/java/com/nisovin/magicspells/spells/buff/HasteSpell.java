@@ -56,7 +56,7 @@ public class HasteSpell extends BuffSpell {
 	@Override
 	public boolean castBuff(SpellData data) {
 		if (!(data.caster() instanceof Player)) return false;
-		players.put(data.caster().getUniqueId(), new HasteData(data.caster(), data.power(), data.args()));
+		players.put(data.caster().getUniqueId(), new HasteData(data));
 		return true;
 	}
 
@@ -160,18 +160,18 @@ public class HasteSpell extends BuffSpell {
 		private int count;
 		private int task;
 
-		private HasteData(LivingEntity entity, float power, String[] args) {
-			int strength = HasteSpell.this.strength.get(entity, null, power, args);
-			if (powerAffectsStrength) strength = AccurateMath.round(strength * power);
+		private HasteData(SpellData data) {
+			this.data = data;
+
+			int strength = HasteSpell.this.strength.get(data);
+			if (powerAffectsStrength) strength = AccurateMath.round(strength * data.power());
 			this.strength = strength;
 
-			accelerationIncrease = HasteSpell.this.accelerationIncrease.get(entity, null, power, args);
-			accelerationInterval = HasteSpell.this.accelerationInterval.get(entity, null, power, args);
-			accelerationAmount = HasteSpell.this.accelerationAmount.get(entity, null, power, args);
-			accelerationDelay = HasteSpell.this.accelerationDelay.get(entity, null, power, args);
-			boostDuration = HasteSpell.this.boostDuration.get(entity, null, power, args);
-
-			data = new SpellData(entity, power, args);
+			accelerationIncrease = HasteSpell.this.accelerationIncrease.get(data);
+			accelerationInterval = HasteSpell.this.accelerationInterval.get(data);
+			accelerationAmount = HasteSpell.this.accelerationAmount.get(data);
+			accelerationDelay = HasteSpell.this.accelerationDelay.get(data);
+			boostDuration = HasteSpell.this.boostDuration.get(data);
 
 			acceleration = accelerationDelay >= 0 && accelerationAmount > 0 && accelerationIncrease > 0 && accelerationInterval > 0;
 		}

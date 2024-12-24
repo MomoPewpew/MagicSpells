@@ -141,7 +141,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				else if (caster != null) playSpellEffectsTrail(caster.getLocation(), targets.get(i).getLocation(), data);
 				playSpellEffects(EffectPosition.TARGET, targets.get(i), data);
 			}
-		} else new ChainBouncer(caster, start, targets, targetPowers, interval, args);
+		} else new ChainBouncer(data, targets, targetPowers, interval);
 	}
 
 	private void castSpellAt(SpellData data) {
@@ -150,9 +150,7 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 	private class ChainBouncer implements Runnable {
 
-		private final LivingEntity caster;
-		private final Location start;
-		private final String[] args;
+		private SpellData data;
 		private final int taskId;
 
 		private final List<LivingEntity> targets;
@@ -160,10 +158,8 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 		private int current = 0;
 
-		private ChainBouncer(LivingEntity caster, Location start, List<LivingEntity> targets, List<Float> targetPowers, int interval, String[] args) {
-			this.caster = caster;
-			this.start = start;
-			this.args = args;
+		private ChainBouncer(SpellData data, List<LivingEntity> targets, List<Float> targetPowers, int interval) {
+			this.data = data;
 
 			this.targetPowers = targetPowers;
 			this.targets = targets;
@@ -174,16 +170,16 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		@Override
 		public void run() {
 			Location from;
-			if (current == 0) from = start;
+			if (current == 0) from = data.location();
 			else from = targets.get(current - 1).getLocation();
 
-			SpellData data = new SpellData(caster, targets.get(current), targetPowers.get(current), args);
+			SpellData data = this.data.builder().target(targets.get(current)).power(targetPowers.get(current)).location(from).build();
 
-			spellToCast.subcast(data.builder().location(from).build());
+			spellToCast.subcast(data);
 			if (current > 0) {
 				playSpellEffectsTrail(targets.get(current - 1).getLocation().add(0, 0.5, 0), targets.get(current).getLocation().add(0, 0.5, 0), data);
-			} else if (current == 0 && caster != null) {
-				playSpellEffectsTrail(caster.getLocation().add(0, 0.5, 0), targets.get(current).getLocation().add(0, 0.5, 0), data);
+			} else if (current == 0 && data.caster() != null) {
+				playSpellEffectsTrail(data.caster().getLocation().add(0, 0.5, 0), targets.get(current).getLocation().add(0, 0.5, 0), data);
 			}
 
 			playSpellEffects(EffectPosition.TARGET, targets.get(current), data);

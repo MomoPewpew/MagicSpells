@@ -21,7 +21,6 @@ import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
-import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.events.SpellApplyDamageEvent;
 
 public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySpell {
@@ -200,6 +199,8 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 	private void handlePotionEffects(SpellData data) {
 		LivingEntity target = data.target();
+		if (target == null) return;
+
 		if (potionEffects == null) {
 			PotionEffectType type = this.type.get(data);
 

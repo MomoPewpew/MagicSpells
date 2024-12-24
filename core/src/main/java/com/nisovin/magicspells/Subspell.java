@@ -204,8 +204,6 @@ public class Subspell {
 					isTargetedEntity = false;
 					isTargetedLocation = false;
 				}
-				case NORMAL -> throw new UnsupportedOperationException("Unimplemented case: " + targeting);
-				default -> throw new IllegalArgumentException("Unexpected value: " + targeting);
 			}
 		}
 

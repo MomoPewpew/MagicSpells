@@ -25,7 +25,7 @@ public class CustomDataFloat extends CustomData {
 
 		try {
 			float value = Float.parseFloat(data);
-			customData = (caster, target, power, args) -> value;
+			customData = sdata -> value;
 		} catch (NumberFormatException e) {
 			customData = FunctionData.build(data, Double::floatValue, 0f);
 			if (customData == null) {
@@ -48,7 +48,7 @@ public class CustomDataFloat extends CustomData {
 	}
 
 	public float get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return customData.get(caster, target, power, args);
+		return customData.get(new SpellData(caster, target, power, args));
 	}
 
 	public static float from(CustomData data, SpellData spellData) {

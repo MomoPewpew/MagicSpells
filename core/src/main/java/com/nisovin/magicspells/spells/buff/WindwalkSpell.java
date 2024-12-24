@@ -69,7 +69,7 @@ public class WindwalkSpell extends BuffSpell {
 		if (launchSpeed > 0) data.caster().setVelocity(new Vector(0, launchSpeed, 0));
 		else data.caster().teleportAsync(data.caster().getLocation().add(0, 0.25, 0));
 
-		FlyData flyData = new FlyData(new CastData(data.power(), data.args()), player.getAllowFlight(), player.getFlySpeed());
+		FlyData flyData = new FlyData(data, player.getAllowFlight(), player.getFlySpeed());
 		players.put(data.caster().getUniqueId(), flyData);
 
 		player.setAllowFlight(true);
@@ -166,7 +166,7 @@ public class WindwalkSpell extends BuffSpell {
 		@Override
 		public void run() {
 			Player pl;
-			CastData data;
+			SpellData data;
 
 			int yDiff;
 			int yLimit;
@@ -181,7 +181,7 @@ public class WindwalkSpell extends BuffSpell {
 
 				addUseAndChargeCost(pl);
 
-				data = players.get(id).castData();
+				data = players.get(id).data();
 
 				loc = pl.getLocation();
 				v = pl.getVelocity();
@@ -211,6 +211,6 @@ public class WindwalkSpell extends BuffSpell {
 
 	}
 
-	private record FlyData(CastData castData, boolean wasFlyingAllowed, float oldFlySpeed) {}
+	private record FlyData(SpellData data, boolean wasFlyingAllowed, float oldFlySpeed) {}
 
 }

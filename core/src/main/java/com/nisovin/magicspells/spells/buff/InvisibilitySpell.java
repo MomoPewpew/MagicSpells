@@ -55,7 +55,7 @@ public class InvisibilitySpell extends BuffSpell {
         assert data.caster() != null;
         entities.add(data.caster().getUniqueId());
 		addInvisibilitySpell(data.caster(), this);
-		makeInvisible(data.caster(), data.power(), data.args());
+		makeInvisible(data);
 		return true;
 	}
 
@@ -81,15 +81,15 @@ public class InvisibilitySpell extends BuffSpell {
 		entitySpellMap.clear();
 	}
 
-	private void makeInvisible(LivingEntity entity, float power, String[] args) {
-		hideEntity(entity);
+	private void makeInvisible(SpellData data) {
+		hideEntity(data.caster());
 
-		double radius = Math.min(mobRadius.get(entity, null, power, args), MagicSpells.getGlobalRadius());
-		for (Entity e : entity.getNearbyEntities(radius, radius, radius)) {
+		double radius = Math.min(mobRadius.get(data), MagicSpells.getGlobalRadius());
+		for (Entity e : data.caster().getNearbyEntities(radius, radius, radius)) {
 			if (!(e instanceof Creature creature)) continue;
 			LivingEntity target = creature.getTarget();
 			if (target == null) continue;
-			if (!target.equals(entity)) continue;
+			if (!target.equals(data.caster())) continue;
 			creature.setTarget(null);
 		}
 	}

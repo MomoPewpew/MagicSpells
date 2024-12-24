@@ -36,7 +36,7 @@ public class ArmorStandEffect extends SpellEffect {
 		if (section == null) return;
 
 		entityData = new EntityData(section);
-		entityData.setEntityType((caster, target, power, args) -> EntityType.ARMOR_STAND);
+		entityData.setEntityType(data -> EntityType.ARMOR_STAND);
 
 		gravity = section.getBoolean("gravity", false);
 

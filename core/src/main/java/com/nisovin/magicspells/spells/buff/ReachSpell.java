@@ -29,7 +29,7 @@ import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
 // TODO this needs exemptions for anticheat
 public class ReachSpell extends BuffSpell {
 
-	private final Map<UUID, CastData> players;
+	private final Map<UUID, SpellData> players;
 
 	private final Set<Material> disallowedBreakBlocks;
 	private final Set<Material> disallowedPlaceBlocks;
@@ -70,7 +70,7 @@ public class ReachSpell extends BuffSpell {
 	@Override
 	public boolean castBuff(SpellData data) {
 		if (!(data.caster() instanceof Player)) return false;
-		players.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
+		players.put(data.caster().getUniqueId(), data);
 		return true;
 	}
 
@@ -99,7 +99,7 @@ public class ReachSpell extends BuffSpell {
 			return;
 		}
 
-		CastData data = players.get(player.getUniqueId());
+		SpellData data = players.get(player.getUniqueId());
 
 		// Get targeted block
 		Action action = event.getAction();
@@ -171,7 +171,7 @@ public class ReachSpell extends BuffSpell {
 		}
 	}
 
-	public Map<UUID, CastData> getPlayers() {
+	public Map<UUID, SpellData> getPlayers() {
 		return players;
 	}
 

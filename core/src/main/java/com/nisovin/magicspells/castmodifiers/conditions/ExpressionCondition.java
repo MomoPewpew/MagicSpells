@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
@@ -54,8 +55,8 @@ public class ExpressionCondition extends OperatorCondition {
 	}
 
 	private boolean compare(LivingEntity target) {
-		Double valueLeft = left.get(target, 0, new String[0]);
-		Double valueRight = right.get(target, 0, new String[0]);
+		Double valueLeft = left.get(new SpellData(target));
+		Double valueRight = right.get(new SpellData(target));
 
 		if (equals) return (valueLeft == valueRight);
 		else if (moreThan) return (valueLeft > valueRight);

@@ -9,7 +9,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
 
-import com.nisovin.magicspells.util.CastData;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellFilter;
@@ -18,7 +17,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 
 public class EmpowerSpell extends BuffSpell {
 
-	private final Map<UUID, CastData> entities;
+	private final Map<UUID, SpellData> entities;
 
 	private ConfigData<Float> maxPower;
 	private ConfigData<Float> extraPower;
@@ -43,7 +42,7 @@ public class EmpowerSpell extends BuffSpell {
 	@Override
 	public boolean castBuff(SpellData data) {
         assert data.caster() != null;
-        entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
+        entities.put(data.caster().getUniqueId(), data);
 		return true;
 	}
 
@@ -73,17 +72,17 @@ public class EmpowerSpell extends BuffSpell {
 		if (caster == null || !isActive(caster)) return;
 		if (!filter.check(event.getSpell())) return;
 
-		CastData data = entities.get(caster.getUniqueId());
+		SpellData data = entities.get(caster.getUniqueId());
 
-		float p = extraPower.get(caster, null, data.power(), data.args());
+		float p = extraPower.get(data);
 		if (powerAffectsMultiplier) p *= data.power();
-		p = Math.min(p, maxPower.get(caster, null, data.power(), data.args()));
+		p = Math.min(p, maxPower.get(data));
 
 		addUseAndChargeCost(caster);
 		event.increasePower(p);
 	}
 
-	public Map<UUID, CastData> getEntities() {
+	public Map<UUID, SpellData> getEntities() {
 		return entities;
 	}
 

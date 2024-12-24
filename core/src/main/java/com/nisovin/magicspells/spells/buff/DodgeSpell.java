@@ -13,7 +13,6 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.CastData;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.spells.BuffSpell;
@@ -28,7 +27,7 @@ import de.slikey.effectlib.util.RandomUtils;
 
 public class DodgeSpell extends BuffSpell {
 
-	private final Map<UUID, CastData> entities;
+	private final Map<UUID, SpellData> entities;
 
 	private final ConfigData<Double> distance;
 
@@ -73,7 +72,7 @@ public class DodgeSpell extends BuffSpell {
 	@Override
 	public boolean castBuff(SpellData data) {
         assert data.caster() != null;
-        entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
+        entities.put(data.caster().getUniqueId(), data);
 		return true;
 	}
 
@@ -110,8 +109,7 @@ public class DodgeSpell extends BuffSpell {
 		e.setCancelled(true);
 		tracker.getImmune().add(target);
 
-		CastData castData = entities.get(target.getUniqueId());
-		SpellData spellData = new SpellData(target, tracker.getCaster(), castData.power(), castData.args());
+		SpellData spellData = entities.get(target.getUniqueId());
 		dodge(target, tracker, spellData);
 
 		playSpellEffects(EffectPosition.TARGET, tracker.getCurrentLocation(), spellData);
@@ -123,7 +121,7 @@ public class DodgeSpell extends BuffSpell {
 
 		playSpellEffects(EffectPosition.SPECIAL, entityLoc, spellData);
 
-		Vector v = RandomUtils.getRandomCircleVector().multiply(distance.get(entity, tracker.getCaster(), spellData.power(), spellData.args()));
+		Vector v = RandomUtils.getRandomCircleVector().multiply(distance.get(spellData));
 		targetLoc.add(v);
 		targetLoc.setDirection(entity.getLocation().getDirection());
 
@@ -139,7 +137,7 @@ public class DodgeSpell extends BuffSpell {
 		if (spellAfterDodge != null) spellAfterDodge.subcast(spellData);
 	}
 
-	public Map<UUID, CastData> getEntities() {
+	public Map<UUID, SpellData> getEntities() {
 		return entities;
 	}
 

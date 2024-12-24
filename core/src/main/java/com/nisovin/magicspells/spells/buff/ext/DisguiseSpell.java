@@ -71,7 +71,7 @@ public class DisguiseSpell extends BuffSpell {
 		if (supplier.isConstant()) {
 			try {
 				Disguise disguise = DisguiseParser.parseDisguise(disguiseString);
-				disguiseData = (caster, target, power, args) -> disguise;
+				disguiseData = data -> disguise;
 			} catch (Throwable t) {
 				MagicSpells.error("DisguiseSpell '" + internalName + "' has an invalid 'disguise' defined.");
 				DebugHandler.debug(t);
@@ -81,9 +81,9 @@ public class DisguiseSpell extends BuffSpell {
 			return;
 		}
 
-		disguiseData = (caster, target, power, args) -> {
+		disguiseData = data -> {
 			try {
-				return DisguiseParser.parseDisguise(supplier.get(caster, target, power, args));
+				return DisguiseParser.parseDisguise(supplier.get(data));
 			} catch (Throwable ignored) {
 				return null;
 			}

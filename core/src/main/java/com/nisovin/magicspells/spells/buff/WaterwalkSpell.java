@@ -15,7 +15,6 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.CastData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -23,7 +22,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 
 public class WaterwalkSpell extends BuffSpell {
 
-	private final Map<UUID, CastData> entities;
+	private final Map<UUID, SpellData> entities;
 
 	private ConfigData<Float> speed;
 
@@ -40,7 +39,7 @@ public class WaterwalkSpell extends BuffSpell {
 	@Override
 	public boolean castBuff(SpellData data) {
 		if (!(data.caster() instanceof Player)) return false;
-		entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
+		entities.put(data.caster().getUniqueId(), data);
 		startTicker();
 		return true;
 	}
@@ -88,7 +87,7 @@ public class WaterwalkSpell extends BuffSpell {
 		ticker = null;
 	}
 
-	public Map<UUID, CastData> getEntities() {
+	public Map<UUID, SpellData> getEntities() {
 		return entities;
 	}
 
@@ -111,7 +110,7 @@ public class WaterwalkSpell extends BuffSpell {
 			Block feet;
 			Block underfeet;
 			Location loc;
-			CastData data;
+			SpellData data;
 			for (UUID id : entities.keySet()) {
 				pl = Bukkit.getPlayer(id);
 				if (pl == null) continue;
@@ -139,7 +138,7 @@ public class WaterwalkSpell extends BuffSpell {
 					if (!pl.isFlying()) {
 						pl.setAllowFlight(true);
 						pl.setFlying(true);
-						pl.setFlySpeed(speed.get(pl, null, data.power(), data.args()));
+						pl.setFlySpeed(speed.get(data));
 					}
 					if (count == 0) addUseAndChargeCost(pl);
 					continue;

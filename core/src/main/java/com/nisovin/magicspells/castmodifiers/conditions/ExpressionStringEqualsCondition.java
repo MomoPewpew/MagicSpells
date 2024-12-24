@@ -10,6 +10,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
@@ -63,8 +64,8 @@ public class ExpressionStringEqualsCondition extends Condition {
 	}
 
 	private boolean compare(LivingEntity caster, LivingEntity target) {
-		String left = expressionLeft.get(caster, target, 0, new String[0]);
-		String right = expressionRight.get(caster, target, 0, new String[0]);
+		String left = expressionLeft.get(new SpellData(caster, target));
+		String right = expressionRight.get(new SpellData(caster, target));
 		return left.equals(right);
 	}
 }

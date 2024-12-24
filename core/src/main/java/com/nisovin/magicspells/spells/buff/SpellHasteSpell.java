@@ -9,7 +9,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
 
-import com.nisovin.magicspells.util.CastData;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellFilter;
@@ -18,7 +17,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 
 public class SpellHasteSpell extends BuffSpell {
 
-	private final Map<UUID, CastData> entities;
+	private final Map<UUID, SpellData> entities;
 
 	private ConfigData<Float> castTimeModAmt;
 	private ConfigData<Float> cooldownModAmt;
@@ -45,7 +44,7 @@ public class SpellHasteSpell extends BuffSpell {
 	@Override
 	public boolean castBuff(SpellData data) {
         assert data.caster() != null;
-        entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
+        entities.put(data.caster().getUniqueId(), data);
 		return true;
 	}
 
@@ -71,12 +70,12 @@ public class SpellHasteSpell extends BuffSpell {
 		LivingEntity caster = event.getCaster();
 		if (!isActive(caster)) return;
 
-		CastData data = entities.get(event.getCaster().getUniqueId());
+		SpellData data = entities.get(event.getCaster().getUniqueId());
 		if (data == null) return;
 
 		boolean modified = false;
 
-		float castTimeModAmt = this.castTimeModAmt.get(caster, null, data.power(), data.args()) / 100f;
+		float castTimeModAmt = this.castTimeModAmt.get(data) / 100f;
 		if (castTimeModAmt != 0) {
 			int ct = event.getCastTime();
 
@@ -87,7 +86,7 @@ public class SpellHasteSpell extends BuffSpell {
 			modified = true;
 		}
 
-		float cooldownModAmt = this.cooldownModAmt.get(caster, null, data.power(), data.args()) / 100f;
+		float cooldownModAmt = this.cooldownModAmt.get(data) / 100f;
 		if (cooldownModAmt != 0) {
 			float cd = event.getCooldown();
 
@@ -102,7 +101,7 @@ public class SpellHasteSpell extends BuffSpell {
 		addUseAndChargeCost(caster);
 	}
 
-	public Map<UUID, CastData> getEntities() {
+	public Map<UUID, SpellData> getEntities() {
 		return entities;
 	}
 

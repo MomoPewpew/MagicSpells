@@ -11,7 +11,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.CastData;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
@@ -22,7 +21,7 @@ import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
 
 public class FlamewalkSpell extends BuffSpell {
 
-	private final Map<UUID, CastData> entities;
+	private final Map<UUID, SpellData> entities;
 
 	private ConfigData<Integer> fireTicks;
 	private ConfigData<Double> radius;
@@ -49,7 +48,7 @@ public class FlamewalkSpell extends BuffSpell {
 	@Override
 	public boolean castBuff(SpellData data) {
         assert data.caster() != null;
-        entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
+        entities.put(data.caster().getUniqueId(), data);
 		if (burner == null) burner = new Burner();
 		return true;
 	}
@@ -78,7 +77,7 @@ public class FlamewalkSpell extends BuffSpell {
 		burner = null;
 	}
 
-	public Map<UUID, CastData> getEntities() {
+	public Map<UUID, SpellData> getEntities() {
 		return entities;
 	}
 
@@ -112,10 +111,10 @@ public class FlamewalkSpell extends BuffSpell {
 					continue;
 				}
 
-				CastData data = entities.get(entity.getUniqueId());
+				SpellData data = entities.get(entity.getUniqueId());
 				playSpellEffects(EffectPosition.DELAYED, entity, new SpellData(entity, data.power(), data.args()));
 
-				double radius = Math.min(FlamewalkSpell.this.radius.get(entity, null, data.power(), data.args()), MagicSpells.getGlobalRadius());
+				double radius = Math.min(FlamewalkSpell.this.radius.get(data), MagicSpells.getGlobalRadius());
 				List<Entity> entities = entity.getNearbyEntities(radius, radius, radius);
 				for (Entity target : entities) {
 					if (!(target instanceof LivingEntity livingTarget)) continue;
@@ -127,7 +126,7 @@ public class FlamewalkSpell extends BuffSpell {
 						if (event.isCancelled()) continue;
 					}
 
-					int fireTicks = FlamewalkSpell.this.fireTicks.get(entity, livingTarget, data.power(), data.args());
+					int fireTicks = FlamewalkSpell.this.fireTicks.get(data);
 					if (powerAffectsFireTicks) fireTicks = Math.round(fireTicks * data.power());
 					target.setFireTicks(fireTicks);
 

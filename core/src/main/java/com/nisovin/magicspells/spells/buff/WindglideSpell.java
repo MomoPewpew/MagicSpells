@@ -172,8 +172,8 @@ public class WindglideSpell extends BuffSpell {
 
 				data = entities.get(id);
 
-				velocity = WindglideSpell.this.velocity.get(caster, null, data.power(), data.args()) / 10;
-				height = WindglideSpell.this.height.get(caster, null, data.power(), data.args());
+				velocity = WindglideSpell.this.velocity.get(data) / 10;
+				height = WindglideSpell.this.height.get(data);
 
 				eLoc = entity.getLocation();
 				v = eLoc.getDirection().normalize().multiply(velocity).add(new Vector(0, height, 0));

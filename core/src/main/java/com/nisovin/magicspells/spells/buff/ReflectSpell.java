@@ -12,7 +12,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.util.CastData;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.handlers.DebugHandler;
@@ -23,7 +22,7 @@ import com.nisovin.magicspells.events.SpellPreImpactEvent;
 // NO API CHANGES - NEEDS TOTAL REWORK
 public class ReflectSpell extends BuffSpell {
 
-	private Map<UUID, CastData> reflectors;
+	private Map<UUID, SpellData> reflectors;
 	private Set<String> shieldBreakerNames;
 	private Set<String> delayedReflectionSpells;
 
@@ -51,7 +50,7 @@ public class ReflectSpell extends BuffSpell {
 	@Override
 	public boolean castBuff(SpellData data) {
         assert data.caster() != null;
-        reflectors.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
+        reflectors.put(data.caster().getUniqueId(), data);
 		return true;
 	}
 
@@ -90,8 +89,8 @@ public class ReflectSpell extends BuffSpell {
 		addUseAndChargeCost(target);
 		event.setTarget(event.getCaster());
 
-		CastData data = reflectors.get(target.getUniqueId());
-		event.setPower(event.getPower() * reflectedSpellPowerMultiplier.get(target, event.getCaster(), data.power(), data.args()) * (spellPowerAffectsReflectedPower ? data.power() : 1));
+		SpellData data = reflectors.get(target.getUniqueId());
+		event.setPower(event.getPower() * reflectedSpellPowerMultiplier.get(data) * (spellPowerAffectsReflectedPower ? data.power() : 1));
 	}
 
 	@EventHandler
@@ -126,8 +125,8 @@ public class ReflectSpell extends BuffSpell {
 		addUseAndChargeCost(target);
 		event.setRedirected(true);
 
-		CastData data = reflectors.get(target.getUniqueId());
-		event.setPower(event.getPower() * reflectedSpellPowerMultiplier.get(target, event.getCaster(), data.power(), data.args()) * (spellPowerAffectsReflectedPower ? data.power() : 1));
+		SpellData data = reflectors.get(target.getUniqueId());
+		event.setPower(event.getPower() * reflectedSpellPowerMultiplier.get(data) * (spellPowerAffectsReflectedPower ? data.power() : 1));
 	}
 
 }

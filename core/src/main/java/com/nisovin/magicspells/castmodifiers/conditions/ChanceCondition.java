@@ -5,6 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 import com.nisovin.magicspells.castmodifiers.Condition;
@@ -35,7 +36,7 @@ public class ChanceCondition extends Condition {
 	}
 
 	private boolean chance(LivingEntity caster, LivingEntity target) {
-		double c = chance.get(caster, target, 1F, null) / 100;
+		double c = chance.get(new SpellData(caster, target)) / 100;
 		return c >= 0 && (c == 1 || ThreadLocalRandom.current().nextDouble() < c);
 	}
 

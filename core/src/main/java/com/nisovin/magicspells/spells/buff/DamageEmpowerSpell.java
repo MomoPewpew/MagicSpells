@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
 
-import com.nisovin.magicspells.util.CastData;
 import com.nisovin.magicspells.util.SpellData;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -18,7 +17,7 @@ import com.nisovin.magicspells.events.SpellApplyDamageEvent;
 
 public class DamageEmpowerSpell extends BuffSpell {
 
-	private final Map<UUID, CastData> entities;
+	private final Map<UUID, SpellData> entities;
 
 	private SpellFilter filter;
 
@@ -36,7 +35,7 @@ public class DamageEmpowerSpell extends BuffSpell {
 	@Override
 	public boolean castBuff(SpellData data) {
         assert data.caster() != null;
-        entities.put(data.caster().getUniqueId(), new CastData(data.power(), data.args()));
+        entities.put(data.caster().getUniqueId(), data);
 		return true;
 	}
 
@@ -63,12 +62,12 @@ public class DamageEmpowerSpell extends BuffSpell {
 
 		addUseAndChargeCost(caster);
 
-		CastData data = entities.get(caster.getUniqueId());
-		float damageMultiplier = this.damageMultiplier.get(caster, event.getTarget(), data.power(), data.args());
+		SpellData data = entities.get(caster.getUniqueId());
+		float damageMultiplier = this.damageMultiplier.get(data);
 		event.applyDamageModifier(damageMultiplier);
 	}
 
-	public Map<UUID, CastData> getEntities() {
+	public Map<UUID, SpellData> getEntities() {
 		return entities;
 	}
 

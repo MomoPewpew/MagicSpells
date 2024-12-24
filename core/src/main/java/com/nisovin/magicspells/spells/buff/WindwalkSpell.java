@@ -186,7 +186,7 @@ public class WindwalkSpell extends BuffSpell {
 				loc = pl.getLocation();
 				v = pl.getVelocity();
 
-				yLimit = maxY.get(pl, null, data.power(), data.args());
+				yLimit = maxY.get(data);
 				if (enableMaxY) {
 					yDiff = loc.getBlockY() - yLimit;
 					if (yDiff > 0) {
@@ -195,13 +195,13 @@ public class WindwalkSpell extends BuffSpell {
 					}
 				}
 
-				altitudeLimit = maxAltitude.get(pl, null, data.power(), data.args());
+				altitudeLimit = maxAltitude.get(data);
 				if (altitudeLimit > 0) {
 					yDiff = loc.getBlockY() - pl.getWorld().getHighestBlockYAt(loc) - altitudeLimit;
 					if (yDiff > 0) pl.setVelocity(v.setY(-yDiff * 1.5));
 				}
 
-				pl.setFlySpeed(flySpeed.get(pl, null, data.power(), data.args()));
+				pl.setFlySpeed(flySpeed.get(data));
 			}
 		}
 

@@ -135,7 +135,7 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		if (!(event.getCause() == DamageCause.BLOCK_EXPLOSION || event.getCause() == DamageCause.ENTITY_EXPLOSION)) return;
 		if (currentTick != Bukkit.getWorlds().get(0).getFullTime()) return;
 
-		float damageMultiplier = this.damageMultiplier.get(currentCaster, event.getEntity() instanceof LivingEntity le ? le : null, currentPower, currentArgs);
+		float damageMultiplier = this.damageMultiplier.get(new SpellData(currentCaster, event.getEntity() instanceof LivingEntity le ? le : null, currentPower, currentArgs));
 		if (!(damageMultiplier > 0 || preventPlayerDamage || preventAnimalDamage)) return;
 
 		if (preventPlayerDamage && event.getEntity() instanceof Player) event.setCancelled(true);

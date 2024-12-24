@@ -955,8 +955,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	public void sendLog(LivingEntity caster, String[] args) {
-		if (this.strCastConsole.get(caster, 0f, args) == null) return;
-		log("Spell " + internalName + ": " + this.strCastConsole.get(caster, 0f, args));
+		if (this.strCastConsole.get(new SpellData(caster, 0f, args)) == null) return;
+		log("Spell " + internalName + ": " + this.strCastConsole.get(new SpellData(caster, 0f, args)));
 	}
 
 
@@ -1214,7 +1214,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	protected int getRange(LivingEntity caster, float power, String[] args) {
-		int range = this.range.get(caster, null, power, args);
+		int range = this.range.get(new SpellData(caster, power, args));
 		return spellPowerAffectsRange ? Math.round(range * power) : range;
 	}
 
@@ -1333,7 +1333,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		double zUpper = 1.75;
 
 		// Do min range
-		for (int i = 0; i < minRange.get(caster, null, power, data.args()) && blockIterator.hasNext(); i++) {
+		for (int i = 0; i < minRange.get(data) && blockIterator.hasNext(); i++) {
 			blockIterator.next();
 		}
 
@@ -2034,7 +2034,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	public SpellReagents getReagentsPreCast(LivingEntity livingEntity, float power, String[] args) {
-		reagentsList = this.reagentsData.get(livingEntity, power, args);
+		reagentsList = this.reagentsData.get(new SpellData(livingEntity, power, args));
 		if (reagentsList == null) reagentsList = new ArrayList<>();
 		reagents = SpellReagents.fromList(reagentsList, internalName);
 		return reagents;

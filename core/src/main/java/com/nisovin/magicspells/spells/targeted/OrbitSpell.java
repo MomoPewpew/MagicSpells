@@ -253,34 +253,34 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 			internalName = OrbitSpell.this.internalName;
 			startTime = System.currentTimeMillis();
 			currentPosition = targetLoc.getDirection().setY(0).normalize();
-			Util.rotateVector(currentPosition, horizOffset.get(caster, target, power, args));
-			orbRadius = orbitRadius.get(caster, target, power, args);
-			orbHeight = yOffset.get(caster, target, power, args);
+			Util.rotateVector(currentPosition, horizOffset.get(data));
+			orbRadius = orbitRadius.get(data);
+			orbHeight = yOffset.get(data);
 
 			if (target != null) previousYaw = targetLoc.getYaw();
 
 			immune = new HashSet<>();
 
-			box = new BoundingBox(targetLoc, hitRadius.get(caster, target, power, args), verticalHitRadius.get(caster, target, power, args));
+			box = new BoundingBox(targetLoc, hitRadius.get(data), verticalHitRadius.get(data));
 
-			int tickInterval = OrbitSpell.this.tickInterval.get(caster, target, power, args);
+			int tickInterval = OrbitSpell.this.tickInterval.get(data);
 			taskId = MagicSpells.scheduleRepeatingTask(this, 0, tickInterval);
 
-			int horizExpandDelay = OrbitSpell.this.horizExpandDelay.get(caster, target, power, args);
+			int horizExpandDelay = OrbitSpell.this.horizExpandDelay.get(data);
 			if (horizExpandDelay > 0) {
-				float horizExpandRadius = OrbitSpell.this.horizExpandRadius.get(caster, target, power, args);
+				float horizExpandRadius = OrbitSpell.this.horizExpandRadius.get(data);
 				repeatingHorizTaskId = MagicSpells.scheduleRepeatingTask(() -> orbRadius += horizExpandRadius, horizExpandDelay, horizExpandDelay);
 			}
 
-			int vertExpandDelay = OrbitSpell.this.vertExpandDelay.get(caster, target, power, args);
+			int vertExpandDelay = OrbitSpell.this.vertExpandDelay.get(data);
 			if (vertExpandDelay > 0) {
-				float vertExpandRadius = OrbitSpell.this.vertExpandRadius.get(caster, target, power, args);
+				float vertExpandRadius = OrbitSpell.this.vertExpandRadius.get(data);
 				repeatingVertTaskId = MagicSpells.scheduleRepeatingTask(() -> orbHeight += vertExpandRadius, vertExpandDelay, vertExpandDelay);
 			}
 
-			distancePerTick = 6.28f * tickInterval / secondsPerRevolution.get(caster, target, power, args) / 20;
+			distancePerTick = 6.28f * tickInterval / secondsPerRevolution.get(data) / 20;
 
-			maxDuration = OrbitSpell.this.maxDuration.get(caster, target, power, args) * TimeUtil.MILLISECONDS_PER_SECOND;
+			maxDuration = OrbitSpell.this.maxDuration.get(data) * TimeUtil.MILLISECONDS_PER_SECOND;
 
 			effectSet = playSpellEffectLibEffects(EffectPosition.PROJECTILE, targetLoc, data);
 			entityMap = playSpellEntityEffects(EffectPosition.PROJECTILE, targetLoc, data);

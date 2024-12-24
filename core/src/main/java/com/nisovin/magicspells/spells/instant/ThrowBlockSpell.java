@@ -76,7 +76,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 
 			try {
 				int fuse = Integer.parseInt(split[1]);
-				tntFuse = (caster, target, power, args) -> fuse;
+				tntFuse = data -> fuse;
 			} catch (NumberFormatException e) {
 				tntFuse = FunctionData.build(split[1], Double::intValue, 0);
 				if (tntFuse == null)

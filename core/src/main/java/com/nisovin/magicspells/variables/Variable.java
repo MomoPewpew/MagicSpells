@@ -5,6 +5,7 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Objective;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
@@ -96,11 +97,11 @@ public abstract class Variable {
 	}
 
 	public double getMaxValue(Player player) {
-		return maxValue.get(player, null, 1F, null);
+		return maxValue.get(new SpellData(player));
 	}
 
 	public double getMinValue(Player player) {
-		return minValue.get(player, null, 1F, null);
+		return minValue.get(new SpellData(player));
 	}
 
 	public double getDefaultValue() {

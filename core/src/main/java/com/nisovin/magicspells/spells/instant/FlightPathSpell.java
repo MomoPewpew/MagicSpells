@@ -83,7 +83,7 @@ public class FlightPathSpell extends InstantSpell {
 		private void addFlight(ActiveFlight flight, float power, String[] args) {
 			flights.put(flight.data.caster().getUniqueId(), flight);
 			flight.start();
-			if (task < 0) task = MagicSpells.scheduleRepeatingTask(this, 0, interval.get(flight.data.caster(), null, power, args));
+			if (task < 0) task = MagicSpells.scheduleRepeatingTask(this, 0, interval.get(flight.data));
 		}
 
 		private void init() {

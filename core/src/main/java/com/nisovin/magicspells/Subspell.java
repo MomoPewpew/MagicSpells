@@ -43,10 +43,10 @@ public class Subspell {
 	private boolean invert = false;
 	private boolean passPower = true;
 	private boolean passTargeting = false;
-	private ConfigData<Integer> delay = (caster, target, power, args) -> -1;
-	private ConfigData<Double> chance = (caster, target, power, args) -> -1D;
-	private ConfigData<Float> subPower = (caster, target, power, args) -> 1F;
-	private ConfigData<String[]> args = (caster, target, power, args) -> null;
+	private ConfigData<Integer> delay = (data) -> -1;
+	private ConfigData<Double> chance = (data) -> -1D;
+	private ConfigData<Float> subPower = (data) -> 1F;
+	private ConfigData<String[]> args = (data) -> null;
 
 	private boolean isTargetedEntity = false;
 	private boolean isTargetedLocation = false;
@@ -105,15 +105,15 @@ public class Subspell {
 
 							if (constant) {
 								String[] arg = arguments.toArray(new String[0]);
-								args = (caster, target, power, args) -> arg;
+								args = (sdata) -> arg;
 
 								continue;
 							}
 
-							args = (caster, target, power, args) -> {
+							args = (sdata) -> {
 								String[] ret = new String[argumentData.size()];
 								for (int i = 0; i < argumentData.size(); i++)
-									ret[i] = argumentData.get(i).get(caster, target, power, args);
+									ret[i] = argumentData.get(i).get(sdata);
 
 								return ret;
 							};
@@ -128,7 +128,7 @@ public class Subspell {
 					case "power" -> {
 						try {
 							float subPower = Float.parseFloat(value);
-							this.subPower = (caster, target, power, args) -> subPower;
+							this.subPower = (sdata) -> subPower;
 						} catch (NumberFormatException e) {
 							FunctionData<Float> subPowerData = FunctionData.build(value, Double::floatValue, true);
 							if (subPowerData == null) {
@@ -142,7 +142,7 @@ public class Subspell {
 					case "delay" -> {
 						try {
 							int delay = Integer.parseInt(value);
-							this.delay = (caster, target, power, args) -> delay;
+							this.delay = (sdata) -> delay;
 						} catch (NumberFormatException e) {
 							FunctionData<Integer> delayData = FunctionData.build(value, Double::intValue, true);
 							if (delayData == null) {
@@ -156,7 +156,7 @@ public class Subspell {
 					case "chance" -> {
 						try {
 							double chance = Double.parseDouble(value);
-							this.chance = (caster, target, power, args) -> chance;
+							this.chance = (sdata) -> chance;
 						} catch (NumberFormatException e) {
 							FunctionData<Double> chanceData = FunctionData.build(value, Function.identity(), true);
 							if (chanceData == null) {

@@ -244,7 +244,7 @@ public class PassiveSpell extends Spell {
 
 		if (disabled || state != SpellCastState.NORMAL) return false;
 
-		float chance = this.chance.get(caster, target, power, null) / 100;
+		float chance = this.chance.get(data) / 100;
 		if (chance < 1 && random.nextFloat() > chance) return false;
 
 		disabled = true;

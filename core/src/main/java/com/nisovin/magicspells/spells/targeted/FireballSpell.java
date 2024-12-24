@@ -223,13 +223,13 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 			if (noExplosionEffect) loc.getWorld().createExplosion(loc, 0);
 
 
-			double noExplosionDamageRange = this.noExplosionDamageRange.get(caster, null, data.power(), data.args());
+			double noExplosionDamageRange = this.noExplosionDamageRange.get(new SpellData(caster, data.power(), data.args()));
 			List<Entity> inRange = fireball.getNearbyEntities(noExplosionDamageRange, noExplosionDamageRange, noExplosionDamageRange);
 			for (Entity entity : inRange) {
 				if (!(entity instanceof LivingEntity target)) continue;
 				if (!validTargetList.canTarget(entity)) continue;
 
-				double noExplosionDamage = this.noExplosionDamage.get(caster, target, data.power(), data.args());
+				double noExplosionDamage = this.noExplosionDamage.get(new SpellData(caster, target, data.power(), data.args()));
 				if (powerAffectsNoExplosionDamage) noExplosionDamage *= data.power();
 
 				target.damage(noExplosionDamage, caster);
@@ -255,7 +255,7 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 		} else {
 			event.setFire(!noFire);
 
-			float explosionSize = this.explosionSize.get(caster, null, data.power(), data.args());
+			float explosionSize = this.explosionSize.get(new SpellData(caster, data.power(), data.args()));
 			if (explosionSize > 0) event.setRadius(explosionSize);
 		}
 
@@ -280,7 +280,7 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 
 		if (!validTargetList.canTarget(caster, target)) event.setCancelled(true);
 		else {
-			double damageMultiplier = this.damageMultiplier.get(caster, target, data.power(), data.args());
+			double damageMultiplier = this.damageMultiplier.get(new SpellData(caster, target, data.power(), data.args()));
 			if (damageMultiplier > 0) {
 				if (powerAffectsDamageMultiplier) damageMultiplier *= data.power();
 				event.setDamage(event.getDamage() * damageMultiplier);

@@ -111,7 +111,7 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 
 	public boolean isBeingLevitated(LivingEntity entity) {
 		for (Levitator levitator : levitating.values()) {
-			if (levitator.target.equals(entity)) return true;
+			if (levitator.data.target().equals(entity)) return true;
 		}
 		return false;
 	}
@@ -119,8 +119,8 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 	public void removeLevitate(LivingEntity entity) {
 		List<LivingEntity> toRemove = new ArrayList<>();
 		for (Levitator levitator : levitating.values()) {
-			if (!levitator.target.equals(entity)) continue;
-			toRemove.add(levitator.caster);
+			if (!levitator.data.target().equals(entity)) continue;
+			toRemove.add(levitator.data.caster());
 			levitator.stop();
 		}
 		for (LivingEntity caster : toRemove) {
@@ -142,7 +142,7 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 		if (duration < tickRate) duration = tickRate;
 
 		double distance = caster.getLocation().distance(target.getLocation());
-		Levitator lev = new Levitator(caster, target, duration / tickRate, tickRate, distance, data.power(), data.args());
+		Levitator lev = new Levitator(data, duration / tickRate, tickRate, distance);
 		levitating.put(caster.getUniqueId(), lev);
 
 		playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, caster.getLocation(), target.getLocation(), caster, target, data);
@@ -154,8 +154,8 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 		Player pl = event.getEntity();
 		UUID _caster = null;
 		for(Levitator lev : levitating.values()){
-			if(lev.target instanceof Player && pl.getUniqueId().equals(lev.target.getUniqueId())){
-				_caster = lev.caster.getUniqueId();
+			if(lev.data.target() instanceof Player && pl.getUniqueId().equals(lev.data.target().getUniqueId())){
+				_caster = lev.data.caster().getUniqueId();
 				break;
 			}
 		}
@@ -201,8 +201,7 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 
 	private class Levitator implements Runnable {
 
-		private LivingEntity caster;
-		private Entity target;
+		private SpellData data;
 		private double distance;
 		private int duration;
 		private int counter;
@@ -215,9 +214,8 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 		private final double yOffset;
 		private final int tickRate;
 
-		private Levitator(LivingEntity caster, LivingEntity target, int duration, int tickRate, double distance, float power, String[] args) {
-			this.caster = caster;
-			this.target = target;
+		private Levitator(SpellData data, int duration, int tickRate, double distance) {
+			this.data = data;
 			this.duration = duration;
 			this.distance = distance;
 			this.tickRate = tickRate;
@@ -225,12 +223,12 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 			counter = 0;
 			stopped = false;
 
-			double maxDistance = LevitateSpell.this.maxDistance.get(caster, target, power, args);
+			double maxDistance = LevitateSpell.this.maxDistance.get(data);
 			maxDistanceSq = maxDistance * maxDistance;
 
-			distanceChange = LevitateSpell.this.distanceChange.get(caster, target, power, args);
-			minDistance = LevitateSpell.this.minDistance.get(caster, target, power, args);
-			yOffset = LevitateSpell.this.yOffset.get(caster, target, power, args);
+			distanceChange = LevitateSpell.this.distanceChange.get(data);
+			minDistance = LevitateSpell.this.minDistance.get(data);
+			yOffset = LevitateSpell.this.yOffset.get(data);
 
 			taskId = MagicSpells.scheduleRepeatingTask(this, 0, tickRate);
 		}
@@ -243,12 +241,12 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 
 			if (duration > 0 && counter >= duration) {
 				stop();
-				levitating.remove(caster.getUniqueId());
+				levitating.remove(data.caster().getUniqueId());
 			}
 
-			if (!caster.getWorld().equals(target.getWorld())) return;
-			if (caster.getLocation().distanceSquared(target.getLocation()) > maxDistanceSq) return;
-			if (caster.isDead() || !caster.isValid()) {
+			if (!data.caster().getWorld().equals(data.target().getWorld())) return;
+			if (data.caster().getLocation().distanceSquared(data.target().getLocation()) > maxDistanceSq) return;
+			if (data.caster().isDead() || !data.caster().isValid()) {
 				stop();
 				return;
 			}
@@ -258,10 +256,10 @@ public class LevitateSpell extends TargetedSpell implements TargetedEntitySpell 
 				if (distance < minDistance) distance = minDistance;
 			}
 
-			target.setFallDistance(0);
-			Vector wantedLocation = caster.getEyeLocation().toVector().add(caster.getLocation().getDirection().multiply(distance)).add(new Vector(0, yOffset, 0));
-			Vector v = wantedLocation.subtract(target.getLocation().toVector()).multiply(tickRate / 25F + 0.1);
-			target.setVelocity(v);
+			data.target().setFallDistance(0);
+			Vector wantedLocation = data.caster().getEyeLocation().toVector().add(data.caster().getLocation().getDirection().multiply(distance)).add(new Vector(0, yOffset, 0));
+			Vector v = wantedLocation.subtract(data.target().getLocation().toVector()).multiply(tickRate / 25F + 0.1);
+			data.target().setVelocity(v);
 		}
 
 		private void stop() {

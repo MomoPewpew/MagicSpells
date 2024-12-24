@@ -28,20 +28,20 @@ public class TimeSpell extends InstantSpell implements TargetedLocationSpell {
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			World world = data.caster().getWorld();
-			setTime(data.caster(), world, data.power(), data.args());
+			setTime(data, world);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
 	public boolean castAtLocation(SpellData data) {
-		setTime(data.caster(), data.location().getWorld(), data.power(), data.args());
+		setTime(data, data.location().getWorld());
 		return true;
 	}
 
-	private void setTime(LivingEntity caster, World world, float power, String[] args) {
-		world.setTime(timeToSet.get(caster, null, power, args));
-		for (Player p : world.getPlayers()) sendMessage(strAnnounce, p, args);
+	private void setTime(SpellData data, World world) {
+		world.setTime(timeToSet.get(data));
+		for (Player p : world.getPlayers()) sendMessage(strAnnounce, p, data.args());
 	}
 
 }

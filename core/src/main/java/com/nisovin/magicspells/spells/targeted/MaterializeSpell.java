@@ -187,7 +187,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 			when placing the new block.*/
 			int rowPosition = 0;
 
-			int height = this.height.get(data.caster(), null, data.power(), data.args());
+			int height = this.height.get(data);
 
 			//If height is 0, the code ceases to function. Lets not have that.
 			if (height == 0) height = 1;

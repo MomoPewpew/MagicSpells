@@ -97,7 +97,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 			}
 			if (locTarget == null && entTarget == null) return noTarget(data);
 			if (locTarget != null) {
-				locTarget.setY(locTarget.getY() + yOffset.get(caster, null, power, args));
+				locTarget.setY(locTarget.getY() + yOffset.get(data));
 				locTarget.setDirection(caster.getLocation().getDirection());
 			}
 

@@ -206,7 +206,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		stopOnModifierFail = getConfigBoolean("stop-on-modifier-fail", true);
 		allowCasterInteract = getConfigBoolean("allow-caster-interact", true);
 		powerAffectsVelocity = getConfigBoolean("power-affects-velocity", true);
-		if (stopOnHitEntity) maxEntitiesHit = (caster, target, power, args) -> 1;
+		if (stopOnHitEntity) maxEntitiesHit = data -> 1;
 
 		// Target List
 		validTargetList.enforce(ValidTargetList.TargetingElement.TARGET_SELF, hitSelf);

@@ -110,7 +110,7 @@ public class VariableMod {
 			return MagicSpells.getVariableManager().getValue(modifyingVariableName, variableHolder) * negationFactor;
 		}
 
-		if (functionModifier != null) return functionModifier.get(caster, target, power, args);
+		if (functionModifier != null) return functionModifier.get(new SpellData(caster, target, power, args));
 
 		return constantModifier * negationFactor;
 	}
@@ -126,7 +126,7 @@ public class VariableMod {
 
 	public String getStringValue(Player caster, Player target) {
 		if (stringModifier != null) {
-            return stringModifier.get(caster, target, 1f, null);
+            return stringModifier.get(new SpellData(caster, target, 1f, null));
         }
 
 		return MagicSpells.doReplacements(value, caster, target);
@@ -134,7 +134,7 @@ public class VariableMod {
 
 	public String getStringValue(Player caster, Player target, String[] args) {
 		if (stringModifier != null) {
-            return stringModifier.get(caster, target, 1f, args);
+            return stringModifier.get(new SpellData(caster, target, 1f, args));
         }
 
 		return MagicSpells.doReplacements(value, caster, target, args);

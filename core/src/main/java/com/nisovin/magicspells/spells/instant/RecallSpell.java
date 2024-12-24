@@ -84,7 +84,7 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 				return PostCastAction.ALREADY_HANDLED;
 			}
 
-			double maxRange = this.maxRange.get(caster, null, power, args);
+			double maxRange = this.maxRange.get(data);
 			if (maxRange > 0 && markLocation.distanceSquared(from) > maxRange * maxRange) {
 				sendMessage(strTooFar, caster, args);
 				return PostCastAction.ALREADY_HANDLED;

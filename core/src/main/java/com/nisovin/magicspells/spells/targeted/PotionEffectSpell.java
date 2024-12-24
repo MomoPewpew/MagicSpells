@@ -112,16 +112,16 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 					ConfigData<PotionEffect> effect;
 					if (!spellPowerAffectsStrength)
-						effect = (caster, target, power, args) -> new PotionEffect(type, Math.round(finalDuration * power), finalStrength, ambient, particles, icon);
+						effect = (sdata) -> new PotionEffect(type, Math.round(finalDuration * sdata.power()), finalStrength, ambient, particles, icon);
 					else if (!spellPowerAffectsDuration)
-						effect = (caster, target, power, args) -> new PotionEffect(type, finalDuration, Math.round(finalStrength * power), ambient, particles, icon);
+						effect = (sdata) -> new PotionEffect(type, finalDuration, Math.round(finalStrength * sdata.power()), ambient, particles, icon);
 					else
-						effect = (caster, target, power, args) -> new PotionEffect(type, Math.round(finalDuration * power), Math.round(finalStrength * power), ambient, particles, icon);
+						effect = (sdata) -> new PotionEffect(type, Math.round(finalDuration * sdata.power()), Math.round(finalStrength * sdata.power()), ambient, particles, icon);
 
 					potionEffects.add(effect);
 				} else {
 					PotionEffect effect = new PotionEffect(type, duration, strength, ambient, particles, icon);
-					potionEffects.add((caster, target, power, args) -> effect);
+					potionEffects.add(sdata -> effect);
 				}
 			} else if (potionEffectObj instanceof Map<?, ?> potionEffectMap) {
 				ConfigurationSection section = ConfigReaderUtil.mapToSection(potionEffectMap);
@@ -133,20 +133,20 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 				ConfigData<Boolean> hidden = ConfigDataUtil.getBoolean(section, "hidden", false);
 				ConfigData<Boolean> icon = ConfigDataUtil.getBoolean(section, "icon", true);
 
-				ConfigData<PotionEffect> effect = (caster, target, power, args) -> {
-					int d = duration.get(caster, target, power, args);
-					if (spellPowerAffectsDuration) d = Math.round(d * power);
+				ConfigData<PotionEffect> effect = data -> {
+					int d = duration.get(data);
+					if (spellPowerAffectsDuration) d = Math.round(d * data.power());
 
-					int s = strength.get(caster, target, power, args);
-					if (spellPowerAffectsStrength) s = Math.round(s * power);
+					int s = strength.get(data);
+					if (spellPowerAffectsStrength) s = Math.round(s * data.power());
 
 					return new PotionEffect(
-						type.get(caster, target, power, args),
+						type.get(data),
 						d,
 						s,
-						ambient.get(caster, target, power, args),
-						!hidden.get(caster, target, power, args),
-						icon.get(caster, target, power, args)
+						ambient.get(data),
+						!hidden.get(data),
+						icon.get(data)
 					);
 				};
 

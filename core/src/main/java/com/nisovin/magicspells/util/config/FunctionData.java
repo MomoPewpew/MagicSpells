@@ -23,6 +23,7 @@ import org.apache.commons.numbers.core.Precision;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.RegexUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.variables.Variable;
 import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;
@@ -170,7 +171,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				try {
 					places = Integer.parseInt(placesString);
 				} catch (NumberFormatException e) {
-					return (caster, target, power, args) -> 0d;
+					return (data) -> 0d;
 				}
 			}
 
@@ -194,7 +195,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				try {
 					places = Integer.parseInt(placesString);
 				} catch (NumberFormatException e) {
-					return (caster, target, power, args) -> 0d;
+					return (data) -> 0d;
 				}
 			}
 
@@ -208,9 +209,9 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 			try {
 				index = Integer.parseInt(matcher.group("argIndex"));
 			} catch (NumberFormatException e) {
-				return (caster, target, power, args) -> 0d;
+				return (data) -> 0d;
 			}
-			if (index == 0) return (caster, target, power, args) -> 0d;
+			if (index == 0) return (data) -> 0d;
 
 			return new ArgumentData(index - 1, def);
 		}
@@ -231,20 +232,20 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 			return new PlayerPAPIData(papiPlaceholder, player);
 		}
 
-		return (caster, target, power, args) -> 0d;
+		return (data) -> 0d;
 	}
 
 	@Override
-	public T get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public T get(SpellData data) {
 		for (Map.Entry<String, ConfigData<Double>> entry : variables.entrySet())
-			expression.setVariable(entry.getKey(), entry.getValue().get(caster, target, power, args));
+			expression.setVariable(entry.getKey(), entry.getValue().get(data));
 
-		expression.setVariable("power", power);
+		expression.setVariable("power", data.power());
 
 		try {
 			return converter.apply(expression.evaluate());
 		} catch (Exception e) {
-			return dataDef != null ? dataDef.get(caster, target, power, args) : def;
+			return dataDef != null ? dataDef.get(data) : def;
 		}
 	}
 
@@ -272,7 +273,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(SpellData data) {
+			String[] args = data.args();
 			if (args != null && args.length > index) {
 				try {
 					return Double.parseDouble(args[index]);
@@ -300,8 +302,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!(caster instanceof Player player)) return 0d;
+		public Double get(SpellData data) {
+			if (!(data.caster() instanceof Player player)) return 0d;
 
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null) return 0d;
@@ -336,8 +338,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!(target instanceof Player player)) return 0d;
+		public Double get(SpellData data) {
+			if (!(data.target() instanceof Player player)) return 0d;
 
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null) return 0d;
@@ -374,7 +376,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(SpellData data) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null) return 0d;
 
@@ -406,7 +408,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 	
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(SpellData data) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null) return 0d;
 	
@@ -430,8 +432,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(caster instanceof Player player))
+		public Double get(SpellData data) {
+			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(data.caster() instanceof Player player))
 				return 0d;
 
 			String value = PlaceholderAPI.setPlaceholders(player, papiPlaceholder);
@@ -459,8 +461,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(target instanceof Player player))
+		public Double get(SpellData data) {
+			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(data.target() instanceof Player player))
 				return 0d;
 
 			String value = PlaceholderAPI.setPlaceholders(player, placeholder);
@@ -490,7 +492,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(SpellData data) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return 0d;
 
 			String value = PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(player), placeholder);

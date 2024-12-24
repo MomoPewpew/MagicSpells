@@ -2126,6 +2126,9 @@ public class MagicSpells extends JavaPlugin {
 			volatileCodeHandle = null;
 		}
 
+		// Clean up config
+		config.cleanup();
+
 		config = null;
 		consoleName = null;
 		strCantCast = null;

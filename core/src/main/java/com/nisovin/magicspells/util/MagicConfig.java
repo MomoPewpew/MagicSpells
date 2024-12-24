@@ -266,4 +266,15 @@ public class MagicConfig {
 		return mainConfig.getConfigurationSection("spells").getKeys(false);
 	}
 
+	public void cleanup() {
+        if (mainConfig != null) {
+            // Clear all keys in the mainConfig
+            for (String key : mainConfig.getKeys(false)) {
+                mainConfig.set(key, null);
+            }
+            // Nullify the mainConfig reference
+            mainConfig = null;
+        }
+    }
+
 }

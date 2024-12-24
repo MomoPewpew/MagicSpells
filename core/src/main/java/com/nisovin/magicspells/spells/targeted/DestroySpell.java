@@ -162,14 +162,14 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 	@Override
 	public boolean castAtLocation(SpellData data) {
-		doIt(data.builder().location(data.caster().getLocation()).build(), data.target().getLocation());
+		doIt(data, data.location());
 		playSpellEffects(data);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(SpellData data) {
-		doIt(data.builder().location(data.caster().getLocation()).build(), data.target().getLocation());
+		doIt(data, data.target().getLocation());
 		playSpellEffects(data.caster(), data.location(), data.target(), data.builder().build());
 		return true;
 	}
@@ -178,7 +178,6 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		LivingEntity caster = data.caster();
 		Location source = data.location();
 		float power = data.power();
-		String[] args = data.args();
 
 		int centerX = targetLocation.getBlockX();
 		int centerY = targetLocation.getBlockY();

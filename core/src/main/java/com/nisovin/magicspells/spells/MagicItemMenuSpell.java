@@ -57,12 +57,11 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && data.caster() instanceof Player caster) {
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
 			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
 			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
-			Player target = targetInfo.target();
 
-			openDelay(caster, target, data.power(), data.args());
+			openDelay(data.builder().target(targetInfo.target()).power(data.power()).build());
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
@@ -71,7 +70,7 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 	@Override
 	public boolean castAtEntity(SpellData data) {
 		if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), player)) return false;
-		openDelay(data.caster(), player, data.power(), data.args());
+		openDelay(data.builder().target(player).power(data.power()).build());
 		return true;
 	}
 
@@ -80,7 +79,7 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 		if (args.length < 1) return false;
 		Player player = Bukkit.getPlayer(args[0]);
 		if (player == null) return false;
-		openDelay(null, player, 1, null);
+		openDelay(new SpellData(null, player));
 		return true;
 	}
 
@@ -97,16 +96,17 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 		return item;
 	}
 
-	private void openDelay(LivingEntity caster, Player opener, float power, String[] args) {
-		ItemMenuData data = new ItemMenuData(new SpellData(caster, opener, power, args), "", 0, 0);
-		itemMenuData.put(opener.getUniqueId(), data);
+	private void openDelay(SpellData data) {
+		ItemMenuData idata = new ItemMenuData(data, "", 0, 0);
+		itemMenuData.put(data.caster().getUniqueId(), idata);
 
-		if (delay > 0) MagicSpells.scheduleDelayedTask(() -> open(opener, data), delay);
-		else open(opener, data);
+		if (delay > 0) MagicSpells.scheduleDelayedTask(() -> open(idata), delay);
+		else open(idata);
 	}
 
-	private void open(Player opener, ItemMenuData data) {
+	private void open(ItemMenuData data) {
 		SpellData spellData = data.spellData();
+		Player opener = (Player) spellData.target();
 		String category = data.category();
 		int page = data.page();
 
@@ -221,7 +221,7 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 				newItemMenuData = new ItemMenuData(spellData, itemMeta.getLore().get(0), 0, 0);
 			}
 			itemMenuData.put(player.getUniqueId(), newItemMenuData);
-			open(player, newItemMenuData);
+			open(newItemMenuData);
 		}
 	}
 

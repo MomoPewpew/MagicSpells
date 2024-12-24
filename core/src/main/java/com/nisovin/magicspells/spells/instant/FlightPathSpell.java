@@ -11,7 +11,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -62,8 +61,8 @@ public class FlightPathSpell extends InstantSpell {
 
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
-		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
-			ActiveFlight flight = new ActiveFlight(player, data.power(), data.args());
+		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
+			ActiveFlight flight = new ActiveFlight(data);
 			flightHandler.addFlight(flight, data.power(), data.args());
 		}
 		return PostCastAction.HANDLE_NORMALLY;
@@ -82,9 +81,9 @@ public class FlightPathSpell extends InstantSpell {
 		}
 
 		private void addFlight(ActiveFlight flight, float power, String[] args) {
-			flights.put(flight.player.getUniqueId(), flight);
+			flights.put(flight.data.caster().getUniqueId(), flight);
 			flight.start();
-			if (task < 0) task = MagicSpells.scheduleRepeatingTask(this, 0, interval.get(flight.player, null, power, args));
+			if (task < 0) task = MagicSpells.scheduleRepeatingTask(this, 0, interval.get(flight.data.caster(), null, power, args));
 		}
 
 		private void init() {
@@ -139,7 +138,6 @@ public class FlightPathSpell extends InstantSpell {
 
 	private class ActiveFlight {
 
-		private Player player;
 		private FlightState state;
 		private Entity mountActive;
 		private Entity entityToPush;
@@ -156,30 +154,32 @@ public class FlightPathSpell extends InstantSpell {
 		private final SpellData data;
 		private final int cruisingAltitude;
 
-		private ActiveFlight(Player caster, float power, String[] args) {
-			player = caster;
+		private ActiveFlight(SpellData data) {
+			this.data = data;
 			state = FlightState.TAKE_OFF;
-			wasFlying = caster.isFlying();
-			wasFlyingAllowed = caster.getAllowFlight();
-			lastLocation = caster.getLocation();
+			wasFlying = data.caster() instanceof Player && ((Player) data.caster()).isFlying();
+			wasFlyingAllowed = data.caster() instanceof Player && ((Player) data.caster()).getAllowFlight();
+			lastLocation = data.caster().getLocation();
+			
+			speed = FlightPathSpell.this.speed.get(data);
+			targetX = FlightPathSpell.this.targetX.get(data);
+			targetZ = FlightPathSpell.this.targetZ.get(data);
 
-			data = new SpellData(caster, power, args);
-
-			speed = FlightPathSpell.this.speed.get(caster, null, power, args);
-			targetX = FlightPathSpell.this.targetX.get(caster, null, power, args);
-			targetZ = FlightPathSpell.this.targetZ.get(caster, null, power, args);
-
-			cruisingAltitude = FlightPathSpell.this.cruisingAltitude.get(caster, null, power, args);
+			cruisingAltitude = FlightPathSpell.this.cruisingAltitude.get(data);
 		}
 
 		private void start() {
-			player.setAllowFlight(true);
-			playSpellEffects(EffectPosition.CASTER, player, data);
-			entityToPush = player;
+			if (data.caster() instanceof Player player) {
+				player.setAllowFlight(true);
+				playSpellEffects(EffectPosition.CASTER, player, data);
+				entityToPush = player;
+			}
 		}
 
 		private void fly() {
 			if (state == FlightState.DONE) return;
+			if (data.caster() == null || !(data.caster() instanceof Player player)) return;
+
 			// Check for stuck
 			if (player.getLocation().distanceSquared(lastLocation) < 0.4) {
 				sameLocCount++;
@@ -230,6 +230,7 @@ public class FlightPathSpell extends InstantSpell {
 		}
 
 		private void cancel() {
+			if (data.caster() == null || !(data.caster() instanceof Player player)) return;
 			if (state != FlightState.DONE) {
 				state = FlightState.DONE;
 				player.setFlying(wasFlying);

@@ -7,6 +7,7 @@ import org.bukkit.inventory.EntityEquipment;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 
 // TODO this should be refactored along with the other 'has item' related conditions to reduce redundant code
@@ -21,17 +22,19 @@ public class HoldingPreciseCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkHolding(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return checkHolding(data.caster());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkHolding(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return checkHolding(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 	

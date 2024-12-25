@@ -11,6 +11,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.MobUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class EntityTypeCondition extends Condition {
@@ -38,19 +39,20 @@ public class EntityTypeCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return entityType(caster);
+	public boolean checkCaster(SpellData data) {
+		return entityType(data.caster());
 	}
-	
+
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return entityType(target);
+	public boolean checkTarget(SpellData data) {
+		return entityType(data.target());
 	}
-	
+
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
+
 
 	private boolean entityType(LivingEntity target) {
 		if (player && target instanceof Player) return true;

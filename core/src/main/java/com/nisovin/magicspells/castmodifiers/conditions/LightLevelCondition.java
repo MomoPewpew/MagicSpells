@@ -1,10 +1,10 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class LightLevelCondition extends OperatorCondition {
 
@@ -24,18 +24,21 @@ public class LightLevelCondition extends OperatorCondition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return lightLevel(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return lightLevel(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return lightLevel(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return lightLevel(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return lightLevel(location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return lightLevel(data.location());
 	}
 
 	private boolean lightLevel(Location location) {

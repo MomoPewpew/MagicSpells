@@ -40,18 +40,18 @@ public class ExpressionCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return compare(caster);
+	public boolean checkCaster(SpellData data) {
+		return compare(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return compare(target);
+	public boolean checkTarget(SpellData data) {
+		return compare(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return compare(caster);
+	public boolean checkLocation(SpellData data) {
+		return false;
 	}
 
 	private boolean compare(LivingEntity target) {

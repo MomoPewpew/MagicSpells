@@ -5,10 +5,10 @@ import java.util.HashSet;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.BlockData;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class OnBlockCondition extends Condition {
 
@@ -48,18 +48,21 @@ public class OnBlockCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return onBlock(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return onBlock(data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return onBlock(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return onBlock(data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return onBlock(location.clone());
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return onBlock(data.location().clone());
 	}
 
 	private boolean onBlock(Location location) {

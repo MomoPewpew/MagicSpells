@@ -1,9 +1,7 @@
 package com.nisovin.magicspells.castmodifiers.conditions.util;
 
-import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
-
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class OperatorCondition extends Condition {
 
@@ -26,17 +24,17 @@ public class OperatorCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity livingEntity) {
+	public boolean checkCaster(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity livingEntity, LivingEntity target) {
+	public boolean checkTarget(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity livingEntity, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

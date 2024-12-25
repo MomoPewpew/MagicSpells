@@ -2,13 +2,13 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 
 import java.util.regex.Pattern;
 
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class NamePatternCondition extends Condition {
 
@@ -24,17 +24,19 @@ public class NamePatternCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return namePattern(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return namePattern(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return namePattern(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return namePattern(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

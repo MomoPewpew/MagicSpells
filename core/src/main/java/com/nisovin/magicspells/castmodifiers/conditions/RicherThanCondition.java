@@ -1,11 +1,11 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
-
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
+	
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 /**
  * Condition check to see if a player has more money than the target
@@ -20,17 +20,17 @@ public class RicherThanCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return richer(caster, target);
+	public boolean checkTarget(SpellData data) {
+		return richer(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

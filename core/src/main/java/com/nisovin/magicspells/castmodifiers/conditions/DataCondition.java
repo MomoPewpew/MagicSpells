@@ -11,6 +11,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.data.DataLivingEntity;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class DataCondition extends OperatorCondition {
 
@@ -47,18 +48,18 @@ public class DataCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return data(caster, caster);
+	public boolean checkCaster(SpellData data) {
+		return data(data.caster(), data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return data(caster, target);
+	public boolean checkTarget(SpellData data) {
+		return data(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return data(caster, caster);
+	public boolean checkLocation(SpellData data) {
+		return data(data.caster(), data.caster());
 	}
 
 	private boolean data(LivingEntity caster, LivingEntity target) {

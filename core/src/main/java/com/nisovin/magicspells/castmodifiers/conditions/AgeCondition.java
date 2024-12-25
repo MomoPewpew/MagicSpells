@@ -1,10 +1,10 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class AgeCondition extends Condition {
 	
@@ -28,17 +28,17 @@ public class AgeCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return age(caster);
+	public boolean checkCaster(SpellData data) {
+		return age(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return age(target);
+	public boolean checkTarget(SpellData data) {
+		return age(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

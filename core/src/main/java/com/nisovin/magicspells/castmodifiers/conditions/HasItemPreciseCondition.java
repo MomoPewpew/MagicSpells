@@ -1,8 +1,6 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.block.BlockState;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.InventoryHolder;
@@ -12,6 +10,7 @@ import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.nisovin.magicspells.util.SpellData;
 
 // Only accepts magic items and uses a much stricter match
 public class HasItemPreciseCondition extends Condition {
@@ -25,20 +24,22 @@ public class HasItemPreciseCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return check(caster, caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		if (data.caster() instanceof InventoryHolder holder) return checkInventory(holder.getInventory());
+		else return checkEquipment(data.caster().getEquipment());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		if (target == null) return false;
-		if (target instanceof InventoryHolder holder) return checkInventory(holder.getInventory());
-		else return checkEquipment(target.getEquipment());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		if (data.target() instanceof InventoryHolder holder) return checkInventory(holder.getInventory());
+		else return checkEquipment(data.target().getEquipment());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		BlockState targetState = location.getBlock().getState();
+	public boolean checkLocation(SpellData data) {
+		BlockState targetState = data.location().getBlock().getState();
 		return targetState instanceof InventoryHolder holder && checkInventory(holder.getInventory());
 	}
 

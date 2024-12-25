@@ -2,7 +2,6 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 
 import java.util.Collection;
 
-import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -10,6 +9,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.spells.targeted.LoopSpell;
 import com.nisovin.magicspells.spells.targeted.LoopSpell.Loop;
+import com.nisovin.magicspells.util.SpellData;
 
 public class OwnedLoopActiveCondition extends Condition {
 
@@ -27,17 +27,19 @@ public class OwnedLoopActiveCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkLoop(caster, caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return checkLoop(data.caster(), data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkLoop(caster, target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return checkLoop(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

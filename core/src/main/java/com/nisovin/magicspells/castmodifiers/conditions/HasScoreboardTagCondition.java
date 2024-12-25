@@ -5,6 +5,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class HasScoreboardTagCondition extends Condition {
 
@@ -22,17 +23,19 @@ public class HasScoreboardTagCondition extends Condition {
     }
 
     @Override
-    public boolean check(LivingEntity caster) {
-        return checkTags(caster, caster);
+    public boolean checkCaster(SpellData data) {
+        if (data.caster() == null) return false;
+        return checkTags(data.caster(), data.caster());
     }
 
     @Override
-    public boolean check(LivingEntity caster, LivingEntity target) {
-        return checkTags(caster, target);
+    public boolean checkTarget(SpellData data) {
+        if (data.target() == null) return false;
+        return checkTags(data.caster(), data.target());
     }
 
     @Override
-    public boolean check(LivingEntity caster, Location location) {
+    public boolean checkLocation(SpellData data) {
         return false;
     }
 

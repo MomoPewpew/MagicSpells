@@ -1,8 +1,8 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
@@ -32,17 +32,19 @@ public class HealthCondition extends OperatorCondition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return health(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return health(data.caster());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return health(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return health(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

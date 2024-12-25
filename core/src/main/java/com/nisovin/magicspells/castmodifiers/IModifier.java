@@ -23,8 +23,8 @@ public interface IModifier {
 	ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data);
 	ModifierResult apply(LivingEntity caster, Location target, SpellData data);
 
-	boolean check(LivingEntity livingEntity);
-	boolean check(LivingEntity livingEntity, LivingEntity entity);
-	boolean check(LivingEntity livingEntity, Location location);
+	boolean checkCaster(SpellData data);
+	boolean checkTarget(SpellData data);
+	boolean checkLocation(SpellData data);
 
 }

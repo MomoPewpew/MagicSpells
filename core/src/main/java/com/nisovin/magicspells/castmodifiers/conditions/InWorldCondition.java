@@ -1,9 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class InWorldCondition extends Condition {
 
@@ -16,18 +16,21 @@ public class InWorldCondition extends Condition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkWorld(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return checkWorld(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkWorld(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return checkWorld(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return checkWorld(location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return checkWorld(data.location());
 	}
 
 	private boolean checkWorld(Location location) {

@@ -1,9 +1,10 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class BlockingCondition extends Condition {
@@ -14,17 +15,17 @@ public class BlockingCondition extends Condition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return blocking(caster);
+	public boolean checkCaster(SpellData data) {
+		return blocking(data.caster());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return blocking(target);
+	public boolean checkTarget(SpellData data) {
+		return blocking(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

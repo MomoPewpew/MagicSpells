@@ -1,16 +1,15 @@
 package com.nisovin.magicspells.castmodifiers;
 
-import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
+import com.nisovin.magicspells.util.SpellData;
 
 public abstract class Condition {
 
 	public abstract boolean initialize(String var);
 
-	public abstract boolean check(LivingEntity livingEntity);
+	public abstract boolean checkCaster(SpellData data);
 
-	public abstract boolean check(LivingEntity livingEntity, LivingEntity target);
+	public abstract boolean checkTarget(SpellData data);
 
-	public abstract boolean check(LivingEntity livingEntity, Location location);
+	public abstract boolean checkLocation(SpellData data);
 
 }

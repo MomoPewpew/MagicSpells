@@ -1,9 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
 
 public class PitchCondition extends OperatorCondition {
@@ -24,18 +24,21 @@ public class PitchCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return pitch(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return pitch(data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return pitch(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return pitch(data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return pitch(location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return pitch(data.location());
 	}
 
 	private boolean pitch(Location location) {

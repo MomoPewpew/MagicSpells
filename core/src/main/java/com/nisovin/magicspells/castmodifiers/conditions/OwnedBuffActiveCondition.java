@@ -7,6 +7,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class OwnedBuffActiveCondition extends Condition {
 
@@ -21,17 +22,19 @@ public class OwnedBuffActiveCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return isOwned(caster, caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return isOwned(data.caster(), data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return isOwned(caster, target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return isOwned(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

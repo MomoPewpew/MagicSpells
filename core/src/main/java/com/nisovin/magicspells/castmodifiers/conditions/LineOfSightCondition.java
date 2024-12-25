@@ -1,9 +1,8 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class LineOfSightCondition extends Condition {
 
@@ -13,18 +12,20 @@ public class LineOfSightCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return caster.hasLineOfSight(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null || data.caster() == null) return false;
+		return data.caster().hasLineOfSight(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return caster.hasLineOfSight(location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null || data.caster() == null) return false;
+		return data.caster().hasLineOfSight(data.location());
 	}
 
 }

@@ -1,10 +1,10 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
 
@@ -31,17 +31,17 @@ public class PotionEffectCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkPotionEffects(caster);
+	public boolean checkCaster(SpellData data) {
+		return checkPotionEffects(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkPotionEffects(target);
+	public boolean checkTarget(SpellData data) {
+		return checkPotionEffects(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

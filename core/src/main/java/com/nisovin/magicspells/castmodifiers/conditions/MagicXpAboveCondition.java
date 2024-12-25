@@ -7,6 +7,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.handlers.MagicXpHandler;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class MagicXpAboveCondition extends Condition {
@@ -38,17 +39,19 @@ public class MagicXpAboveCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return xpAbove(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return xpAbove(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return xpAbove(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return xpAbove(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

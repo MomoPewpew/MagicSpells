@@ -1,6 +1,5 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
@@ -8,6 +7,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.mana.ManaHandler;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class MaxManaCondition extends OperatorCondition {
 
@@ -32,17 +32,19 @@ public class MaxManaCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return maxMana(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return maxMana(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return maxMana(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return maxMana(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

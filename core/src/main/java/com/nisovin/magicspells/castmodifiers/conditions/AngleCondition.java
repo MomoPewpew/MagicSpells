@@ -2,12 +2,13 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
-import org.bukkit.entity.LivingEntity;
 
 import org.apache.commons.math4.core.jdkmath.AccurateMath;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
+
 
 public class AngleCondition extends OperatorCondition {
 
@@ -27,18 +28,18 @@ public class AngleCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return angle(caster.getLocation(), target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return angle(data.caster().getLocation(), data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return angle(caster.getLocation(), location);
+	public boolean checkLocation(SpellData data) {
+		return angle(data.caster().getLocation(), data.location());
 	}
 
 	private boolean angle(Location from, Location to) {

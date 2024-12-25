@@ -1,12 +1,12 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.MobUtil;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class RidingCondition extends Condition {
 
@@ -20,17 +20,17 @@ public class RidingCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return isRiding(caster);
+	public boolean checkCaster(SpellData data) {
+		return isRiding(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return isRiding(target);
+	public boolean checkTarget(SpellData data) {
+		return isRiding(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

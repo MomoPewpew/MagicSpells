@@ -4,8 +4,8 @@ import java.util.EnumSet;
 
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
-import org.bukkit.entity.LivingEntity;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.Condition;
@@ -30,18 +30,18 @@ public class BiomeCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return biome(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return biome(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return biome(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return biome(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return biome(location);
+	public boolean checkLocation(SpellData data) {
+		return biome(data.location());
 	}
 
 	private boolean biome(Location location) {

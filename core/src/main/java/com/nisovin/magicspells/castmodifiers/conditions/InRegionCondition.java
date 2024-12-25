@@ -3,7 +3,6 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 import org.bukkit.World;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
@@ -12,6 +11,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.castmodifiers.conditions.util.DependsOn;
+import com.nisovin.magicspells.util.SpellData;
 
 @DependsOn(plugin = "WorldGuard")
 public class InRegionCondition extends Condition {
@@ -32,18 +32,21 @@ public class InRegionCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkRegion(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return checkRegion(data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkRegion(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return checkRegion(data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return checkRegion(location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return checkRegion(data.location());
 	}
 
 	private boolean checkRegion(Location location) {

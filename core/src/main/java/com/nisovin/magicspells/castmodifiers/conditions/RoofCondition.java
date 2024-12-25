@@ -3,9 +3,9 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.RegexUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
@@ -22,18 +22,18 @@ public class RoofCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return hasRoof(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return hasRoof(data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return hasRoof(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return hasRoof(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return hasRoof(location);
+	public boolean checkLocation(SpellData data) {
+		return hasRoof(data.location());
 	}
 
 	private boolean hasRoof(Location location) {

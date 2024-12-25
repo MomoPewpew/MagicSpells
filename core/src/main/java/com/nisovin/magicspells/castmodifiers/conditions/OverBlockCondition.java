@@ -11,6 +11,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.BlockData;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class OverBlockCondition extends Condition {
@@ -48,18 +49,21 @@ public class OverBlockCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return overBlock(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return overBlock(data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return overBlock(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return overBlock(data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return overBlock(location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return overBlock(data.location());
 	}
 
 	private boolean overBlock(Location location) {

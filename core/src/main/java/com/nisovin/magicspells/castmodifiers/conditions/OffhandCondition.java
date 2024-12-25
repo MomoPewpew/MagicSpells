@@ -2,7 +2,6 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 
 import java.util.Objects;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
@@ -14,6 +13,7 @@ import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class OffhandCondition extends Condition {
 
@@ -65,17 +65,19 @@ public class OffhandCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return offHand(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return offHand(data.caster());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return offHand(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return offHand(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 	

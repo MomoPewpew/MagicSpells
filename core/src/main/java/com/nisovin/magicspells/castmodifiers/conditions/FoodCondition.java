@@ -1,11 +1,11 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class FoodCondition extends OperatorCondition {
 
@@ -25,17 +25,17 @@ public class FoodCondition extends OperatorCondition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return food(caster);
+	public boolean checkCaster(SpellData data) {
+		return food(data.caster());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return food(target);
+	public boolean checkTarget(SpellData data) {
+		return food(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

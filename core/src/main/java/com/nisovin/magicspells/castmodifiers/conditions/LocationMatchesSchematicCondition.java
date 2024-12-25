@@ -11,6 +11,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
@@ -47,18 +48,21 @@ public class LocationMatchesSchematicCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return matchesSchematic(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return matchesSchematic(data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return matchesSchematic(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return matchesSchematic(data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return matchesSchematic(location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return matchesSchematic(data.location());
 	}
 
 	private boolean matchesSchematic(Location location) {

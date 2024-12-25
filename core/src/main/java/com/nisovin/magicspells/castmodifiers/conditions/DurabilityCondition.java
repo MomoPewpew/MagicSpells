@@ -12,6 +12,7 @@ import org.bukkit.inventory.EntityEquipment;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class DurabilityCondition extends Condition {
 
@@ -59,17 +60,17 @@ public class DurabilityCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkDurability(caster);
+	public boolean checkCaster(SpellData data) {
+		return checkDurability(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkDurability(target);
+	public boolean checkTarget(SpellData data) {
+		return checkDurability(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

@@ -1,6 +1,5 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
@@ -8,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.nisovin.magicspells.util.SpellData;
 
 public class HoveringWithCondition extends Condition {
 
@@ -22,17 +22,19 @@ public class HoveringWithCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkHovering(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return checkHovering(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkHovering(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return checkHovering(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

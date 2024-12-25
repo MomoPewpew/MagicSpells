@@ -9,6 +9,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class OnFireCondition extends Condition {
 
@@ -20,18 +21,21 @@ public class OnFireCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return onFire(caster, null);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return onFire(data.caster(), null);
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return onFire(target, null);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return onFire(data.target(), null);
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return onFire(caster, location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return onFire(data.caster(), data.location());
 	}
 
 	private boolean onFire(LivingEntity target, Location location) {

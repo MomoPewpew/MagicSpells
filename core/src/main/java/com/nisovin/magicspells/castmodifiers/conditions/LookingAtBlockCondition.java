@@ -1,12 +1,12 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.BlockData;
 
 import com.nisovin.magicspells.util.BlockUtils;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class LookingAtBlockCondition extends Condition {
@@ -38,17 +38,19 @@ public class LookingAtBlockCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return lookingAt(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return lookingAt(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return lookingAt(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return lookingAt(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

@@ -1,9 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class AbsorptionCondition extends OperatorCondition {
 
@@ -22,17 +22,17 @@ public class AbsorptionCondition extends OperatorCondition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return absorption(caster);
+	public boolean checkCaster(SpellData data) {
+		return absorption(data.caster());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return absorption(target);
+	public boolean checkTarget(SpellData data) {
+		return absorption(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

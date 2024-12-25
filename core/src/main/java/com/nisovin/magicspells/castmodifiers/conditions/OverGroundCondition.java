@@ -4,10 +4,10 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class OverGroundCondition extends Condition {
 
@@ -26,18 +26,21 @@ public class OverGroundCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return overGround(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return overGround(data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return overGround(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return overGround(data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return overGround(location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return overGround(data.location());
 	}
 
 	private boolean overGround(Location location) {

@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
+import com.nisovin.magicspells.util.SpellData;
+
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
@@ -13,17 +14,19 @@ public class IsNPCCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return isNPC(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return isNPC(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return isNPC(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return isNPC(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

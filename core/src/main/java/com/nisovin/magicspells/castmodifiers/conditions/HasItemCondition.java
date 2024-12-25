@@ -17,6 +17,7 @@ import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.InventoryUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
@@ -51,20 +52,22 @@ public class HasItemCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return check(caster, caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		if (data.caster() instanceof InventoryHolder holder) return checkInventory(holder.getInventory());
+		else return checkEquipment(data.caster().getEquipment());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		if (target == null) return false;
-		if (target instanceof InventoryHolder holder) return checkInventory(holder.getInventory());
-		else return checkEquipment(target.getEquipment());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		if (data.target() instanceof InventoryHolder holder) return checkInventory(holder.getInventory());
+		else return checkEquipment(data.target().getEquipment());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		Block target = location.getBlock();
+	public boolean checkLocation(SpellData data) {
+		Block target = data.location().getBlock();
 		BlockState targetState = target.getState();
 		return targetState instanceof InventoryHolder holder && checkInventory(holder.getInventory());
 	}

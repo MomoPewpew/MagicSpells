@@ -1,10 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class PlayerCountCondition extends OperatorCondition {
 
@@ -24,17 +23,17 @@ public class PlayerCountCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return playerCount();
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
+	public boolean checkTarget(SpellData data) {
 		return playerCount();
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return playerCount();
 	}
 

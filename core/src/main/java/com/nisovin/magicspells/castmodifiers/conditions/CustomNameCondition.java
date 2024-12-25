@@ -3,6 +3,7 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
@@ -23,17 +24,17 @@ public class CustomNameCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return false;
+	public boolean checkCaster(SpellData data) {
+		return checkName(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkName(caster, target);
+	public boolean checkTarget(SpellData data) {
+		return checkName(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

@@ -1,12 +1,12 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.spells.targeted.LoopSpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class LoopActiveCondition extends Condition {
 
@@ -24,17 +24,19 @@ public class LoopActiveCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return loopActive(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return loopActive(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return loopActive(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return loopActive(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

@@ -48,18 +48,18 @@ public class ExpressionStringContainsCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return compare(caster, null);
+	public boolean checkCaster(SpellData data) {
+		return compare(data.caster(), null);
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return compare(caster, target);
+	public boolean checkTarget(SpellData data) {
+		return compare(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return compare(caster, null);
+	public boolean checkLocation(SpellData data) {
+		return false;
 	}
 
 	private boolean compare(LivingEntity caster, LivingEntity target) {

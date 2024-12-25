@@ -1,9 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class NightCondition extends Condition {
 
@@ -13,18 +13,21 @@ public class NightCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return night(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return night(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return night(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return night(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return night(location);
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
+		return night(data.location());
 	}
 
 	private boolean night(Location location) {

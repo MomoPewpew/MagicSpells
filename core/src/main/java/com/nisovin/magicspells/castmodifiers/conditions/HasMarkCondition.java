@@ -7,6 +7,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.spells.instant.MarkSpell;
+import com.nisovin.magicspells.util.SpellData;
 
 public class HasMarkCondition extends Condition {
 
@@ -23,17 +24,19 @@ public class HasMarkCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return hasMark(caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		return hasMark(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return hasMark(target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return hasMark(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

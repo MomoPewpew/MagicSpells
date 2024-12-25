@@ -6,6 +6,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class DisplayNameCondition extends Condition {
 
@@ -19,17 +20,17 @@ public class DisplayNameCondition extends Condition {
     }
 
     @Override
-    public boolean check(LivingEntity caster) {
-        return checkName(caster);
+    public boolean checkCaster(SpellData data) {
+        return checkName(data.caster());
     }
 
     @Override
-    public boolean check(LivingEntity caster, LivingEntity target) {
-        return checkName(target);
+    public boolean checkTarget(SpellData data) {
+        return checkName(data.target());
     }
 
     @Override
-    public boolean check(LivingEntity caster, Location location) {
+    public boolean checkLocation(SpellData data) {
         return false;
     }
 

@@ -1,10 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
-
+import com.nisovin.magicspells.util.SpellData;
 public class FallingCondition extends Condition {
 
 	@Override
@@ -13,17 +12,17 @@ public class FallingCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return isFalling(caster);
+	public boolean checkCaster(SpellData data) {
+		return isFalling(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return isFalling(target);
+	public boolean checkTarget(SpellData data) {
+		return isFalling(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

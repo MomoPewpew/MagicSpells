@@ -9,6 +9,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.EntityEquipment;
 
 import com.nisovin.magicspells.util.InventoryUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
@@ -38,20 +39,22 @@ public class HasItemAmountCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return check(caster, caster);
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
+		if (data.caster() instanceof InventoryHolder holder) return checkInventory(holder.getInventory());
+		else return checkEquipment(data.caster().getEquipment());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		if (target == null) return false;
-		if (target instanceof InventoryHolder holder) return checkInventory(holder.getInventory());
-		else return checkEquipment(target.getEquipment());
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		if (data.target() instanceof InventoryHolder holder) return checkInventory(holder.getInventory());
+		else return checkEquipment(data.target().getEquipment());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		BlockState targetState = location.getBlock().getState();
+	public boolean checkLocation(SpellData data) {
+		BlockState targetState = data.location().getBlock().getState();
 		return targetState instanceof InventoryHolder holder && checkInventory(holder.getInventory());
 	}
 

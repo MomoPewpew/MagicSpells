@@ -1,9 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class ReceivingRedstoneCondition extends OperatorCondition {
 	
@@ -22,18 +22,18 @@ public class ReceivingRedstoneCondition extends OperatorCondition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return signal(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return signal(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return signal(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return signal(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return signal(location);
+	public boolean checkLocation(SpellData data) {
+		return signal(data.location());
 	}
 
 	private boolean signal(Location location) {

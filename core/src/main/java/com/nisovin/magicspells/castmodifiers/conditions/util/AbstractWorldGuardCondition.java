@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
-
+import com.nisovin.magicspells.util.SpellData;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldedit.math.BlockVector3;
@@ -20,16 +20,20 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 public abstract class AbstractWorldGuardCondition extends Condition {
 
 	@Override
-	public boolean check(LivingEntity livingEntity) {
-		return check(livingEntity, livingEntity.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return check(data.caster(), data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity livingEntity, LivingEntity target) {
-		return check(livingEntity, target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return check(data.target(), data.target().getLocation());
 	}
 
 	@Override
+	public boolean checkLocation(SpellData data) {
+		return check(data.caster(), data.location());
+	}
+
 	public boolean check(LivingEntity livingEntity, Location location) {
 		if (!(livingEntity instanceof Player player)) return false;
 		ProtectedRegion region = getTopPriorityRegion(location);

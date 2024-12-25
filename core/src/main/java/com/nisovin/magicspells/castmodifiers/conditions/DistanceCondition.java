@@ -1,8 +1,7 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
-
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
 
@@ -25,18 +24,18 @@ public class DistanceCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return distance(caster.getLocation(), target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return distance(data.caster().getLocation(), data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return distance(caster.getLocation(), location);
+	public boolean checkLocation(SpellData data) {
+		return distance(data.caster().getLocation(), data.location());
 	}
 
 	private boolean distance(Location from, Location to) {

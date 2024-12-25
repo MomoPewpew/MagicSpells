@@ -8,6 +8,7 @@ import me.ryanhamshire.GriefPrevention.GriefPrevention;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.castmodifiers.conditions.util.DependsOn;
+import com.nisovin.magicspells.util.SpellData;
 
 @DependsOn(plugin = "GriefPrevention")
 public class GriefPreventionIsOwnerCondition extends Condition {
@@ -18,18 +19,18 @@ public class GriefPreventionIsOwnerCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkClaim(caster, caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return checkClaim(data.caster(), data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkClaim(target, target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return checkClaim(data.target(), data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return checkClaim(caster, location);
+	public boolean checkLocation(SpellData data) {
+		return false;
 	}
 
 	private boolean checkClaim(LivingEntity target, Location location) {

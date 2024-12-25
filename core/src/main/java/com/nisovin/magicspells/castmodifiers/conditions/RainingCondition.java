@@ -1,8 +1,8 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class RainingCondition extends Condition {
@@ -13,18 +13,18 @@ public class RainingCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return isRaining(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return isRaining(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return isRaining(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return isRaining(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return isRaining(location);
+	public boolean checkLocation(SpellData data) {
+		return isRaining(data.location());
 	}
 
 	private boolean isRaining(Location location) {

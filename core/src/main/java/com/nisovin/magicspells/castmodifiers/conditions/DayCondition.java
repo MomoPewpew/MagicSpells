@@ -1,8 +1,7 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
-
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class DayCondition extends Condition {
@@ -13,18 +12,18 @@ public class DayCondition extends Condition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkTime(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return checkTime(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkTime(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return checkTime(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return checkTime(location);
+	public boolean checkLocation(SpellData data) {
+		return checkTime(data.location());
 	}
 
 	private boolean checkTime(Location location) {

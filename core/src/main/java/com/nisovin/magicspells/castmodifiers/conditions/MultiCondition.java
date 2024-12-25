@@ -98,16 +98,17 @@ public class MultiCondition extends Condition implements IModifier {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
+		if (data.caster() == null) return false;
 		int pass = 0;
 		int fail = 0;
 		for (Modifier m : modifiers) {
-			boolean check = m.check(caster);
+			boolean check = m.check(data.caster());
 			if (check) pass++;
 			else {
 				fail++;
 				String msg = m.getStrModifierFailed();
-				if (msg != null) MagicSpells.sendMessage(msg, caster, null);
+				if (msg != null) MagicSpells.sendMessage(msg, data.caster(), null);
 			}
 			if (!passCondition.shouldContinue(pass, fail)) return passCondition.hasPassed(pass, fail);
 		}
@@ -115,16 +116,17 @@ public class MultiCondition extends Condition implements IModifier {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
 		int pass = 0;
 		int fail = 0;
 		for (Modifier m : modifiers) {
-			boolean check = m.check(caster, target);
+			boolean check = m.check(data.caster(), data.target());
 			if (check) pass++;
 			else {
 				fail++;
 				String msg = m.getStrModifierFailed();
-				if (msg != null) MagicSpells.sendMessage(msg, caster, null);
+				if (msg != null) MagicSpells.sendMessage(msg, data.caster(), null);
 			}
 			if (!passCondition.shouldContinue(pass, fail)) return passCondition.hasPassed(pass, fail);
 		}
@@ -132,16 +134,17 @@ public class MultiCondition extends Condition implements IModifier {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
+		if (data.location() == null) return false;
 		int pass = 0;
 		int fail = 0;
 		for (Modifier m : modifiers) {
-			boolean check = m.check(caster, location);
+			boolean check = m.check(data.caster(), data.location());
 			if (check) pass++;
 			else {
 				fail++;
 				String msg = m.getStrModifierFailed();
-				if (msg != null) MagicSpells.sendMessage(msg, caster, null);
+				if (msg != null) MagicSpells.sendMessage(msg, data.caster(), null);
 			}
 			if (!passCondition.shouldContinue(pass, fail)) return passCondition.hasPassed(pass, fail);
 		}

@@ -3,7 +3,6 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -21,22 +20,22 @@ public class ChanceCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return chance(caster, null);
+	public boolean checkCaster(SpellData data) {
+		return chance(data);
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return chance(caster, target);
+	public boolean checkTarget(SpellData data) {
+		return chance(data);
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return chance(caster, null);
+	public boolean checkLocation(SpellData data) {
+		return chance(data);
 	}
 
-	private boolean chance(LivingEntity caster, LivingEntity target) {
-		double c = chance.get(new SpellData(caster, target)) / 100;
+	private boolean chance(SpellData data) {
+		double c = chance.get(data) / 100;
 		return c >= 0 && (c == 1 || ThreadLocalRandom.current().nextDouble() < c);
 	}
 

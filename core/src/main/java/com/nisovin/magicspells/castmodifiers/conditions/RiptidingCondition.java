@@ -1,10 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
-
+import com.nisovin.magicspells.util.SpellData;
 public class RiptidingCondition extends Condition {
 
 	@Override
@@ -13,17 +12,17 @@ public class RiptidingCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return isRiptiding(caster);
+	public boolean checkCaster(SpellData data) {
+		return isRiptiding(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return isRiptiding(target);
+	public boolean checkTarget(SpellData data) {
+		return isRiptiding(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

@@ -1,13 +1,13 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.scoreboard.ScoreboardManager;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class OnSameTeamCondition extends Condition {
 	
@@ -17,17 +17,18 @@ public class OnSameTeamCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkTeam(caster, target);
+	public boolean checkTarget(SpellData data) {
+		if (data.target() == null) return false;
+		return checkTeam(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

@@ -24,6 +24,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType.SlotType;
+import org.bukkit.event.inventory.ClickType;
 
 import net.kyori.adventure.text.Component;
 
@@ -333,7 +334,7 @@ public class ArmorSpell extends BuffSpell {
 
 		@EventHandler(ignoreCancelled=true)
 		public void onInventoryClick(InventoryClickEvent event) {
-			if (event.getSlotType() != SlotType.ARMOR && event.getSlotType() != SlotType.QUICKBAR) return;
+			if (event.getSlotType() != SlotType.ARMOR && event.getSlotType() != SlotType.QUICKBAR && event.getClick() != ClickType.SWAP_OFFHAND) return;
 			HumanEntity entity = event.getWhoClicked();
 			if (!(entity instanceof Player p)) return;
 			if (!isActive(p)) return;
@@ -346,7 +347,8 @@ public class ArmorSpell extends BuffSpell {
 					(event.getSlot() == 38 && armorSet.chestplate() != null) ||
 					(event.getSlot() == 37 && armorSet.leggings() != null) ||
 					(event.getSlot() == 36 && armorSet.boots() != null) ||
-					(event.getSlot() == 40 && armorSet.offhand() != null)
+					(event.getSlot() == 40 && armorSet.offhand() != null) ||
+					(event.getClick() == ClickType.SWAP_OFFHAND && armorSet.offhand() != null)
 				)
 			) return;
 

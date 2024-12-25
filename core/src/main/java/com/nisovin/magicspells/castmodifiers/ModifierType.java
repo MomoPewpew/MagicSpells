@@ -564,7 +564,7 @@ public enum ModifierType {
 		@Override
 		public boolean apply(SpellCastEvent event, boolean check, CustomData customData) {
 			CastData data = (CastData) customData;
-			if (check && data.isValid()) data.spell.subcast(new SpellData(event.getCaster(), event.getPower(), event.getSpellArgs()));
+			if (check && data.isValid()) data.spell.subcast(event.getSpellData());
 			return true;
 		}
 
@@ -578,14 +578,14 @@ public enum ModifierType {
 		@Override
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
 			CastData data = (CastData) customData;
-			if (check && data.isValid()) data.spell.subcast(new SpellData(event.getCaster(), event.getCaster(), event.getPower(), event.getSpellArgs()));
+			if (check && data.isValid()) data.spell.subcast(event.getSpellData());
 			return true;
 		}
 
 		@Override
 		public boolean apply(SpellTargetLocationEvent event, boolean check, CustomData customData) {
 			CastData data = (CastData) customData;
-			if (check && data.isValid()) data.spell.subcast(new SpellData(event.getCaster(), event.getTargetLocation(), event.getPower(), event.getSpellArgs()));
+			if (check && data.isValid()) data.spell.subcast(event.getSpellData());
 			return true;
 		}
 
@@ -658,7 +658,7 @@ public enum ModifierType {
 		public boolean apply(SpellCastEvent event, boolean check, CustomData customData) {
 			CustomInsteadData data = (CustomInsteadData) customData;
 			if (check && data.isValid()) {
-				data.spell.subcast(new SpellData(event.getCaster(), event.getPower(), event.getSpellArgs()));
+				data.spell.subcast(event.getSpellData());
 				event.setCancelled(true);
 			}
 			return !check;
@@ -675,7 +675,7 @@ public enum ModifierType {
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
 			CustomInsteadData data = (CustomInsteadData) customData;
 			if (check && data.isValid()) {
-				data.spell.subcast(new SpellData(event.getCaster(), event.getTarget(), event.getPower(), event.getSpellArgs()));
+				data.spell.subcast(event.getSpellData());
 				event.setCancelled(true);
 				event.setCastCancelled(true);
 			}
@@ -686,7 +686,7 @@ public enum ModifierType {
 		public boolean apply(SpellTargetLocationEvent event, boolean check, CustomData customData) {
 			CustomInsteadData data = (CustomInsteadData) customData;
 			if (check && data.isValid()) {
-				data.spell.subcast(new SpellData(event.getCaster(), event.getTargetLocation(), event.getPower(), event.getSpellArgs()));
+				data.spell.subcast(event.getSpellData());
 				event.setCancelled(true);
 			}
 			return !check;

@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class SprintingCondition extends Condition {
 	
@@ -14,17 +15,17 @@ public class SprintingCondition extends Condition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return isSprinting(caster);
+	public boolean checkCaster(SpellData data) {
+		return isSprinting(data.caster());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return isSprinting(target);
+	public boolean checkTarget(SpellData data) {
+		return isSprinting(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

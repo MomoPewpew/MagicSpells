@@ -67,17 +67,17 @@ public class SpellBeneficialCondition extends Condition implements IModifier {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
+	public boolean checkTarget(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

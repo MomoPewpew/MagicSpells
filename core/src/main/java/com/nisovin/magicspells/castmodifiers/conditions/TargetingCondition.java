@@ -3,12 +3,12 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 import java.util.Set;
 import java.util.HashSet;
 
-import org.bukkit.Location;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.MobUtil;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class TargetingCondition extends Condition {
@@ -38,17 +38,17 @@ public class TargetingCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return false;
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return targeting(caster, target);
+	public boolean checkTarget(SpellData data) {
+		return targeting(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

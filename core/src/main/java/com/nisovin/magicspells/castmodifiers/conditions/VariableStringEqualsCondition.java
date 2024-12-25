@@ -8,6 +8,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class VariableStringEqualsCondition extends Condition {
 
@@ -40,18 +41,18 @@ public class VariableStringEqualsCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return isEqualFor(caster);
+	public boolean checkCaster(SpellData data) {
+		return isEqualFor(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return isEqualFor(target);
+	public boolean checkTarget(SpellData data) {
+		return isEqualFor(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return isEqualFor(caster);
+	public boolean checkLocation(SpellData data) {
+		return false;
 	}
 
 	private boolean isEqualFor(LivingEntity target) {

@@ -3,6 +3,7 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.Condition;
@@ -25,17 +26,17 @@ public class UpTimeCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return checkUptime();
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
+	public boolean checkTarget(SpellData data) {
 		return checkUptime();
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return checkUptime();
 	}
 

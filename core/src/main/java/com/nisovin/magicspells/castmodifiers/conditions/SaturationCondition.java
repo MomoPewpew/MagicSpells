@@ -1,10 +1,10 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class SaturationCondition extends OperatorCondition {
 
@@ -23,17 +23,17 @@ public class SaturationCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return saturation(caster);
+	public boolean checkCaster(SpellData data) {
+		return saturation(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return saturation(target);
+	public boolean checkTarget(SpellData data) {
+		return saturation(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

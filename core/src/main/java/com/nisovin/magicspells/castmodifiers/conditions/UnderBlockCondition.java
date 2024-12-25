@@ -7,10 +7,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.block.data.BlockData;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class UnderBlockCondition extends Condition {
@@ -48,18 +48,18 @@ public class UnderBlockCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return underBlock(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return underBlock(data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return underBlock(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return underBlock(data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return underBlock(location);
+	public boolean checkLocation(SpellData data) {
+		return underBlock(data.location());
 	}
 
 	private boolean underBlock(Location location) {

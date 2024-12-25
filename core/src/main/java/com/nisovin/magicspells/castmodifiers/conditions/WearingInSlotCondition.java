@@ -1,6 +1,5 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.LivingEntity;
@@ -8,6 +7,7 @@ import org.bukkit.inventory.EntityEquipment;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.BlockUtils;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
@@ -43,17 +43,17 @@ public class WearingInSlotCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkSlot(caster);
+	public boolean checkCaster(SpellData data) {
+		return checkSlot(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkSlot(target);
+	public boolean checkTarget(SpellData data) {
+		return checkSlot(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

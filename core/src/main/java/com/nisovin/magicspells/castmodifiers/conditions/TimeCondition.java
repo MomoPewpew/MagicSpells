@@ -1,9 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.handlers.DebugHandler;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
 public class TimeCondition extends Condition {
@@ -25,18 +25,18 @@ public class TimeCondition extends Condition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return time(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return time(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return time(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return time(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return time(location);
+	public boolean checkLocation(SpellData data) {
+		return time(data.location());
 	}
 
 	private boolean time(Location location) {

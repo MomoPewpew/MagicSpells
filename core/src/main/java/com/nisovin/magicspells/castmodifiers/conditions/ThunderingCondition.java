@@ -4,6 +4,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class ThunderingCondition extends Condition {
 
@@ -13,18 +14,18 @@ public class ThunderingCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return thundering(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return thundering(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return thundering(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return thundering(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return thundering(location);
+	public boolean checkLocation(SpellData data) {
+		return thundering(data.location());
 	}
 
 	private boolean thundering(Location location) {

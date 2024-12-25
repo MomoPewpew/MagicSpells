@@ -3,15 +3,14 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.bukkit.Location;
 import org.bukkit.block.Sign;
 import org.bukkit.block.Block;
-import org.bukkit.entity.LivingEntity;
 
 import net.kyori.adventure.text.Component;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.MagicLocation;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
@@ -40,17 +39,17 @@ public class SignTextCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
+	public boolean checkCaster(SpellData data) {
 		return checkSignText();
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
+	public boolean checkTarget(SpellData data) {
 		return checkSignText();
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return checkSignText();
 	}
 

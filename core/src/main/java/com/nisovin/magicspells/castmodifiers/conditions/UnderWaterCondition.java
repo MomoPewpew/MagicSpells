@@ -1,9 +1,7 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
-import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
-
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class UnderWaterCondition extends Condition {
 	@Override
@@ -12,17 +10,17 @@ public class UnderWaterCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return caster.isUnderWater();
+	public boolean checkCaster(SpellData data) {
+		return data.caster().isUnderWater();
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return target.isUnderWater();
+	public boolean checkTarget(SpellData data) {
+		return data.target().isUnderWater();
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return false;
+	public boolean checkLocation(SpellData data) {
+		return data.location().getBlock().isLiquid();
 	}
 }

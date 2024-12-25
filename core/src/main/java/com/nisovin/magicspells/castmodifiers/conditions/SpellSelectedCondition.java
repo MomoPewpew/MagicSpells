@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 
 import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.SpellFilter;
 import com.nisovin.magicspells.castmodifiers.Condition;
 
@@ -22,18 +23,18 @@ public class SpellSelectedCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return spellSelected(caster);
+	public boolean checkCaster(SpellData data) {
+		return spellSelected(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return spellSelected(target);
+	public boolean checkTarget(SpellData data) {
+		return spellSelected(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return spellSelected(caster);
+	public boolean checkLocation(SpellData data) {
+		return false;
 	}
 
 	private boolean spellSelected(LivingEntity target) {

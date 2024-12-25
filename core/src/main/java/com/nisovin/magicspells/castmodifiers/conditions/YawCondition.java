@@ -1,9 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class YawCondition extends OperatorCondition {
 	
@@ -22,18 +22,18 @@ public class YawCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return yaw(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return yaw(data.caster().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return yaw(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return yaw(data.target().getLocation());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return yaw(location);
+	public boolean checkLocation(SpellData data) {
+		return yaw(data.location());
 	}
 
 	private boolean yaw(Location location) {

@@ -2,12 +2,12 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 
 import java.util.Objects;
 
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class VariableMatchesCondition extends Condition {
 
@@ -21,18 +21,18 @@ public class VariableMatchesCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return variableMatches(caster, null);
+	public boolean checkCaster(SpellData data) {
+		return variableMatches(data.caster(), null);
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return variableMatches(caster, target);
+	public boolean checkTarget(SpellData data) {
+		return variableMatches(data.caster(), data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return variableMatches(caster, null);
+	public boolean checkLocation(SpellData data) {
+		return false;
 	}
 
 	private boolean variableMatches(LivingEntity caster, LivingEntity target) {

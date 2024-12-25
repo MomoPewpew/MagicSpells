@@ -3,6 +3,7 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
 
@@ -23,17 +24,17 @@ public class TargetMaxHealthCondition extends OperatorCondition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return maxHealth(caster);
+	public boolean checkCaster(SpellData data) {
+		return maxHealth(data.caster());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return maxHealth(target);
+	public boolean checkTarget(SpellData data) {
+		return maxHealth(data.target());
 	}
 
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

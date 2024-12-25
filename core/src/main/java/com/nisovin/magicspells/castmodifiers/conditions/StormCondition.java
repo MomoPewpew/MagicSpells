@@ -1,9 +1,9 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.util.SpellData;
 
 public class StormCondition extends Condition {
 
@@ -13,18 +13,18 @@ public class StormCondition extends Condition {
 	}
 
 	@Override
-	public boolean check(LivingEntity caster) {
-		return stormy(caster.getLocation());
+	public boolean checkCaster(SpellData data) {
+		return stormy(data.caster().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return stormy(target.getLocation());
+	public boolean checkTarget(SpellData data) {
+		return stormy(data.target().getLocation());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
-		return stormy(location);
+	public boolean checkLocation(SpellData data) {
+		return stormy(data.location());
 	}
 
 	private boolean stormy(Location location) {

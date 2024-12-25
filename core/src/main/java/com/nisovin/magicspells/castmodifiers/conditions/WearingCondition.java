@@ -3,7 +3,6 @@ package com.nisovin.magicspells.castmodifiers.conditions;
 import java.util.Objects;
 
 import org.bukkit.Material;
-import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -12,6 +11,7 @@ import org.bukkit.inventory.EntityEquipment;
 
 import net.kyori.adventure.text.Component;
 
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.castmodifiers.Condition;
@@ -67,17 +67,17 @@ public class WearingCondition extends Condition {
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster) {
-		return checkInventory(caster);
+	public boolean checkCaster(SpellData data) {
+		return checkInventory(data.caster());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, LivingEntity target) {
-		return checkInventory(target);
+	public boolean checkTarget(SpellData data) {
+		return checkInventory(data.target());
 	}
 	
 	@Override
-	public boolean check(LivingEntity caster, Location location) {
+	public boolean checkLocation(SpellData data) {
 		return false;
 	}
 

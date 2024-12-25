@@ -251,7 +251,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				locTarget = block.getLocation();
 			}
 
-			open(player, opener, target, locTarget, power, args);
+			open(data, opener);
 
 			if (requireEntityTarget) {
 				sendMessages(player, targetOpensMenuInstead ? opener : target, args);
@@ -266,20 +266,19 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	public boolean castAtEntity(SpellData data) {
 		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
 		if (!(data.caster() instanceof Player opener)) return false;
-		Player target = (Player) data.target();
 		if (targetOpensMenuInstead) {
 			if (!(data.target() instanceof Player player)) return false;
 			opener = player;
-			target = null;
+			data = data.builder().target(null).build();
 		}
-		open((Player) data.caster(), opener, target, null, data.power(), data.args());
+		open(data, opener);
 		return true;
 	}
 
 	@Override
 	public boolean castAtLocation(SpellData data) {
 		if (!(data.caster() instanceof Player player)) return false;
-		open(player, player, null, data.location(), data.power(), data.args());
+		open(data, player);
 		return true;
 	}
 
@@ -289,7 +288,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		Player player = PlayerNameUtils.getPlayer(args[0]);
 		String[] spellArgs = args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : null;
 		if (player != null) {
-			open(null, player, null, null, 1, spellArgs);
+			open(new SpellData(null, spellArgs), player);
 			return true;
 		}
 		return false;
@@ -322,31 +321,31 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return item;
 	}
 
-	private void open(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power, String[] args) {
+	private void open(SpellData data, Player opener) {
 		if (delay < 0) {
-			openMenu(caster, opener, entityTarget, locTarget, power, args);
+			openMenu(data, opener);
 			return;
 		}
-		MagicSpells.scheduleDelayedTask(() -> openMenu(caster, opener, entityTarget, locTarget, power, args), delay);
+		MagicSpells.scheduleDelayedTask(() -> openMenu(data, opener), delay);
 	}
 
-	private void openMenu(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power, String[] args) {
-		MenuData mData = new MenuData(requireEntityTarget ? entityTarget : null, requireLocationTarget ? locTarget : null, power, args, 0);
+	private void openMenu(SpellData data, Player opener) {
+		data = data.builder().target(requireEntityTarget ? data.target() : null).location(requireLocationTarget ? data.location() : null).build();
+		MenuData mData = new MenuData(data, 0);
 		menuData.put(opener.getUniqueId(), mData);
 
 		Inventory inv = Bukkit.createInventory(opener, size, Component.text(internalName));
-		applyOptionsToInventory(opener, inv, args, mData);
+		applyOptionsToInventory(opener, inv, data.args(), mData);
 		opener.openInventory(inv);
 		Util.setInventoryTitle(opener, title);
 
-		SpellData data = new SpellData(caster, entityTarget, power, args);
-		if (entityTarget != null && caster != null) {
-			playSpellEffects(caster, entityTarget, data);
+		if (data.target() != null && data.caster() != null) {
+			playSpellEffects(data.caster(), data.target(), data);
 			return;
 		}
 		playSpellEffects(EffectPosition.SPECIAL, opener, data);
-		if (caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
-		if (locTarget != null) playSpellEffects(EffectPosition.TARGET, locTarget, data);
+		if (data.caster() != null) playSpellEffects(EffectPosition.CASTER, data.caster(), data);
+		if (data.location() != null) playSpellEffects(EffectPosition.TARGET, data.location(), data);
 	}
 
 	private void applyOptionsToInventory(Player opener, Inventory inv, String[] args, MenuData mData) {
@@ -447,9 +446,9 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		MenuData mData = menuData.get(id);
 
 		if (autoArrange && event.getSlot() == 52) {
-			if (event.getCurrentItem() != null && event.getCurrentItem().equals(previousPageItem)) mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(), mData.page() - 1);
+			if (event.getCurrentItem() != null && event.getCurrentItem().equals(previousPageItem)) mData = new MenuData(mData.spellData(), mData.page() - 1);
 		} else if (autoArrange && event.getSlot() == 53) {
-			if (event.getCurrentItem() != null && event.getCurrentItem().equals(nextPageItem)) mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(), mData.page() + 1);
+			if (event.getCurrentItem() != null && event.getCurrentItem().equals(nextPageItem)) mData = new MenuData(mData.spellData(), mData.page() + 1);
 		} else {
 			closeState = castSpells(player, event.getCurrentItem(), event.getClick());
 		}
@@ -487,19 +486,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	private String processClickSpell(Player player, Subspell spell, MenuOption option) {
-		LivingEntity entityTarget = null;
-		Location locationTarget = null;
-		float power = option.power;
-		String[] args = new String[0];
-
 		UUID id = player.getUniqueId();
 		MenuData data = menuData.get(id);
+		SpellData sdata;
 		if (data != null) {
-			locationTarget = data.targetLocation;
-			entityTarget = data.targetEntity;
-			power *= data.power;
-			args = data.args;
-		}
+			sdata = data.spellData().builder().power(data.spellData().power() * option.power).build();
+		} else sdata = new SpellData(player, option.power);
 
 		processVariables(option.variableModsClick, player, data);
 
@@ -507,11 +499,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		boolean success;
 
-		if (entityTarget != null) success = spell.subcast(new SpellData(player, entityTarget, power, args));
-		else if (locationTarget != null) success = spell.subcast(new SpellData(player, locationTarget, power, args));
-		else if (bypassNormalCast) success = spell.subcast(new SpellData(player, power, args));
+		if (sdata.target() != null || sdata.location() != null) success = spell.subcast(sdata);
+		else if (bypassNormalCast) success = spell.subcast(new SpellData(player, sdata.power()));
 		else {
-			SpellCastResult result = spell.getSpell().cast(new SpellData(player, power, new String[0]));
+			SpellCastResult result = spell.getSpell().cast(sdata);
 			success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
 		}
 
@@ -529,7 +520,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 			Variable variable = MagicSpells.getVariableManager().getVariable(entry.getKey());
 
-			String amount = MagicSpells.getVariableManager().processVariableMods(variable, mod, player, player, null, data.power(), data.args());
+			String amount = MagicSpells.getVariableManager().processVariableMods(variable, mod, player, player, null, data.spellData().power(), data.spellData().args());
 			MagicSpells.debug(3, "Variable '" + entry.getKey() + "' for player '" + player.getName() + "' modified by " + amount + " as a result of spell cast '" + internalName + "'");
 		}
 	}
@@ -540,7 +531,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		menuData.remove(id);
 	}
 
-	private record MenuData(LivingEntity targetEntity, Location targetLocation, float power, String[] args, int page) {
+	private record MenuData(SpellData spellData, int page) {
 	}
 
 	private static class MenuOption {

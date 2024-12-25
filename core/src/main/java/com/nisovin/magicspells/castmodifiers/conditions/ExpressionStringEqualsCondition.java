@@ -50,12 +50,13 @@ public class ExpressionStringEqualsCondition extends Condition {
 
 	@Override
 	public boolean checkCaster(SpellData data) {
-		return compare(data.caster(), null);
+		return compare(data);
 	}
 
 	@Override
 	public boolean checkTarget(SpellData data) {
-		return compare(data.caster(), data.target());
+		SpellData newData = data.builder().build().invert();
+		return compare(newData);
 	}
 
 	@Override
@@ -63,9 +64,9 @@ public class ExpressionStringEqualsCondition extends Condition {
 		return false;
 	}
 
-	private boolean compare(LivingEntity caster, LivingEntity target) {
-		String left = expressionLeft.get(new SpellData(caster, target));
-		String right = expressionRight.get(new SpellData(caster, target));
+	private boolean compare(SpellData data) {
+		String left = expressionLeft.get(data);
+		String right = expressionRight.get(data);
 		return left.equals(right);
 	}
 }

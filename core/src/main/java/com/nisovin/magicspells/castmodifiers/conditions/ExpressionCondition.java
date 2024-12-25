@@ -41,12 +41,12 @@ public class ExpressionCondition extends OperatorCondition {
 
 	@Override
 	public boolean checkCaster(SpellData data) {
-		return compare(data.caster());
+		return compare(data);
 	}
 
 	@Override
 	public boolean checkTarget(SpellData data) {
-		return compare(data.target());
+		return compare(data.builder().caster(data.target()).build());
 	}
 
 	@Override
@@ -54,9 +54,9 @@ public class ExpressionCondition extends OperatorCondition {
 		return false;
 	}
 
-	private boolean compare(LivingEntity target) {
-		Double valueLeft = left.get(new SpellData(target));
-		Double valueRight = right.get(new SpellData(target));
+	private boolean compare(SpellData data) {
+		Double valueLeft = left.get(data);
+		Double valueRight = right.get(data);
 
 		if (equals) return (valueLeft == valueRight);
 		else if (moreThan) return (valueLeft > valueRight);

@@ -164,12 +164,9 @@ public enum ModifierType {
 				SpellData data = result.data();
 
 				return new ModifierResult(
-					new SpellData(
-						data.caster(),
-						data.target(),
-						data.power() * CustomDataFloat.from(customData, data),
-						data.args()
-					),
+					data.builder()
+						.power(data.power() + CustomDataFloat.from(customData, data))
+						.build(),
 					true
 				);
 			}
@@ -183,12 +180,9 @@ public enum ModifierType {
 				SpellData data = result.data();
 
 				return new ModifierResult(
-					new SpellData(
-						data.caster(),
-						data.target(),
-						data.power() * CustomDataFloat.from(customData, data),
-						data.args()
-					),
+					data.builder()
+						.power(data.power() + CustomDataFloat.from(customData, data))
+						.build(),
 					true
 				);
 			}
@@ -202,12 +196,9 @@ public enum ModifierType {
 				SpellData data = result.data();
 
 				return new ModifierResult(
-					new SpellData(
-						data.caster(),
-						data.target(),
-						data.power() * CustomDataFloat.from(customData, data),
-						data.args()
-					),
+					data.builder()
+						.power(data.power() + CustomDataFloat.from(customData, data))
+						.build(),
 					true
 				);
 			}
@@ -263,12 +254,9 @@ public enum ModifierType {
 				SpellData data = result.data();
 
 				return new ModifierResult(
-					new SpellData(
-						data.caster(),
-						data.target(),
-						data.power() + CustomDataFloat.from(customData, data),
-						data.args()
-					),
+					data.builder()
+						.power(data.power() + CustomDataFloat.from(customData, data))
+						.build(),
 					true
 				);
 			}
@@ -282,12 +270,9 @@ public enum ModifierType {
 				SpellData data = result.data();
 
 				return new ModifierResult(
-					new SpellData(
-						data.caster(),
-						data.target(),
-						data.power() + CustomDataFloat.from(customData, data),
-						data.args()
-					),
+					data.builder()
+						.power(data.power() + CustomDataFloat.from(customData, data))
+						.build(),
 					true
 				);
 			}
@@ -301,12 +286,9 @@ public enum ModifierType {
 				SpellData data = result.data();
 
 				return new ModifierResult(
-					new SpellData(
-						data.caster(),
-						data.target(),
-						data.power() + CustomDataFloat.from(customData, data),
-						data.args()
-					),
+					data.builder()
+						.power(data.power() + CustomDataFloat.from(customData, data))
+						.build(),
 					true
 				);
 			}

@@ -1,7 +1,6 @@
 package com.nisovin.magicspells.events;
 
 import org.bukkit.event.Cancellable;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.util.SpellData;
@@ -16,7 +15,6 @@ import com.nisovin.magicspells.Spell.SpellCastState;
 public class SpellCastEvent extends SpellEvent implements Cancellable {
 
 	private SpellCastState state;
-	private SpellData data;
 	private boolean stateChanged;
 	private float cooldown;
 	private SpellReagents reagents;
@@ -27,7 +25,6 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 	public SpellCastEvent(Spell spell, SpellCastState state, SpellData data, float cooldown, SpellReagents reagents, int castTime) {
 		super(spell, data);
 		this.state = state;
-		this.data = data;
 		this.cooldown = cooldown;
 		this.reagents = reagents;
 		this.castTime = castTime;
@@ -51,7 +48,7 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 		this.state = state;
 		stateChanged = true;
 	}
-	
+
 	/**
 	 * Checks whether the spell cast state has been changed.
 	 * @return true if it has been changed

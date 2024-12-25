@@ -2,19 +2,16 @@ package com.nisovin.magicspells.events;
 
 import org.bukkit.Location;
 import org.bukkit.event.Cancellable;
-import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.util.SpellData;
 
 public class SpellTargetLocationEvent extends SpellEvent implements Cancellable {
 
-	private SpellData data;
 	private boolean cancelled = false;
 
 	public SpellTargetLocationEvent(Spell spell, SpellData data) {
 		super(spell, data);
-		this.data = data;
 	}
 
 	/**

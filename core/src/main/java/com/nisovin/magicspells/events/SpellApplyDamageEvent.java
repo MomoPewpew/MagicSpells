@@ -16,7 +16,6 @@ public class SpellApplyDamageEvent extends SpellEvent {
 	public SpellApplyDamageEvent(Spell spell, SpellData data, double damage, DamageCause cause, String spellDamageType) {
 		super(spell, data);
 
-		this.data = data;
 		this.damage = damage;
 		this.cause = cause;
 

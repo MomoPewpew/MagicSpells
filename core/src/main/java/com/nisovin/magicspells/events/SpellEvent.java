@@ -29,6 +29,14 @@ public abstract class SpellEvent extends Event implements IMagicSpellsCompatEven
 	}
 	
 	/**
+	 * Gets the spell data.
+	 * @return the spell data
+	 */
+	public SpellData getSpellData() {
+		return data;
+	}
+
+	/**
 	 * Gets the player casting the spell.
 	 * @return the casting player
 	 */

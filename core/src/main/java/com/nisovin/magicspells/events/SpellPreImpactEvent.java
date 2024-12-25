@@ -18,7 +18,6 @@ public class SpellPreImpactEvent extends SpellEvent implements Cancellable {
 
 	public SpellPreImpactEvent(Spell spellPayload, Spell deliverySpell, SpellData data) {
 		super(spellPayload, data);
-		this.data = data;
 		this.deliverySpell = deliverySpell;
 		redirect = false;
 		cancelled = false;

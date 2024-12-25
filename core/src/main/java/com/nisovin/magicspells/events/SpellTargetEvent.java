@@ -13,15 +13,11 @@ import com.nisovin.magicspells.util.SpellData;
  */
 public class SpellTargetEvent extends SpellEvent implements Cancellable {
 
-	private SpellData spellData;
-
 	private boolean cancelled = false;
 	private boolean castCancelled = false;
 
 	public SpellTargetEvent(Spell spell, SpellData data) {
 		super(spell, data);
-
-		this.data = data;
 	}
 
 	public SpellTargetEvent(Spell spell, SpellData spellData, LivingEntity target) {
@@ -65,7 +61,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	 * @return the spell arguments
 	 */
 	public String[] getSpellArgs() {
-		return spellData.args();
+		return data.args();
 	}
 
 	/**
@@ -73,7 +69,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	 * @param power the power level multiplier
 	 */
 	public void increasePower(float power) {
-		spellData = spellData.power(spellData.power() * power);
+		data = data.power(data.power() * power);
 	}
 
 	/**
@@ -81,7 +77,7 @@ public class SpellTargetEvent extends SpellEvent implements Cancellable {
 	 * @return the spell data
 	 */
 	public SpellData getSpellData() {
-		return spellData;
+		return data;
 	}
 
 	@Override

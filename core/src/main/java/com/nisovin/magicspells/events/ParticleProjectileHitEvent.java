@@ -20,7 +20,6 @@ public class ParticleProjectileHitEvent extends SpellEvent implements Cancellabl
 	public ParticleProjectileHitEvent(ParticleProjectileTracker tracker, Spell spell, SpellData data) {
 		super(spell, data);
 
-		this.data = data;
 		this.tracker = tracker;
 	}
 

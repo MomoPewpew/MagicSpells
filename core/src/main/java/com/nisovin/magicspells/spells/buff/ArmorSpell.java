@@ -123,7 +123,7 @@ public class ArmorSpell extends BuffSpell {
 
 		ArmorSet armorSet = new ArmorSet(helmet, chestplate, leggings, boots, offhand);
 
-		if (!replace && ((armorSet.helmet() != null && inv.getHelmet() != null) || (armorSet.chestplate() != null && inv.getChestplate() != null) || (armorSet.leggings() != null && inv.getLeggings() != null) || (armorSet.boots() != null && inv.getBoots() != null) || (armorSet.offhand() != null && inv.getItemInOffHand() != null))) {
+		if (!replace && ((armorSet.helmet() != null && inv.getHelmet() != null) || (armorSet.chestplate() != null && inv.getChestplate() != null) || (armorSet.leggings() != null && inv.getLeggings() != null) || (armorSet.boots() != null && inv.getBoots() != null) || (armorSet.offhand() != null && inv.getItemInOffHand().getType() != Material.AIR))) {
 			// error
 			if (entity instanceof Player) sendMessage(strHasArmor, entity, args);
 			return false;

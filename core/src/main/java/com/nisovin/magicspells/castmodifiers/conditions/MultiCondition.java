@@ -103,7 +103,7 @@ public class MultiCondition extends Condition implements IModifier {
 		int pass = 0;
 		int fail = 0;
 		for (Modifier m : modifiers) {
-			boolean check = m.check(data.caster());
+			boolean check = m.checkCaster(data);
 			if (check) pass++;
 			else {
 				fail++;
@@ -121,7 +121,7 @@ public class MultiCondition extends Condition implements IModifier {
 		int pass = 0;
 		int fail = 0;
 		for (Modifier m : modifiers) {
-			boolean check = m.check(data.caster(), data.target());
+			boolean check = m.checkTarget(data);
 			if (check) pass++;
 			else {
 				fail++;
@@ -139,7 +139,7 @@ public class MultiCondition extends Condition implements IModifier {
 		int pass = 0;
 		int fail = 0;
 		for (Modifier m : modifiers) {
-			boolean check = m.check(data.caster(), data.location());
+			boolean check = m.checkLocation(data);
 			if (check) pass++;
 			else {
 				fail++;

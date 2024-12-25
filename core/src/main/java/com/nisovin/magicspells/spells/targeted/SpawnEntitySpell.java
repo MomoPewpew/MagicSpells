@@ -681,7 +681,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		@EventHandler
 		private void onTarget(EntityTargetEvent event) {
 			if (event.getEntity() == monster) {
-				if (!validTargetList.canTarget(data.caster(), event.getTarget()) || (targetModifiers != null && !targetModifiers.check(monster, (LivingEntity) event.getTarget()))) event.setCancelled(true);
+				if (!validTargetList.canTarget(data.caster(), event.getTarget()) || (targetModifiers != null && !targetModifiers.checkTarget(data.builder().caster(monster).target((LivingEntity) event.getTarget()).build()))) event.setCancelled(true);
 				else if (event.getTarget() == null) retarget(null);
 				else if (target != null && event.getTarget() != target) event.setTarget(target);
 			}
@@ -704,7 +704,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				if (!(e instanceof LivingEntity)) continue;
 				if (!validTargetList.canTarget(data.caster(), e)) continue;
 				if (e == ignore) continue;
-				if (targetModifiers != null && !targetModifiers.check(monster, (LivingEntity) e)) continue;
+				if (targetModifiers != null && !targetModifiers.checkTarget(data.builder().caster(monster).target((LivingEntity) e).build())) continue;
 
 				if (e instanceof Player p) {
 					GameMode gamemode = p.getGameMode();
@@ -774,7 +774,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				}
 
 				if (!validTargetList.canTarget(data.caster(), e)) continue;
-				if (targetModifiers != null && !targetModifiers.check(entity, e)) continue;
+				if (targetModifiers != null && !targetModifiers.checkTarget(data.builder().caster(entity).target((LivingEntity) e).build())) continue;
 
 				targetable.add(e);
 

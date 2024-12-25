@@ -163,25 +163,25 @@ public class ModifierSet {
 		return new ModifierResult(data, true);
 	}
 
-	public boolean check(LivingEntity livingEntity) {
+	public boolean checkCaster(SpellData data) {
 		for (Modifier modifier : modifiers) {
-			boolean pass = modifier.check(livingEntity);
+			boolean pass = modifier.checkCaster(data);
 			if (!pass) return false;
 		}
 		return true;
 	}
 
-	public boolean check(LivingEntity livingEntity, LivingEntity entity) {
+	public boolean checkTarget(SpellData data) {
 		for (Modifier modifier : modifiers) {
-			boolean pass = modifier.check(livingEntity, entity);
+			boolean pass = modifier.checkTarget(data);
 			if (!pass) return false;
 		}
 		return true;
 	}
 
-	public boolean check(LivingEntity livingEntity, Location location) {
+	public boolean checkLocation(SpellData data) {
 		for (Modifier modifier : modifiers) {
-			boolean pass = modifier.check(livingEntity, location);
+			boolean pass = modifier.checkLocation(data);
 			if (!pass) return false;
 		}
 		return true;

@@ -186,7 +186,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 	private void open(Player opener, MenuData data) {
 		List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
 		if (!addOpener) players.remove(opener);
-		if (playerModifiers != null) players.removeIf(player -> !playerModifiers.check(player));
+		if (playerModifiers != null) players.removeIf(player -> !playerModifiers.checkCaster(data.spellData));
 		if (radius > 0) players.removeIf(player -> opener.getLocation().distance(player.getLocation()) > radius);
 
 		int size = Math.max((int) Math.ceil(Math.min(players.size(), 54) / 9.0) * 9, 9);

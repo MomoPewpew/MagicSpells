@@ -114,10 +114,9 @@ public class Modifier implements IModifier {
 
 	@Override
 	public boolean apply(SpellCastEvent event) {
-		LivingEntity caster = event.getCaster();
 		boolean check;
 		if (alertCondition) check = ((IModifier) condition).apply(event);
-		else check = condition.check(caster);
+		else check = condition.checkCaster(event.getSpellData());
 		if (negated) check = !check;
 		return type.apply(event, check, customActionData);
 	}
@@ -127,34 +126,32 @@ public class Modifier implements IModifier {
 		Player player = event.getPlayer();
 		boolean check;
 		if (alertCondition) check = ((IModifier) condition).apply(event);
-		else check = condition.check(player);
+		else check = condition.checkCaster(new SpellData(player));
 		if (negated) check = !check;
 		return type.apply(event, check, customActionData);
 	}
 
 	@Override
 	public boolean apply(SpellTargetEvent event) {
-		LivingEntity caster = event.getCaster();
 		boolean check;
 		if (alertCondition) check = ((IModifier) condition).apply(event);
-		else check = condition.check(caster, event.getTarget());
+		else check = condition.checkTarget(event.getSpellData());
 		if (negated) check = !check;
 		return type.apply(event, check, customActionData);
 	}
 
 	@Override
 	public boolean apply(SpellTargetLocationEvent event) {
-		LivingEntity caster = event.getCaster();
 		boolean check;
 		if (alertCondition) check = ((IModifier) condition).apply(event);
-		else check = condition.check(caster, event.getTargetLocation());
+		else check = condition.checkLocation(event.getSpellData());
 		if (negated) check = !check;
 		return type.apply(event, check, customActionData);
 	}
 
 	@Override
 	public boolean apply(MagicSpellsGenericPlayerEvent event) {
-		boolean check = condition.check(event.getPlayer());
+		boolean check = condition.checkCaster(new SpellData(event.getPlayer()));
 		if (negated) check = !check;
 		return type.apply(event, check, customActionData);
 	}
@@ -165,7 +162,7 @@ public class Modifier implements IModifier {
 		if (alertCondition) {
 			result = ((IModifier) condition).apply(caster, data);
 			if (negated) result = new ModifierResult(result.data(), !result.check());
-		} else result = new ModifierResult(data, negated != condition.check(caster));
+		} else result = new ModifierResult(data, negated != condition.checkCaster(data));
 		return type.apply(caster, result, customActionData);
 	}
 
@@ -175,7 +172,7 @@ public class Modifier implements IModifier {
 		if (alertCondition) {
 			result = ((IModifier) condition).apply(caster, target, data);
 			if (negated) result = new ModifierResult(result.data(), !result.check());
-		} else result = new ModifierResult(data, negated != condition.check(caster, target));
+		} else result = new ModifierResult(data, negated != condition.checkTarget(data));
 		return type.apply(caster, result, customActionData);
 	}
 
@@ -185,25 +182,25 @@ public class Modifier implements IModifier {
 		if (alertCondition) {
 			result = ((IModifier) condition).apply(caster, target, data);
 			if (negated) result = new ModifierResult(result.data(), !result.check());
-		} else result = new ModifierResult(data, negated != condition.check(caster, target));
+		} else result = new ModifierResult(data, negated != condition.checkTarget(data));
 		return type.apply(caster, result, customActionData);
 	}
 
 	@Override
-	public boolean check(LivingEntity livingEntity) {
-		boolean check = condition.check(livingEntity);
+	public boolean checkCaster(SpellData data) {
+		boolean check = condition.checkCaster(data);
 		return checkCondition(check);
 	}
 
 	@Override
-	public boolean check(LivingEntity livingEntity, LivingEntity entity) {
-		boolean check = condition.check(livingEntity, entity);
+	public boolean checkTarget(SpellData data) {
+		boolean check = condition.checkTarget(data);
 		return checkCondition(check);
 	}
 
 	@Override
-	public boolean check(LivingEntity livingEntity, Location location) {
-		boolean check = condition.check(livingEntity, location);
+	public boolean checkLocation(SpellData data) {
+		boolean check = condition.checkLocation(data);
 		return checkCondition(check);
 	}
 

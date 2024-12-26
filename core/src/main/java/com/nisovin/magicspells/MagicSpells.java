@@ -1976,45 +1976,6 @@ public class MagicSpells extends JavaPlugin {
 	public void unload() {
 		loaded = false;
 
-		// save player data and disable storage
-		if (storageHandler != null) {
-			for (Spellbook spellBook : spellbooks.values()) {
-				storageHandler.save(spellBook);
-			}
-			storageHandler.disable();
-			storageHandler = null;
-		}
-
-		// Turn off spells and their spell effects
-		for (Spell spell : spells.values()) {
-			EffectPosition position;
-			List<SpellEffect> spellEffects;
-			Iterator<SpellEffect> iterator;
-			if (spell.getEffects() != null) {
-				for (Map.Entry<EffectPosition, List<SpellEffect>> entry : spell.getEffects().entrySet()) {
-					if (entry == null) continue;
-
-					position = entry.getKey();
-					spellEffects = entry.getValue();
-					if (position == null || spellEffects == null) continue;
-
-					iterator = spellEffects.iterator();
-					while (iterator.hasNext()) {
-						iterator.next().turnOff();
-						iterator.remove();
-					}
-				}
-			}
-
-			spell.turnOff();
-		}
-
-		// Clear spell animations.
-		for (SpellAnimation animation : SpellAnimation.getAnimations()) {
-			animation.stop(false);
-		}
-		SpellAnimation.getAnimations().clear();
-
 		// Save cooldowns
 		if (cooldownsPersistThroughReload) {
 			File file = new File(getDataFolder(), "cooldowns.txt");
@@ -2058,10 +2019,49 @@ public class MagicSpells extends JavaPlugin {
 			}
 		}
 
+		// Turn off spells and their spell effects
+		for (Spell spell : spells.values()) {
+			EffectPosition position;
+			List<SpellEffect> spellEffects;
+			Iterator<SpellEffect> iterator;
+			if (spell.getEffects() != null) {
+				for (Map.Entry<EffectPosition, List<SpellEffect>> entry : spell.getEffects().entrySet()) {
+					if (entry == null) continue;
+
+					position = entry.getKey();
+					spellEffects = entry.getValue();
+					if (position == null || spellEffects == null) continue;
+
+					iterator = spellEffects.iterator();
+					while (iterator.hasNext()) {
+						iterator.next().turnOff();
+						iterator.remove();
+					}
+				}
+			}
+
+			spell.turnOff();
+		}
+
+		// Clear spell animations.
+		for (SpellAnimation animation : SpellAnimation.getAnimations()) {
+			animation.stop(false);
+		}
+		SpellAnimation.getAnimations().clear();
+
 		// Turn off buff manager
 		if (buffManager != null) {
 			buffManager.turnOff();
 			buffManager = null;
+		}
+
+		// save player data and disable storage
+		if (storageHandler != null) {
+			for (Spellbook spellBook : spellbooks.values()) {
+				storageHandler.save(spellBook);
+			}
+			storageHandler.disable();
+			storageHandler = null;
 		}
 
 		// Clear memory

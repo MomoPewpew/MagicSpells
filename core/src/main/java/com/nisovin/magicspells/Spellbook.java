@@ -76,6 +76,10 @@ public class Spellbook {
 	}
 
 	public void load() {
+		if (MagicSpells.getStorageHandler() == null) {
+			MagicSpells.debug("  Storage handler is null, skipping load");
+			return;
+		}
 		MagicSpells.debug("  Loading data for player '" + player.getName() + "'...");
 		MagicSpells.getStorageHandler().load(this);
 

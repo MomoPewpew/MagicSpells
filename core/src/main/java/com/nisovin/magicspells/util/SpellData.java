@@ -18,7 +18,7 @@ public record SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity ta
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity target, float power, @NotNull String[] args) {
-		this(caster, target, (target != null) ? target.getLocation() : null, power, args, null);
+		this(caster, target, (target != null) ? target.getLocation() : (caster != null) ? caster.getLocation() : null, power, args, null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @NotNull Location location, float power, @NotNull String[] args) {
@@ -42,7 +42,7 @@ public record SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity ta
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity target, float power) {
-		this(caster, target, (target != null) ? target.getLocation() : null, power, new String[0], null);
+		this(caster, target, (target != null) ? target.getLocation() : (caster != null) ? caster.getLocation() : null, power, new String[0], null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity target, @NotNull Location location) {
@@ -62,7 +62,7 @@ public record SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity ta
 	}
 
 	public SpellData(@Nullable LivingEntity caster, @Nullable LivingEntity target) {
-		this(caster, target, (target != null) ? target.getLocation() : null, 1f, new String[0], null);
+		this(caster, target, (target != null) ? target.getLocation() : (caster != null) ? caster.getLocation() : null, 1f, new String[0], null);
 	}
 
 	public SpellData(@Nullable LivingEntity caster, float power) {

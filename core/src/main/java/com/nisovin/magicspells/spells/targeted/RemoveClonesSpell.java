@@ -68,7 +68,7 @@ public class RemoveClonesSpell extends TargetedSpell implements TargetedLocation
 				if (pointBlank) loc = data.caster().getLocation();
 				else {
 					try {
-						Block block = getTargetedBlock(data.caster(), data.power());
+						Block block = getTargetedBlock(data);
 						if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation().add(0.5, 0, 0.5);
 					}
 					catch (IllegalStateException ignored) {}

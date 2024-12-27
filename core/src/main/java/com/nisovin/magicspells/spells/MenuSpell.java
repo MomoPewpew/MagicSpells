@@ -245,7 +245,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 					power = info.getPower();
 				}
 			} else if (requireLocationTarget) {
-				Block block = getTargetedBlock(player, power, args);
+				Block block = getTargetedBlock(data);
 				if (block == null || BlockUtils.isAir(block.getType())) return noTarget(data);
 
 				locTarget = block.getLocation();

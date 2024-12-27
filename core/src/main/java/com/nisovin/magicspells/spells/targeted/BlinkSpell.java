@@ -31,7 +31,7 @@ public class BlinkSpell extends TargetedSpell implements TargetedLocationSpell {
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			LivingEntity caster = data.caster();
-			int range = getRange(data.power());
+			int range = getRange(data);
 			if (range <= 0) range = 25;
 			if (range > 125) range = 125;
 			BlockIterator iter; 

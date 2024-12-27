@@ -123,7 +123,7 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 			if (materials == null || materials.isEmpty()) return PostCastAction.ALREADY_HANDLED;
 
 			int distance = this.distance.get(data);
-			Block target = getTargetedBlock(data.caster(), distance > 0 && distance < 15 ? distance : 3, data.args());
+			Block target = getTargetedBlock(data.builder().power(distance > 0 && distance < 15 ? distance : 3).build());
 			if (target == null || !BlockUtils.isAir(target.getType())) {
 				sendMessage(strNoTarget, data.caster(), data.args());
 				return PostCastAction.ALREADY_HANDLED;

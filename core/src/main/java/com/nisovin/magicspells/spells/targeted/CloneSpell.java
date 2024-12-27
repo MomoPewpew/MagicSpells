@@ -70,7 +70,7 @@ public class CloneSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (pointBlank) loc = caster.getLocation();
 			else {
 				try {
-					Block block = getTargetedBlock(caster, power, args);
+					Block block = getTargetedBlock(data);
 					if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation().add(0.5, 1, 0.5);
 				}
 				catch (IllegalStateException ignored) {}

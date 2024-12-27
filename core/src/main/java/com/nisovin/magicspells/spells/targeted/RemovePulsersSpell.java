@@ -70,7 +70,7 @@ public class RemovePulsersSpell extends TargetedSpell implements TargetedLocatio
 			if (pointBlank)
 				loc = data.caster().getLocation();
 			else {
-				Block b = getTargetedBlock(data.caster(), data.power());
+				Block b = getTargetedBlock(data);
 				if (b != null && !BlockUtils.isAir(b.getType()))
 					loc = b.getLocation();
 			}

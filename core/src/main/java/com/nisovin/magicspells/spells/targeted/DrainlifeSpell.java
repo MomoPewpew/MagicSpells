@@ -243,7 +243,7 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 
 			current = data.location().toVector();
 			world = data.caster().getWorld();
-			range = getRange(data.power());
+			range = getRange(data);
 		}
 
 		@Override

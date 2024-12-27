@@ -102,7 +102,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
             }
 			else {
 				try {
-					Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+					Block block = getTargetedBlock(data);
 					if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation().add(0.5, 0, 0.5);
 				}
 				catch (IllegalStateException ignored) {}

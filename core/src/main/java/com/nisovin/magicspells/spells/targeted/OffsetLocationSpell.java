@@ -57,7 +57,7 @@ public class OffsetLocationSpell extends TargetedSpell implements TargetedLocati
 			if (info.cancelled()) return PostCastAction.ALREADY_HANDLED;
 
 			if (!info.empty()) baseTargetLocation = info.target().getLocation();
-			else baseTargetLocation = getTargetedBlock(data.caster(), data.power()).getLocation();
+			else baseTargetLocation = getTargetedBlock(data).getLocation();
 
 			Location loc;
 			if (forcePitch) {

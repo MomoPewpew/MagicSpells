@@ -248,7 +248,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 				loc = data.caster().getLocation();
 			} else {
 				try {
-					Block block = getTargetedBlock(data.caster(), data.power());
+					Block block = getTargetedBlock(data);
 					if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation();
 				} catch (IllegalStateException ignored) {}
 			}

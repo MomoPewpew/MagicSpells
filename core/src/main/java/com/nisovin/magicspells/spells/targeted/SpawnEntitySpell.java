@@ -334,7 +334,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			TargetInfo<LivingEntity> targetInfo = null;
 
 			if (location.equalsIgnoreCase("target")) {
-				Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+				Block block = getTargetedBlock(data);
 				if (block != null && !BlockUtils.isAir(block.getType())) {
 					loc = block.getLocation();
 					loc.setY(loc.getY() + 1);

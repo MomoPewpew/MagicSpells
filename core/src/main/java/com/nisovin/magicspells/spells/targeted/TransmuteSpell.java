@@ -49,7 +49,7 @@ public class TransmuteSpell extends TargetedSpell implements TargetedLocationSpe
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+			Block block = getTargetedBlock(data);
 			if (block == null) return noTarget(data);
 			
 			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);

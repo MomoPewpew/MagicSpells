@@ -178,7 +178,7 @@ public class ParticleCloudSpell extends TargetedSpell implements TargetedLocatio
 			}
 
 			if (canTargetLocation && locToSpawn == null) {
-				Block targetBlock = getTargetedBlock(data.caster(), data.power());
+				Block targetBlock = getTargetedBlock(data);
 				if (targetBlock != null) locToSpawn = targetBlock.getLocation().add(0.5, 1, 0.5);
 			}
 

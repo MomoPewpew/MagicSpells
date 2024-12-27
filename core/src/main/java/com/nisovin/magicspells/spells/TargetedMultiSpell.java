@@ -86,7 +86,7 @@ public final class TargetedMultiSpell extends TargetedSpell implements TargetedE
 			} else {
 				Block b;
 				try {
-					b = getTargetedBlock(caster, power, args);
+					b = getTargetedBlock(data);
 					if (b != null && !BlockUtils.isAir(b.getType())) {
 						locTarget = b.getLocation();
 						locTarget.add(0.5, 0, 0.5);

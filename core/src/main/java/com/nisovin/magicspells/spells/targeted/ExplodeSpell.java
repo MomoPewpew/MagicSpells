@@ -70,7 +70,7 @@ public class ExplodeSpell extends TargetedSpell implements TargetedLocationSpell
 		if (state == SpellCastState.NORMAL) {
 			Block target;
 			try {
-				target = getTargetedBlock(data.caster(), data.power(), data.args());
+				target = getTargetedBlock(data);
 			} catch (IllegalStateException e) {
 				DebugHandler.debugIllegalState(e);
 				target = null;

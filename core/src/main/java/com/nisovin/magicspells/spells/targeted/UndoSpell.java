@@ -63,7 +63,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Location loc = pointBlank ? data.caster().getLocation() : getTargetedBlock(data.caster(), data.power(), data.args()).getLocation();
+			Location loc = pointBlank ? data.caster().getLocation() : getTargetedBlock(data).getLocation();
 			if (loc == null) {
 				return noTarget(data);
 			}

@@ -73,7 +73,7 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
 			Block target;
 			try {
-				target = getTargetedBlock(data.caster(), data.power(), data.args());
+				target = getTargetedBlock(data);
 			} catch (IllegalStateException e) {
 				target = null;
 			}

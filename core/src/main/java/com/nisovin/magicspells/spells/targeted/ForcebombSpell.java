@@ -50,16 +50,14 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			LivingEntity caster = data.caster();
-			float power = data.power();
-			Block block = getTargetedBlock(caster, power, data.args());
+			Block block = getTargetedBlock(data);
 			if (block != null && !BlockUtils.isAir(block.getType())) {
 				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(block.getLocation()).build());
 				EventUtil.call(event);
 				if (event.isCancelled()) block = null;
 				else {
 					block = event.getTargetLocation().getBlock();
-					power = event.getPower();
+					data = data.builder().power(event.getPower()).build();
 				}
 			}
 

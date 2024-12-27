@@ -215,7 +215,7 @@ public class TotemSpell extends TargetedSpell implements TargetedLocationSpell {
 				}
 			}
 
-			List<Block> lastTwo = getLastTwoTargetedBlocks(data.caster(), data.power(), data.args());
+			List<Block> lastTwo = getLastTwoTargetedBlocks(data);
 			Block target = null;
 
 			if (lastTwo != null && lastTwo.size() == 2) target = lastTwo.get(0);

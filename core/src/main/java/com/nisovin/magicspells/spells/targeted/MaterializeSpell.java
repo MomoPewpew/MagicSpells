@@ -147,7 +147,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		if (state == SpellCastState.NORMAL && data.caster() instanceof Player player) {
 			List<Block> lastTwo;
 			try {
-				lastTwo = getLastTwoTargetedBlocks(player, data.power(), data.args());
+				lastTwo = getLastTwoTargetedBlocks(data);
 			} catch (IllegalStateException e) {
 				DebugHandler.debugIllegalState(e);
 				lastTwo = null;

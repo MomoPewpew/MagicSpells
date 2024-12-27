@@ -102,7 +102,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		if (state == SpellCastState.NORMAL) {
 			Location loc;
 			if (pointBlank) loc = data.caster().getLocation();
-			else loc = getTargetedBlock(data.caster(), data.power()).getLocation();
+			else loc = getTargetedBlock(data).getLocation();
 			
 			createNova(data.builder().location(loc).build());
 		}

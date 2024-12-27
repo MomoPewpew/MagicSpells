@@ -142,7 +142,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			float power = data.power();
 			String[] args = data.args();
 
-			Block b = getTargetedBlock(caster, power, args);
+			Block b = getTargetedBlock(data);
 			if (b != null && !BlockUtils.isAir(b.getType())) {
 				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 				EventUtil.call(event);

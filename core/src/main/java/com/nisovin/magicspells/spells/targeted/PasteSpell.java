@@ -279,7 +279,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Block target = pasteAtCaster ? data.caster().getLocation().getBlock() : getTargetedBlock(data.caster(), data.power());
+			Block target = pasteAtCaster ? data.caster().getLocation().getBlock() : getTargetedBlock(data);
 			if (target == null) return noTarget(data);
 			Location loc = target.getLocation();
 			boolean ok = castAtLocation(data.builder().location(loc).build());

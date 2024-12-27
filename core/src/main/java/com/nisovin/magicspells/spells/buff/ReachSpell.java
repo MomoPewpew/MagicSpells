@@ -103,7 +103,7 @@ public class ReachSpell extends BuffSpell {
 
 		// Get targeted block
 		Action action = event.getAction();
-		List<Block> targets = getLastTwoTargetedBlocks(player, data.power(), data.args());
+		List<Block> targets = getLastTwoTargetedBlocks(data);
 
 		Block airBlock;
 		Block targetBlock;

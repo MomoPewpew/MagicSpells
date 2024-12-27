@@ -35,7 +35,7 @@ public class VinesSpell extends TargetedSpell {
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			List<Block> target = getLastTwoTargetedBlocks(data.caster(), data.power(), data.args());
+			List<Block> target = getLastTwoTargetedBlocks(data);
 			if (target == null || target.size() != 2) return noTarget(data);
 			if (target.get(0).getType() != Material.AIR || !target.get(1).getType().isSolid()) return noTarget(data);
 

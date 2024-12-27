@@ -234,7 +234,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				} else if (pointBlank) {
 					locationTarget = data.caster().getLocation();
 				} else {
-					Block block = getTargetedBlock(data.caster(), data.power());
+					Block block = getTargetedBlock(data);
 
 					if (block != null) {
 						locationTarget = block.getLocation();

@@ -50,7 +50,7 @@ public class FillSpell extends TargetedSpell implements TargetedLocationSpell {
         if(castAtCaster){
             fillZone(caster, caster.getLocation());
         }else{
-            fillZone(caster, getTargetedBlock(caster, data.power(), data.args()).getLocation());
+            fillZone(caster, getTargetedBlock(data).getLocation());
         }
         return PostCastAction.ALREADY_HANDLED;
     }

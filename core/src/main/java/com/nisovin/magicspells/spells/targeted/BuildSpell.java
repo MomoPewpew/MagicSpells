@@ -84,7 +84,7 @@ public class BuildSpell extends TargetedSpell implements TargetedLocationSpell {
 
 			List<Block> lastBlocks;
 			try {
-				lastBlocks = getLastTwoTargetedBlocks(player, data.power(), data.args());
+				lastBlocks = getLastTwoTargetedBlocks(data);
 			} catch (IllegalStateException e) {
 				DebugHandler.debugIllegalState(e);
 				lastBlocks = null;

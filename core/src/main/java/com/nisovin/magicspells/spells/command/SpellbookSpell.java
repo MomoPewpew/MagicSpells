@@ -124,7 +124,7 @@ public class SpellbookSpell extends CommandSpell {
 				return PostCastAction.ALREADY_HANDLED;
 			}
 
-			Block target = getTargetedBlock(player, 10, args);
+			Block target = getTargetedBlock(data.builder().power(10).build());
 			if (target == null || !spellbookBlock.equals(target.getType())) {
 				sendMessage(strNoTarget, player, args);
 				return PostCastAction.ALREADY_HANDLED;

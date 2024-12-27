@@ -896,7 +896,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		debug(3, "    Power: " + power);
 		debug(3, "    Cooldown: " + cooldown);
 		if (MagicSpells.isDebug() && args != null && args.length > 0) debug(3, "    Args: {" + Util.arrayJoin(args, ',') + '}');
-		PostCastAction action = castSpell(state, new SpellData(caster, power, args));
+		PostCastAction action = castSpell(state, spellCast.getSpellData());
 		if (MagicSpells.hasProfilingEnabled()) {
 			Long total = MagicSpells.getProfilingTotalTime().get(profilingKey);
 			if (total == null) total = (long) 0;
@@ -927,11 +927,11 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			} else if (state == SpellCastState.ON_COOLDOWN) {
 				MagicSpells.sendMessageAndFormat(strOnCooldown, caster, spellCast.getSpellArgs(),
 					"%c", Math.round(getCooldown(caster)) + "", "%s", spellCast.getSpell().getName());
-				playSpellEffects(EffectPosition.COOLDOWN, caster, new SpellData(caster, spellCast.getPower(), spellCast.getSpellArgs()));
+				playSpellEffects(EffectPosition.COOLDOWN, caster, spellCast.getSpellData());
 				if (soundOnCooldown != null && caster instanceof Player player) player.playSound(caster.getLocation(), soundOnCooldown, 1F, 1F);
 			} else if (state == SpellCastState.MISSING_REAGENTS) {
 				MagicSpells.sendMessage(strMissingReagents, caster, spellCast.getSpellArgs());
-				playSpellEffects(EffectPosition.MISSING_REAGENTS, caster, new SpellData(caster, spellCast.getPower(), spellCast.getSpellArgs()));
+				playSpellEffects(EffectPosition.MISSING_REAGENTS, caster, spellCast.getSpellData());
 				if (MagicSpells.showStrCostOnMissingReagents() && strCost != null && !strCost.isEmpty()) MagicSpells.sendMessage("    (" + strCost + ')', caster, spellCast.getSpellArgs());
 				if (soundMissingReagents != null && caster instanceof Player player) player.playSound(caster.getLocation(), soundMissingReagents, 1F, 1F);
 			} else if (state == SpellCastState.CANT_CAST) {
@@ -943,7 +943,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			}
 		}
 
-		SpellCastedEvent event = new SpellCastedEvent(this, state, new SpellData(caster, spellCast.getPower(), spellCast.getSpellArgs()), cooldown, reagents, action);
+		SpellCastedEvent event = new SpellCastedEvent(this, state, spellCast.getSpellData(), cooldown, reagents, action);
 		EventUtil.call(event);
 	}
 
@@ -1208,13 +1208,9 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return effects;
 	}
 
-	protected int getRange(float power) {
-		return getRange(null, power, null);
-	}
-
-	protected int getRange(LivingEntity caster, float power, String[] args) {
-		int range = this.range.get(new SpellData(caster, power, args));
-		return spellPowerAffectsRange ? Math.round(range * power) : range;
+	protected int getRange(SpellData data) {
+		int range = this.range.get(data);
+		return spellPowerAffectsRange ? Math.round(range * data.power()) : range;
 	}
 
 	public int getCharges() {
@@ -1242,38 +1238,12 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	/**
 	 * Gets the player a player is currently looking at, ignoring other living entities
 	 *
-	 * @param livingEntity the living entity to get the target for
-	 * @return the targeted Player, or null if none was found
-	 */
-	protected TargetInfo<Player> getTargetedPlayer(LivingEntity livingEntity, float power) {
-		return getTargetedPlayer(new SpellData(livingEntity, power, null));
-	}
-
-	/**
-	 * Gets the player a player is currently looking at, ignoring other living entities
-	 *
 	 * @param data spell data
 	 * @return the targeted Player, or null if none was found
 	 */
 	protected TargetInfo<Player> getTargetedPlayer(SpellData data) {
 		TargetInfo<LivingEntity> info = getTargetedEntity(data, true, e -> e instanceof Player);
 		return new TargetInfo<>((Player) info.target(), info.spellData(), info.cancelled());
-	}
-
-	protected TargetInfo<Player> getTargetPlayer(LivingEntity caster, float power) {
-		return getTargetedPlayer(caster, power);
-	}
-
-	protected TargetInfo<LivingEntity> getTargetedEntity(LivingEntity caster, float power) {
-		return getTargetedEntity(new SpellData(caster, power, null), false, null);
-	}
-
-	protected TargetInfo<LivingEntity> getTargetedEntity(LivingEntity caster, float power, ValidTargetChecker checker) {
-		return getTargetedEntity(new SpellData(caster, power, null), false, checker);
-	}
-
-	protected TargetInfo<LivingEntity> getTargetedEntity(LivingEntity caster, float power, boolean forceTargetPlayers, ValidTargetChecker checker) {
-		return getTargetedEntity(new SpellData(caster, power, null), forceTargetPlayers, checker);
 	}
 
 	protected TargetInfo<LivingEntity> getTargetedEntity(SpellData data) {
@@ -1286,9 +1256,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	protected TargetInfo<LivingEntity> getTargetedEntity(SpellData data, boolean forceTargetPlayers, ValidTargetChecker checker) {
 		LivingEntity caster = data.caster();
-		Float power = data.power();
 
-		int currentRange = getRange(power);
+		int currentRange = getRange(data);
 		List<Entity> nearbyEntities = caster.getNearbyEntities(currentRange, currentRange, currentRange);
 
 		// Get valid targets
@@ -1409,7 +1378,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 					continue;
 				} else {
 					target = targetEvent.getTarget();
-					power = targetEvent.getPower();
 				}
 
 				// Call damage event
@@ -1430,20 +1398,12 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return new TargetInfo<>(null, data, false);
 	}
 
-	protected Block getTargetedBlock(LivingEntity entity, float power) {
-		return BlockUtils.getTargetBlock(this, entity, getRange(entity, power, null));
+	protected Block getTargetedBlock(SpellData data) {
+		return BlockUtils.getTargetBlock(this, data.caster(), getRange(data));
 	}
 
-	protected Block getTargetedBlock(LivingEntity entity, float power, String[] args) {
-		return BlockUtils.getTargetBlock(this, entity, getRange(entity, power, args));
-	}
-
-	protected List<Block> getLastTwoTargetedBlocks(LivingEntity entity, float power) {
-		return BlockUtils.getLastTwoTargetBlock(this, entity, getRange(entity, power, null));
-	}
-
-	protected List<Block> getLastTwoTargetedBlocks(LivingEntity entity, float power, String[] args) {
-		return BlockUtils.getLastTwoTargetBlock(this, entity, getRange(entity, power, args));
+	protected List<Block> getLastTwoTargetedBlocks(SpellData data) {
+		return BlockUtils.getLastTwoTargetBlock(this, data.caster(), getRange(data));
 	}
 
 	public Set<Material> getLosTransparentBlocks() {

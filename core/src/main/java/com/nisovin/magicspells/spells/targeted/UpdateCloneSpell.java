@@ -33,7 +33,7 @@ public class UpdateCloneSpell extends TargetedSpell implements TargetedLocationS
     @Override
     public PostCastAction castSpell(SpellCastState state, SpellData data) {
 
-        Block block = getTargetedBlock(data.caster(), data.power(), data.args());
+        Block block = getTargetedBlock(data);
 
         Collection<Entity> nearbyEntities = block.getLocation().getNearbyEntities(
                 maxX.get(data),

@@ -80,7 +80,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 			LivingEntity caster = data.caster();
 			float power = data.power();
 			String[] args = data.args();
-			List<Block> blocks = getLastTwoTargetedBlocks(caster, power, args);
+			List<Block> blocks = getLastTwoTargetedBlocks(data);
 			if (blocks.size() != 2) return noTarget(data);
 			if (!blocks.get(1).getType().isSolid()) return noTarget(data);
 

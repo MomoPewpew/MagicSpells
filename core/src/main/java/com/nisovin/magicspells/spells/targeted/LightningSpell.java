@@ -70,7 +70,7 @@ public class LightningSpell extends TargetedSpell implements TargetedLocationSpe
 				target = entityTarget.getLocation().getBlock();
 				if (additionalDamage > 0) entityTarget.damage(additionalDamage * data.power(), caster);
 			} else {
-				target = getTargetedBlock(caster, data.power(), args);
+				target = getTargetedBlock(data);
 				if (target == null) return noTarget(data);
 
 				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(target.getLocation()).build());

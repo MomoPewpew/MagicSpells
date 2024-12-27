@@ -61,7 +61,7 @@ public class PhaseSpell extends InstantSpell {
 			float power = data.power();
 			String[] args = data.args();
 
-			int r = getRange(caster, power, args);
+			int r = getRange(data);
 
 			int distance = maxDistance.get(data);
 			if (powerAffectsMaxDistance) distance = Math.round(distance * power);

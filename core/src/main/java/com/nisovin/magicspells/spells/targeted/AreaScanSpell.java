@@ -146,7 +146,7 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		if (state == SpellCastState.NORMAL) {
 			if (pointBlank) data = data.builder().location(data.caster().getLocation()).build();
 			else {
-				Block target = getTargetedBlock(data.caster(), data.power(), data.args());
+				Block target = getTargetedBlock(data);
 				if (target == null) return noTarget(data);
 
 				data = data.builder().location(target.getLocation()).build();

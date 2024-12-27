@@ -47,32 +47,28 @@ public class CustomDataFloat extends CustomData {
 		return invalidText;
 	}
 
-	public float get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return customData.get(new SpellData(caster, target, power, args));
-	}
-
 	public static float from(CustomData data, SpellData spellData) {
 		return ((CustomDataFloat) data).customData.get(spellData);
 	}
 
 	public static float from(CustomData data, SpellCastEvent event) {
-		return ((CustomDataFloat) data).get(event.getCaster(), null, event.getPower(), event.getSpellArgs());
+		return ((CustomDataFloat) data).customData.get(event.getSpellData());
 	}
 
 	public static float from(CustomData data, ManaChangeEvent event) {
-		return ((CustomDataFloat) data).get(event.getPlayer(), null, 1f, null);
+		return ((CustomDataFloat) data).customData.get(new SpellData(event.getPlayer()));
 	}
 
 	public static float from(CustomData data, SpellTargetEvent event) {
-		return ((CustomDataFloat) data).get(event.getCaster(), event.getTarget(), event.getPower(), event.getSpellArgs());
+		return ((CustomDataFloat) data).customData.get(event.getSpellData());
 	}
 
 	public static float from(CustomData data, SpellTargetLocationEvent event) {
-		return ((CustomDataFloat) data).get(event.getCaster(), null, event.getPower(), event.getSpellArgs());
+		return ((CustomDataFloat) data).customData.get(event.getSpellData());
 	}
 
 	public static float from(CustomData data, MagicSpellsGenericPlayerEvent event) {
-		return ((CustomDataFloat) data).get(event.getPlayer(), null, 1f, null);
+		return ((CustomDataFloat) data).customData.get(new SpellData(event.getPlayer()));
 	}
 
 }

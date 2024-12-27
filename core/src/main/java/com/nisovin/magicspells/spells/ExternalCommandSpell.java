@@ -112,8 +112,6 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
 
-			LivingEntity caster = data.caster();
-			String[] args = data.args();
 			if (data.target() == null || !(data.target() instanceof Player target)) return noTarget(data, targetInfo);
 
 			if (requirePlayerTarget) {
@@ -123,9 +121,7 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 			}
 
 			process(data);
-
-			if (target != null) sendMessages(caster, target, args);
-			else sendMessages(caster, args);
+			sendMessages(data);
 
 			return PostCastAction.NO_MESSAGES;
 		}

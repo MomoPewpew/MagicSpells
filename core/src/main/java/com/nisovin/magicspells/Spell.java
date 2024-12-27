@@ -921,8 +921,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			if (state == SpellCastState.NORMAL) {
 				if (action.setCooldown()) setCooldown(caster, spellCast.getCooldown());
 				if (action.chargeReagents()) removeReagents(caster, spellCast.getReagents());
-				if (action.sendMessages()) sendMessages(caster, spellCast.getSpellArgs());
-				if (action.sendMessages()) sendLog(caster, spellCast.getSpellArgs());
+				if (action.sendMessages()) sendMessages(spellCast.getSpellData());
+				if (action.sendMessages()) sendLog(spellCast.getSpellData());
 				if (experience > 0 && caster instanceof Player player) player.giveExp(experience);
 			} else if (state == SpellCastState.ON_COOLDOWN) {
 				MagicSpells.sendMessageAndFormat(strOnCooldown, caster, spellCast.getSpellArgs(),
@@ -948,14 +948,14 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	// TODO can this safely be made varargs?
-	public void sendMessages(LivingEntity caster, String[] args) {
-		sendMessage(strCastSelf, caster, args, "%a", caster.getName());
-		sendMessageNear(caster, strCastOthers, args, "%a", caster.getName());
+	public void sendMessages(SpellData data) {
+		sendMessage(strCastSelf, data.caster(), data.args(), "%a", data.caster().getName());
+		sendMessageNear(data.caster(), strCastOthers, data.args(), "%a", data.caster().getName());
 	}
 
-	public void sendLog(LivingEntity caster, String[] args) {
-		if (this.strCastConsole.get(new SpellData(caster, 0f, args)) == null) return;
-		log("Spell " + internalName + ": " + this.strCastConsole.get(new SpellData(caster, 0f, args)));
+	public void sendLog(SpellData data) {
+		if (this.strCastConsole.get(data) == null) return;
+		log("Spell " + internalName + ": " + this.strCastConsole.get(data));
 	}
 
 

@@ -58,7 +58,7 @@ public class LocationSpell extends InstantSpell {
 			data = data.location(loc);
 
 			if (spellToCast != null) spellToCast.subcast(data);
-			playSpellEffects(data.caster(), loc, data.power(), data.args());
+			playSpellEffects(data.caster(), loc, data);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}

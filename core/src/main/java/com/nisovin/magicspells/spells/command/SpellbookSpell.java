@@ -140,7 +140,7 @@ public class SpellbookSpell extends CommandSpell {
 
 			saveSpellbooks();
 			sendMessage(strCastSelf, player, args, "%s", spell.getName());
-			playSpellEffects(player, target.getLocation(), data.power(), args);
+			playSpellEffects(EffectPosition.CASTER, data);
 			return PostCastAction.NO_MESSAGES;
 		}
 		return PostCastAction.HANDLE_NORMALLY;

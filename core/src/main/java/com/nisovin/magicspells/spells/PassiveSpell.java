@@ -300,7 +300,7 @@ public class PassiveSpell extends Spell {
 
 				spell.subcast(data);
 				if (!spellEffectsDone) {
-					playSpellEffects(EffectPosition.CASTER, caster, power, null);
+					playSpellEffects(EffectPosition.CASTER, data);
 					spellEffectsDone = true;
 				}
 

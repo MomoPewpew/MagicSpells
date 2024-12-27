@@ -24,11 +24,11 @@ public class GlideSpell extends TargetedSpell implements TargetedEntitySpell{
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
 			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
-			LivingEntity target = targetInfo.target();
+			data = data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build();
 
-			target.setGliding(targetState.getBooleanState(target.isGliding()));
-			playSpellEffects(data.caster(), target, targetInfo.getPower(), data.args());
-			sendMessages(data.caster(), target, data.args());
+			data.target().setGliding(targetState.getBooleanState(data.target().isGliding()));
+			playSpellEffects(data);
+			sendMessages(data.caster(), data.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}

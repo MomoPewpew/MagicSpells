@@ -1419,15 +1419,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		playSpellEffects(caster, target, null);
 	}
 
-	protected void playSpellEffects(Entity caster, Entity target, float power, String[] args) {
-		SpellData data = new SpellData(caster instanceof LivingEntity le ? le : null, target instanceof LivingEntity le ? le : null, power, args);
-		playSpellEffects(caster, target, data);
-	}
-
-	protected void playSpellEffects(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		playSpellEffects(caster, target, new SpellData(caster, target, power, args));
-	}
-
 	protected void playSpellEffects(Entity caster, Entity target, SpellData data) {
 		playSpellEffects(EffectPosition.CASTER, caster, data);
 		playSpellEffects(EffectPosition.TARGET, target, data);
@@ -1439,20 +1430,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		playSpellEffects(caster, target, null);
 	}
 
-	protected void playSpellEffects(Entity caster, Location target, float power, String[] args) {
-		SpellData data = new SpellData(caster instanceof LivingEntity le ? le : null, power, args);
-		playSpellEffects(caster, target, data);
-	}
-
 	protected void playSpellEffects(Entity caster, Location target, SpellData data) {
 		playSpellEffects(EffectPosition.CASTER, caster, data);
 		playSpellEffects(EffectPosition.TARGET, target, data);
 		playSpellEffectsTrail(caster.getLocation(), target, data);
-	}
-
-	protected void playSpellEffects(Entity caster, Location from, Entity target, float power, String[] args) {
-		SpellData data = new SpellData(caster instanceof LivingEntity le ? le : null, target instanceof LivingEntity le ? le : null, power, args);
-		playSpellEffects(caster, from, target, data);
 	}
 
 	protected void playSpellEffects(Entity caster, Location from, Entity target, SpellData data) {
@@ -1472,12 +1453,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		playSpellEffects(data.location(), data.target(), data);
 	}
 
-
-	protected void playSpellEffects(Location from, Entity target, float power, String[] args) {
-		SpellData data = new SpellData(null, target instanceof LivingEntity le ? le : null, power, args);
-		playSpellEffects(from, target, data);
-	}
-
 	protected void playSpellEffects(Location from, Entity target, SpellData data) {
 		playSpellEffects(EffectPosition.START_POSITION, from, data);
 		playSpellEffects(EffectPosition.END_POSITION, target, data);
@@ -1488,10 +1463,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	@Deprecated
 	protected void playSpellEffects(Location startLoc, Location endLoc) {
 		playSpellEffects(startLoc, endLoc, null);
-	}
-
-	protected void playSpellEffects(Location startLoc, Location endLoc, float power, String[] args) {
-		playSpellEffects(startLoc, endLoc, new SpellData(null, (LivingEntity) null, power, args));
 	}
 
 	protected void playSpellEffects(Location startLoc, Location endLoc, SpellData data) {
@@ -1507,18 +1478,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		playSpellEffects(pos, entity, null);
 	}
 
-	protected void playSpellEffects(EffectPosition pos, Entity entity, float power, String[] args) {
-		LivingEntity caster = pos == EffectPosition.CASTER && entity instanceof LivingEntity le ? le : null;
-		LivingEntity target = pos == EffectPosition.TARGET && entity instanceof LivingEntity le ? le : null;
+	protected void playSpellEffects(EffectPosition pos, SpellData data) {
+		data = data.builder().caster(pos == EffectPosition.CASTER ? data.caster() : null).target(pos == EffectPosition.TARGET ? data.target() : null).build();
 
-		playSpellEffects(pos, entity, new SpellData(caster, target, power, args));
-	}
-
-	protected void playSpellEffects(EffectPosition pos, LivingEntity entity, float power, String[] args) {
-		LivingEntity caster = pos == EffectPosition.CASTER ? entity : null;
-		LivingEntity target = pos == EffectPosition.TARGET ? entity : null;
-
-		playSpellEffects(pos, entity, new SpellData(caster, target, power, args));
+		playSpellEffects(pos, data.caster(), data);
 	}
 
 	protected void playSpellEffects(EffectPosition pos, Entity entity, SpellData data) {
@@ -1545,10 +1508,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	@Deprecated
 	protected void playSpellEffects(EffectPosition pos, Location location) {
 		playSpellEffects(pos, location, null);
-	}
-
-	protected void playSpellEffects(EffectPosition pos, Location location, float power, String[] args) {
-		playSpellEffects(pos, location, new SpellData(null, (LivingEntity) null, power, args));
 	}
 
 	protected void playSpellEffects(EffectPosition pos, Location location, SpellData data) {

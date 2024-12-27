@@ -114,7 +114,7 @@ public final class MultiSpell extends InstantSpell {
 					action.getSpell().subcast(data);
 				}
 			}
-			playSpellEffects(EffectPosition.CASTER, data.caster(), data.power(), data.args());
+			playSpellEffects(EffectPosition.CASTER, data);
 		}
 		return Spell.PostCastAction.HANDLE_NORMALLY;
 	}

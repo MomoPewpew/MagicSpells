@@ -107,10 +107,10 @@ public class ForgetSpell extends CommandSpell {
 				if (!player.equals(target)) {
 					sendMessage(strCastTarget, target, args, "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
 					sendMessage(strCastSelf, player, args, "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
-					playSpellEffects(player, target, power, args);
+					playSpellEffects(data.builder().caster(player).target(target).power(power).build());
 				} else {
 					sendMessage(strCastSelfTarget, player, args, "%s", spell.getName());
-					playSpellEffects(EffectPosition.CASTER, player, power, args);
+					playSpellEffects(EffectPosition.CASTER, data);
 				}
 				return PostCastAction.NO_MESSAGES;
 			}
@@ -120,10 +120,10 @@ public class ForgetSpell extends CommandSpell {
 
 			if (!player.equals(target)) {
 				sendMessage(strResetTarget, player, args, "%t", targetDisplayName);
-				playSpellEffects(player, target, power, args);
+				playSpellEffects(data.builder().caster(player).target(target).power(power).build());
 			} else {
 				sendMessage(strResetSelf, player, args);
-				playSpellEffects(EffectPosition.CASTER, player, power, args);
+				playSpellEffects(EffectPosition.CASTER, data);
 			}
 			return PostCastAction.NO_MESSAGES;
 		}

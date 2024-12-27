@@ -38,11 +38,11 @@ public class FlySpell extends TargetedSpell implements TargetedEntitySpell {
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
 			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
-			Player target = targetInfo.target();
+			data = data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build();
 
-			setFlyingState(target);
-			playSpellEffects(data.caster(), target, targetInfo.getPower(), data.args());
-			sendMessages(data.caster(), target, data.args());
+			setFlyingState((Player) data.target());
+			playSpellEffects(data);
+			sendMessages(data.caster(), data.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}

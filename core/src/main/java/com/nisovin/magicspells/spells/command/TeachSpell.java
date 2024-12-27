@@ -94,7 +94,7 @@ public class TeachSpell extends CommandSpell {
 			sendMessage(spell.getStrOnTeach() == null ? strCastTarget : spell.getStrOnTeach(), target, args, "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
 			sendMessage(strCastSelf, player, args, "%a", playerDisplayName, "%s", spell.getName(), "%t", targetDisplayName);
 
-			playSpellEffects(player, target, data.power(), args);
+			playSpellEffects(data);
 			return PostCastAction.NO_MESSAGES;
 		}
 		return PostCastAction.HANDLE_NORMALLY;

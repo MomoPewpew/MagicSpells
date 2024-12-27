@@ -139,8 +139,6 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
 			LivingEntity caster = data.caster();
-			float power = data.power();
-			String[] args = data.args();
 
 			Block b = getTargetedBlock(data);
 			if (b != null && !BlockUtils.isAir(b.getType())) {
@@ -154,7 +152,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			if (b != null && !BlockUtils.isAir(b.getType())) {
 				Location loc = b.getLocation().add(0.5, 0.5, 0.5);
 				doIt(data.builder().location(caster.getLocation()).build(), data.target().getLocation());
-				playSpellEffects(caster, loc, power, args);
+				playSpellEffects(caster, loc, data);
 			}
 		}
 		return PostCastAction.HANDLE_NORMALLY;

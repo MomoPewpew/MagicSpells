@@ -136,9 +136,9 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 				spellToCast.subcast(data.builder().target(targets.get(i)).location(from).power(targetPowers.get(i)).build());
 
-				data = new SpellData(caster, targets.get(i), targetPowers.get(i), args);
-				if (i > 0) playSpellEffectsTrail(targets.get(i - 1).getLocation(), targets.get(i).getLocation(), data);
-				else if (caster != null) playSpellEffectsTrail(caster.getLocation(), targets.get(i).getLocation(), data);
+				SpellData data_ = data.builder().target(targets.get(i)).location(from).power(targetPowers.get(i)).args(args).build();
+				if (i > 0) playSpellEffectsTrail(targets.get(i - 1).getLocation(), targets.get(i).getLocation(), data_);
+				else if (caster != null) playSpellEffectsTrail(caster.getLocation(), targets.get(i).getLocation(), data_);
 				playSpellEffects(EffectPosition.TARGET, targets.get(i), data);
 			}
 		} else new ChainBouncer(data, targets, targetPowers, interval);

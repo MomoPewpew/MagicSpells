@@ -361,7 +361,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 				immune.add(event.getTarget());
 				if (entitySpell != null) entitySpell.subcast(data.builder().target(event.getTarget()).build());
 
-				SpellData data = new SpellData(caster, event.getTarget(), event.getPower(), args);
+				data = data.builder().target(event.getTarget()).power(event.getPower()).args(args).build();
 				playSpellEffects(EffectPosition.TARGET, event.getTarget(), data);
 				playSpellEffectsTrail(targetLoc, event.getTarget().getLocation(), data);
 

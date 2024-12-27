@@ -245,7 +245,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 					power = info.getPower();
 				}
 			} else if (requireLocationTarget) {
-				Block block = getTargetedBlock(data);
+				Block block = getTargetedBlock(player, power, args);
 				if (block == null || BlockUtils.isAir(block.getType())) return noTarget(data);
 
 				locTarget = block.getLocation();
@@ -335,7 +335,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		menuData.put(opener.getUniqueId(), mData);
 
 		Inventory inv = Bukkit.createInventory(opener, size, Component.text(internalName));
-		applyOptionsToInventory(opener, inv, data.args(), mData);
+		applyOptionsToInventory(opener, inv, mData);
 		opener.openInventory(inv);
 		Util.setInventoryTitle(opener, title);
 
@@ -348,7 +348,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		if (data.location() != null) playSpellEffects(EffectPosition.TARGET, data.location(), data);
 	}
 
-	private void applyOptionsToInventory(Player opener, Inventory inv, String[] args, MenuData mData) {
+	private void applyOptionsToInventory(Player opener, Inventory inv, MenuData mData) {
 		Map<Integer, ItemStack> itemStacks = new HashMap<>();
 
 		// Setup option items.
@@ -360,7 +360,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				if (event.isCancelled()) continue;
 			}
 			// Select and finalise item to display.
-			SpellData spellData = new SpellData(opener, 0f, args);
+			SpellData spellData = mData.spellData.builder().caster(opener).power(0f).build();
 			ItemStack itemData = null;
 			if (option.itemSection != null) {
 				MagicItem magicItem = MagicItems.getMagicItemFromSection(option.itemSection.get(spellData));
@@ -500,7 +500,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		boolean success;
 
 		if (sdata.target() != null || sdata.location() != null) success = spell.subcast(sdata);
-		else if (bypassNormalCast) success = spell.subcast(new SpellData(player, sdata.power()));
+		else if (bypassNormalCast) success = spell.subcast(sdata.builder().caster(player).build());
 		else {
 			SpellCastResult result = spell.getSpell().cast(sdata);
 			success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);

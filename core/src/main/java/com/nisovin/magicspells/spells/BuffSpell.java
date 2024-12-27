@@ -86,6 +86,8 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	protected Subspell spellOnCost;
 	protected Subspell spellOnUseIncrement;
 
+	protected SpellData data;
+
 	public BuffSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -123,6 +125,8 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		spellOnEndName = getConfigString("spell-on-end", "");
 		spellOnCostName = getConfigString("spell-on-cost", "");
 		spellOnUseIncrementName = getConfigString("spell-on-use-increment", "");
+
+		data = null;
 
 		filter = getConfigSpellFilter();
 
@@ -194,6 +198,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	}
 
 	private PostCastAction activate(SpellData data, boolean normal) {
+		this.data = data.builder().build();
 		if (isActive(data.target()) && toggle) {
 			turnOff(data.target());
 			return PostCastAction.ALREADY_HANDLED;
@@ -303,7 +308,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	 */
 	protected int addUse(LivingEntity entity) {
 		// Run spell on use increment first thing in case we want to intervene
-		if (spellOnUseIncrement != null) spellOnUseIncrement.subcast(new SpellData(entity));
+		if (spellOnUseIncrement != null) spellOnUseIncrement.subcast(data.builder().caster(entity).build());
 
 		if (numUses > 0 || (reagents != null && useCostInterval > 0)) {
 
@@ -329,7 +334,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 	 */
 	protected boolean chargeUseCost(LivingEntity entity) {
 		// Run spell on cost first thing to dodge the early returns and allow intervention
-		if (spellOnCost != null) spellOnCost.subcast(new SpellData(entity));
+		if (spellOnCost != null) spellOnCost.subcast(data.builder().caster(entity).build());
 
 		if (reagents == null) return true;
 		if (useCostInterval <= 0) return true;
@@ -378,11 +383,11 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		if (manager != null) manager.removeBuff(entity, this);
 
 		turnOffBuff(entity);
-		playSpellEffects(EffectPosition.DISABLED, entity, new SpellData(entity));
+		playSpellEffects(EffectPosition.DISABLED, entity, data);
 		cancelEffects(EffectPosition.CASTER, entity.getUniqueId().toString());
 		stopEffects(entity);
 
-		if (spellOnEnd != null) spellOnEnd.subcast(new SpellData(endSpellFromTarget ? entity : getLastCaster(entity)));
+		if (spellOnEnd != null) spellOnEnd.subcast(data.builder().target(endSpellFromTarget ? entity : getLastCaster(entity)).build());
 		sendMessage(strFade, entity, null);
 
 		lastCaster.remove(entity.getUniqueId());

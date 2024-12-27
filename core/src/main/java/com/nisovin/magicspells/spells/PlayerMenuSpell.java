@@ -162,12 +162,12 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		return item;
 	}
 
-	private void openDelay(LivingEntity caster, Player opener, float power, String[] args) {
-		MenuData data = new MenuData(new SpellData(caster, opener, power, args), 0);
-		menuData.put(opener.getUniqueId(), data);
+	private void openDelay(SpellData data, Player opener) {
+		MenuData mdata = new MenuData(data.builder().target(opener).build(), 0);
+		menuData.put(opener.getUniqueId(), mdata);
 
-		if (delay > 0) MagicSpells.scheduleDelayedTask(() -> open(opener, data), delay);
-		else open(opener, data);
+		if (delay > 0) MagicSpells.scheduleDelayedTask(() -> open(opener, mdata), delay);
+		else open(opener, mdata);
 	}
 
 	private Component translate(Player opener, Player target, String string, String[] args) {

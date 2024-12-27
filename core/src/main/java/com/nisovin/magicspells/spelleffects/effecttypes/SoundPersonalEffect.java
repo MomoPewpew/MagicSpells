@@ -46,7 +46,7 @@ public class SoundPersonalEffect extends SoundEffect {
 
 		Player target = getTarget(entity, data);
 		if (target != null) {
-			if (useListenerAsTarget && data != null) data = new SpellData(data.caster(), target, data.power(), data.args());
+			if (useListenerAsTarget && data != null) data = data.builder().target(target).build();
 			target.playSound(applyOffsets(entity.getLocation(), data), sound.get(data), category.get(data), volume.get(data), pitch.get(data));
 		}
 

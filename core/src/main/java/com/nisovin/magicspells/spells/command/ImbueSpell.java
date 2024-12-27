@@ -140,7 +140,7 @@ public class ImbueSpell extends CommandSpell {
 			}
 			
 			if (chargeReagentsForSpellPerUse && !Perm.NO_REAGENTS.has(player)) {
-				SpellReagents reagents = spell.getReagentsPreCast(player, data.power(), args).multiply(uses);
+				SpellReagents reagents = spell.getReagentsPreCast(data).multiply(uses);
 				if (!hasReagents(player, reagents)) {
 					sendMessage(strMissingReagents, player, args);
 					return PostCastAction.ALREADY_HANDLED;

@@ -1951,8 +1951,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return reagents;
 	}
 
-	public SpellReagents getReagentsPreCast(LivingEntity livingEntity, float power, String[] args) {
-		reagentsList = this.reagentsData.get(new SpellData(livingEntity, power, args));
+	public SpellReagents getReagentsPreCast(SpellData data) {
+		reagentsList = this.reagentsData.get(data);
 		if (reagentsList == null) reagentsList = new ArrayList<>();
 		reagents = SpellReagents.fromList(reagentsList, internalName);
 		return reagents;

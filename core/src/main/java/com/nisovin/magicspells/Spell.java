@@ -833,18 +833,17 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return new SpellCastResult(spellCast.getSpellCastState(), action);
 	}
 
-	protected SpellCastState getCastState(LivingEntity livingEntity) {
-		if (livingEntity instanceof Player && !MagicSpells.getSpellbook((Player) livingEntity).canCast(this)) return SpellCastState.CANT_CAST;
-		if (worldRestrictions != null && !worldRestrictions.contains(livingEntity.getWorld().getName())) return SpellCastState.WRONG_WORLD;
-		if (MagicSpells.getNoMagicZoneManager() != null && MagicSpells.getNoMagicZoneManager().willFizzle(livingEntity, this)) return SpellCastState.NO_MAGIC_ZONE;
-		if (onCooldown(livingEntity)) return SpellCastState.ON_COOLDOWN;
+	protected SpellCastState getCastState(SpellData data) {
+		if (data.caster() instanceof Player && !MagicSpells.getSpellbook((Player) data.caster()).canCast(this)) return SpellCastState.CANT_CAST;
+		if (worldRestrictions != null && !worldRestrictions.contains(data.caster().getWorld().getName())) return SpellCastState.WRONG_WORLD;
+		if (MagicSpells.getNoMagicZoneManager() != null && MagicSpells.getNoMagicZoneManager().willFizzle(data.caster(), this)) return SpellCastState.NO_MAGIC_ZONE;
+		if (onCooldown(data.caster())) return SpellCastState.ON_COOLDOWN;
 		if (reagents == null) {
-			SpellData spellData = new SpellData(livingEntity);
-			reagentsList = this.reagentsData.get(spellData);
+			reagentsList = this.reagentsData.get(data);
 			if (reagentsList == null) reagentsList = new ArrayList<>();
 			reagents = SpellReagents.fromList(reagentsList, internalName);
 		}
-		if (!hasReagents(livingEntity)) return SpellCastState.MISSING_REAGENTS;
+		if (!hasReagents(data.caster())) return SpellCastState.MISSING_REAGENTS;
 		return SpellCastState.NORMAL;
 	}
 
@@ -858,7 +857,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		reagents = SpellReagents.fromList(reagentsList, internalName);
 
 		// Get spell state
-		SpellCastState state = getCastState(data.caster());
+		SpellCastState state = getCastState(data);
 		debug(2, "    Spell cast state: " + state);
 
 		// Call events
@@ -2240,7 +2239,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				if (!interruptOnMove || inBounds(caster.getLocation())) {
 					unregisterEvents(this);
 
-					spellCast.setSpellCastState(getCastState(caster));
+					spellCast.setSpellCastState(getCastState(spellCast.getSpellData()));
 					spellCast.getSpell().handleCast(spellCast);
 				} else interrupt();
 
@@ -2331,7 +2330,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 					if (elapsed >= castTime) {
 						end();
 
-						spellCast.setSpellCastState(getCastState(caster));
+						spellCast.setSpellCastState(getCastState(spellCast.getSpellData()));
 						spellCast.getSpell().handleCast(spellCast);
 					}
 

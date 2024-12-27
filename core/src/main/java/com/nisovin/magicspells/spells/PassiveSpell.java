@@ -220,7 +220,7 @@ public class PassiveSpell extends Spell {
 		float power = data.power();
 
 		if (!triggerList.canTarget(caster, true)) return false;
-		SpellCastState state = getCastState(caster);
+		SpellCastState state = getCastState(data);
 		if (caster instanceof Player) {
 			MagicSpells.debug(3, "Activating passive spell '" + name + "' for player " + caster.getName() + " (state: " + state + ')');
 		} else {

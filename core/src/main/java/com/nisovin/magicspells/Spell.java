@@ -2213,7 +2213,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			unregisterEvents(this);
 
 			sendMessage(strInterrupted, caster, null);
-			if (spellOnInterrupt != null) spellOnInterrupt.subcast(new SpellData(caster, caster.getLocation(), spellCast.getPower(), spellCast.getSpellArgs()));
+			if (spellOnInterrupt != null) spellOnInterrupt.subcast(spellCast.getSpellData());
 			MagicSpells.plugin.delayedSpellCasts.remove(caster.getUniqueId());
 		}
 
@@ -2262,7 +2262,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		protected void interrupt() {
 			sendMessage(strInterrupted, caster, null);
 			end();
-			if (spellOnInterrupt != null) spellOnInterrupt.subcast(new SpellData(caster, caster.getLocation(), spellCast.getPower(), spellCast.getSpellArgs()));
+			if (spellOnInterrupt != null) spellOnInterrupt.subcast(spellCast.getSpellData());
 		}
 
 		private void end() {

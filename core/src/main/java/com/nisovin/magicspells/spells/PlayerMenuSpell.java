@@ -125,9 +125,9 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		if (state == SpellCastState.NORMAL && data.caster() instanceof Player) {
 			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
 			if (targetInfo.noTarget()) return noTarget(data, targetInfo);
-			Player target = targetInfo.target();
+			data = data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build();
 
-			openDelay(data.caster(), target, data.power(), data.args());
+			openDelay(data, targetInfo.target());
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
@@ -136,7 +136,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 	@Override
 	public boolean castAtEntity(SpellData data) {
 		if (!(data.target() instanceof Player player) || !validTargetList.canTarget(data.caster(), data.target())) return false;
-		openDelay(data.caster(), player, data.power(), data.args());
+		openDelay(data, player);
 		return true;
 	}
 
@@ -145,7 +145,7 @@ public class PlayerMenuSpell extends TargetedSpell implements TargetedEntitySpel
 		if (args.length < 1) return false;
 		Player player = Bukkit.getPlayer(args[0]);
 		if (player == null) return false;
-		openDelay(null, player, 1, null);
+		openDelay(new SpellData(null, player, 1, args), player);
 		return true;
 	}
 

@@ -245,7 +245,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 					power = info.getPower();
 				}
 			} else if (requireLocationTarget) {
-				Block block = getTargetedBlock(player, power, args);
+				Block block = getTargetedBlock(data);
 				if (block == null || BlockUtils.isAir(block.getType())) return noTarget(data);
 
 				locTarget = block.getLocation();
@@ -380,7 +380,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 			ItemStack item = (option.item != null ? option.item : option.items.get(Util.getRandomInt(option.items.size()))).clone();
 			DataUtil.setString(item, "menuOption", option.menuOptionName);
-			item = translateItem(opener, args, item);
+			item = translateItem(opener, mData.spellData().args(), item);
 
 			int quantity;
 			Variable variable = MagicSpells.getVariableManager().getVariable(option.quantity);
@@ -397,7 +397,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			}
 		}
 		// Fill inventory.
-		ItemStack fillerItem = (filler == null) ? null : translateItem(opener, args, filler);
+		ItemStack fillerItem = (filler == null) ? null : translateItem(opener, mData.spellData().args(), filler);
 		for (int i = 0; i < inv.getSize(); i++) {
 			if (inv.getItem(i) != null) continue;
 
@@ -462,7 +462,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		// Reopen.
 		menuData.put(id, mData);
 		Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(), Component.text(internalName));
-		applyOptionsToInventory(player, newInv, new String[0], mData);
+		applyOptionsToInventory(player, newInv, mData);
 		player.openInventory(newInv);
 		Util.setInventoryTitle(player, title);
 	}

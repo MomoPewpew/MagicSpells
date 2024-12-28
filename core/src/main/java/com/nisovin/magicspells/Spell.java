@@ -889,7 +889,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	// DEBUG INFO: level 3, args argsvalue
 	PostCastAction handleCast(SpellCastEvent spellCast) {
 		long start = System.nanoTime();
-		LivingEntity caster = spellCast.getCaster();
 		SpellCastState state = spellCast.getSpellCastState();
 		String[] args = spellCast.getSpellArgs();
 		float power = spellCast.getPower();

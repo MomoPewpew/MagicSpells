@@ -266,7 +266,7 @@ public abstract class SpellEffect {
 	}
 
 	protected Runnable playEffectEntity(Entity entity, SpellData data) {
-		return playEffectLocationReal(entity == null ? null : entity.getLocation(), data);
+		return playEffectLocationReal(entity == null ? data.location() : entity.getLocation(), data);
 	}
 
 	/**

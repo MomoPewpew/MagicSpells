@@ -1456,7 +1456,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		playSpellEffects(EffectPosition.START_POSITION, from, data);
 		playSpellEffects(EffectPosition.END_POSITION, target, data);
 		playSpellEffects(EffectPosition.TARGET, target, data);
-		playSpellEffectsTrail(from, target.getLocation(), data);
+		if (target != null) playSpellEffectsTrail(from, target.getLocation(), data);
 	}
 
 	@Deprecated

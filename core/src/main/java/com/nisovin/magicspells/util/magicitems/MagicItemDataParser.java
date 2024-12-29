@@ -423,6 +423,19 @@ public class MagicItemDataParser {
 
 							if (!fireworkEffects.isEmpty()) data.setAttribute(FIREWORK_EFFECTS, fireworkEffects);
 							break;
+						case "pdc":
+						case "persistent-data":
+						case "persistent_data":
+							if (!value.isJsonArray()) continue;
+
+							List<String> pdcList = new ArrayList<>();
+							JsonArray pdcArray = value.getAsJsonArray();
+							for (JsonElement line : pdcArray) {
+								pdcList.add(line.getAsString());
+							}
+
+							if (!pdcList.isEmpty()) data.setAttribute(PERSISTENT_DATA, pdcList);
+							break;
 						case "ignoredattributes":
 						case "ignored-attributes":
 						case "ignored_attributes":

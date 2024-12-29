@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.io.FileWriter;
 import java.util.regex.Pattern;
 
+import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 import com.nisovin.magicspells.util.managers.OfflineVariableManager;
 import com.nisovin.magicspells.util.managers.VariableManager;
 import org.bukkit.*;
@@ -667,6 +668,14 @@ public class MagicCommand extends BaseCommand {
 		MagicSpells.setDebug(!MagicSpells.isDebug());
 
 		issuer.sendMessage(MagicSpells.getTextColor() + "MagicSpells debug mode " + (MagicSpells.isDebug() ? "enabled (level: " + levelFinal + ")" : "disabled") + ".");
+	}
+
+	@Subcommand("updatetest")
+	@Description("FOR TESTING.")
+	public void onUpdate(CommandIssuer issuer) {
+		if (!MagicSpells.isLoaded()) return;
+
+		MagicItemUpdater.updateTest();
 	}
 
 	@Subcommand("magicxp")

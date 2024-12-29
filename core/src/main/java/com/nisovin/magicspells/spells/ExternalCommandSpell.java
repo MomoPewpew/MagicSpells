@@ -110,17 +110,15 @@ public class ExternalCommandSpell extends TargetedSpell implements TargetedEntit
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<Player> targetInfo = getTargetedPlayer(data);
-
-			if (data.target() == null || !(data.target() instanceof Player target)) return noTarget(data, targetInfo);
-
 			if (requirePlayerTarget) {
+				TargetInfo<Player> targetInfo = getTargetedPlayer(data);
 				if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
 				data = data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build();
 			}
 
 			process(data);
+
 			sendMessages(data);
 
 			return PostCastAction.NO_MESSAGES;

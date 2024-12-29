@@ -221,45 +221,35 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			LivingEntity entityTarget = null;
-			Location locationTarget = null;
-
 			if (targeted) {
 				if (requireEntityTarget) {
 					TargetInfo<LivingEntity> info = getTargetedEntity(data);
 					if (info.noTarget()) return noTarget(data, info);
 
-					entityTarget = info.target();
-					data = data.builder().power(info.getPower()).build();
+					data = data.builder().target(info.target()).power(info.getPower()).build();
 				} else if (pointBlank) {
-					locationTarget = data.caster().getLocation();
+					data = data.builder().location(data.caster().getLocation()).build();
 				} else {
 					Block block = getTargetedBlock(data);
 
 					if (block != null) {
-						locationTarget = block.getLocation();
-						locationTarget.add(0.5, yOffset + 0.5, 0.5);
+						data = data.builder().location(block.getLocation().clone().add(0.5, yOffset + 0.5, 0.5)).build();
 
-						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data.builder().location(locationTarget).build());
+						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 						if (!event.callEvent()) return noTarget(data);
 
-						locationTarget = event.getTargetLocation();
-						data = data.builder().power(event.getPower()).build();
+						data = data.builder().location(event.getTargetLocation()).power(event.getPower()).build();
 					}
 				}
 
-				if (entityTarget == null && locationTarget == null) return noTarget(data);
+				if (data.target() == null && data.location() == null) return noTarget(data);
 			}
 
-			initLoop(data.builder()
-				.target(entityTarget)
-				.location(locationTarget)
-				.build());
+			initLoop(data);
 
-			if (entityTarget != null) {
-				sendMessages(data.caster(), entityTarget, data.args());
-				return PostCastAction.NO_MESSAGES;
-			}
+			sendMessages(data);
+
+			return PostCastAction.NO_MESSAGES;
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
@@ -322,6 +312,7 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		private boolean cancelled;
 
 		private Loop(SpellData data) {
+			this.data = data;
 			iterations = LoopSpell.this.iterations.get(data);
 
 			long interval = LoopSpell.this.interval.get(data);

@@ -236,7 +236,7 @@ public class Subspell {
 	}
 
 	public boolean subcast(SpellData data, boolean passTargeting, boolean useTargetForLocation) {
-		data = data.builder().build();
+		data = data.builder().target(data.target() == null ? data.caster() : data.target()).build();
 
 		if (invert) data.invert();
 

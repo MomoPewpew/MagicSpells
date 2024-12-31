@@ -11,7 +11,6 @@ import java.util.Collection;
 
 import com.google.common.collect.Multimap;
 
-import com.nisovin.magicspells.MagicSpells;
 import net.kyori.adventure.text.Component;
 
 import org.bukkit.*;
@@ -226,7 +225,6 @@ public class MagicItemData {
 					return true;
 				}
 				case MAGIC_ITEM_NAME -> {
-					MagicSpells.error("MAGIC_ITEM_NAME " + checkItemPersistentData());
 					if (checkItemPersistentData()) continue;
 					if (!itemAttributes.get(attr).equals(data.itemAttributes.get(attr))) return false;
 				}

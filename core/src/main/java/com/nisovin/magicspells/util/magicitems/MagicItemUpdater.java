@@ -1,15 +1,11 @@
 package com.nisovin.magicspells.util.magicitems;
 
-import com.Zrips.CMI.CMI;
-
-import com.Zrips.CMI.Containers.CMIUser;
-import com.nisovin.magicspells.MagicSpells;
-
-import com.nisovin.magicspells.spells.instant.ConjureSpell;
-import com.nisovin.magicspells.util.compat.CompatBasics;
-import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
-import net.sneakymouse.sneakyvaults.SneakyVaults;
-import net.sneakymouse.sneakyvaults.utlitiy.ChatUtility;
+import java.io.File;
+import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 import org.bukkit.Chunk;
 import org.bukkit.World;
@@ -32,13 +28,18 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.configuration.file.YamlConfiguration;
-import net.sneakycharactermanager.paper.SneakyCharacterManager;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.Zrips.CMI.CMI;
+import com.Zrips.CMI.Containers.CMIUser;
+
+import net.sneakymouse.sneakyvaults.SneakyVaults;
+import net.sneakymouse.sneakyvaults.utlitiy.ChatUtility;
+
+import net.sneakycharactermanager.paper.SneakyCharacterManager;
+import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
+
+import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.compat.CompatBasics;
 
 import static com.nisovin.magicspells.MagicSpells.setCheckItemPersistentData;
 import static com.nisovin.magicspells.util.magicitems.MagicItems.getMagicItems;
@@ -47,15 +48,119 @@ public class MagicItemUpdater {
     // This file is my own person nightmare of not knowing how multi-threading works
     // There is a chance that this may crash if you have too many players, characters, or vaults
 
-    // TODO: ADD ENDERCHEST SUPPORT
-
-    private static MagicItemUpdater.PersistentDataUpdater persistentDataUpdater = null;
+    private static final MagicItemUpdater.PersistentDataUpdater persistentDataUpdater = null;
 
     private static final Map<String, MagicItem> magicItems = getMagicItems();
     private static final Map<String, MagicItemData> magicItemsCache = new HashMap<>();
     private static final NamespacedKey NAME_KEY = new NamespacedKey(MagicSpells.getInstance(), "magicitem");
 
-    public static void updateTest() {
+    // Active updating of items on login/inventory open
+    public static class PersistentDataUpdater implements Listener {
+        private static CharacterPersistentDataUpdater characterPersistentDataUpdater  = null;
+
+        @EventHandler(ignoreCancelled = true)
+        public void onJoin(PlayerJoinEvent event) {
+            MagicSpells.error("OnJoin");
+            joinOrLoadCharacter(event.getPlayer());
+        }
+
+        private void joinOrLoadCharacter(Player player) {
+            PlayerInventory inv = player.getInventory();
+            updateInventory(inv);
+            ItemStack[] armor = inv.getArmorContents();
+            updateInventory(armor);
+            inv.setArmorContents(armor);
+        }
+
+        @EventHandler(priority = EventPriority.LOWEST)
+        public void onInvOpen(InventoryOpenEvent event) {
+            MagicSpells.error("OnInvOpen");
+            updateInventory(event.getInventory());
+        }
+
+        public PersistentDataUpdater() {
+            MagicSpells.registerEvents(this);
+
+            if (CompatBasics.pluginEnabled("SneakyCharacterManager")) {
+                characterPersistentDataUpdater = new CharacterPersistentDataUpdater();
+            }
+        }
+
+        private void updateInventory(Inventory inv) {
+            ItemStack[] contents = inv.getContents();
+            updateInventory(contents);
+            inv.setContents(contents);
+        }
+
+        private void updateInventory(ItemStack[] items) {
+            if (items == null) return;
+            for (int i = 0; i < items.length; i++) {
+                ItemStack itemStack = items[i];
+                if (itemStack == null) continue;
+
+                ItemMeta meta = itemStack.getItemMeta();
+                if (meta == null) continue;
+
+                PersistentDataContainer container = meta.getPersistentDataContainer();
+
+                String magicitemName = null;
+
+                if (container.has(NAME_KEY, PersistentDataType.STRING)) {
+                    magicitemName = container.get(NAME_KEY, PersistentDataType.STRING);
+                }
+
+                if (magicitemName != null && magicItems.containsKey(magicitemName)) {
+                    MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(itemStack);
+                    MagicItemData magicItemData = MagicItems.getMagicItemDataByInternalName(magicitemName);
+
+                    if (magicItemData == null || stackData == null) continue;
+                    if (magicItemData.matches(stackData)) continue;
+
+                    items[i] = updateItem(itemStack, magicItems.get(magicitemName));
+                }
+            }
+        }
+    }
+
+    private static class CharacterPersistentDataUpdater implements Listener {
+
+        private CharacterPersistentDataUpdater() {
+            MagicSpells.registerEvents(this);
+        }
+
+        @EventHandler(priority = EventPriority.LOWEST)
+        private void onCharacterLoad(LoadCharacterEvent event) {
+            if (!event.isCancelled()) {
+                MagicSpells.scheduleDelayedTask(() -> {
+                    persistentDataUpdater.joinOrLoadCharacter(event.getPlayer());
+                }, 1);
+            }
+        }
+    }
+
+    private static ItemStack updateItem(ItemStack itemStack, MagicItem magicItem) {
+        Integer durability = null;
+        int amount = itemStack.getAmount();
+
+        if (itemStack.getItemMeta() instanceof Damageable damageable) {
+            durability = damageable.getDamage();
+        }
+
+        ItemStack updatedItem = magicItem.getItemStack().clone();
+        updatedItem.setAmount(amount);
+
+        ItemMeta meta = updatedItem.getItemMeta();
+        if (durability != null && durability != 0 && meta instanceof Damageable updatedDamageable) {
+            updatedDamageable.setDamage(durability);
+            updatedItem.setItemMeta(meta);
+        }
+
+        return updatedItem;
+    }
+
+    // Add PDC to all items for worlds used prior to PDC
+    public static void addMagicItemPDC(boolean updateVaults, boolean updateCharacters) {
+        MagicSpells.log("Adding PDC to Magic Items.");
         cacheItemData();
         setCheckItemPersistentData(false);
 
@@ -63,16 +168,17 @@ public class MagicItemUpdater {
         updatePlayers();
 
         // Update Characters
-        if (CompatBasics.pluginEnabled("SneakyCharacterManager")) updateCharacters();
+        if (updateCharacters && CompatBasics.pluginEnabled("SneakyCharacterManager")) updateCharacters();
 
         // Update Vaults
-        if (CompatBasics.pluginEnabled("SneakyVaults")) updateVaults();
+        if (updateVaults && CompatBasics.pluginEnabled("SneakyVaults")) updateVaults();
 
         // Update Chunks
         scanWorlds();
     }
 
     private static void cacheItemData() {
+        // Cache data for performance purposes when adding PDC
         for (Map.Entry<String, MagicItem> entry : magicItems.entrySet()) {
             String key = entry.getKey();
             MagicItem value = entry.getValue();
@@ -104,6 +210,7 @@ public class MagicItemUpdater {
         CMI cmi = CMI.getInstance();
         for (CMIUser user : cmi.getPlayerManager().getAllUsers().values()) {
             Player player = user.getPlayer();
+            MagicSpells.log("Updating user " + user.getName() + ".");
             if (player == null) {
                 MagicSpells.error("User " + user.getName() + " is null!");
                 continue;
@@ -123,102 +230,7 @@ public class MagicItemUpdater {
             player.updateInventory();
             player.saveData();
         }
-    }
-
-    private static void scanWorlds() {
-        Bukkit.getScheduler().runTaskAsynchronously(MagicSpells.getInstance(), () -> {
-            for (World world : Bukkit.getWorlds()) {
-                MagicSpells.error("Scanning world: " + world.getName());
-
-                File worldFolder = world.getWorldFolder();
-                File regionFolder;
-                switch (world.getEnvironment()) {
-                    case NORMAL:
-                        regionFolder = new File(worldFolder, "region");
-                        break;
-                    case NETHER:
-                        regionFolder = new File(worldFolder, "DIM-1/region");
-                        break;
-                    case THE_END:
-                        regionFolder = new File(worldFolder, "DIM1/region");
-                        break;
-                    default:
-                        MagicSpells.error("Unknown world environment for world: " + world.getName());
-                        continue;
-                }
-
-                if (!regionFolder.exists() || !regionFolder.isDirectory()) {
-                    MagicSpells.error("Region folder not found for world: " + world.getName());
-                    continue;
-                }
-
-                File[] regionFiles = regionFolder.listFiles((dir, name) -> name.endsWith(".mca"));
-
-                if (regionFiles == null || regionFiles.length == 0) {
-                    MagicSpells.error("No region files found for world: " + world.getName());
-                    continue;
-                }
-
-                for (File regionFile : regionFiles) {
-                    String fileName = regionFile.getName();
-                    String[] parts = fileName.split("\\.");
-                    if (parts.length != 4) {
-                        MagicSpells.error("Invalid region file name: " + fileName);
-                        continue;
-                    }
-
-                    try {
-                        int regionX = Integer.parseInt(parts[1]);
-                        int regionZ = Integer.parseInt(parts[2]);
-
-                        MagicSpells.error("Scanning region: r." + regionX + "." + regionZ + ".mca in world " + world.getName());
-
-                        for (int chunkX = regionX * 32; chunkX < (regionX + 1) * 32; chunkX++) {
-                            for (int chunkZ = regionZ * 32; chunkZ < (regionZ + 1) * 32; chunkZ++) {
-                                if (world.isChunkGenerated(chunkX, chunkZ)) {
-                                    final int finalChunkX = chunkX;
-                                    final int finalChunkZ = chunkZ;
-
-                                    world.getChunkAtAsync(finalChunkX, finalChunkZ).thenAccept(chunk -> {
-                                        Bukkit.getScheduler().runTask(MagicSpells.getInstance(), () -> {
-                                            // CRUCIAL: Check if chunk is fully loaded and populated
-                                            if (chunk.isLoaded() && chunk.getTileEntities() != null) {
-                                                processChunk(chunk);
-                                            } else {
-                                                MagicSpells.error("Chunk not fully loaded: " + finalChunkX + ", " + finalChunkZ);
-                                            }
-                                        });
-                                    }).exceptionally(ex -> {
-                                        MagicSpells.error("Error loading chunk: " + finalChunkX + ", " + finalChunkZ);
-                                        return null;
-                                    });
-                                }
-                            }
-                        }
-
-                    } catch (NumberFormatException e) {
-                        MagicSpells.error("Error parsing region coordinates from file name: " + fileName);
-                    }
-                }
-            }
-        });
-    }
-
-    private static void processChunk(Chunk chunk) {
-        // Synchronize access to the chunk's tile entities on the main thread
-        synchronized (chunk) {
-            MagicSpells.error("Processing chunk: " + chunk.getX() + "." + chunk.getZ());
-            for (BlockState blockState : chunk.getTileEntities()) {
-                if (blockState instanceof Container container) {
-                    Inventory inventory = container.getInventory();
-                    ItemStack[] items = inventory.getContents();
-                    addItemNames(items);
-
-                    inventory.setContents(items);
-
-                }
-            }
-        }
+        MagicSpells.log("Updated items in playerdata.");
     }
 
     private static void updateCharacters() {
@@ -235,7 +247,7 @@ public class MagicItemUpdater {
         for (File playerDir : playerData) {
             if(!playerDir.exists() || !playerDir.isDirectory()) continue;
             File[] characterData = playerDir.listFiles();
-            if (characterData == null || characterData.length == 0) continue;
+            if (characterData == null) continue;
 
             for (File characterFile : characterData) {
                 YamlConfiguration config = YamlConfiguration.loadConfiguration(characterFile);
@@ -267,6 +279,7 @@ public class MagicItemUpdater {
                 }
             }
         }
+        MagicSpells.log("Updated items in SneakyCharacterManager.");
     }
 
     private static void updateVaults() {
@@ -322,110 +335,124 @@ public class MagicItemUpdater {
                 }
             }
         }
+        MagicSpells.log("Updated items in SneakyCharacterManager.");
     }
 
-    private static class PersistentDataUpdater implements Listener {
-        private static CharacterPersistentDataUpdater characterPersistentDataUpdater  = null;
+    private static void scanWorlds() {
+        Bukkit.getScheduler().runTaskAsynchronously(MagicSpells.getInstance(), () -> {
+            CountDownLatch latch = new CountDownLatch(Bukkit.getWorlds().size());
 
-        private PersistentDataUpdater() {
-            MagicSpells.registerEvents(this);
+            for (World world : Bukkit.getWorlds()) {
+                Bukkit.getScheduler().runTaskAsynchronously(MagicSpells.getInstance(), () -> {
+                    MagicSpells.error("Scanning world: " + world.getName());
 
-            if (CompatBasics.pluginEnabled("SneakyCharacterManager")) {
-                characterPersistentDataUpdater = new CharacterPersistentDataUpdater();
+                    File worldFolder = world.getWorldFolder();
+                    File regionFolder;
+                    switch (world.getEnvironment()) {
+                        case NORMAL:
+                            regionFolder = new File(worldFolder, "region");
+                            break;
+                        case NETHER:
+                            regionFolder = new File(worldFolder, "DIM-1/region");
+                            break;
+                        case THE_END:
+                            regionFolder = new File(worldFolder, "DIM1/region");
+                            break;
+                        default:
+                            MagicSpells.error("Unknown world environment for world: " + world.getName());
+                            latch.countDown();
+                            return;
+                    }
+
+                    if (!regionFolder.exists() || !regionFolder.isDirectory()) {
+                        MagicSpells.error("Region folder not found for world: " + world.getName());
+                        latch.countDown();
+                        return;
+                    }
+
+                    File[] regionFiles = regionFolder.listFiles((dir, name) -> name.endsWith(".mca"));
+
+                    if (regionFiles == null || regionFiles.length == 0) {
+                        MagicSpells.error("No region files found for world: " + world.getName());
+                        latch.countDown();
+                        return;
+                    }
+
+                    for (File regionFile : regionFiles) {
+                        String fileName = regionFile.getName();
+                        String[] parts = fileName.split("\\.");
+                        if (parts.length != 4) {
+                            MagicSpells.error("Invalid region file name: " + fileName);
+                            continue;
+                        }
+
+                        try {
+                            int regionX = Integer.parseInt(parts[1]);
+                            int regionZ = Integer.parseInt(parts[2]);
+
+                            MagicSpells.error("Scanning region: r." + regionX + "." + regionZ + ".mca in world " + world.getName());
+
+                            for (int chunkX = regionX * 32; chunkX < (regionX + 1) * 32; chunkX++) {
+                                for (int chunkZ = regionZ * 32; chunkZ < (regionZ + 1) * 32; chunkZ++) {
+                                    if (world.isChunkGenerated(chunkX, chunkZ)) {
+                                        final int finalChunkX = chunkX;
+                                        final int finalChunkZ = chunkZ;
+
+                                        world.getChunkAtAsync(finalChunkX, finalChunkZ).thenAccept(chunk -> {
+                                            Bukkit.getScheduler().runTask(MagicSpells.getInstance(), () -> {
+                                                if (chunk.isLoaded() && chunk.getTileEntities() != null) {
+                                                    processChunk(chunk);
+                                                } else {
+                                                    MagicSpells.error("Chunk not fully loaded: " + finalChunkX + ", " + finalChunkZ);
+                                                }
+                                            });
+                                        }).exceptionally(ex -> {
+                                            MagicSpells.error("Error loading chunk: " + finalChunkX + ", " + finalChunkZ);
+                                            return null;
+                                        });
+                                    }
+                                }
+                            }
+                        } catch (NumberFormatException e) {
+                            MagicSpells.error("Error parsing region coordinates from file name: " + fileName);
+                        }
+                    }
+                    latch.countDown();
+                });
             }
-        }
 
-        private void updateInventory(Inventory inv) {
-            ItemStack[] contents = inv.getContents();
-            updateInventory(contents);
-            inv.setContents(contents);
-        }
-
-        private void updateInventory(ItemStack[] items) {
-            if (items == null) return;
-            for (int i = 0; i < items.length; i++) {
-                ItemStack itemStack = items[i];
-                if (itemStack == null) continue;
-
-                ItemMeta meta = itemStack.getItemMeta();
-                if (meta == null) continue;
-
-                PersistentDataContainer container = meta.getPersistentDataContainer();
-
-                String magicitemName = null;
-
-                if (container.has(NAME_KEY, PersistentDataType.STRING)) {
-                    magicitemName = container.get(NAME_KEY, PersistentDataType.STRING);
+            Bukkit.getScheduler().runTaskAsynchronously(MagicSpells.getInstance(), () -> {
+                try {
+                    latch.await();
+                    Bukkit.getScheduler().runTaskLater(MagicSpells.getInstance(),
+                            () -> MagicSpells.log("All chunk data has been updated."),
+                            1L
+                    );
+                    Bukkit.getScheduler().runTaskLater(MagicSpells.getInstance(),
+                            () -> MagicSpells.log("All tasks complete. Please restart to proceed."),
+                            1L
+                    );
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    MagicSpells.error("Task interrupted while waiting for world scans to complete.");
                 }
+            });
+        });
+    }
 
-                if (magicitemName != null && magicItems.containsKey(magicitemName)) {
-                    MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(itemStack);
-                    MagicItemData magicItemData = MagicItems.getMagicItemDataByInternalName(magicitemName);
+    private static void processChunk(Chunk chunk) {
+        // Synchronize access to the chunk's tile entities on the main thread
+        synchronized (chunk) {
+//            MagicSpells.log("Processing chunk: " + chunk.getX() + "." + chunk.getZ());
+            for (BlockState blockState : chunk.getTileEntities()) {
+                if (blockState instanceof Container container) {
+                    Inventory inventory = container.getInventory();
+                    ItemStack[] items = inventory.getContents();
+                    addItemNames(items);
 
-                    if (magicItemData == null || stackData == null) continue;
-                    if (magicItemData.matches(stackData)) continue;
-
-                    items[i] = updateItem(itemStack, magicItems.get(magicitemName));
+                    inventory.setContents(items);
                 }
             }
-
-        }
-
-        @EventHandler(priority = EventPriority.LOWEST)
-        private void onJoin(PlayerJoinEvent event) {
-            joinOrLoadCharacter(event.getPlayer());
-        }
-
-        private void joinOrLoadCharacter(Player player) {
-            PlayerInventory inv = player.getInventory();
-            updateInventory(inv);
-            ItemStack[] armor = inv.getArmorContents();
-            updateInventory(armor);
-            inv.setArmorContents(armor);
-        }
-
-        @EventHandler(priority = EventPriority.LOWEST)
-        private void onInvOpen(InventoryOpenEvent event) {
-            updateInventory(event.getInventory());
-        }
-
-    }
-
-    private static class CharacterPersistentDataUpdater implements Listener {
-
-        private CharacterPersistentDataUpdater() {
-            MagicSpells.registerEvents(this);
-        }
-
-        @EventHandler(priority = EventPriority.LOWEST)
-        private void onCharacterLoad(LoadCharacterEvent event) {
-            if (!event.isCancelled()) {
-                MagicSpells.scheduleDelayedTask(() -> {
-                    persistentDataUpdater.joinOrLoadCharacter(event.getPlayer());
-                }, 1);
-            }
         }
     }
-
-
-    private static ItemStack updateItem(ItemStack itemStack, MagicItem magicItem) {
-        Integer durability = null;
-        int amount = itemStack.getAmount();
-
-        if (itemStack.getItemMeta() instanceof Damageable damageable) {
-            durability = damageable.getDamage();
-        }
-
-        ItemStack updatedItem = magicItem.getItemStack().clone();
-        updatedItem.setAmount(amount);
-
-        ItemMeta meta = updatedItem.getItemMeta();
-        if (durability != null && durability != 0 && meta instanceof Damageable updatedDamageable) {
-            updatedDamageable.setDamage(durability);
-            updatedItem.setItemMeta(meta);
-        }
-
-        return updatedItem;
-    }
-
 }

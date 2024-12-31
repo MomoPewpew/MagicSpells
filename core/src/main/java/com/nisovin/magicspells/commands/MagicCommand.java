@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 import com.nisovin.magicspells.util.managers.OfflineVariableManager;
 import com.nisovin.magicspells.util.managers.VariableManager;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -670,12 +671,38 @@ public class MagicCommand extends BaseCommand {
 		issuer.sendMessage(MagicSpells.getTextColor() + "MagicSpells debug mode " + (MagicSpells.isDebug() ? "enabled (level: " + levelFinal + ")" : "disabled") + ".");
 	}
 
-	@Subcommand("updatetest")
-	@Description("FOR TESTING.")
-	public void onUpdate(CommandIssuer issuer) {
+	@Subcommand("additempdc")
+	@Syntax("<update vaults> <update characters>")
+	@Description("Add PDC to all Magic Items.")
+	public void onAddItemPDC(CommandIssuer issuer,
+							 boolean vaults,
+							 boolean characters,
+							 @Optional String confirm) {
+
 		if (!MagicSpells.isLoaded()) return;
 
-		MagicItemUpdater.updateTest();
+		if (issuer.isPlayer()) {
+			issuer.sendMessage("This command can only be run from the console.");
+			return;
+		}
+
+		if (!Bukkit.getOnlinePlayers().isEmpty()) {
+			issuer.sendMessage("This command cannot be run while players are online.");
+			return;
+		}
+
+		if (!Objects.equals(confirm, "--confirm")) { // Check for the --confirm flag
+			issuer.sendMessage("This command will update every magic item across all save data.");
+			issuer.sendMessage("It should only be run if you know what you are doing.");
+			issuer.sendMessage("This may take a while to complete. Are you sure you wish to proceed?");
+			issuer.sendMessage("");
+			issuer.sendMessage(NamedTextColor.RED + "This command requires confirmation. Use --confirm to proceed.");
+			return; // Stop execution if not confirmed
+		}
+
+		issuer.sendMessage("PDC update starting.");
+		MagicItemUpdater.addMagicItemPDC(vaults, characters);
+
 	}
 
 	@Subcommand("magicxp")

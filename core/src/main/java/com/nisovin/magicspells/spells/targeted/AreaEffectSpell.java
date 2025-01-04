@@ -95,30 +95,27 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			Location loc = null;
 			if (pointBlank) {
-                assert data.caster() != null;
-                loc = data.caster().getLocation();
+				data = data.builder().location(data.caster().getLocation()).build();
             }
 			else {
 				try {
 					Block block = getTargetedBlock(data);
-					if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation().add(0.5, 0, 0.5);
+					if (block != null && !BlockUtils.isAir(block.getType())) data = data.builder().location(block.getLocation().add(0.5, 0, 0.5)).build();
 				}
 				catch (IllegalStateException ignored) {}
 			}
 
-			if (loc == null) return noTarget(data);
+			if (data.location() == null) return noTarget(data);
 
 			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, data);
 			EventUtil.call(event);
-			if (event.isCancelled()) loc = null;
+			if (event.isCancelled()) data = data.builder().location(null).build();
 			else {
-				loc = event.getTargetLocation();
-				data = data.builder().power(event.getPower()).build();
+				data = data.builder().location(event.getTargetLocation()).power(event.getPower()).build();
 			}
 
-			if (loc == null) return noTarget(data);
+			if (data.location() == null) return noTarget(data);
 
 			boolean done = doAoe(data);
 			if (!done) return noTarget(data);

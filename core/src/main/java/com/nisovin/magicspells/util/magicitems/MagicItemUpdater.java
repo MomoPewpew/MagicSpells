@@ -55,16 +55,20 @@ public class MagicItemUpdater {
 
     // Active updating of items on login/inventory open
     public static class PersistentDataUpdater implements Listener {
-        private static CharacterPersistentDataUpdater characterPersistentDataUpdater  = null;
 
         @EventHandler(ignoreCancelled = true)
         public void onJoin(PlayerJoinEvent event) {
-            MagicSpells.error("OnJoin");
-            joinOrLoadCharacter(event.getPlayer());
+            if (!MagicSpells.enableUpdateItemData()) return;
+            PlayerInventory inv = event.getPlayer().getInventory();
+            updateInventory(inv);
+            ItemStack[] armor = inv.getArmorContents();
+            updateInventory(armor);
+            inv.setArmorContents(armor);
         }
 
-        private void joinOrLoadCharacter(Player player) {
+        public void joinOrLoadCharacter(Player player) {
             if (!MagicSpells.enableUpdateItemData()) return;
+            MagicSpells.error("UpdateItems");
             PlayerInventory inv = player.getInventory();
             updateInventory(inv);
             ItemStack[] armor = inv.getArmorContents();
@@ -75,16 +79,7 @@ public class MagicItemUpdater {
         @EventHandler(priority = EventPriority.LOWEST)
         public void onInvOpen(InventoryOpenEvent event) {
             if (!MagicSpells.enableUpdateItemData()) return;
-            MagicSpells.error("OnInvOpen");
             updateInventory(event.getInventory());
-        }
-
-        public PersistentDataUpdater() {
-            MagicSpells.registerEvents(this);
-
-            if (CompatBasics.pluginEnabled("SneakyCharacterManager")) {
-                characterPersistentDataUpdater = new CharacterPersistentDataUpdater();
-            }
         }
 
         private void updateInventory(Inventory inv) {
@@ -123,11 +118,7 @@ public class MagicItemUpdater {
         }
     }
 
-    private static class CharacterPersistentDataUpdater implements Listener {
-
-        private CharacterPersistentDataUpdater() {
-            MagicSpells.registerEvents(this);
-        }
+    public static class CharacterPersistentDataUpdater implements Listener {
 
         @EventHandler(priority = EventPriority.LOWEST)
         private void onCharacterLoad(LoadCharacterEvent event) {

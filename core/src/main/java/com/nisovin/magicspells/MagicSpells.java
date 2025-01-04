@@ -19,6 +19,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Files;
 
+import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 import de.slikey.effectlib.EffectManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -620,6 +621,9 @@ public class MagicSpells extends JavaPlugin {
 		if (config.getBoolean(path + "enable-dance-casting", true)) new DanceCastListener(this, config);
 
 		if (enableUpdateItemData) registerEvents(new PersistentDataUpdater());
+		if (enableUpdateItemData && CompatBasics.pluginEnabled("SneakyCharacterManager")) {
+			registerEvents(new MagicItemUpdater.CharacterPersistentDataUpdater());
+		}
 
 		log("...done");
 

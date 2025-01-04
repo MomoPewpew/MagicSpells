@@ -1,12 +1,11 @@
 package com.nisovin.magicspells.util.magicitems;
 
 import java.io.File;
-import java.util.Map;
-import java.util.List;
-import java.util.HashMap;
+import java.util.*;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.Bukkit;
@@ -48,7 +47,7 @@ public class MagicItemUpdater {
     // This file is my own person nightmare of not knowing how multi-threading works
     // There is a chance that this may crash if you have too many players, characters, or vaults
 
-    private static final MagicItemUpdater.PersistentDataUpdater persistentDataUpdater = null;
+    private static MagicItemUpdater.PersistentDataUpdater persistentDataUpdater = new PersistentDataUpdater();
 
     private static final Map<String, MagicItem> magicItems = getMagicItems();
     private static final Map<String, MagicItemData> magicItemsCache = new HashMap<>();
@@ -65,6 +64,7 @@ public class MagicItemUpdater {
         }
 
         private void joinOrLoadCharacter(Player player) {
+            if (!MagicSpells.enableUpdateItemData()) return;
             PlayerInventory inv = player.getInventory();
             updateInventory(inv);
             ItemStack[] armor = inv.getArmorContents();
@@ -74,6 +74,7 @@ public class MagicItemUpdater {
 
         @EventHandler(priority = EventPriority.LOWEST)
         public void onInvOpen(InventoryOpenEvent event) {
+            if (!MagicSpells.enableUpdateItemData()) return;
             MagicSpells.error("OnInvOpen");
             updateInventory(event.getInventory());
         }
@@ -140,10 +141,24 @@ public class MagicItemUpdater {
 
     private static ItemStack updateItem(ItemStack itemStack, MagicItem magicItem) {
         Integer durability = null;
+        Long expiresAt = null;
+        String creatorName = null;
         int amount = itemStack.getAmount();
 
         if (itemStack.getItemMeta() instanceof Damageable damageable) {
             durability = damageable.getDamage();
+        }
+
+        ItemMeta sourceMeta = itemStack.getItemMeta();
+
+        PersistentDataContainer sourceContainer = sourceMeta.getPersistentDataContainer();
+
+        if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG)) {
+            expiresAt = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG);
+        }
+
+        if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
+            creatorName = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING);
         }
 
         ItemStack updatedItem = magicItem.getItemStack().clone();
@@ -152,20 +167,30 @@ public class MagicItemUpdater {
         ItemMeta meta = updatedItem.getItemMeta();
         if (durability != null && durability != 0 && meta instanceof Damageable updatedDamageable) {
             updatedDamageable.setDamage(durability);
-            updatedItem.setItemMeta(meta);
         }
+        if (expiresAt != null) {
+            meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+        }
+
+        if (creatorName != null) {
+            meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING, creatorName);
+        }
+
+        updatedItem.setItemMeta(meta);
 
         return updatedItem;
     }
 
     // Add PDC to all items for worlds used prior to PDC
-    public static void addMagicItemPDC(boolean updateVaults, boolean updateCharacters) {
-        MagicSpells.log("Adding PDC to Magic Items.");
+    public static void addMagicItemPDC(boolean updatePlayers, boolean updateWorlds,
+                                       boolean updateVaults, boolean updateCharacters) {
+
+        MagicSpells.log(NamedTextColor.BLUE + "Adding PDC to Magic Items.");
         cacheItemData();
         setCheckItemPersistentData(false);
 
         // Update Player Inventories
-        updatePlayers();
+        if (updatePlayers) updatePlayers();
 
         // Update Characters
         if (updateCharacters && CompatBasics.pluginEnabled("SneakyCharacterManager")) updateCharacters();
@@ -174,7 +199,7 @@ public class MagicItemUpdater {
         if (updateVaults && CompatBasics.pluginEnabled("SneakyVaults")) updateVaults();
 
         // Update Chunks
-        scanWorlds();
+        if (updateWorlds) scanWorlds();
     }
 
     private static void cacheItemData() {
@@ -208,29 +233,46 @@ public class MagicItemUpdater {
 
     private static void updatePlayers() {
         CMI cmi = CMI.getInstance();
-        for (CMIUser user : cmi.getPlayerManager().getAllUsers().values()) {
-            Player player = user.getPlayer();
-            MagicSpells.log("Updating user " + user.getName() + ".");
-            if (player == null) {
-                MagicSpells.error("User " + user.getName() + " is null!");
-                continue;
+        List<CMIUser> users = new ArrayList<>(cmi.getPlayerManager().getAllUsers().values());
+        int batchSize = 5;
+        Iterator<CMIUser> userIterator = users.iterator();
+
+        MagicSpells.log("Starting player update task...");
+
+        Bukkit.getScheduler().runTaskTimer(MagicSpells.getInstance(), new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < batchSize && userIterator.hasNext(); i++) {
+                    CMIUser user = userIterator.next();
+                    Player player = user.getPlayer();
+                    MagicSpells.log("Updating user " + user.getName() + ".");
+
+                    if (player == null) {
+                        MagicSpells.error("User " + user.getName() + " is null!");
+                        continue;
+                    }
+
+                    Inventory inventory = player.getInventory();
+                    ItemStack[] items = inventory.getContents();
+                    Inventory enderChest = player.getEnderChest();
+                    ItemStack[] enderChestContents = enderChest.getContents();
+
+                    addItemNames(items);
+                    addItemNames(enderChestContents);
+
+                    inventory.setContents(items);
+                    enderChest.setContents(enderChestContents);
+
+                    player.updateInventory();
+                    cmi.save(player);
+                }
+
+                if (!userIterator.hasNext()) {
+                    MagicSpells.log(NamedTextColor.BLUE + "Finished updating all players.");
+                    Bukkit.getScheduler().cancelTasks(MagicSpells.getInstance());
+                }
             }
-
-            Inventory inventory = player.getInventory();
-            ItemStack[] items = inventory.getContents();
-            Inventory enderChest = player.getEnderChest();
-            ItemStack[] enderChestContents = enderChest.getContents();
-
-            addItemNames(items);
-            addItemNames(enderChestContents);
-
-            inventory.setContents(items);
-            enderChest.setContents(enderChestContents);
-
-            player.updateInventory();
-            player.saveData();
-        }
-        MagicSpells.log("Updated items in playerdata.");
+        }, 0L, 1L);
     }
 
     private static void updateCharacters() {
@@ -259,17 +301,7 @@ public class MagicItemUpdater {
 
                 addItemNames(items);
 
-                Inventory inventory = Bukkit.createInventory(null, 9);
-                if(items.length > inventory.getSize()) {
-                    if(items.length % 9 != 0) {
-                        MagicSpells.error("Error: Saved inventory size is not a multiple of 9. This should be impossible!");
-                        continue;
-                    }
-                    inventory = Bukkit.createInventory(null, items.length, ChatUtility.convertToComponent("&ePlayer Vault"));
-                }
-                inventory.setContents(items);
-
-                inventoryB64 = net.sneakycharactermanager.paper.util.InventoryUtility.inventoryToBase64(inventory);
+                inventoryB64 = net.sneakycharactermanager.paper.util.InventoryUtility.inventoryToBase64(41, items);
                 config.set("inventory", inventoryB64);
 
                 try {
@@ -279,7 +311,7 @@ public class MagicItemUpdater {
                 }
             }
         }
-        MagicSpells.log("Updated items in SneakyCharacterManager.");
+        MagicSpells.log(NamedTextColor.BLUE + "Updated items in SneakyCharacterManager.");
     }
 
     private static void updateVaults() {
@@ -303,7 +335,7 @@ public class MagicItemUpdater {
 
             for(String vault : vaults.getKeys(false)) {
                 if(!vaults.getBoolean(vault + ".paperConverted")) {
-                    MagicSpells.error("Vault " + vaults.getName() + " not found.");
+                    MagicSpells.error("Vault " + vault + " not found.");
                     continue;
                 }
 
@@ -335,7 +367,7 @@ public class MagicItemUpdater {
                 }
             }
         }
-        MagicSpells.log("Updated items in SneakyCharacterManager.");
+        MagicSpells.log(NamedTextColor.BLUE + "Updated items in SneakyVaults.");
     }
 
     private static void scanWorlds() {
@@ -425,11 +457,11 @@ public class MagicItemUpdater {
                 try {
                     latch.await();
                     Bukkit.getScheduler().runTaskLater(MagicSpells.getInstance(),
-                            () -> MagicSpells.log("All chunk data has been updated."),
+                            () -> MagicSpells.log(NamedTextColor.BLUE + "All chunk data has been updated."),
                             1L
                     );
                     Bukkit.getScheduler().runTaskLater(MagicSpells.getInstance(),
-                            () -> MagicSpells.log("All tasks complete. Please restart to proceed."),
+                            () -> MagicSpells.log(NamedTextColor.GREEN + "All tasks complete. Please restart to proceed."),
                             1L
                     );
                 } catch (InterruptedException e) {
@@ -441,9 +473,7 @@ public class MagicItemUpdater {
     }
 
     private static void processChunk(Chunk chunk) {
-        // Synchronize access to the chunk's tile entities on the main thread
         synchronized (chunk) {
-//            MagicSpells.log("Processing chunk: " + chunk.getX() + "." + chunk.getZ());
             for (BlockState blockState : chunk.getTileEntities()) {
                 if (blockState instanceof Container container) {
                     Inventory inventory = container.getInventory();

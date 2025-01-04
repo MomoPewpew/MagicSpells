@@ -169,7 +169,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (event.isCancelled()) return false;
 
 			target = event.getTarget();
-			data = data.builder().power(event.getPower()).build();
+			data = data.builder().target(target).power(event.getPower()).build();
 
 			castSpells(data);
 
@@ -220,7 +220,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (event.isCancelled()) continue;
 
 			target = event.getTarget();
-			data = data.builder().power(event.getPower()).build();
+			data = data.builder().target(target).power(event.getPower()).build();
 
 			castSpells(data);
 

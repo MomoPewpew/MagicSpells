@@ -161,13 +161,11 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 	@Override
 	public PostCastAction castSpell(SpellCastState state, SpellData data) {
 		if (state == SpellCastState.NORMAL) {
-			LivingEntity target;
 			if (targeted) {
 				TargetInfo<LivingEntity> targetInfo = getTargetedEntity(data);
 				if (targetInfo.noTarget()) return noTarget(data, targetInfo);
 
-				target = targetInfo.target();
-				data = data.builder().power(targetInfo.getPower()).build();
+				data = data.builder().target(targetInfo.target()).power(targetInfo.getPower()).build();
 			} else {
 				SpellTargetEvent targetEvent = new SpellTargetEvent(this, data.builder().target(data.caster()).build());
 				targetEvent.callEvent();
@@ -175,13 +173,12 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 				if (targetEvent.isCastCancelled()) return PostCastAction.ALREADY_HANDLED;
 				else if (targetEvent.isCancelled()) return noTarget(data);
 
-				target = targetEvent.getTarget();
-				data = data.builder().power(targetEvent.getPower()).build();
+				data = data.builder().target(targetEvent.getTarget()).power(targetEvent.getPower()).build();
 			}
 
 			handlePotionEffects(data);
-			playSpellEffects(data.caster(), target, data);
-			sendMessages(data.caster(), target, data.args());
+			playSpellEffects(data.caster(), data.target(), data);
+			sendMessages(data.caster(), data.target(), data.args());
 
 			return PostCastAction.NO_MESSAGES;
 		}

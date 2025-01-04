@@ -215,7 +215,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 
 			data = data.builder().power(basePower).build();
 
-			event = new SpellTargetEvent(this, data);
+			event = new SpellTargetEvent(this, data, target);
 			EventUtil.call(event);
 			if (event.isCancelled()) continue;
 

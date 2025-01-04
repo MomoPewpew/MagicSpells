@@ -672,12 +672,9 @@ public class MagicCommand extends BaseCommand {
 	}
 
 	@Subcommand("additempdc")
-	@Syntax("<update vaults> <update characters>")
+	@Syntax("<players|world|vaults|characters>")
 	@Description("Add PDC to all Magic Items.")
-	public void onAddItemPDC(CommandIssuer issuer,
-							 boolean vaults,
-							 boolean characters,
-							 @Optional String confirm) {
+	public void onAddItemPDC(CommandIssuer issuer, String[] args) {
 
 		if (!MagicSpells.isLoaded()) return;
 
@@ -691,17 +688,50 @@ public class MagicCommand extends BaseCommand {
 			return;
 		}
 
-		if (!Objects.equals(confirm, "--confirm")) { // Check for the --confirm flag
+		if (args.length < 1) throw new InvalidCommandArgument();
+
+		boolean updatePlayers = false;
+		boolean updateWorlds = false;
+		boolean updateVaults = false;
+		boolean updateCharacters = false;
+		boolean confirm = false;
+
+		for (String arg : args) {
+			if (arg.equalsIgnoreCase("players") || arg.equalsIgnoreCase("player")) {
+				updatePlayers = true;
+			} else if (arg.equalsIgnoreCase("worlds") || arg.equalsIgnoreCase("world")) {
+				updateWorlds = true;
+			} else if (arg.equalsIgnoreCase("vaults") || arg.equalsIgnoreCase("vault")) {
+				updateVaults = true;
+			} else if (arg.equalsIgnoreCase("characters") || arg.equalsIgnoreCase("character")) {
+				updateCharacters = true;
+			} else if (arg.equalsIgnoreCase("--confirm")) confirm = true;
+		}
+
+		StringBuilder toUpdate = new StringBuilder("The following will be updated: ");
+		if (updatePlayers) {toUpdate.append("Players, ");}
+		if (updateWorlds) {toUpdate.append("Worlds, ");}
+		if (updateVaults) {toUpdate.append("Vaults, ");}
+		if (updateCharacters) {toUpdate.append("Characters, ");}
+		if (toUpdate.length() > 31) { // "Updated: " is 9 characters
+			toUpdate.setLength(toUpdate.length() - 2); // Remove ", "
+			toUpdate.append(".");
+		} else {
+			toUpdate.append("None");
+		}
+
+		if (!confirm) { // Check for the --confirm flag
 			issuer.sendMessage("This command will update every magic item across all save data.");
 			issuer.sendMessage("It should only be run if you know what you are doing.");
 			issuer.sendMessage("This may take a while to complete. Are you sure you wish to proceed?");
 			issuer.sendMessage("");
+			issuer.sendMessage(toUpdate.toString());
 			issuer.sendMessage(NamedTextColor.RED + "This command requires confirmation. Use --confirm to proceed.");
 			return; // Stop execution if not confirmed
 		}
 
 		issuer.sendMessage("PDC update starting.");
-		MagicItemUpdater.addMagicItemPDC(vaults, characters);
+		MagicItemUpdater.addMagicItemPDC(updatePlayers, updateWorlds, updateVaults, updateCharacters);
 
 	}
 

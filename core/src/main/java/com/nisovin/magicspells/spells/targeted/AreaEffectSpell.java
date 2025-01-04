@@ -148,8 +148,6 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 
 		SpellTargetEvent event;
 
-		float power;
-
 		double hDistance;
 		double vDistance;
 
@@ -157,7 +155,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (caster == null) return false;
 
 			LivingEntity target = caster;
-			power = basePower;
+			data = data.builder().power(basePower).build();
 
 			if (!target.getWorld().equals(location.getWorld())) return false;
 
@@ -171,7 +169,7 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			if (event.isCancelled()) return false;
 
 			target = event.getTarget();
-			power = event.getPower();
+			data = data.builder().power(event.getPower()).build();
 
 			castSpells(data);
 
@@ -215,14 +213,14 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 				if (AccurateMath.toDegrees(AccurateMath.abs(dir.angle(location.getDirection()))) > cone) continue;
 			}
 
-			power = basePower;
+			data = data.builder().power(basePower).build();
 
 			event = new SpellTargetEvent(this, data);
 			EventUtil.call(event);
 			if (event.isCancelled()) continue;
 
 			target = event.getTarget();
-			power = event.getPower();
+			data = data.builder().power(event.getPower()).build();
 
 			castSpells(data);
 

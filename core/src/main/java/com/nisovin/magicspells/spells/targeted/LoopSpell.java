@@ -428,8 +428,6 @@ public class LoopSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 			if (data.target() != null) {
 				success = spell.subcast(data, passTargeting);
-			} else if (data.location() != null) {
-				success = spell.subcast(data);
 			} else {
 				success = spell.subcast(data);
 			}

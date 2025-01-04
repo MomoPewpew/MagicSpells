@@ -94,7 +94,7 @@ public abstract class TargetedSpell extends InstantSpell {
 	@Override
 	protected TargetInfo<LivingEntity> getTargetedEntity(SpellData data, boolean forceTargetPlayers, ValidTargetChecker checker) {
 		if (targetSelf || validTargetList.canTargetSelf()) {
-			SpellTargetEvent event = new SpellTargetEvent(this, data);
+			SpellTargetEvent event = new SpellTargetEvent(this, data.builder().target(data.caster()).build());
 			return new TargetInfo<>(event.callEvent() ? event.getTarget() : null, event.getSpellData(), event.isCastCancelled());
 		}
 

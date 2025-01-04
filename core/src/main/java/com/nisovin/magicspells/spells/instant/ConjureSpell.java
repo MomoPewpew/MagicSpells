@@ -12,7 +12,6 @@ import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.ChatColor;
 import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -279,7 +278,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		if (calculateDropsIndividually) individual(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
 		else together(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
 
-		Location loc = player.getEyeLocation().add(player.getLocation().getDirection());
+		Location loc = data.location() != null ? data.location() : player.getEyeLocation().add(player.getLocation().getDirection());
 		boolean updateInv = false;
 		for (ItemStack itemOrg : items) {
 			if (itemOrg == null) continue;
@@ -409,72 +408,14 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 	@Override
 	public boolean castAtLocation(SpellData data) {
-		return conjureItemsAtLocation(data);
-	}
-
-	private boolean conjureItemsAtLocation(SpellData data) {
-		Location location = data.location();
-		float power = data.power();
-		LivingEntity player = data.caster();
-
-		List<String> itemList = this.itemListData.get(data);
-
-		Object[] itemResults = processItemList(itemList, data);
-		ItemStack[] itemTypes = (ItemStack[]) itemResults[0];
-		int[] itemMinQuantities = (int[]) itemResults[1];
-		int[] itemMaxQuantities = (int[]) itemResults[2];
-		double[] itemChances = (double[]) itemResults[3];
-
-		List<ItemStack> items = new ArrayList<>();
-		if (calculateDropsIndividually) individual(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
-		else together(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
-
-		Location loc = location.clone();
-		if (!BlockUtils.isAir(loc.getBlock().getType())) loc.add(0, 1, 0);
-		if (!BlockUtils.isAir(loc.getBlock().getType())) loc.add(0, 1, 0);
-		for (ItemStack item : items) {
-			int amt = item.getAmount();
-			while (amt > 0) {
-				ItemStack drop = item.clone();
-				drop.setAmount(Math.min(drop.getMaxStackSize(), amt));
-
-				Item i = player.getWorld().dropItem(loc, drop);
-
-				PlayerDropItemEvent event = null;
-
-				if (player != null && player instanceof Player pl) {
-					event = new PlayerDropItemEvent(pl, i);
-					EventUtil.call(event);
-				}
-
-				if (event == null || !event.isCancelled()) {
-					i.setItemStack(drop);
-					i.setPickupDelay(pickupDelay);
-					if (randomVelocity > 0) {
-						Vector v = new Vector(random.nextDouble() - 0.5, random.nextDouble() / 2, random.nextDouble() - 0.5);
-						v.normalize().multiply(randomVelocity);
-						i.setVelocity(v);
-					}
-					i.setGravity(itemHasGravity);
-					if (player != null) i.setThrower(player.getUniqueId());
-					playSpellEffects(EffectPosition.SPECIAL, i);
-					EventUtil.call(new ConjureItemEvent(player, item));
-				}
-
-				amt -= drop.getMaxStackSize();
-			}
-		}
-		return true;
+		return conjureItems(data);
 	}
 
 	@Override
 	public boolean castAtEntity(SpellData data) {
 		if (!validTargetList.canTarget(data.caster(), data.target())) return false;
 
-		if (data.caster() instanceof Player) conjureItems(data);
-		else return conjureItemsAtLocation(data);
-
-		return true;
+		return conjureItems(data);
 	}
 
 	@Override

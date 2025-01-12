@@ -383,6 +383,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	    private Clipboard clipboard;
 	    private Clipboard ogClipboard;
+		private int undoDelayTask = -1;
 
 		private int changedBlocks = 0;
 		private int workingBlocks = 0;
@@ -588,7 +589,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        		this.intialize(this.blockVectors.get(n));
 				}
 	        } else if (this.airVectors.isEmpty()) {
-	        	this.finalise();
+	        	this.finalise(false);
 	        }
 		}
 
@@ -601,19 +602,20 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        	this.parseClipboard();
     	        if (this.blockVectors.size() > 0) this.firstBuildInit(this.clipboard.getOrigin());
 	        } else if (this.blockVectors.isEmpty()) {
-	        	this.finalise();
+	        	this.finalise(false);
 	        }
 		}
 
-		private void finalise() {
-			if (this.built) this.undone = true;
+		private void finalise(Boolean prematureEnd) {
+			if (this.built && !prematureEnd) this.undone = true;
 			this.built = true;
 			this.pasteAir = true;
 
 			this.blockDisplays = new ArrayList<BlockDisplay>();
 
-			if (!this.undone && this.undoDelay > 0) {
-				MagicSpells.scheduleDelayedTask(() ->{
+			if (!this.undone && this.undoDelay > 0 && this.undoDelayTask == -1) {
+				this.undoDelayTask = MagicSpells.scheduleDelayedTask(() ->{
+					this.blocksPerCast = 0;
 					this.clipboard = this.ogClipboard;
 					this.parseClipboard();
 					if (this.instantUndo) {
@@ -627,7 +629,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		private void placeBlock(Block block, int x, int y, int z) {
 			for (BlockFace face : CARDINAL_BLOCK_FACES) {
-				if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) return;
+				if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) {
+					this.finalise(true);
+					return;
+				}
 
 				if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 
@@ -664,7 +669,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    }
 
 		private void withdrawBlock(Block block, int x, int y, int z, BlockFace priorityFace) {
-			if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) return;
+			if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) {
+				this.finalise(true);
+				return;
+			}
 			if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 
 			BlockVector3 currPos = BlockVector3.at(x, y, z);

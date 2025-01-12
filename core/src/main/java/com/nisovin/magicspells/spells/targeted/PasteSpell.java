@@ -459,6 +459,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			EditSession session = WorldEdit.getInstance().newEditSessionBuilder().world(cuboidRegion.getWorld()).maxBlocks(-1).build();
 
 			ForwardExtentCopy fec = new ForwardExtentCopy(session, cuboidRegion, bAClipboard, cuboidRegion.getMinimumPoint());
+			fec.setCopyingEntities(false);
 			try {
 				Operations.complete(fec);
 			} catch (WorldEditException e) {

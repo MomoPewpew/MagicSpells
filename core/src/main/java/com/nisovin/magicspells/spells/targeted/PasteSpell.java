@@ -333,7 +333,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			int undoDelay = this.undoDelay.get(caster, null, power, args);
 
 			if (removePaste) sessions.add(editSession);
-			spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), editSession);
+			if (removePaste || undoDelay > 0) spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), editSession);
 
 			if (undoDelay > 0) {
 				MagicSpells.scheduleDelayedTask(() -> {
@@ -354,7 +354,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		try {
 			Builder builder = new Builder(caster, target, power, args);
 			builders.add(builder);
-			spellRecords.get(this.spellName).addPlayerPaste(caster.getUniqueId().toString(), builder);
+			if (removePaste || this.undoDelay.get(caster, null, power, args) > 0) spellRecords.get(this.spellName).addPlayerPaste(caster.getUniqueId().toString(), builder);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -413,7 +413,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
             this.blocksPerCast = PasteSpell.this.blocksPerCast.get(caster, null, power, args);
             this.instantUndo = PasteSpell.this.instantUndo;
 
-			this.storeStartRegion();
+			if (PasteSpell.this.removePaste || this.undoDelay > 0) this.storeStartRegion();
 
 			this.parseClipboard();
 

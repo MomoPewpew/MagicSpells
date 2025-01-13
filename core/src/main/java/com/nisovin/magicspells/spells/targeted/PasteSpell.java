@@ -520,6 +520,20 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					}
 				}
 	        }
+
+			// Sort both lists by distance from origin
+			Comparator<BlockVector3> distanceComparator = (v1, v2) -> {
+				double dist1 = Math.pow(v1.getX() - origin.getX(), 2) + 
+							  Math.pow(v1.getY() - origin.getY(), 2) + 
+							  Math.pow(v1.getZ() - origin.getZ(), 2);
+				double dist2 = Math.pow(v2.getX() - origin.getX(), 2) + 
+							  Math.pow(v2.getY() - origin.getY(), 2) + 
+							  Math.pow(v2.getZ() - origin.getZ(), 2);
+				return Double.compare(dist1, dist2);
+			};
+
+			Collections.sort(this.blockVectors, distanceComparator);
+			Collections.sort(this.airVectors, distanceComparator);
 		}
 
 		private void intialize(BlockVector3 pos) {

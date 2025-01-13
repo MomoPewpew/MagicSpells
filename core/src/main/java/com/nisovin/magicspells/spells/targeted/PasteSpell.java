@@ -508,7 +508,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				Block bl = this.target.getBlock().getRelative(pos_.getX() - origin.getX(), pos_.getY() - origin.getY(), pos_.getZ() - origin.getZ());
 
-				if (bl.getY() > bl.getWorld().getMaxHeight() || bl.getY() < bl.getWorld().getMinHeight()) continue;
+				if (bl.getY() >= bl.getWorld().getMaxHeight() || bl.getY() < bl.getWorld().getMinHeight()) continue;
 				
 				if (this.onlyReplaceAir && !bl.getBlockData().getMaterial().isAir()) continue;
 

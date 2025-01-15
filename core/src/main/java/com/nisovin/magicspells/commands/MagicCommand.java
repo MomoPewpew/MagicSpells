@@ -672,7 +672,7 @@ public class MagicCommand extends BaseCommand {
 	}
 
 	@Subcommand("additempdc")
-	@Syntax("<players|world|vaults|characters>")
+	@Syntax("<players|worlds|vaults|characters>")
 	@Description("Add PDC to all Magic Items.")
 	public void onAddItemPDC(CommandIssuer issuer, String[] args) {
 
@@ -713,8 +713,8 @@ public class MagicCommand extends BaseCommand {
 		if (updateWorlds) {toUpdate.append("Worlds, ");}
 		if (updateVaults) {toUpdate.append("Vaults, ");}
 		if (updateCharacters) {toUpdate.append("Characters, ");}
-		if (toUpdate.length() > 31) { // "Updated: " is 9 characters
-			toUpdate.setLength(toUpdate.length() - 2); // Remove ", "
+		if (toUpdate.length() > 31) {
+			toUpdate.setLength(toUpdate.length() - 2);
 			toUpdate.append(".");
 		} else {
 			toUpdate.append("None");
@@ -727,7 +727,7 @@ public class MagicCommand extends BaseCommand {
 			issuer.sendMessage("");
 			issuer.sendMessage(toUpdate.toString());
 			issuer.sendMessage(NamedTextColor.RED + "This command requires confirmation. Use --confirm to proceed.");
-			return; // Stop execution if not confirmed
+			return;
 		}
 
 		issuer.sendMessage("PDC update starting.");

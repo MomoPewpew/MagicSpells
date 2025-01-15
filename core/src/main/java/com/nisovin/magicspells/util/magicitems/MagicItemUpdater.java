@@ -21,6 +21,7 @@ import org.bukkit.event.player.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.persistence.PersistentDataType;
@@ -135,6 +136,7 @@ public class MagicItemUpdater {
         Long expiresAt = null;
         String creatorName = null;
         int amount = itemStack.getAmount();
+        BookMeta bookMeta = null;
 
         if (itemStack.getItemMeta() instanceof Damageable damageable) {
             durability = damageable.getDamage();
@@ -152,6 +154,10 @@ public class MagicItemUpdater {
             creatorName = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING);
         }
 
+        if (sourceMeta instanceof BookMeta sourceBookMeta) {
+            bookMeta = sourceBookMeta.clone();
+        }
+
         ItemStack updatedItem = magicItem.getItemStack().clone();
         updatedItem.setAmount(amount);
 
@@ -165,6 +171,13 @@ public class MagicItemUpdater {
 
         if (creatorName != null) {
             meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING, creatorName);
+        }
+
+        if (meta instanceof BookMeta updatedBookMeta && bookMeta != null) {
+            updatedBookMeta.setTitle(bookMeta.getTitle());
+            updatedBookMeta.setAuthor(bookMeta.getAuthor());
+            updatedBookMeta.setPages(bookMeta.getPages());
+            updatedBookMeta.setGeneration(bookMeta.getGeneration());
         }
 
         updatedItem.setItemMeta(meta);

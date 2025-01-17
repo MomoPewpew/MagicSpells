@@ -32,7 +32,7 @@ public class PlayerVariable extends Variable {
 			double change = amount - current;
 
 			if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect"))
-				CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +" + change));
+				CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 		}
 
 		if (objective == null) return;
@@ -53,7 +53,7 @@ public class PlayerVariable extends Variable {
 		map.remove(player);
 
 		double change = defaultValue - current;
-		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +" + change));
+		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 
 		if (objective == null) return;
 		objective.getScore(player).setScore((int) defaultValue);

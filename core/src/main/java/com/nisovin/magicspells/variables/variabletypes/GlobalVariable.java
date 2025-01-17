@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 public class GlobalVariable extends Variable {
 
 	private double value = 0;
+	private static final double EPSILON = 1e-10;
 	
 	@Override
 	protected void init() {
@@ -25,7 +26,7 @@ public class GlobalVariable extends Variable {
 		value = amount;
 
 		double change = amount - current;
-		if (change != 0D && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
+		if (Math.abs(change) > EPSILON && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 	}
 
 	@Override
@@ -40,7 +41,7 @@ public class GlobalVariable extends Variable {
 		value = defaultValue;
 
 		double change = defaultValue - current;
-		if (change != 0D && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
+		if (Math.abs(change) > EPSILON && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 	}
 
 }

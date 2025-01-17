@@ -45,8 +45,9 @@ public class GlobalStringVariable extends Variable {
 
 	@Override
 	public void reset(String player) {
+		String current = value;
 		value = defaultStringValue;
-		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + defaultValue);
+		if (current != null && !current.equals(defaultStringValue) && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + " =" + defaultValue);
 	}
 
 }

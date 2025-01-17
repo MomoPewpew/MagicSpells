@@ -14,6 +14,7 @@ import com.nisovin.magicspells.variables.Variable;
 public class PlayerVariable extends Variable {
 
 	private final Map<String, Double> map = new HashMap<>();
+	private static final double EPSILON = 1e-10;
 
 	@Override
 	public void set(String player, double amount) {
@@ -31,7 +32,7 @@ public class PlayerVariable extends Variable {
 		if (current != null) {
 			double change = amount - current;
 
-			if (change != 0D && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect"))
+			if (Math.abs(change) > EPSILON && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect"))
 				CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 		}
 
@@ -53,7 +54,7 @@ public class PlayerVariable extends Variable {
 		map.remove(player);
 
 		double change = defaultValue - current;
-		if (change != 0D && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
+		if (Math.abs(change) > EPSILON && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 
 		if (objective == null) return;
 		objective.getScore(player).setScore((int) defaultValue);

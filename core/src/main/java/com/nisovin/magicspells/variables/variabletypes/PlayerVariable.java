@@ -31,7 +31,7 @@ public class PlayerVariable extends Variable {
 		if (current != null) {
 			double change = amount - current;
 
-			if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect"))
+			if (change != 0D && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect"))
 				CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 		}
 
@@ -53,7 +53,7 @@ public class PlayerVariable extends Variable {
 		map.remove(player);
 
 		double change = defaultValue - current;
-		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
+		if (change != 0D && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(p, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 
 		if (objective == null) return;
 		objective.getScore(player).setScore((int) defaultValue);

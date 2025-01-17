@@ -25,7 +25,7 @@ public class GlobalVariable extends Variable {
 		value = amount;
 
 		double change = amount - current;
-		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
+		if (change != 0D && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class GlobalVariable extends Variable {
 		value = defaultValue;
 
 		double change = defaultValue - current;
-		if (logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
+		if (change != 0D && logInCoreprotect && Bukkit.getPluginManager().isPluginEnabled("CoreProtect")) CoreProtect.getInstance().getAPI().logCommand(null, "/ms_var " + name + ((change < 0D) ? " " : " +") + change);
 	}
 
 }

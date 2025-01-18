@@ -7,9 +7,6 @@ import java.util.ArrayList;
 
 import org.bukkit.Color;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionData;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -44,12 +41,6 @@ public class CastItem {
 	private Map<Enchantment, Integer> enchants = null;
 	private List<String> lore = null;
 
-	private String magicitemName = null;
-	private List<String> persistentData = null;
-
-	private static final NamespacedKey DATA_KEY = new NamespacedKey(MagicSpells.getInstance(), "magicspellsData");
-	private static final NamespacedKey NAME_KEY = new NamespacedKey(MagicSpells.getInstance(), "magicitem");
-
 	public CastItem() {
 
 	}
@@ -81,17 +72,6 @@ public class CastItem {
 					loreLocal.add(Util.getLegacyFromComponent(component));
 				}
 				lore = loreLocal;
-			}
-			if (!MagicSpells.ignoreCastItemPersistentData()) {
-				PersistentDataContainer container = meta.getPersistentDataContainer();
-
-				if (container.has(NAME_KEY, PersistentDataType.STRING)) {
-					magicitemName = container.get(NAME_KEY, PersistentDataType.STRING);
-				}
-
-				if (container.has(DATA_KEY, PersistentDataType.LIST.strings())) {
-					persistentData = container.get(DATA_KEY, PersistentDataType.LIST.strings());
-				}
 			}
 		}
 	}
@@ -141,14 +121,6 @@ public class CastItem {
 					}
 					lore = loreLocal;
 				}
-
-				if (!MagicSpells.ignoreCastItemPersistentData() && data.hasAttribute(MAGIC_ITEM_NAME)) {
-					magicitemName = (String) data.getAttribute(MAGIC_ITEM_NAME);
-				}
-
-				if (!MagicSpells.ignoreCastItemPersistentData() && data.hasAttribute(PERSISTENT_DATA)) {
-					persistentData = (List<String>) data.getAttribute(PERSISTENT_DATA);
-				}
 			}
 		}
 	}
@@ -182,9 +154,7 @@ public class CastItem {
 			&& (MagicSpells.ignoreCastItemTitle() || Objects.equals(title, i.title))
 			&& (MagicSpells.ignoreCastItemAuthor() || Objects.equals(author, i.author))
 			&& (MagicSpells.ignoreCastItemEnchants() || Objects.equals(enchants, i.enchants))
-			&& (MagicSpells.ignoreCastItemLore() || Objects.equals(lore, i.lore))
-			&& (MagicSpells.ignoreCastItemPersistentData() || Objects.equals(persistentData, i.persistentData))
-			&& (MagicSpells.ignoreCastItemPersistentData() || Objects.equals(magicitemName, i.magicitemName));
+			&& (MagicSpells.ignoreCastItemLore() || Objects.equals(lore, i.lore));
 	}
 
 	@Override

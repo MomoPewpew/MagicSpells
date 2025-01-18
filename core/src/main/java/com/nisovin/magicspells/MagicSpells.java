@@ -19,7 +19,6 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Files;
 
-import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 import de.slikey.effectlib.EffectManager;
 
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +77,6 @@ import com.nisovin.magicspells.spelleffects.trackers.AsyncEffectTracker;
 import com.nisovin.magicspells.spelleffects.effecttypes.EffectLibEffect;
 import com.nisovin.magicspells.variables.variabletypes.GlobalStringVariable;
 import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;
-import com.nisovin.magicspells.util.magicitems.MagicItemUpdater.PersistentDataUpdater;
 
 public class MagicSpells extends JavaPlugin {
 
@@ -158,10 +156,6 @@ public class MagicSpells extends JavaPlugin {
 	private boolean ignoreCastItemAuthor;
 	private boolean ignoreCastItemLore;
 	private boolean ignoreCastItemCustomModelData;
-	private boolean ignoreCastItemPersistentData;
-
-	private boolean checkItemPersistentData;
-	private boolean enableUpdateItemData;
 
 	private boolean castOnAnimate;
 	private boolean enableManaSystem;
@@ -319,10 +313,6 @@ public class MagicSpells extends JavaPlugin {
 		ignoreCastItemLore = config.getBoolean(path + "ignore-cast-item-lore", true);
 		ignoreCastItemCustomModelData = config.getBoolean(path + "ignore-cast-item-custom-model-data", true);
 		ignoreCastItemDurability = Util.getMaterialList(config.getStringList(path + "ignore-cast-item-durability", new ArrayList<>()), ArrayList::new);
-		ignoreCastItemPersistentData = config.getBoolean(path + "ignore-cast-item-persistent-data", true);
-
-		checkItemPersistentData = config.getBoolean(path + "check-item-persistent-data", false);
-		enableUpdateItemData = config.getBoolean(path + "enable-update-item-data", false);
 
 		checkWorldPvpFlag = config.getBoolean(path + "check-world-pvp-flag", true);
 		checkScoreboardTeams = config.getBoolean(path + "check-scoreboard-teams", false);
@@ -619,11 +609,6 @@ public class MagicSpells extends JavaPlugin {
 		ConsumeListener consumeListener = new ConsumeListener();
 		if (consumeListener.hasConsumeCastItems()) registerEvents(consumeListener);
 		if (config.getBoolean(path + "enable-dance-casting", true)) new DanceCastListener(this, config);
-
-		if (enableUpdateItemData) registerEvents(new PersistentDataUpdater());
-		if (enableUpdateItemData && CompatBasics.pluginEnabled("SneakyCharacterManager")) {
-			registerEvents(new MagicItemUpdater.CharacterPersistentDataUpdater());
-		}
 
 		log("...done");
 
@@ -1047,22 +1032,6 @@ public class MagicSpells extends JavaPlugin {
 
 	public static boolean ignoreCastItemNameColors() {
 		return plugin.ignoreCastItemNameColors;
-	}
-
-	public static boolean ignoreCastItemPersistentData() {
-		return plugin.ignoreCastItemPersistentData;
-	}
-
-	public static boolean checkItemPersistentData() {
-		return plugin.checkItemPersistentData;
-	}
-
-	public static void setCheckItemPersistentData(boolean checkItemPersistentData) {
-		plugin.checkItemPersistentData = checkItemPersistentData;
-	}
-
-	public static boolean enableUpdateItemData() {
-		return plugin.enableUpdateItemData;
 	}
 
 	public static boolean showStrCostOnMissingReagents() {

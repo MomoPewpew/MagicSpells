@@ -167,9 +167,6 @@ public class MagicItems {
 		// block data
 		BlockDataHandler.processMagicItemData(meta, data, itemStack.getType());
 
-		// PDC
-		PersistentDataHandler.processMagicItemData(meta, data);
-
 		itemStackCache.put(itemStack, data);
 		return data;
 	}
@@ -276,9 +273,6 @@ public class MagicItems {
 
 		// Block Data
 		BlockDataHandler.processItemMeta(meta, data);
-
-		// PDC
-		PersistentDataHandler.processItemMeta(meta, data);
 
 		// Unbreakable
 		if (data.hasAttribute(UNBREAKABLE))
@@ -474,9 +468,6 @@ public class MagicItems {
 
 			// Block Data
 			BlockDataHandler.process(section, meta, itemData, type);
-
-			// PDC
-			PersistentDataHandler.process(section, meta, itemData);
 
 			// Unbreakable
 			if (section.isBoolean("unbreakable")) {

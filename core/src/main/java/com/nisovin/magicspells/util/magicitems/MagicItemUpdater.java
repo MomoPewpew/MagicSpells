@@ -5,7 +5,6 @@ import java.util.*;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.Bukkit;
@@ -47,6 +46,8 @@ import static com.nisovin.magicspells.util.magicitems.MagicItems.getMagicItems;
 public class MagicItemUpdater {
     // This file is my own person nightmare of not knowing how multi-threading works
     // There is a chance that this may crash if you have too many players, characters, or vaults
+    private static int itemUpdateCount = 0;
+    private static boolean countItemUpdates = false;
 
     private static MagicItemUpdater.PersistentDataUpdater persistentDataUpdater = new PersistentDataUpdater();
 
@@ -69,7 +70,6 @@ public class MagicItemUpdater {
 
         public void joinOrLoadCharacter(Player player) {
             if (!MagicSpells.enableUpdateItemData()) return;
-            MagicSpells.error("UpdateItems");
             PlayerInventory inv = player.getInventory();
             updateInventory(inv);
             ItemStack[] armor = inv.getArmorContents();
@@ -182,6 +182,8 @@ public class MagicItemUpdater {
 
         updatedItem.setItemMeta(meta);
 
+        if (countItemUpdates) itemUpdateCount += amount;
+
         return updatedItem;
     }
 
@@ -189,9 +191,10 @@ public class MagicItemUpdater {
     public static void addMagicItemPDC(boolean updatePlayers, boolean updateWorlds,
                                        boolean updateVaults, boolean updateCharacters) {
 
-        MagicSpells.log(NamedTextColor.BLUE + "Adding PDC to Magic Items.");
+        MagicSpells.log("Adding PDC to Magic Items.");
         cacheItemData();
         setCheckItemPersistentData(false);
+        countItemUpdates = true;
 
         // Update Player Inventories
         if (updatePlayers) updatePlayers();
@@ -272,7 +275,7 @@ public class MagicItemUpdater {
                 }
 
                 if (!userIterator.hasNext()) {
-                    MagicSpells.log(NamedTextColor.BLUE + "Finished updating all players.");
+                    MagicSpells.log("Finished updating all players.");
                     Bukkit.getScheduler().cancelTasks(MagicSpells.getInstance());
                 }
             }
@@ -315,7 +318,7 @@ public class MagicItemUpdater {
                 }
             }
         }
-        MagicSpells.log(NamedTextColor.BLUE + "Updated items in SneakyCharacterManager.");
+        MagicSpells.log("Updated items in SneakyCharacterManager.");
     }
 
     private static void updateVaults() {
@@ -371,7 +374,7 @@ public class MagicItemUpdater {
                 }
             }
         }
-        MagicSpells.log(NamedTextColor.BLUE + "Updated items in SneakyVaults.");
+        MagicSpells.log("Updated items in SneakyVaults.");
     }
 
     private static void scanWorlds() {
@@ -461,11 +464,11 @@ public class MagicItemUpdater {
                 try {
                     latch.await();
                     Bukkit.getScheduler().runTaskLater(MagicSpells.getInstance(),
-                            () -> MagicSpells.log(NamedTextColor.BLUE + "All chunk data has been updated."),
+                            () -> MagicSpells.log("All chunk data has been updated."),
                             1L
                     );
                     Bukkit.getScheduler().runTaskLater(MagicSpells.getInstance(),
-                            () -> MagicSpells.log(NamedTextColor.GREEN + "All tasks complete. Please restart to proceed."),
+                            () -> MagicSpells.log("All tasks complete. " + itemUpdateCount + " items have been updated." + " Please restart to proceed."),
                             1L
                     );
                 } catch (InterruptedException e) {

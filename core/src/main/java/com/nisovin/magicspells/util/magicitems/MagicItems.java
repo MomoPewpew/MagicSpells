@@ -288,6 +288,11 @@ public class MagicItems {
 		if (data.hasAttribute(HIDE_TOOLTIP) && (boolean) data.getAttribute(HIDE_TOOLTIP))
 			meta.addItemFlags(ItemFlag.values());
 
+
+		// Invisible tooltip
+		if (data.hasAttribute(INVISIBLE_TOOLTIP) && (boolean) data.getAttribute(INVISIBLE_TOOLTIP))
+			meta.setHideTooltip(true);
+
 		// Set meta
 		item.setItemMeta(meta);
 

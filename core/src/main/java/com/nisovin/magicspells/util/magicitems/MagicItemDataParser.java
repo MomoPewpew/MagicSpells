@@ -156,6 +156,11 @@ public class MagicItemDataParser {
 						case "hide_tooltip":
 							data.setAttribute(HIDE_TOOLTIP, value.getAsBoolean());
 							break;
+						case "invisibletooltip":
+						case "invisible-tooltip":
+						case "invisible_tooltip":
+							data.setAttribute(INVISIBLE_TOOLTIP, value.getAsBoolean());
+							break;
 						case "color":
 							try {
 								Color color = Color.fromRGB(Integer.parseInt(value.getAsString().replace("#", ""), 16));

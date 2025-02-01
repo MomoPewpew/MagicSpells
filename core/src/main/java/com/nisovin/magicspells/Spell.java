@@ -71,7 +71,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected Map<UUID, Long> nextCast;
 	protected Map<String, Integer> xpGranted;
 	protected Map<String, Integer> xpRequired;
-	protected Map<Spell, Float> sharedCooldowns;
 	protected Map<String, Map<EffectPosition, List<Runnable>>> callbacks;
 
 	protected Multimap<String, VariableMod> variableModsCast;
@@ -95,7 +94,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected List<String> prerequisites;
 	protected List<String> modifierStrings;
 	protected List<String> worldRestrictions;
-	protected List<String> rawSharedCooldowns;
+	protected ConfigData<List<String>> rawSharedCooldownsData;
 	protected List<String> targetModifierStrings;
 	protected List<String> locationModifierStrings;
 
@@ -372,7 +371,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		}
 
 		serverCooldown = (float) config.getDouble(path + "server-cooldown", 0);
-		rawSharedCooldowns = config.getStringList(path + "shared-cooldowns", null);
+		rawSharedCooldownsData = getConfigDataStringList("shared-cooldowns", null);
 		ignoreGlobalCooldown = config.getBoolean(path + "ignore-global-cooldown", false);
 		charges = config.getInt(path + "charges", 0);
 		rechargeSound = config.getString(path + "recharge-sound", "");
@@ -597,19 +596,6 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * This method is called immediately after all spells have been loaded.
 	 */
 	protected void initialize() {
-		// Process shared cooldowns
-		if (rawSharedCooldowns != null) {
-			sharedCooldowns = new HashMap<>();
-			for (String s : rawSharedCooldowns) {
-				String[] data = s.split(" ");
-				Spell spell = MagicSpells.getSpellByInternalName(data[0]);
-				float cd = Float.parseFloat(data[1]);
-				if (spell != null) sharedCooldowns.put(spell, cd);
-			}
-			rawSharedCooldowns.clear();
-			rawSharedCooldowns = null;
-		}
-
 		// Register events
 		registerEvents();
 
@@ -1149,9 +1135,25 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			else chargesConsumed.remove(livingEntity.getUniqueId());
 		}
 		if (serverCooldown > 0) nextCastServer = System.currentTimeMillis() + (long) (serverCooldown * TimeUtil.MILLISECONDS_PER_SECOND);
-		if (activateSharedCooldowns && sharedCooldowns != null) {
-			for (Map.Entry<Spell, Float> scd : sharedCooldowns.entrySet()) {
-				scd.getKey().setCooldown(livingEntity, scd.getValue(), false);
+		if (activateSharedCooldowns && rawSharedCooldownsData != null) {
+			// Process shared cooldowns
+			List<String> rawSharedCooldowns = rawSharedCooldownsData.get(livingEntity, 1f, new String[] {});
+			if (rawSharedCooldowns != null) {
+				Map<Spell, Float> sharedCooldowns = new HashMap<>();
+				for (String s : rawSharedCooldowns) {
+					String[] data = s.split(" ");
+					Spell spell = MagicSpells.getSpellByInternalName(data[0]);
+					try {
+						float cd = Float.parseFloat(data[1]);
+						if (spell != null) sharedCooldowns.put(spell, cd);
+					} catch (NumberFormatException e) {
+						MagicSpells.error("Invalid shared cooldown data: " + s);
+					}
+				}
+			
+				for (Map.Entry<Spell, Float> scd : sharedCooldowns.entrySet()) {
+					scd.getKey().setCooldown(livingEntity, scd.getValue(), false);
+				}
 			}
 		}
 	}

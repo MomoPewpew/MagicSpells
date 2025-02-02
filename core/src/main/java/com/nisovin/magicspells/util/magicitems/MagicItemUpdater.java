@@ -20,6 +20,7 @@ import org.bukkit.event.player.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Damageable;
@@ -89,7 +90,7 @@ public class MagicItemUpdater {
             inv.setContents(contents);
         }
 
-        private void updateInventory(ItemStack[] items) {
+        private static void updateInventory(ItemStack[] items) {
             if (items == null) return;
             for (int i = 0; i < items.length; i++) {
                 ItemStack itemStack = items[i];
@@ -137,14 +138,15 @@ public class MagicItemUpdater {
         String creatorName = null;
         int amount = itemStack.getAmount();
         BookMeta bookMeta = null;
-
-        if (itemStack.getItemMeta() instanceof Damageable damageable) {
-            durability = damageable.getDamage();
-        }
+        Inventory blockInventory = null;
 
         ItemMeta sourceMeta = itemStack.getItemMeta();
 
         PersistentDataContainer sourceContainer = sourceMeta.getPersistentDataContainer();
+
+        if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "menuoption"), PersistentDataType.STRING)) {
+            return itemStack;
+        }
 
         if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG)) {
             expiresAt = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG);
@@ -154,8 +156,16 @@ public class MagicItemUpdater {
             creatorName = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING);
         }
 
+        if (sourceMeta instanceof Damageable damageable) {
+            durability = damageable.getDamage();
+        }
+
         if (sourceMeta instanceof BookMeta sourceBookMeta) {
             bookMeta = sourceBookMeta.clone();
+        }
+
+        if (sourceMeta instanceof BlockStateMeta blockStateMeta && blockStateMeta.getBlockState() instanceof Container container) {
+            blockInventory = container.getInventory();
         }
 
         ItemStack updatedItem = magicItem.getItemStack().clone();
@@ -178,6 +188,14 @@ public class MagicItemUpdater {
             updatedBookMeta.setAuthor(bookMeta.getAuthor());
             updatedBookMeta.setPages(bookMeta.getPages());
             updatedBookMeta.setGeneration(bookMeta.getGeneration());
+        }
+
+        if (meta instanceof BlockStateMeta updatedBlockStateMeta && blockInventory != null) {
+            ItemStack[] contents = blockInventory.getContents();
+            PersistentDataUpdater.updateInventory(contents);
+            Container updatedContainer = (Container) updatedBlockStateMeta.getBlockState();
+            updatedContainer.getInventory().setContents(contents);
+            updatedBlockStateMeta.setBlockState(updatedContainer);
         }
 
         updatedItem.setItemMeta(meta);

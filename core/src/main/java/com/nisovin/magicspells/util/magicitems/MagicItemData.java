@@ -26,6 +26,8 @@ import org.bukkit.attribute.AttributeModifier;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.TxtUtil;
 
+import static com.nisovin.magicspells.MagicSpells.checkItemPersistentData;
+
 public class MagicItemData {
 
 	private final EnumMap<MagicItemAttribute, Object> itemAttributes = new EnumMap<>(MagicItemAttribute.class);
@@ -147,6 +149,7 @@ public class MagicItemData {
 
 		for (MagicItemAttribute attr : keysSelf) {
 			if (ignoredAttributes.contains(attr)) continue;
+			if (attr == MagicItemAttribute.MAGIC_ITEM_NAME && !checkItemPersistentData()) continue;
 			if (!keysOther.contains(attr)) return false;
 		}
 
@@ -221,10 +224,24 @@ public class MagicItemData {
 					}
 					return true;
 				}
+				case MAGIC_ITEM_NAME -> {
+					if (checkItemPersistentData()) continue;
+					if (!itemAttributes.get(attr).equals(data.itemAttributes.get(attr))) return false;
+				}
 				default -> {
 					if (!itemAttributes.get(attr).equals(data.itemAttributes.get(attr))) return false;
 				}
 			}
+		}
+
+		return true;
+	}
+
+	public boolean fastMatches(MagicItemData data) {
+		if (this == data) return true;
+
+		if (!itemAttributes.get(MagicItemAttribute.MAGIC_ITEM_NAME).equals(data.itemAttributes.get(MagicItemAttribute.MAGIC_ITEM_NAME))) {
+			return false;
 		}
 
 		return true;
@@ -267,6 +284,7 @@ public class MagicItemData {
 		POWER(Integer.class),
 		UNBREAKABLE(Boolean.class),
 		HIDE_TOOLTIP(Boolean.class),
+		INVISIBLE_TOOLTIP(Boolean.class),
 		FAKE_GLINT(Boolean.class),
 		POTION_DATA(PotionData.class),
 		COLOR(Color.class),
@@ -284,7 +302,9 @@ public class MagicItemData {
 		POTION_EFFECTS(List.class),
 		PATTERNS(List.class),
 		FIREWORK_EFFECTS(List.class),
-		ATTRIBUTES(Multimap.class);
+		ATTRIBUTES(Multimap.class),
+		PERSISTENT_DATA(List.class),
+		MAGIC_ITEM_NAME(String.class);
 
 		private final Class<?> dataType;
 		private final String asString;
@@ -408,6 +428,17 @@ public class MagicItemData {
 			output
 				.append("\"hide-tooltip\":")
 				.append((boolean) getAttribute(MagicItemAttribute.HIDE_TOOLTIP));
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.INVISIBLE_TOOLTIP)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+					.append("\"invisible-tooltip\":")
+					.append((boolean) getAttribute(MagicItemAttribute.INVISIBLE_TOOLTIP));
 
 			previous = true;
 		}
@@ -769,6 +800,28 @@ public class MagicItemData {
 			}
 
 			output.append(']');
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.PERSISTENT_DATA)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			List<String> pdcList = (List<String>) getAttribute(MagicItemAttribute.PERSISTENT_DATA);
+			boolean previousLine = false;
+			output.append("\"data\":[");
+			for (String line : pdcList) {
+				if (previousLine) output.append(',');
+
+				output
+						.append('"')
+						.append(TxtUtil.escapeJSON(line))
+						.append('"');
+
+				previousLine = true;
+			}
+			output.append(']');
+
 			previous = true;
 		}
 

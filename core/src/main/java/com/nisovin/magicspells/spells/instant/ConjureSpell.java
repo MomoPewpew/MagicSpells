@@ -808,7 +808,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		}
 
 		@EventHandler(priority = EventPriority.LOWEST)
-		private void onJoin(LoadCharacterEvent event) {
+		private void onCharacterLoad(LoadCharacterEvent event) {
 			if (!event.isCancelled()) {
 				MagicSpells.scheduleDelayedTask(() -> {
 					expirationHandler.joinOrLoadCharacter(event.getPlayer());

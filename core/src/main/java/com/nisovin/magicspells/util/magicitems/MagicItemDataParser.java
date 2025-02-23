@@ -154,6 +154,11 @@ public class MagicItemDataParser {
 						case "hide_tooltip":
 							data.setAttribute(HIDE_TOOLTIP, value.getAsBoolean());
 							break;
+						case "invisibletooltip":
+						case "invisible-tooltip":
+						case "invisible_tooltip":
+							data.setAttribute(INVISIBLE_TOOLTIP, value.getAsBoolean());
+							break;
 						case "color":
 							try {
 								Color color = Color.fromRGB(Integer.parseInt(value.getAsString().replace("#", ""), 16));
@@ -419,6 +424,19 @@ public class MagicItemDataParser {
 							}
 
 							if (!fireworkEffects.isEmpty()) data.setAttribute(FIREWORK_EFFECTS, fireworkEffects);
+							break;
+						case "pdc":
+						case "persistent-data":
+						case "persistent_data":
+							if (!value.isJsonArray()) continue;
+
+							List<String> pdcList = new ArrayList<>();
+							JsonArray pdcArray = value.getAsJsonArray();
+							for (JsonElement line : pdcArray) {
+								pdcList.add(line.getAsString());
+							}
+
+							if (!pdcList.isEmpty()) data.setAttribute(PERSISTENT_DATA, pdcList);
 							break;
 						case "ignoredattributes":
 						case "ignored-attributes":

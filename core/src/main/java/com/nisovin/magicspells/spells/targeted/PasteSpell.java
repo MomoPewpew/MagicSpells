@@ -333,7 +333,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			int undoDelay = this.undoDelay.get(caster, null, power, args);
 
 			if (removePaste) sessions.add(editSession);
-			spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), editSession);
+			if (removePaste || undoDelay > 0) spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), editSession);
 
 			if (undoDelay > 0) {
 				MagicSpells.scheduleDelayedTask(() -> {
@@ -354,7 +354,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		try {
 			Builder builder = new Builder(caster, target, power, args);
 			builders.add(builder);
-			spellRecords.get(this.spellName).addPlayerPaste(caster.getUniqueId().toString(), builder);
+			if (removePaste || this.undoDelay.get(caster, null, power, args) > 0) spellRecords.get(this.spellName).addPlayerPaste(caster.getUniqueId().toString(), builder);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -383,6 +383,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	    private Clipboard clipboard;
 	    private Clipboard ogClipboard;
+		private int undoDelayTask = -1;
 
 		private int changedBlocks = 0;
 		private int workingBlocks = 0;
@@ -413,7 +414,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
             this.blocksPerCast = PasteSpell.this.blocksPerCast.get(caster, null, power, args);
             this.instantUndo = PasteSpell.this.instantUndo;
 
-			this.storeStartRegion();
+			if (PasteSpell.this.removePaste || this.undoDelay > 0) this.storeStartRegion();
 
 			this.parseClipboard();
 
@@ -459,6 +460,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			EditSession session = WorldEdit.getInstance().newEditSessionBuilder().world(cuboidRegion.getWorld()).maxBlocks(-1).build();
 
 			ForwardExtentCopy fec = new ForwardExtentCopy(session, cuboidRegion, bAClipboard, cuboidRegion.getMinimumPoint());
+			fec.setCopyingEntities(false);
 			try {
 				Operations.complete(fec);
 			} catch (WorldEditException e) {
@@ -506,6 +508,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				Block bl = this.target.getBlock().getRelative(pos_.getX() - origin.getX(), pos_.getY() - origin.getY(), pos_.getZ() - origin.getZ());
 
+				if (bl.getY() >= bl.getWorld().getMaxHeight() || bl.getY() < bl.getWorld().getMinHeight()) continue;
+				
 				if (this.onlyReplaceAir && !bl.getBlockData().getMaterial().isAir()) continue;
 
 				if (!data.matches(bl.getBlockData())) {
@@ -516,6 +520,20 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					}
 				}
 	        }
+
+			// Sort both lists by distance from origin
+			Comparator<BlockVector3> distanceComparator = (v1, v2) -> {
+				double dist1 = Math.pow(v1.getX() - origin.getX(), 2) + 
+							  Math.pow(v1.getY() - origin.getY(), 2) + 
+							  Math.pow(v1.getZ() - origin.getZ(), 2);
+				double dist2 = Math.pow(v2.getX() - origin.getX(), 2) + 
+							  Math.pow(v2.getY() - origin.getY(), 2) + 
+							  Math.pow(v2.getZ() - origin.getZ(), 2);
+				return Double.compare(dist1, dist2);
+			};
+
+			Collections.sort(this.blockVectors, distanceComparator);
+			Collections.sort(this.airVectors, distanceComparator);
 		}
 
 		private void intialize(BlockVector3 pos) {
@@ -587,7 +605,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        		this.intialize(this.blockVectors.get(n));
 				}
 	        } else if (this.airVectors.isEmpty()) {
-	        	this.finalise();
+	        	this.finalise(false);
 	        }
 		}
 
@@ -600,19 +618,20 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	        	this.parseClipboard();
     	        if (this.blockVectors.size() > 0) this.firstBuildInit(this.clipboard.getOrigin());
 	        } else if (this.blockVectors.isEmpty()) {
-	        	this.finalise();
+	        	this.finalise(false);
 	        }
 		}
 
-		private void finalise() {
-			if (this.built) this.undone = true;
+		private void finalise(Boolean prematureEnd) {
+			if (this.built && !prematureEnd) this.undone = true;
 			this.built = true;
 			this.pasteAir = true;
 
 			this.blockDisplays = new ArrayList<BlockDisplay>();
 
-			if (!this.undone && this.undoDelay > 0) {
-				MagicSpells.scheduleDelayedTask(() ->{
+			if (!this.undone && this.undoDelay > 0 && this.undoDelayTask == -1) {
+				this.undoDelayTask = MagicSpells.scheduleDelayedTask(() ->{
+					this.blocksPerCast = 0;
 					this.clipboard = this.ogClipboard;
 					this.parseClipboard();
 					if (this.instantUndo) {
@@ -626,7 +645,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		private void placeBlock(Block block, int x, int y, int z) {
 			for (BlockFace face : CARDINAL_BLOCK_FACES) {
-				if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) return;
+				if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) {
+					this.finalise(true);
+					return;
+				}
 
 				if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 
@@ -663,7 +685,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    }
 
 		private void withdrawBlock(Block block, int x, int y, int z, BlockFace priorityFace) {
-			if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) return;
+			if (this.stop || (this.blocksPerCast > 0 && this.changedBlocks >= this.blocksPerCast)) {
+				this.finalise(true);
+				return;
+			}
 			if ((this.workingBlocks + this.workingAir) > PasteSpell.this.maxWorkingBlocks) return;
 
 			BlockVector3 currPos = BlockVector3.at(x, y, z);

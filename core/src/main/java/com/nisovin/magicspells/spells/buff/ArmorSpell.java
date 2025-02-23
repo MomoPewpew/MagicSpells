@@ -14,19 +14,17 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.inventory.EntityEquipment;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType.SlotType;
+import org.bukkit.event.inventory.ClickType;
 
 import net.kyori.adventure.text.Component;
 
@@ -51,6 +49,7 @@ public class ArmorSpell extends BuffSpell {
 	private ConfigData<String> chestplateData;
 	private ConfigData<String> leggingsData;
 	private ConfigData<String> bootsData;
+	private ConfigData<String> offhandData;
 
 	private String strHasArmor;
 
@@ -65,6 +64,7 @@ public class ArmorSpell extends BuffSpell {
 		chestplateData = getConfigDataString("chestplate", "");
 		leggingsData = getConfigDataString("leggings", "");
 		bootsData = getConfigDataString("boots", "");
+		offhandData = getConfigDataString("offhand", "");
 
 		strHasArmor = getConfigString("str-has-armor", "You cannot cast this spell if you are wearing armor.");
 
@@ -120,10 +120,11 @@ public class ArmorSpell extends BuffSpell {
 		ItemStack chestplate = getItem(chestplateData.get(entity, power, args));
 		ItemStack leggings = getItem(leggingsData.get(entity, power, args));
 		ItemStack boots = getItem(bootsData.get(entity, power, args));
+		ItemStack offhand = getItem(offhandData.get(entity, power, args));
 
-		ArmorSet armorSet = new ArmorSet(helmet, chestplate, leggings, boots);
+		ArmorSet armorSet = new ArmorSet(helmet, chestplate, leggings, boots, offhand);
 
-		if (!replace && ((armorSet.helmet() != null && inv.getHelmet() != null) || (armorSet.chestplate() != null && inv.getChestplate() != null) || (armorSet.leggings() != null && inv.getLeggings() != null) || (armorSet.boots() != null && inv.getBoots() != null))) {
+		if (!replace && ((armorSet.helmet() != null && inv.getHelmet() != null) || (armorSet.chestplate() != null && inv.getChestplate() != null) || (armorSet.leggings() != null && inv.getLeggings() != null) || (armorSet.boots() != null && inv.getBoots() != null) || (armorSet.offhand() != null && inv.getItemInOffHand().getType() != Material.AIR))) {
 			// error
 			if (entity instanceof Player) sendMessage(strHasArmor, entity, args);
 			return false;
@@ -173,6 +174,7 @@ public class ArmorSpell extends BuffSpell {
 		public ItemStack chest;
 		public ItemStack legs;
 		public ItemStack boots;
+		public ItemStack offhand;
 	}
 	private final Map<UUID, EquipStore> equipStore = new HashMap<>();
 
@@ -181,6 +183,7 @@ public class ArmorSpell extends BuffSpell {
 		ItemStack chestplate = armorSet.chestplate();
 		ItemStack leggings = armorSet.leggings();
 		ItemStack boots = armorSet.boots();
+		ItemStack offhand = armorSet.offhand();
 
 		EquipStore eStore = new EquipStore();
 		if (helmet != null) {
@@ -238,6 +241,21 @@ public class ArmorSpell extends BuffSpell {
 			}
 			inv.setBoots(stack);
 		}
+
+		if (offhand != null) {
+			eStore.offhand = inv.getItemInOffHand();
+			if (eStore.offhand == null) eStore.offhand = new ItemStack(Material.AIR);
+			if (replace) inv.setItemInOffHand(null);
+			ItemStack stack = offhand.clone();
+			if (duration > 0) {
+				ItemMeta meta = stack.getItemMeta();
+				long expiresAt = System.currentTimeMillis() + (long) (duration * 1000L);
+				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+				stack.setItemMeta(meta);
+			}
+			inv.setItemInOffHand(stack);
+		}
+
 		equipStore.put(inv.getHolder().getUniqueId(), eStore);
 	}
 
@@ -246,6 +264,7 @@ public class ArmorSpell extends BuffSpell {
 		ItemStack chestplate = armorSet.chestplate();
 		ItemStack leggings = armorSet.leggings();
 		ItemStack boots = armorSet.boots();
+		ItemStack offhand = armorSet.offhand();
 
 		ItemStack invHelmet = inv.getHelmet();
 		if (helmet != null && invHelmet != null && invHelmet.getType() == helmet.getType()) {
@@ -265,6 +284,11 @@ public class ArmorSpell extends BuffSpell {
 		ItemStack invBoots = inv.getBoots();
 		if (boots != null && invBoots != null && invBoots.getType() == boots.getType()) {
 			inv.setBoots(null);
+		}
+
+		ItemStack invOffhand = inv.getItemInOffHand();
+		if (offhand != null && invOffhand != null && invOffhand.getType() == offhand.getType()) {
+			inv.setItemInOffHand(null);
 		}
 	}
 
@@ -287,6 +311,10 @@ public class ArmorSpell extends BuffSpell {
 				inv.setBoots(null);
 				inv.setBoots(eStore.boots);
 			}
+			if(eStore.offhand != null){
+				inv.setItemInOffHand(null);
+				inv.setItemInOffHand(eStore.offhand);
+			}
 		}
 		ArmorSet armorSet = entities.remove(id);
 
@@ -306,7 +334,7 @@ public class ArmorSpell extends BuffSpell {
 
 		@EventHandler(ignoreCancelled=true)
 		public void onInventoryClick(InventoryClickEvent event) {
-			if (event.getSlotType() != SlotType.ARMOR) return;
+			if (event.getSlotType() != SlotType.ARMOR && event.getSlotType() != SlotType.QUICKBAR && event.getClick() != ClickType.SWAP_OFFHAND) return;
 			HumanEntity entity = event.getWhoClicked();
 			if (!(entity instanceof Player p)) return;
 			if (!isActive(p)) return;
@@ -318,7 +346,9 @@ public class ArmorSpell extends BuffSpell {
 					(event.getSlot() == 39 && armorSet.helmet() != null) ||
 					(event.getSlot() == 38 && armorSet.chestplate() != null) ||
 					(event.getSlot() == 37 && armorSet.leggings() != null) ||
-					(event.getSlot() == 36 && armorSet.boots() != null)
+					(event.getSlot() == 36 && armorSet.boots() != null) ||
+					(event.getSlot() == 40 && armorSet.offhand() != null) ||
+					(event.getClick() == ClickType.SWAP_OFFHAND && armorSet.offhand() != null)
 				)
 			) return;
 
@@ -342,6 +372,19 @@ public class ArmorSpell extends BuffSpell {
 					(armorSet.boots() != null && (inventory.getItemInMainHand().getType().toString().toLowerCase().contains("boots") || inventory.getItemInOffHand().getType().toString().toLowerCase().contains("boots")))
 				)
 			) return;
+
+			event.setCancelled(true);
+		}
+
+		@EventHandler
+		public void onPlayerSwapHands(PlayerSwapHandItemsEvent event) {
+			Player player = event.getPlayer();
+
+			if(!isActive(player)) return;
+
+			ArmorSet armorSet = entities.get(player.getUniqueId());
+
+			if (armorSet == null || armorSet.offhand() == null) return;
 
 			event.setCancelled(true);
 		}
@@ -399,5 +442,5 @@ record ArmorSet(
 	ItemStack helmet,
 	ItemStack chestplate,
 	ItemStack leggings,
-	ItemStack boots
-) {}
+	ItemStack boots,
+	ItemStack offhand) {}

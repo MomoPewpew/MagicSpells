@@ -120,6 +120,8 @@ public class MagicItems {
 		}
 		data.setAttribute(HIDE_TOOLTIP, tooltip);
 
+		data.setAttribute(INVISIBLE_TOOLTIP, meta.isHideTooltip());
+
 		// color
 		LeatherArmorHandler.processMagicItemData(meta, data);
 
@@ -164,6 +166,9 @@ public class MagicItems {
 
 		// block data
 		BlockDataHandler.processMagicItemData(meta, data, itemStack.getType());
+
+		// PDC
+		PersistentDataHandler.processMagicItemData(meta, data);
 
 		itemStackCache.put(itemStack, data);
 		return data;
@@ -272,6 +277,9 @@ public class MagicItems {
 		// Block Data
 		BlockDataHandler.processItemMeta(meta, data);
 
+		// PDC
+		PersistentDataHandler.processItemMeta(meta, data);
+
 		// Unbreakable
 		if (data.hasAttribute(UNBREAKABLE))
 			meta.setUnbreakable((boolean) data.getAttribute(UNBREAKABLE));
@@ -279,6 +287,11 @@ public class MagicItems {
 		// Hide tooltip
 		if (data.hasAttribute(HIDE_TOOLTIP) && (boolean) data.getAttribute(HIDE_TOOLTIP))
 			meta.addItemFlags(ItemFlag.values());
+
+
+		// Invisible tooltip
+		if (data.hasAttribute(INVISIBLE_TOOLTIP) && (boolean) data.getAttribute(INVISIBLE_TOOLTIP))
+			meta.setHideTooltip(true);
 
 		// Set meta
 		item.setItemMeta(meta);
@@ -467,6 +480,9 @@ public class MagicItems {
 			// Block Data
 			BlockDataHandler.process(section, meta, itemData, type);
 
+			// PDC
+			PersistentDataHandler.process(section, meta, itemData);
+
 			// Unbreakable
 			if (section.isBoolean("unbreakable")) {
 				boolean unbreakable = section.getBoolean("unbreakable");
@@ -483,6 +499,12 @@ public class MagicItems {
 
 				if (hideTooltip) meta.addItemFlags(ItemFlag.values());
 				itemData.setAttribute(HIDE_TOOLTIP, hideTooltip);
+			}
+
+			if (section.isBoolean("invisible-tooltip")) {
+				boolean invisibleTooltip = section.getBoolean("invisible-tooltip");
+				meta.setHideTooltip(invisibleTooltip);
+				itemData.setAttribute(INVISIBLE_TOOLTIP, invisibleTooltip);
 			}
 
 			// Set meta

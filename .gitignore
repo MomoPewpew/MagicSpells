@@ -21,4 +21,4 @@ Lib/GriefPrevention.jar
 Build/
 .gradle/
 .vscode/*
-.settings/org.eclipse.buildship.core.prefs
+.settings/*

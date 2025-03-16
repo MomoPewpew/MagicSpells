@@ -13,7 +13,8 @@ public class ExperienceReagent extends Reagent {
         this.experience = experience;
     }
 
-    public int get() {
+    @Override
+    public Number get() {
         return experience;
     }
 

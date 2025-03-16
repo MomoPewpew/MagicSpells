@@ -92,4 +92,9 @@ public class ItemReagent extends Reagent {
         sb.append("}");
         return sb.toString();
     }
+
+    @Override
+    public Number get() {
+        return isEmpty() ? 0.0 : 1.0;
+    }
 }

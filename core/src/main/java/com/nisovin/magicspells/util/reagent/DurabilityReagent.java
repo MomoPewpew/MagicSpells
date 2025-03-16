@@ -15,7 +15,8 @@ public class DurabilityReagent extends Reagent {
         this.durability = durability;
     }
 
-    public int get() {
+    @Override
+    public Number get() {
         return durability;
     }
 

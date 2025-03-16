@@ -14,7 +14,8 @@ public class ManaReagent extends Reagent {
         this.mana = mana;
     }
 
-    public int get() {
+    @Override
+    public Number get() {
         return mana;
     }
 

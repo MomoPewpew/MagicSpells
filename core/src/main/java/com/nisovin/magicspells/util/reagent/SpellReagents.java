@@ -38,43 +38,47 @@ public class SpellReagents {
     }
 
     public static SpellReagents fromList(List<String> costList, String internalName) {
-
         SpellReagents spellReagents = new SpellReagents();
         if (costList == null || costList.isEmpty()) return spellReagents;
-
-        ManaReagent manaReagent = new ManaReagent(0);
-        HealthReagent healthReagent = new HealthReagent(0);
-        HungerReagent hungerReagent = new HungerReagent(0);
-        ExperienceReagent experienceReagent = new ExperienceReagent(0);
-        LevelReagent levelReagent = new LevelReagent(0);
-        DurabilityReagent durabilityReagent = new DurabilityReagent(0);
-        MoneyReagent moneyReagent = new MoneyReagent(0);
-        VariableReagent variableReagent = new VariableReagent();
-        ItemReagent itemReagent = new ItemReagent();
 
         for (String costVal : costList) {
             try {
                 String[] data = costVal.split(" ");
-                switch (data[0].toLowerCase()) {
-                    case "mana" -> manaReagent.add(Integer.parseInt(data[1]));
-                    case "health" -> healthReagent.add(Double.parseDouble(data[1]));
-                    case "hunger" -> hungerReagent.add(Integer.parseInt(data[1]));
-                    case "experience" -> experienceReagent.add(Integer.parseInt(data[1]));
-                    case "levels" -> levelReagent.add(Integer.parseInt(data[1]));
-                    case "durability" -> durabilityReagent.add(Integer.parseInt(data[1]));
-                    case "money" -> moneyReagent.add(Float.parseFloat(data[1]));
-                    case "variable" -> variableReagent.add(data[1], Double.parseDouble(data[2]));
+                Reagent reagent = switch (data[0].toLowerCase()) {
+                    case "mana" -> new ManaReagent(Integer.parseInt(data[1]));
+                    case "health" -> new HealthReagent(Double.parseDouble(data[1]));
+                    case "hunger" -> new HungerReagent(Integer.parseInt(data[1]));
+                    case "experience" -> new ExperienceReagent(Integer.parseInt(data[1]));
+                    case "levels" -> new LevelReagent(Integer.parseInt(data[1]));
+                    case "durability" -> new DurabilityReagent(Integer.parseInt(data[1]));
+                    case "money" -> new MoneyReagent(Float.parseFloat(data[1]));
+                    case "variable" -> {
+                        VariableReagent varReagent = new VariableReagent();
+                        varReagent.add(data[1], Double.parseDouble(data[2]));
+                        yield varReagent;
+                    }
                     default -> {
-
                         int quantity = 1;
                         if (data.length > 1) quantity = (int) Float.parseFloat(data[1]);
 
                         MagicItemData itemData = MagicItems.getMagicItemDataFromString(data[0]);
                         if (itemData == null) {
                             MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
-                            continue;
+                            yield null;
                         }
+                        ItemReagent itemReagent = new ItemReagent();
                         itemReagent.add(itemData, quantity);
+                        yield itemReagent;
+                    }
+                };
+
+                if (reagent != null) {
+                    if (reagent instanceof VariableReagent varReagent && !varReagent.isEmpty()) {
+                        spellReagents.addReagent(varReagent);
+                    } else if (reagent instanceof ItemReagent itemReagent && !itemReagent.isEmpty()) {
+                        spellReagents.addReagent(itemReagent);
+                    } else if (reagent.get().doubleValue() > 0) {
+                        spellReagents.addReagent(reagent);
                     }
                 }
             }
@@ -83,33 +87,6 @@ public class SpellReagents {
             }
         }
 
-        if (manaReagent.get() > 0) {
-            spellReagents.addReagent(manaReagent);
-        }
-        if (healthReagent.get() > 0) {
-            spellReagents.addReagent(healthReagent);
-        }
-        if (hungerReagent.get() > 0) {
-            spellReagents.addReagent(hungerReagent);
-        }
-        if (experienceReagent.get() > 0) {
-            spellReagents.addReagent(experienceReagent);
-        }
-        if (levelReagent.get() > 0) {
-            spellReagents.addReagent(levelReagent);
-        }
-        if (durabilityReagent.get() > 0) {
-            spellReagents.addReagent(durabilityReagent);
-        }
-        if (moneyReagent.get() > 0) {
-            spellReagents.addReagent(moneyReagent);
-        }
-        if (!variableReagent.isEmpty()) {
-            spellReagents.addReagent(variableReagent);
-        }
-        if (!itemReagent.isEmpty()) {
-            spellReagents.addReagent(itemReagent);
-        }
         return spellReagents;
     }
 

@@ -10,7 +10,8 @@ public class LevelReagent extends Reagent {
         this.levels = levels;
     }
 
-    public int get() {
+    @Override
+    public Number get() {
         return levels;
     }
 

@@ -11,7 +11,8 @@ public class HealthReagent extends Reagent {
         this.health = health;
     }
 
-    public double get() {
+    @Override
+    public Number get() {
         return health;
     }
 

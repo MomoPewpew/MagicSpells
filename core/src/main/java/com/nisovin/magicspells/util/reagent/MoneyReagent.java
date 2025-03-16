@@ -13,7 +13,8 @@ public class MoneyReagent extends Reagent {
         this.money = money;
     }
 
-    public float get() {
+    @Override
+    public Number get() {
         return money;
     }
 

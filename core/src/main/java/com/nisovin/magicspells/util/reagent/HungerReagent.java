@@ -3,8 +3,6 @@ package com.nisovin.magicspells.util.reagent;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
-import com.nisovin.magicspells.MagicSpells;
-
 public class HungerReagent extends Reagent {
     private int hunger;
 
@@ -12,7 +10,7 @@ public class HungerReagent extends Reagent {
         this.hunger = hunger;
     }
 
-    public int get() {
+    public Number get() {
         return hunger;
     }
 

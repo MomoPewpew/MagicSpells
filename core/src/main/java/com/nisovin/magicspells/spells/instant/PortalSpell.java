@@ -89,7 +89,7 @@ public class PortalSpell extends InstantSpell {
 		startMarkSpellName = getConfigString("mark-spell", "");
 		endMarkSpellName = getConfigString("second-mark-spell", "");
 
-		teleportReagents = getConfigReagents("teleport-cost");
+		teleportReagents = getConfigReagents("teleport-cost", null);
 	}
 
 	@Override

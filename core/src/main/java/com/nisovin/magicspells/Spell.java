@@ -461,10 +461,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		return '[' + internalName + ']';
 	}
 
-	protected SpellReagents getConfigReagents(String option) {
+	protected SpellReagents getConfigReagents(String option, LivingEntity livingEntity) {
 		List<String> costList = config.getStringList("spells." + internalName + '.' + option, null);
 
-        return SpellReagents.fromList(costList, internalName);
+        return SpellReagents.fromList(costList, internalName, livingEntity);
 	}
 
 	protected void initializeVariables() {
@@ -837,7 +837,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			SpellData spellData = new SpellData(livingEntity);
 			reagentsList = this.reagentsData.get(spellData);
 			if (reagentsList == null) reagentsList = new ArrayList<>();
-			reagents = SpellReagents.fromList(reagentsList, internalName);
+			reagents = SpellReagents.fromList(reagentsList, internalName, livingEntity);
 		}
 		if (!hasReagents(livingEntity)) return SpellCastState.MISSING_REAGENTS;
 		return SpellCastState.NORMAL;
@@ -850,7 +850,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected SpellCastEvent preCast(LivingEntity livingEntity, float power, String[] args) {
 		reagentsList = this.reagentsData.get(livingEntity, power, args);
 		if (reagentsList == null) reagentsList = new ArrayList<>();
-		reagents = SpellReagents.fromList(reagentsList, internalName);
+		reagents = SpellReagents.fromList(reagentsList, internalName, livingEntity);
 
 		// Get spell state
 		SpellCastState state = getCastState(livingEntity);
@@ -2037,7 +2037,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	public SpellReagents getReagentsPreCast(LivingEntity livingEntity, float power, String[] args) {
 		reagentsList = this.reagentsData.get(livingEntity, power, args);
 		if (reagentsList == null) reagentsList = new ArrayList<>();
-		reagents = SpellReagents.fromList(reagentsList, internalName);
+		reagents = SpellReagents.fromList(reagentsList, internalName, livingEntity);
 		return reagents;
 	}
 

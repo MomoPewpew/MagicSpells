@@ -102,7 +102,7 @@ public abstract class BuffSpell extends TargetedSpell implements TargetedEntityS
 		numUses = getConfigInt("num-uses", 0);
 		useCostInterval = getConfigInt("use-cost-interval", 0);
 
-		reagents = getConfigReagents("use-cost");
+		reagents = getConfigReagents("use-cost", null);
 		toggle = getConfigBoolean("toggle", true);
 		targeted = getConfigBoolean("targeted", false);
 		cancelOnJoin = getConfigBoolean("cancel-on-join", false);

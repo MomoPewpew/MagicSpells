@@ -37,53 +37,61 @@ public class SpellReagents {
         reagents.add(reagent);
     }
 
-    public static SpellReagents fromList(List<String> costList, String internalName) {
+    public static SpellReagents fromList(List<String> costList, String internalName, LivingEntity livingEntity) {
         SpellReagents spellReagents = new SpellReagents();
         if (costList == null || costList.isEmpty()) return spellReagents;
 
-        for (String costVal : costList) {
+        for (String costEntry : costList) {
             try {
-                String[] data = costVal.split(" ");
-                Reagent reagent = switch (data[0].toLowerCase()) {
-                    case "mana" -> new ManaReagent(Integer.parseInt(data[1]));
-                    case "health" -> new HealthReagent(Double.parseDouble(data[1]));
-                    case "hunger" -> new HungerReagent(Integer.parseInt(data[1]));
-                    case "experience" -> new ExperienceReagent(Integer.parseInt(data[1]));
-                    case "levels" -> new LevelReagent(Integer.parseInt(data[1]));
-                    case "durability" -> new DurabilityReagent(Integer.parseInt(data[1]));
-                    case "money" -> new MoneyReagent(Float.parseFloat(data[1]));
-                    case "variable" -> {
-                        VariableReagent varReagent = new VariableReagent();
-                        varReagent.add(data[1], Double.parseDouble(data[2]));
-                        yield varReagent;
-                    }
-                    default -> {
-                        int quantity = 1;
-                        if (data.length > 1) quantity = (int) Float.parseFloat(data[1]);
+                // Split by pipe to get alternative reagents
+                String[] alternatives = costEntry.split("\\|");
+                Reagent selectedReagent = null;
 
-                        MagicItemData itemData = MagicItems.getMagicItemDataFromString(data[0]);
-                        if (itemData == null) {
-                            MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
-                            yield null;
+                // Try each alternative until we find one that the player has or reach the end
+                for (String costVal : alternatives) {
+                    costVal = costVal.trim(); // Remove any whitespace
+                    String[] data = costVal.split(" ");
+                    Reagent reagent = switch (data[0].toLowerCase()) {
+                        case "mana" -> new ManaReagent(Integer.parseInt(data[1]));
+                        case "health" -> new HealthReagent(Double.parseDouble(data[1]));
+                        case "hunger" -> new HungerReagent(Integer.parseInt(data[1]));
+                        case "experience" -> new ExperienceReagent(Integer.parseInt(data[1]));
+                        case "levels" -> new LevelReagent(Integer.parseInt(data[1]));
+                        case "durability" -> new DurabilityReagent(Integer.parseInt(data[1]));
+                        case "money" -> new MoneyReagent(Float.parseFloat(data[1]));
+                        case "variable" -> {
+                            VariableReagent varReagent = new VariableReagent();
+                            varReagent.add(data[1], Double.parseDouble(data[2]));
+                            yield varReagent;
                         }
-                        ItemReagent itemReagent = new ItemReagent();
-                        itemReagent.add(itemData, quantity);
-                        yield itemReagent;
-                    }
-                };
+                        default -> {
+                            int quantity = 1;
+                            if (data.length > 1) quantity = (int) Float.parseFloat(data[1]);
 
-                if (reagent != null) {
-                    if (reagent instanceof VariableReagent varReagent && !varReagent.isEmpty()) {
-                        spellReagents.addReagent(varReagent);
-                    } else if (reagent instanceof ItemReagent itemReagent && !itemReagent.isEmpty()) {
-                        spellReagents.addReagent(itemReagent);
-                    } else if (reagent.get().doubleValue() > 0) {
-                        spellReagents.addReagent(reagent);
+                            MagicItemData itemData = MagicItems.getMagicItemDataFromString(data[0]);
+                            if (itemData == null) {
+                                MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
+                                yield null;
+                            }
+                            ItemReagent itemReagent = new ItemReagent();
+                            itemReagent.add(itemData, quantity);
+                            yield itemReagent;
+                        }
+                    };
+
+                    if (reagent != null && (livingEntity == null || reagent.has(livingEntity))) {
+                        selectedReagent = reagent;
+                        break;
                     }
+                }
+
+                // Add the selected reagent if one was found
+                if (selectedReagent != null) {
+                    spellReagents.addReagent(selectedReagent);
                 }
             }
             catch (Exception e) {
-                MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
+                MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costEntry);
             }
         }
 

@@ -12,6 +12,7 @@ import com.nisovin.magicspells.util.magicitems.MagicItemData;
 public class SpellReagents {
 
     private List<Reagent> reagents;
+    private boolean parseSucceeded = true;
 
     public SpellReagents() {
         reagents = new ArrayList<>();
@@ -79,9 +80,12 @@ public class SpellReagents {
                         }
                     };
 
-                    if (reagent != null && (livingEntity == null || reagent.has(livingEntity))) {
+                    if (reagent != null && reagent.get().doubleValue() != 0 && (livingEntity == null || reagent.has(livingEntity))) {
                         selectedReagent = reagent;
                         break;
+                    } else {
+                        MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
+                        spellReagents.parseSucceeded = false;
                     }
                 }
 
@@ -92,6 +96,7 @@ public class SpellReagents {
             }
             catch (Exception e) {
                 MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costEntry);
+                spellReagents.parseSucceeded = false;
             }
         }
 
@@ -99,6 +104,7 @@ public class SpellReagents {
     }
 
     public boolean hasAll(LivingEntity livingEntity) {
+        if (!parseSucceeded) return false;
         if (reagents != null && !reagents.isEmpty()) {
             for (Reagent reagent : reagents) {
                 if (!reagent.has(livingEntity)) {

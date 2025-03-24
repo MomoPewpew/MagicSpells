@@ -969,6 +969,11 @@ public class Util {
 			public void setTitle(@NotNull String title) {
 
 			}
+
+			@Override
+			public void open() {
+				throw new UnsupportedOperationException("Unimplemented method 'open'");
+			}
 		};
 	}
 

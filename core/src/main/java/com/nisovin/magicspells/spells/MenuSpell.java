@@ -24,6 +24,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 
 import com.nisovin.magicspells.util.*;
 import com.nisovin.magicspells.Subspell;
@@ -36,6 +37,7 @@ import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.events.MagicSpellsGenericPlayerEvent;
+import com.nisovin.magicspells.util.magicitems.MagicItemData;
 
 public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, TargetedLocationSpell {
 
@@ -157,6 +159,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
             option.stayOpen = getConfigBoolean(path + "stay-open", false);
 			option.varModsClick = getConfigStringList(path + "variable-mods-click", null);
 			option.varModsClicked = getConfigStringList(path + "variable-mods-clicked", null);
+            option.spellsOnDrop = getConfigDataConfigurationSection(path + "spells-on-drop", null);
 
             options.put(optionName, option);
         }
@@ -465,6 +468,11 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	public void onInvClick(InventoryClickEvent event) {
 		Player player = (Player) event.getWhoClicked();
 		if (!Util.getStringFromComponent(event.getView().title()).equals(internalName)) return;
+		
+		// Allow clicks in the bottom inventory (player's inventory)
+		if (event.getClickedInventory() != event.getView().getTopInventory()) return;
+		
+		// Cancel clicks in the top inventory (menu)
 		event.setCancelled(true);
 
 		String closeState = "reopen";
@@ -502,6 +510,64 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		if (key == null || key.isEmpty() || !options.containsKey(key)) return stayOpenNonOption ? "ignore" : "close";
 		MenuOption option = options.get(key);
 		if (option == null) return "close";
+
+		// Handle drag and drop
+		if (click == ClickType.LEFT && player.getItemOnCursor() != null && !player.getItemOnCursor().getType().isAir()) {
+			if (option.spellsOnDrop != null) {
+				// Get menu data for spell evaluation context
+				UUID id = player.getUniqueId();
+				MenuData data = menuData.get(id);
+				float power = option.power;
+				String[] args = null;
+				
+				if (data != null) {
+					power *= data.power();
+					args = data.args();
+				}
+
+				// Get the dragged item
+				ItemStack draggedItem = player.getItemOnCursor();
+
+				// Find matching spell for the dragged item
+				MagicItemData draggedMagicItem = MagicItems.getMagicItemDataFromItemStack(draggedItem);
+				if (draggedMagicItem != null) {
+					String itemName = (String) draggedMagicItem.getAttribute(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
+					if (itemName != null) {
+						// Get the spell configuration for this menu session
+						SpellData spellData = new SpellData(player, 0f, args);
+						ConfigurationSection dropSection = option.spellsOnDrop.get(spellData);
+						if (dropSection != null) {
+							// Get and initialize the spell for the dragged item
+							String spellName = dropSection.getString(itemName);
+							if (spellName != null) {
+								Subspell spell = initSubspell(spellName, "MenuSpell '" + internalName + "' has an invalid 'spell-on-drop' spell defined for item '" + itemName + "' in option: " + option.menuOptionName);
+								if (spell != null) {
+									processVariables(option.variableModsClick, player, data);
+
+									// Cast the spell
+									boolean success;
+									if (data != null && data.targetEntity() != null) {
+										success = spell.subcast(player, data.targetEntity(), power, args);
+									} else if (data != null && data.targetLocation() != null) {
+										success = spell.subcast(player, data.targetLocation(), power, args);
+									} else if (bypassNormalCast) {
+										success = spell.subcast(player, power, args);
+									} else {
+										SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
+										success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
+									}
+
+									if (success) processVariables(option.variableModsClicked, player, data);
+
+									return option.stayOpen ? "reopen" : "close";
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
 		return switch (click) {
 			case LEFT -> processClickSpell(player, option.spell, option);
 			case RIGHT -> processClickSpell(player, option.spellRight, option);
@@ -595,6 +661,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		private List<String> varModsClicked;
 		protected Multimap<String, VariableMod> variableModsClick;
 		protected Multimap<String, VariableMod> variableModsClicked;
+		private ConfigData<ConfigurationSection> spellsOnDrop;
 	}
 
 }

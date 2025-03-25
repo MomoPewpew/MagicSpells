@@ -3,7 +3,6 @@ package com.nisovin.magicspells.spells.targeted;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
-import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
@@ -30,7 +29,7 @@ public class RiptideSpell extends TargetedSpell implements TargetedEntitySpell {
 			Player target = info.target();
 			power = info.power();
 
-			MagicSpells.getVolatileCodeHandler().startAutoSpinAttack(target, duration.get(caster, target, power, args));
+			target.startRiptideAttack(duration.get(caster, target, power, args), 0, null);
 			playSpellEffects(caster, target, power, args);
 			sendMessages(caster, target, args);
 
@@ -44,7 +43,7 @@ public class RiptideSpell extends TargetedSpell implements TargetedEntitySpell {
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		if (!(target instanceof Player player) || !validTargetList.canTarget(caster, target)) return false;
 
-		MagicSpells.getVolatileCodeHandler().startAutoSpinAttack(player, duration.get(caster, target, power, args));
+		player.startRiptideAttack(duration.get(player, target, power, args), 0, null);
 		playSpellEffects(caster, target, power, args);
 
 		return true;
@@ -59,7 +58,7 @@ public class RiptideSpell extends TargetedSpell implements TargetedEntitySpell {
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
 		if (!(target instanceof Player player) || !validTargetList.canTarget(target)) return false;
 
-		MagicSpells.getVolatileCodeHandler().startAutoSpinAttack(player, duration.get(null, target, power, args));
+		player.startRiptideAttack(duration.get(player, target, power, args), 0, null);
 		playSpellEffects(EffectPosition.TARGET, target, power, args);
 
 		return true;

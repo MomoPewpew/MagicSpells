@@ -53,11 +53,6 @@ public class VolatileCodeDisabled extends VolatileCodeHandle {
 	}
 
 	@Override
-	public void startAutoSpinAttack(Player player, int ticks) {
-
-	}
-
-	@Override
 	public int createFalsePlayer(Player player, Location location, String pose, boolean cloneEquipment) {
 		return 0;
 	}

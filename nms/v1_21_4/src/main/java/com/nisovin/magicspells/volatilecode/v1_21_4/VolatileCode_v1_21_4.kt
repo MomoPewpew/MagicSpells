@@ -43,12 +43,14 @@ import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.advancements.critereon.ImpossibleTrigger
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon
+import net.minecraft.world.entity.PositionMoveRotation
+import net.minecraft.world.entity.Relative
 import net.minecraft.world.level.block.BedBlock
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.properties.BedPart
 import net.minecraft.core.particles.ColorParticleOption
 import net.minecraft.core.particles.ParticleTypes
-import net.minecraft.util.FastColor
+import net.minecraft.util.ARGB
 
 import com.nisovin.magicspells.volatilecode.VolatileCodeHandle
 import com.nisovin.magicspells.volatilecode.VolatileCodeHelper
@@ -63,7 +65,7 @@ private typealias nmsEntityPose = net.minecraft.world.entity.Pose
 
 class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(helper) {
 
-    private val toastKey = ResourceLocation("magicspells", "toast_effect")
+    private val toastKey = ResourceLocation.fromNamespaceAndPath("magicspells", "toast_effect")
 
     private var DATA_EFFECT_PARTICLES: EntityDataAccessor<List<ParticleOptions>>? = null
     private var DATA_EFFECT_AMBIENCE_ID: EntityDataAccessor<Boolean>? = null
@@ -95,7 +97,7 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
 
         entityData.set(
             DATA_EFFECT_PARTICLES!!, Collections.singletonList(
-                ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.color(255, color))
+                ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, ARGB.opaque(color))
             )
         )
 
@@ -131,9 +133,10 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
         val dragon = EnderDragon(EntityType.ENDER_DRAGON, (location.world as CraftWorld).handle)
         dragon.setPos(location.x, location.y, location.z)
 
-        val addMobPacket = ClientboundAddEntityPacket(dragon)
+        val pos = BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ())
+        val addMobPacket = ClientboundAddEntityPacket(dragon, 0, pos)
         val entityEventPacket = ClientboundEntityEventPacket(dragon, 3)
-        val removeEntityPacket = ClientboundRemoveEntitiesPacket(dragon.id)
+        val removeEntityPacket = ClientboundRemoveEntitiesPacket(dragon.getId())
 
         val players = ArrayList<Player>()
         for (player in location.getNearbyPlayers(64.0)) {
@@ -164,11 +167,6 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
 
         player.handle.connection.send(packet)
         player.updateInventory()
-    }
-
-    override fun startAutoSpinAttack(player: Player?, ticks: Int) {
-        val entityPlayer = (player as CraftPlayer).handle
-        entityPlayer.startAutoSpinAttack(ticks)
     }
 
     private var displayEntityList: MutableMap<Display, ServerPlayer> = HashMap<Display, ServerPlayer>();
@@ -206,7 +204,7 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
 
         val bedPos = BlockPos(craftLocation.getBlockX(), craftLocation.getWorld().getMinHeight(), craftLocation.getBlockZ())
         val setBedPacket = ClientboundBlockUpdatePacket(bedPos, Blocks.WHITE_BED.defaultBlockState().setValue(BedBlock.FACING, direction.getOpposite()).setValue(BedBlock.PART, BedPart.HEAD))
-        val teleportNpcPacket = ClientboundTeleportEntityPacket(clone)
+        val teleportNpcPacket = ClientboundTeleportEntityPacket(0, PositionMoveRotation(Vec3(craftLocation.x, craftLocation.y, craftLocation.z), Vec3.ZERO, craftLocation.yaw.toFloat(), craftLocation.pitch.toFloat()), mutableSetOf(), false)
 
         //show outer skin layer
         clone.entityData.set(EntityDataAccessor(17, EntityDataSerializers.BYTE), 127.toByte())
@@ -239,7 +237,7 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
             clone.connection = connection;
 
             connection.send(ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, clone))
-            connection.send(ClientboundAddEntityPacket(clone))
+            connection.send(ClientboundAddEntityPacket(clone, 0, BlockPos(craftLocation.getBlockX(), craftLocation.getBlockY(), craftLocation.getBlockZ())))
             connection.send(ClientboundSetEntityDataPacket(clone.getId(), clone.entityData.getNonDefaultValues()))
             connection.send(ClientboundRotateHeadPacket(clone, (player.location.yaw % 360.0 * 256 / 360).toInt().toByte()))
 
@@ -286,8 +284,8 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
                     ?: return
             val displayLocation = entityDisplay.location
             clone.setPos(displayLocation.x, displayLocation.y, displayLocation.z)    //Change the NPC Location to the displayEntities location
-            val teleportPacket = ClientboundTeleportEntityPacket(clone)      //Update it for all players on the server
-            for (player in Bukkit.getOnlinePlayers()) {
+            val teleportPacket = ClientboundTeleportEntityPacket(0, PositionMoveRotation(Vec3(displayLocation.x, displayLocation.y, displayLocation.z), Vec3.ZERO, displayLocation.yaw.toFloat(), displayLocation.pitch.toFloat()), mutableSetOf(), false)
+            for (player in Bukkit.getOnlinePlayers()) { //Update it for all players on the server
                 (player as CraftPlayer).handle.connection.send(teleportPacket)
             }
         }

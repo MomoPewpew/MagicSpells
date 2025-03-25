@@ -31,8 +31,6 @@ public abstract class VolatileCodeHandle {
 
 	public abstract void setInventoryTitle(Player player, String title);
 
-	public abstract void startAutoSpinAttack(Player player, int ticks);
-
 	public abstract int createFalsePlayer(Player player, Location location, String pose, boolean cloneEquipment);
 
 	public abstract void removeFalsePlayer(int id);

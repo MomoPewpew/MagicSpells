@@ -204,7 +204,7 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
 
         val bedPos = BlockPos(craftLocation.getBlockX(), craftLocation.getWorld().getMinHeight(), craftLocation.getBlockZ())
         val setBedPacket = ClientboundBlockUpdatePacket(bedPos, Blocks.WHITE_BED.defaultBlockState().setValue(BedBlock.FACING, direction.getOpposite()).setValue(BedBlock.PART, BedPart.HEAD))
-        val teleportNpcPacket = ClientboundTeleportEntityPacket(0, PositionMoveRotation(Vec3(craftLocation.x, craftLocation.y, craftLocation.z), Vec3.ZERO, craftLocation.yaw.toFloat(), craftLocation.pitch.toFloat()), mutableSetOf(), false)
+        val teleportNpcPacket = ClientboundTeleportEntityPacket(clone.id, net.minecraft.world.entity.PositionMoveRotation.of(clone), mutableSetOf(), false)
 
         //show outer skin layer
         clone.entityData.set(EntityDataAccessor(17, EntityDataSerializers.BYTE), 127.toByte())
@@ -248,6 +248,7 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
             if (pose == "SLEEPING") {
                 connection.send(setBedPacket)
                 connection.send(teleportNpcPacket)
+                connection.send(teleportNpcPacket)
             }
         })
 
@@ -284,7 +285,7 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
                     ?: return
             val displayLocation = entityDisplay.location
             clone.setPos(displayLocation.x, displayLocation.y, displayLocation.z)    //Change the NPC Location to the displayEntities location
-            val teleportPacket = ClientboundTeleportEntityPacket(0, PositionMoveRotation(Vec3(displayLocation.x, displayLocation.y, displayLocation.z), Vec3.ZERO, displayLocation.yaw.toFloat(), displayLocation.pitch.toFloat()), mutableSetOf(), false)
+            val teleportPacket = ClientboundTeleportEntityPacket(clone.id, net.minecraft.world.entity.PositionMoveRotation.of((entityDisplay as CraftEntity).handle), mutableSetOf(), false)
             for (player in Bukkit.getOnlinePlayers()) { //Update it for all players on the server
                 (player as CraftPlayer).handle.connection.send(teleportPacket)
             }

@@ -255,6 +255,7 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
         val markerEntity: Display = player.world.spawnEntity(Location(player.world, clone.x, clone.y, clone.z), org.bukkit.entity.EntityType.BLOCK_DISPLAY) as Display
         markerEntity.displayHeight = 1.0f
         markerEntity.displayWidth = 1.0f
+        markerEntity.addScoreboardTag("magicspells_clone_marker")
         displayEntityList[markerEntity] = clone //Create a Display Entity and spawn it ontop of the player. No collider means easy way to track positioning
         return clone.id
     }

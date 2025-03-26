@@ -14,6 +14,7 @@ import com.nisovin.magicspells.util.VariableMod;
 import com.nisovin.magicspells.variables.Variable;
 import com.nisovin.magicspells.util.ModifierResult;
 import com.nisovin.magicspells.events.SpellCastEvent;
+import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.events.ManaChangeEvent;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.util.VariableMod.VariableOwner;
@@ -41,6 +42,11 @@ public enum ModifierType {
 		@Override
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
 			if (!check) event.setCancelled(true);
+			return check;
+		}
+
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
 			return check;
 		}
 
@@ -90,6 +96,11 @@ public enum ModifierType {
 		@Override
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
 			if (check) event.setCancelled(true);
+			return !check;
+		}
+
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
 			return !check;
 		}
 
@@ -145,6 +156,11 @@ public enum ModifierType {
 		@Override
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
 			if (check) event.increasePower(CustomDataFloat.from(customData, event));
+			return true;
+		}
+
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
 			return true;
 		}
 
@@ -248,6 +264,11 @@ public enum ModifierType {
 		}
 
 		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
+			return true;
+		}
+
+		@Override
 		public boolean apply(SpellTargetLocationEvent event, boolean check, CustomData customData) {
 			return true;
 		}
@@ -340,6 +361,11 @@ public enum ModifierType {
 		}
 
 		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
+			return true;
+		}
+
+		@Override
 		public boolean apply(SpellTargetLocationEvent event, boolean check, CustomData customData) {
 			return true;
 		}
@@ -386,6 +412,11 @@ public enum ModifierType {
 
 		@Override
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
+			return true;
+		}
+		
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
 			return true;
 		}
 
@@ -438,6 +469,11 @@ public enum ModifierType {
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
 			return true;
 		}
+		
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
+			return true;
+		}
 
 		@Override
 		public boolean apply(SpellTargetLocationEvent event, boolean check, CustomData customData) {
@@ -487,6 +523,11 @@ public enum ModifierType {
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
 			return !check;
 		}
+		
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
+			return !check;
+		}
 
 		@Override
 		public boolean apply(SpellTargetLocationEvent event, boolean check, CustomData customData) {
@@ -529,6 +570,11 @@ public enum ModifierType {
 
 		@Override
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
+			return check;
+		}
+		
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
 			return check;
 		}
 
@@ -597,6 +643,13 @@ public enum ModifierType {
 		public boolean apply(SpellTargetEvent event, boolean check, CustomData customData) {
 			CastData data = (CastData) customData;
 			if (check && data.isValid()) data.spell.subcast(event.getCaster(), event.getCaster(), event.getPower(), event.getSpellArgs());
+			return true;
+		}
+
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
+			CastData data = (CastData) customData;
+			if (check && data.isValid()) data.spell.subcast(event.getCaster(), event.getPower(), event.getSpellArgs());
 			return true;
 		}
 
@@ -696,6 +749,15 @@ public enum ModifierType {
 				data.spell.subcast(event.getCaster(), event.getTarget(), event.getPower(), event.getSpellArgs());
 				event.setCancelled(true);
 				event.setCastCancelled(true);
+			}
+			return !check;
+		}
+
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
+			CustomInsteadData data = (CustomInsteadData) customData;
+			if (check && data.isValid()) {
+				data.spell.subcast(event.getCaster(), event.getPower(), event.getSpellArgs());
 			}
 			return !check;
 		}
@@ -808,6 +870,13 @@ public enum ModifierType {
 				Player target = event.getTarget() instanceof Player p ? p : null;
 				modifyVariable(customData, caster, target, event.getPower(), event.getSpellArgs());
 			}
+			return true;
+		}
+
+		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
+			if (!(event.getCaster() instanceof Player caster)) return false;
+			if (check) modifyVariable(customData, caster, null, event.getPower(), event.getSpellArgs());
 			return true;
 		}
 
@@ -937,6 +1006,13 @@ public enum ModifierType {
 		}
 		
 		@Override
+		public boolean apply(SpellCastedEvent event, boolean check, CustomData customData) {
+			if (!(event.getCaster() instanceof Player caster)) return false;
+			if (check) setVariable(caster, (StringData) customData);
+			return true;
+		}
+		
+		@Override
 		public boolean apply(SpellTargetLocationEvent event, boolean check, CustomData customData) {
 			if (!(event.getCaster() instanceof Player caster)) return false;
 			if (check) setVariable(caster, (StringData) customData);
@@ -1017,6 +1093,7 @@ public enum ModifierType {
 	public abstract boolean apply(SpellTargetEvent event, boolean check, CustomData customData);
 	public abstract boolean apply(SpellTargetLocationEvent event, boolean check, CustomData customData);
 	public abstract boolean apply(MagicSpellsGenericPlayerEvent event, boolean check, CustomData customData);
+	public abstract boolean apply(SpellCastedEvent event, boolean check, CustomData customData);
 
 	public abstract ModifierResult apply(LivingEntity caster, ModifierResult result, CustomData customData);
 	public abstract ModifierResult apply(LivingEntity caster, LivingEntity target, ModifierResult result, CustomData customData);

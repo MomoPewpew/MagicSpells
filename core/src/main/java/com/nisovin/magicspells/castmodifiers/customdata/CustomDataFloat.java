@@ -4,6 +4,7 @@ import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.events.SpellCastEvent;
+import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.events.ManaChangeEvent;
 import com.nisovin.magicspells.events.SpellTargetEvent;

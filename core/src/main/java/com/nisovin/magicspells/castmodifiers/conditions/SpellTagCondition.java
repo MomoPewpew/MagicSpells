@@ -9,6 +9,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.ModifierResult;
 import com.nisovin.magicspells.events.SpellCastEvent;
+import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.events.ManaChangeEvent;
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.castmodifiers.IModifier;
@@ -39,6 +40,11 @@ public class SpellTagCondition extends Condition implements IModifier {
 
 	@Override
 	public boolean apply(SpellTargetEvent event) {
+		return checkSpell(event.getSpell());
+	}
+
+	@Override
+	public boolean apply(SpellCastedEvent event) {
 		return checkSpell(event.getSpell());
 	}
 

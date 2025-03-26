@@ -6,6 +6,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.ModifierResult;
 import com.nisovin.magicspells.events.SpellCastEvent;
+import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.events.ManaChangeEvent;
 import com.nisovin.magicspells.castmodifiers.IModifier;
 import com.nisovin.magicspells.events.SpellTargetEvent;
@@ -42,6 +43,11 @@ public class PowerCondition extends OperatorCondition implements IModifier {
 
 	@Override
 	public boolean apply(SpellTargetEvent event) {
+		return power(event.getPower());
+	}
+
+	@Override
+	public boolean apply(SpellCastedEvent event) {
 		return power(event.getPower());
 	}
 

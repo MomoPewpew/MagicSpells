@@ -11,6 +11,7 @@ import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.ModifierResult;
 import com.nisovin.magicspells.events.SpellCastEvent;
+import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.events.ManaChangeEvent;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
@@ -138,6 +139,16 @@ public class Modifier implements IModifier {
 		boolean check;
 		if (alertCondition) check = ((IModifier) condition).apply(event);
 		else check = condition.check(caster, event.getTarget());
+		if (negated) check = !check;
+		return type.apply(event, check, customActionData);
+	}
+
+	@Override
+	public boolean apply(SpellCastedEvent event) {
+		LivingEntity caster = event.getCaster();
+		boolean check;
+		if (alertCondition) check = ((IModifier) condition).apply(event);
+		else check = condition.check(caster);
 		if (negated) check = !check;
 		return type.apply(event, check, customActionData);
 	}

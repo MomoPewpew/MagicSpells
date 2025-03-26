@@ -8,6 +8,7 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.ModifierResult;
 import com.nisovin.magicspells.Spell.SpellCastState;
 import com.nisovin.magicspells.events.SpellCastEvent;
+import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.events.ManaChangeEvent;
 import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.castmodifiers.IModifier;
@@ -53,6 +54,11 @@ public class SpellCastStateCondition extends Condition implements IModifier {
 	@Override
 	public boolean apply(SpellTargetEvent event) {
 		return false;
+	}
+
+	@Override
+	public boolean apply(SpellCastedEvent event) {
+		return event.getSpellCastState() == state;
 	}
 
 	@Override

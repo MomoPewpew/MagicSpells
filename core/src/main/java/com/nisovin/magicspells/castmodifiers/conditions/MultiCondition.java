@@ -11,6 +11,7 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.ModifierResult;
 import com.nisovin.magicspells.events.SpellCastEvent;
+import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.castmodifiers.Modifier;
 import com.nisovin.magicspells.events.ManaChangeEvent;
 import com.nisovin.magicspells.events.SpellTargetEvent;
@@ -196,6 +197,23 @@ public class MultiCondition extends Condition implements IModifier {
 				if (msg != null) MagicSpells.sendMessage(msg, event.getCaster(), null);
 			}
 
+			if (!passCondition.shouldContinue(pass, fail)) return passCondition.hasPassed(pass, fail);
+		}
+		return passCondition.hasPassed(pass, fail);
+	}
+
+	@Override
+	public boolean apply(SpellCastedEvent event) {
+		int pass = 0;
+		int fail = 0;
+		for (Modifier m : modifiers) {
+			boolean check = m.apply(event);
+			if (check) pass++;
+			else {
+				fail++;
+				String msg = m.getStrModifierFailed();
+				if (msg != null) MagicSpells.sendMessage(msg, event.getCaster(), null);
+			}
 			if (!passCondition.shouldContinue(pass, fail)) return passCondition.hasPassed(pass, fail);
 		}
 		return passCondition.hasPassed(pass, fail);

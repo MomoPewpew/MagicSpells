@@ -385,7 +385,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		modifierStrings = config.getStringList(path + "modifiers", null);
 		targetModifierStrings = config.getStringList(path + "target-modifiers", null);
 		locationModifierStrings = config.getStringList(path + "location-modifiers", null);
-		modifierCastedStrings = config.getStringList(path + "modifiers", null);
+		modifierCastedStrings = config.getStringList(path + "modifiers-casted", null);
 
 		// Variables
 		varModsCast = config.getStringList(path + "variable-mods-cast", null);

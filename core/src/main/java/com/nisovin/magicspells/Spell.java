@@ -93,6 +93,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected List<String> incantationsRegex;
 	protected List<String> prerequisites;
 	protected List<String> modifierStrings;
+	protected List<String> modifierCastedStrings;
 	protected List<String> worldRestrictions;
 	protected ConfigData<List<String>> rawSharedCooldownsData;
 	protected List<String> targetModifierStrings;
@@ -157,6 +158,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected ModifierSet modifiers;
 	protected ModifierSet targetModifiers;
 	protected ModifierSet locationModifiers;
+	protected ModifierSet modifiersCasted;
 
 	protected Subspell spellOnInterrupt;
 
@@ -383,6 +385,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		modifierStrings = config.getStringList(path + "modifiers", null);
 		targetModifierStrings = config.getStringList(path + "target-modifiers", null);
 		locationModifierStrings = config.getStringList(path + "location-modifiers", null);
+		modifierCastedStrings = config.getStringList(path + "modifiers", null);
 
 		// Variables
 		varModsCast = config.getStringList(path + "variable-mods-cast", null);
@@ -579,6 +582,11 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			debug(2, "Adding location modifiers to " + internalName + " spell");
 			locationModifiers = new ModifierSet(locationModifierStrings, this);
 			locationModifierStrings = null;
+		}
+		if (modifierCastedStrings != null && !modifierCastedStrings.isEmpty()) {
+			debug(2, "Adding casted modifiers to " + internalName + " spell");
+			modifiersCasted = new ModifierSet(modifierCastedStrings, this);
+			modifierCastedStrings = null;
 		}
 
 		if (effects != null && !effects.isEmpty()) {
@@ -2075,6 +2083,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	public ModifierSet getLocationModifiers() {
 		return locationModifiers;
+	}
+
+	public ModifierSet getModifiersCasted() {
+		return modifiersCasted;
 	}
 
 	public String getStrModifierFailed() {

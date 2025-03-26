@@ -88,6 +88,15 @@ public class ModifierSet {
 		}
 	}
 
+	public void apply(SpellCastedEvent event) {
+		for (Modifier modifier : modifiers) {
+			boolean cont = modifier.apply(event);
+			
+			if (cont) continue;
+			break;
+		}
+	}
+
 	public void apply(SpellTargetEvent event) {
 		for (Modifier modifier : modifiers) {
 			boolean cont = modifier.apply(event);

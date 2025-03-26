@@ -6,6 +6,7 @@ import org.bukkit.entity.LivingEntity;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.ModifierResult;
 import com.nisovin.magicspells.events.SpellCastEvent;
+import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.events.ManaChangeEvent;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
@@ -18,6 +19,7 @@ public interface IModifier {
 	boolean apply(SpellTargetEvent event);
 	boolean apply(SpellTargetLocationEvent event);
 	boolean apply(MagicSpellsGenericPlayerEvent event);
+	boolean apply(SpellCastedEvent event);
 
 	ModifierResult apply(LivingEntity caster, SpellData data);
 	ModifierResult apply(LivingEntity caster, LivingEntity target, SpellData data);

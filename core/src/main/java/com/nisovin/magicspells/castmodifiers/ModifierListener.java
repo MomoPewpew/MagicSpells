@@ -8,8 +8,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.mana.ManaChangeReason;
 import com.nisovin.magicspells.events.SpellCastEvent;
+import com.nisovin.magicspells.events.SpellCastedEvent;
 import com.nisovin.magicspells.events.ManaChangeEvent;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
@@ -68,6 +70,19 @@ public class ModifierListener implements Listener {
 			if (!preMod.apply(event)) return;
 		}
 		if (modifiers != null) modifiers.apply(event);
+		for (IModifier postMod : postModifierHooks) {
+			if (!postMod.apply(event)) return;
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.LOW)
+	public void onSpellCasted(SpellCastedEvent event) {
+		if (event.getSpellCastState() != Spell.SpellCastState.NORMAL || event.getPostCastAction() == Spell.PostCastAction.ALREADY_HANDLED) return;
+		ModifierSet m = event.getSpell().getModifiersCasted();
+		for (IModifier preMod : preModifierHooks) {
+			if (!preMod.apply(event)) return;
+		}
+		if (m != null) m.apply(event);
 		for (IModifier postMod : postModifierHooks) {
 			if (!postMod.apply(event)) return;
 		}

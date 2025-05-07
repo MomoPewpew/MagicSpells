@@ -80,6 +80,19 @@ public class ConfigDataUtil {
 	}
 
 	@NotNull
+	public static ConfigData<Integer> getInteger(@NotNull String string) {
+		try {
+            int value = Integer.parseInt(string);
+			return (caster, target, power, args) -> value;
+        } catch (NumberFormatException e) {
+			FunctionData<Integer> data = FunctionData.build(string, Double::intValue);
+			if (data == null) return (caster, target, power, args) -> null;
+
+			return data;
+        }
+	}
+
+	@NotNull
 	public static ConfigData<Long> getLong(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (config.isInt(path) || config.isLong(path)) {
 			long value = config.getLong(path);
@@ -527,6 +540,32 @@ public class ConfigDataUtil {
 
 				MagicItem material = MagicItems.getMagicItemFromString(val);
 				return material == null ? MagicItems.getMagicItemFromString(def) : material;
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+
+		};
+	}
+
+	public static ConfigData<MagicItem> getMagicItem(@NotNull String string) {
+		String value = string;
+		if (value == null) return (caster, target, power, args) -> null;
+
+		ConfigData<String> supplier = getString(value);
+		if (supplier.isConstant()) return (caster, target, power, args) -> MagicItems.getMagicItemFromString(value);
+
+		return new ConfigData<>() {
+
+			@Override
+			public MagicItem get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+				String val = supplier.get(caster, target, power, args);
+				if (val == null) return MagicItems.getMagicItemFromString(string);
+
+				MagicItem material = MagicItems.getMagicItemFromString(val);
+				return material == null ? MagicItems.getMagicItemFromString(string) : material;
 			}
 
 			@Override

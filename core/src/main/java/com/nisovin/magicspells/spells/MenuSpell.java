@@ -148,7 +148,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
             option.itemSection = itemSection;
             option.itemString = itemString;
             option.items = items;
-            option.quantity = getConfigString(path + "quantity", "");
+            option.quantity = getConfigDataString(path + "quantity", "");
             option.spellName = getConfigString(path + "spell", "");
             option.spellRightName = getConfigString(path + "spell-right", "");
             option.spellMiddleName = getConfigString(path + "spell-middle", "");
@@ -413,8 +413,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			item = translateItem(opener, args, item);
 
 			int quantity;
-			Variable variable = MagicSpells.getVariableManager().getVariable(option.quantity);
-			if (variable == null) quantity = ACFUtil.parseInt(option.quantity, 1);
+			Variable variable = MagicSpells.getVariableManager().getVariable(option.quantity.get(spellData));
+			if (variable == null) quantity = ACFUtil.parseInt(option.quantity.get(spellData), 1);
 			else quantity = (int) Math.round(variable.getValue(opener));
 			item.setAmount(quantity);
 
@@ -642,7 +642,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		private ConfigData<String> itemString;
 		private ItemStack item;
 		private List<ItemStack> items;
-		private String quantity;
+		private ConfigData<String> quantity;
 		private String spellName;
 		private String spellRightName;
 		private String spellMiddleName;

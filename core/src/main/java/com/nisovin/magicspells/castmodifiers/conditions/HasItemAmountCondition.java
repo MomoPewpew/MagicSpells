@@ -13,7 +13,6 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
-import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
@@ -21,19 +20,16 @@ import com.nisovin.magicspells.castmodifiers.conditions.util.OperatorCondition;
 public class HasItemAmountCondition extends OperatorCondition {
 
 	private ConfigData<MagicItem> itemData;
-	private ConfigData<Integer> amount;
+	private ConfigData<String> amount;
 	
 	@Override
 	public boolean initialize(String var) {
 		String[] args = var.split(";");
 		if (args.length < 2) return false;
 
-		if (!super.initialize(var)) return false;
-
-		amount = ConfigDataUtil.getInteger(args[0]);
-		
+		amount = ConfigDataUtil.getString(args[0]);
 		itemData = ConfigDataUtil.getMagicItem(args[1]);
-		return itemData != null;
+		return true;
 	}
 
 	@Override
@@ -57,7 +53,17 @@ public class HasItemAmountCondition extends OperatorCondition {
 	private boolean checkInventory(LivingEntity caster, LivingEntity target, Inventory inventory) {
 		SpellData data = new SpellData(caster, target, 1f, new String[0]);
 		int c = 0;
-		int amt = amount.get(data);
+
+		String var = amount.get(data);
+		if (!super.initialize(var)) return false;
+
+		int amt = 0;
+		try {
+			amt = Integer.parseInt(var.substring(1));
+		} catch (NumberFormatException e) {
+			return false;
+		}
+
 		for (ItemStack i : inventory.getContents()) {
 			if (!isSimilar(i, data)) continue;
 			c += i.getAmount();
@@ -75,7 +81,16 @@ public class HasItemAmountCondition extends OperatorCondition {
 	private boolean checkEquipment(LivingEntity caster, LivingEntity target, EntityEquipment entityEquipment) {
 		SpellData data = new SpellData(caster, target, 1f, new String[0]);
 		int c = 0;
-		int amt = amount.get(data);
+
+		String var = amount.get(data);
+		if (!super.initialize(var)) return false;
+
+		int amt = 0;
+		try {
+			amt = Integer.parseInt(var.substring(1));
+		} catch (NumberFormatException e) {
+			return false;
+		}
 		for (ItemStack i : InventoryUtil.getEquipmentItems(entityEquipment)) {
 			if (!isSimilar(i, data)) continue;
 			c += i.getAmount();

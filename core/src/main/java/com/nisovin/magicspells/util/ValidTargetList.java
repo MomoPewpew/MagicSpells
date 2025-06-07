@@ -118,6 +118,12 @@ public class ValidTargetList {
 	public ValidTargetList(boolean targetPlayers, boolean targetNonPlayers) {
 		this.targetPlayers = targetPlayers;
 		this.targetNonPlayers = targetNonPlayers;
+		if (targetPlayers) {
+			this.targetList.add("players");
+		}
+		if (targetNonPlayers) {
+			this.targetList.add("nonplayers");
+		}
 	}
 	
 	public boolean canTarget(LivingEntity caster, Entity target) {

@@ -37,7 +37,7 @@ public class PainSpell extends TargetedSpell implements TargetedEntitySpell, Dam
 		super(config, spellName);
 
 		spellDamageType = getConfigString("spell-damage-type", "");
-		String damageTypeName = getConfigString("damage-type", "ENTITY_ATTACK");
+		String damageTypeName = getConfigString("damage-type", "MAGIC");
 		try {
 			damageType = DamageCause.valueOf(damageTypeName.toUpperCase());
 		} catch (IllegalArgumentException ignored) {

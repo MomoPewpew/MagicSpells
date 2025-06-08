@@ -16,6 +16,8 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -24,6 +26,7 @@ import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 
 import com.nisovin.magicspells.Spell;
+import com.nisovin.magicspells.Spell.SpellCastState;
 import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spells.BowSpell;
@@ -138,6 +141,25 @@ public class CastListener implements Listener {
 		}
 	}
 
+	@EventHandler(priority=EventPriority.MONITOR)
+	public void onPlayerDamage(EntityDamageByEntityEvent event) {
+		if (MagicSpells.isCastingOnAnimate()) return;
+		if (event.getCause() == DamageCause.ENTITY_ATTACK && event.getDamager() instanceof Player player) {
+
+			if (player.getUniqueId().equals(event.getEntity().getUniqueId())) return;
+
+			Spellbook spellbook = MagicSpells.getSpellbook(player);
+			Spell spell = spellbook.getActiveSpell(player.getInventory().getItemInMainHand());
+
+			if (spell != null) {
+				Long noCastTime = noCastUntil.get(player.getName());
+				if (noCastTime == null || System.currentTimeMillis() >= noCastTime) {
+					event.setCancelled(castSpell(player));
+				}
+			}
+		}
+	}
+
 	@EventHandler
 	public void onItemHeldChange(final PlayerItemHeldEvent event) {
 		if (MagicSpells.getSpellIconSlot() >= 0 && MagicSpells.getSpellIconSlot() <= 8) {
@@ -199,19 +221,19 @@ public class CastListener implements Listener {
 		event.getProjectile().setMetadata("bow-draw-strength", new FixedMetadataValue(plugin, event.getForce()));
 	}
 
-	private void castSpell(Player player) {
+	private Boolean castSpell(Player player) {
 		ItemStack inHand = player.getInventory().getItemInMainHand();
-		if (!MagicSpells.canCastWithFist() && BlockUtils.isAir(inHand)) return;
+		if (!MagicSpells.canCastWithFist() && BlockUtils.isAir(inHand)) return false;
 
 		Spellbook spellbook = MagicSpells.getSpellbook(player);
 		Spell spell = spellbook.getActiveSpell(inHand);
 
-		castSpell(player, spell, inHand);
+		return castSpell(player, spell, inHand);
 	}
 
-	private void castSpell(Player player, Spell spell, ItemStack item) {
-		if (spell == null || !spell.canCastWithItem()) return;
-		if (!checkGlobalCooldown(player, spell)) return;
+	private Boolean castSpell(Player player, Spell spell, ItemStack item) {
+		if (spell == null || !spell.canCastWithItem()) return false;
+		if (!checkGlobalCooldown(player, spell)) return false;
 
 		// Cast spell
 		String[] args = null;
@@ -221,7 +243,7 @@ public class CastListener implements Listener {
 				args = new String[] {container.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)};
 			}
 		}
-		spell.cast(player, 1.0F, args);
+		return spell.cast(player, 1.0F, args).state.equals(SpellCastState.NORMAL);
 	}
 
 	private boolean checkGlobalCooldown(Player player, Spell spell) {

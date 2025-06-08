@@ -57,12 +57,12 @@ public class DotSpell extends TargetedSpell implements TargetedEntitySpell, Dama
 		tryAvoidingAntiCheatPlugins = getConfigBoolean("try-avoiding-anticheat-plugins", false);
 
 		spellDamageType = getConfigString("spell-damage-type", "");
-		String damageTypeName = getConfigString("damage-type", "ENTITY_ATTACK");
+		String damageTypeName = getConfigString("damage-type", "MAGIC");
 		try {
 			damageType = DamageCause.valueOf(damageTypeName.toUpperCase());
 		} catch (IllegalArgumentException ignored) {
 			DebugHandler.debugBadEnumValue(DamageCause.class, damageTypeName);
-			damageType = DamageCause.ENTITY_ATTACK;
+			damageType = DamageCause.MAGIC;
 		}
 
 		activeDots = new HashMap<>();

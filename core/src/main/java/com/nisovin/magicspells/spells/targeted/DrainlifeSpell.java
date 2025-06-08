@@ -76,12 +76,12 @@ public class DrainlifeSpell extends TargetedSpell implements TargetedEntitySpell
 
 		spellOnAnimationName = getConfigString("spell-on-animation", "");
 
-		String damageTypeName = getConfigString("damage-type", "ENTITY_ATTACK");
+		String damageTypeName = getConfigString("damage-type", "MAGIC");
 		try {
 			damageType = DamageCause.valueOf(damageTypeName.toUpperCase());
 		} catch (IllegalArgumentException ignored) {
 			DebugHandler.debugBadEnumValue(DamageCause.class, damageTypeName);
-			damageType = DamageCause.ENTITY_ATTACK;
+			damageType = DamageCause.MAGIC;
 		}
 	}
 

@@ -76,7 +76,7 @@ public class GeyserSpell extends TargetedSpell implements TargetedEntitySpell {
 		if (powerAffectsDamage) damage *= power;
 
 		if (caster != null && checkPlugins && damage > 0) {
-			MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, DamageCause.ENTITY_ATTACK, damage, this);
+			MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, DamageCause.MAGIC, damage, this);
 			EventUtil.call(event);
 			if (event.isCancelled()) return false;
 			if (!avoidDamageModification) damage = event.getDamage();

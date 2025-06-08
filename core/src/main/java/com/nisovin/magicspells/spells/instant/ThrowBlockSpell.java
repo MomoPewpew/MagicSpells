@@ -338,7 +338,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 
 			if (checkPlugins && info.caster != null) {
 				MagicSpellsEntityDamageByEntityEvent evt = new MagicSpellsEntityDamageByEntityEvent(info.caster, target,
-						DamageCause.ENTITY_ATTACK, damage, ThrowBlockSpell.this);
+						DamageCause.MAGIC, damage, ThrowBlockSpell.this);
 				EventUtil.call(evt);
 				if (evt.isCancelled()) {
 					event.setCancelled(true);

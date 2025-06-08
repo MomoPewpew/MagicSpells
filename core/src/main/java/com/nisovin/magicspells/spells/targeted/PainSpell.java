@@ -42,7 +42,7 @@ public class PainSpell extends TargetedSpell implements TargetedEntitySpell, Dam
 			damageType = DamageCause.valueOf(damageTypeName.toUpperCase());
 		} catch (IllegalArgumentException ignored) {
 			DebugHandler.debugBadEnumValue(DamageCause.class, damageTypeName);
-			damageType = DamageCause.ENTITY_ATTACK;
+			damageType = DamageCause.MAGIC;
 		}
 
 		damage = getConfigDataDouble("damage", 4);

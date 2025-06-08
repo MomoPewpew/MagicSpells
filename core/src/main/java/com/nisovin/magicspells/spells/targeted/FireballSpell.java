@@ -119,7 +119,7 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 
 				if (checkPlugins) {
 					// Run a pvp damage check
-					MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, DamageCause.ENTITY_ATTACK, 1D, this);
+					MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, DamageCause.MAGIC, 1D, this);
 					EventUtil.call(event);
 					if (event.isCancelled()) return noTarget(caster, args);
 				}

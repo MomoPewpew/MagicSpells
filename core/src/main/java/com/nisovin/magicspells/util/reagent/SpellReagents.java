@@ -83,9 +83,6 @@ public class SpellReagents {
                     if (reagent != null && reagent.get().doubleValue() != 0 && (livingEntity == null || reagent.has(livingEntity))) {
                         selectedReagent = reagent;
                         break;
-                    } else {
-                        MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
-                        spellReagents.parseSucceeded = false;
                     }
                 }
 

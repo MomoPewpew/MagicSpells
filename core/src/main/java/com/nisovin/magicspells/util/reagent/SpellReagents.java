@@ -49,8 +49,8 @@ public class SpellReagents {
                 Reagent selectedReagent = null;
 
                 // Try each alternative until we find one that the player has or reach the end
-                for (String costVal : alternatives) {
-                    costVal = costVal.trim(); // Remove any whitespace
+                for (int i = 0; i < alternatives.length; i++) {
+                    String costVal = alternatives[i].trim(); // Remove any whitespace
                     String[] data = costVal.split(" ");
                     Reagent reagent = switch (data[0].toLowerCase()) {
                         case "mana" -> new ManaReagent(Integer.parseInt(data[1]));
@@ -72,6 +72,7 @@ public class SpellReagents {
                             MagicItemData itemData = MagicItems.getMagicItemDataFromString(data[0]);
                             if (itemData == null) {
                                 MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
+                                spellReagents.parseSucceeded = false;
                                 yield null;
                             }
                             ItemReagent itemReagent = new ItemReagent();
@@ -80,9 +81,14 @@ public class SpellReagents {
                         }
                     };
 
-                    if (reagent != null && reagent.get().doubleValue() != 0 && (livingEntity == null || reagent.has(livingEntity))) {
-                        selectedReagent = reagent;
-                        break;
+                    if (reagent != null && reagent.get().doubleValue() != 0) {
+                        if (livingEntity == null || reagent.has(livingEntity) || i == alternatives.length - 1) {
+                            selectedReagent = reagent;
+                            break;
+                        }
+                    } else {
+                        MagicSpells.error("Failed to process cost value for " + internalName + " spell: " + costVal);
+                        spellReagents.parseSucceeded = false;
                     }
                 }
 

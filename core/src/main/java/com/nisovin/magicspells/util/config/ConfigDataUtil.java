@@ -1063,6 +1063,57 @@ public class ConfigDataUtil {
 		};
 	}
 
+    @NotNull
+    public static ConfigData<List<Integer>> getIntList(@NotNull ConfigurationSection config, @NotNull String path) {
+        if (config.isList(path)) {
+            List<String> value = config.getStringList(path);
+            if (value.isEmpty()) return (caster, target, power, args) -> null;
+            return getIntList(value);
+        }
+        
+        // Handle single string value
+        String singleValue = config.getString(path);
+        if (singleValue == null) return (caster, target, power, args) -> null;
+        
+        List<String> singleItemList = new ArrayList<>();
+        singleItemList.add(singleValue);
+        return getIntList(singleItemList);
+    }
+
+	@NotNull
+	public static ConfigData<List<Integer>> getIntList(@Nullable List<String> value) {
+		if (value == null || value.isEmpty()) {
+			return (caster, target, power, args) -> null;
+		}
+	
+		List<ConfigData<Integer>> configDataList = new ArrayList<>();
+		for (String str : value) {
+			configDataList.add(getInteger(str));
+		}
+	
+		return new ConfigData<>() {
+	
+			@Override
+			public List<Integer> get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+				List<Integer> results = new ArrayList<>();
+				for (ConfigData<Integer> configData : configDataList) {
+					results.add(configData.get(caster, target, power, args));
+				}
+				return results;
+			}
+	
+			@Override
+			public boolean isConstant() {
+				for (ConfigData<Integer> configData : configDataList) {
+					if (!configData.isConstant()) {
+						return false;
+					}
+				}
+				return true;
+			}
+		};
+	}
+
 	@NotNull
 	public static ConfigData<ConfigurationSection> getConfigurationSection(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (!config.isConfigurationSection(path)) return (caster, target, power, args) -> null;

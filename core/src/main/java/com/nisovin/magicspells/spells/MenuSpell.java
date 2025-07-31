@@ -5,6 +5,8 @@ import java.util.*;
 import co.aikar.commands.ACFUtil;
 
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.config.ConfigDataUtil;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -86,24 +88,9 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		for (String optionName : optionKeys) {
             String path = "options." + optionName + ".";
 
-            List<Integer> slots = getConfigIntList(path + "slots", new ArrayList<>());
-            if (slots.isEmpty()) slots.add(getConfigInt(path + "slot", -1));
-
-            List<Integer> validSlots = new ArrayList<>();
-			if (!autoArrange) {
-				for (int slot : slots) {
-					if (slot < 0 || slot > 53) {
-						MagicSpells.error("MenuSpell '" + internalName + "' a slot defined which is out of bounds for '" + optionName + "': " + slot);
-						continue;
-					}
-					validSlots.add(slot);
-					if (slot > maxSlot) maxSlot = slot;
-				}
-				if (validSlots.isEmpty()) {
-					MagicSpells.error("MenuSpell '" + internalName + "' has no slots defined for: " + optionName);
-					continue;
-				}
-			}
+            ConfigData<List<Integer>> slots;
+            if (getConfigStringList(path + "slots", new ArrayList<>()).isEmpty()) slots = ConfigDataUtil.getIntList(config.getMainConfig(), "spells." + internalName + '.' + path + "slot");
+			else slots = ConfigDataUtil.getIntList(config.getMainConfig(), "spells." + internalName + '.' + path + "slots");
 
             ConfigData<ConfigurationSection> itemSection = null;
 			ConfigData<String> itemString = null;
@@ -144,7 +131,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
             MenuOption option = new MenuOption();
             option.menuOptionName = optionName;
-            option.slots = validSlots;
+            option.slots = slots;
             option.itemSection = itemSection;
             option.itemString = itemString;
             option.items = items;
@@ -418,8 +405,11 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			// Set item for all defined slots.
 			if (autoArrange) itemStacks.put(itemStacks.keySet().size(), item);
 			else {
-				for (int slot : option.slots) {
-					itemStacks.put(slot, item);
+				List<Integer> slots = option.slots.get(spellData);
+				if (slots != null) {
+					for (int slot : slots) {
+						itemStacks.put(slot, item);
+					}
 				}
 			}
 		}
@@ -634,7 +624,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	private static class MenuOption {
 		private String menuOptionName;
-		private List<Integer> slots;
+		private ConfigData<List<Integer>> slots;
 		private ConfigData<ConfigurationSection> itemSection;
 		private ConfigData<String> itemString;
 		private ItemStack item;

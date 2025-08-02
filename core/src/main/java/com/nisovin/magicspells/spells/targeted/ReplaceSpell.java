@@ -273,7 +273,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 						if (newBlockData == null) continue;
 
-						if (!newBlockData.isSupported(block.getLocation())) continue;
+						if (applyPhysics && !newBlockData.isSupported(block.getLocation())) continue;
 
 						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData, applyPhysics);
 

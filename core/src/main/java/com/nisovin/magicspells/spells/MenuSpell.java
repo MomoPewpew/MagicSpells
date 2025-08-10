@@ -46,7 +46,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	private final Map<String, MenuOption> options = new LinkedHashMap<>();
 	private final Map<UUID, MenuData> menuData = new HashMap<>();
 
-	private int size;
+	private int rows;
 
 	private final String title;
 	private final int delay;
@@ -84,7 +84,6 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			MagicSpells.error("MenuSpell '" + spellName + "' has no menu options!");
 			return;
 		}
-		int maxSlot = (getConfigInt("min-rows", 1) * 9) - 1;
 		for (String optionName : optionKeys) {
             String path = "options." + optionName + ".";
 
@@ -150,7 +149,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
             options.put(optionName, option);
         }
-		size = autoArrange ? 54 : (int) Math.ceil((maxSlot+1) / 9.0) * 9;
+		rows = autoArrange ? 54 : getConfigInt("min-rows", 1);
 		if (options.isEmpty()) MagicSpells.error("MenuSpell '" + spellName + "' has no menu options!");
 	}
 
@@ -350,8 +349,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		MenuData mData = new MenuData(requireEntityTarget ? entityTarget : null, requireLocationTarget ? locTarget : null, power, args, 0);
 		menuData.put(opener.getUniqueId(), mData);
 
-		Inventory inv = Bukkit.createInventory(opener, size, Component.text(internalName));
-		applyOptionsToInventory(opener, inv, args, mData);
+		Map<Integer, ItemStack> itemStacks = buildInventory(opener, args, mData);
+		int rows_ = (int) Math.ceil((itemStacks.keySet().stream().max(Integer::compareTo).orElse(0)+1) / 9.0);
+		Inventory inv = Bukkit.createInventory(opener, Math.min(6, Math.max(1, (rows_ > rows ? rows_ : rows))) * 9, Component.text(internalName));
+
+		applyOptionsToInventory(opener, inv, args, mData, itemStacks);
+
 		opener.openInventory(inv);
 		Util.setInventoryTitle(opener, title);
 
@@ -365,7 +368,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		if (locTarget != null) playSpellEffects(EffectPosition.TARGET, locTarget, data);
 	}
 
-	private void applyOptionsToInventory(Player opener, Inventory inv, String[] args, MenuData mData) {
+	private Map<Integer, ItemStack> buildInventory(Player opener, String[] args, MenuData mData) {
 		Map<Integer, ItemStack> itemStacks = new HashMap<>();
 
 		// Setup option items.
@@ -408,11 +411,17 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				List<Integer> slots = option.slots.get(spellData);
 				if (slots != null) {
 					for (int slot : slots) {
+						if (slot < 0 || slot >= 54) continue;
 						itemStacks.put(slot, item);
 					}
 				}
 			}
 		}
+
+		return itemStacks;
+	}
+
+	public void applyOptionsToInventory(Player opener, Inventory inv, String[] args, MenuData mData, Map<Integer, ItemStack> itemStacks) {
 		// Fill inventory.
 		ItemStack fillerItem = (filler == null) ? null : translateItem(opener, args, filler);
 		for (int i = 0; i < inv.getSize(); i++) {
@@ -483,8 +492,9 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		}
 		// Reopen.
 		menuData.put(id, mData);
+		Map<Integer, ItemStack> itemStacks = buildInventory(player, MagicSpells.NULL_ARGS, mData);
 		Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(), Component.text(internalName));
-		applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS, mData);
+		applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS, mData, itemStacks);
 		player.openInventory(newInv);
 		Util.setInventoryTitle(player, title);
 	}

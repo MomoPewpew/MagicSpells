@@ -15,6 +15,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.command.CommandSender;
@@ -580,7 +581,8 @@ public class MagicCommand extends BaseCommand {
 				int dropAmount = Math.min(amt, maxStackSize);
 				ItemStack drop = leftover.clone();
 				drop.setAmount(dropAmount);
-				player.getWorld().dropItem(player.getLocation(), drop);
+				Item i = player.getWorld().dropItem(player.getLocation(), drop);
+				i.setOwner(player.getUniqueId());
 				amt -= dropAmount;
 			}
 		}

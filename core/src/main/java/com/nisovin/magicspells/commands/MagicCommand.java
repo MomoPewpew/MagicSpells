@@ -569,7 +569,21 @@ public class MagicCommand extends BaseCommand {
 
 		ItemStack item = magicItem.getItemStack();
 		item.setAmount(amount);
-		player.getInventory().addItem(item);
+		Map<Integer, ItemStack> leftovers = player.getInventory().addItem(item);
+		for (ItemStack leftover : leftovers.values()) {
+			if (leftover == null) continue;
+			
+			int maxStackSize = leftover.getMaxStackSize();
+			int amt = leftover.getAmount();
+			
+			while (amt > 0) {
+				int dropAmount = Math.min(amt, maxStackSize);
+				ItemStack drop = leftover.clone();
+				drop.setAmount(dropAmount);
+				player.getWorld().dropItem(player.getLocation(), drop);
+				amt -= dropAmount;
+			}
+		}
 		issuer.sendMessage(MagicSpells.getTextColor() + player.getName() + " received a magic item (" + args[0] + " x" + amount + ").");
 	}
 

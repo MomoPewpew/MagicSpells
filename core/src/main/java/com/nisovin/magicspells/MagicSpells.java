@@ -180,6 +180,7 @@ public class MagicSpells extends JavaPlugin {
 	private boolean checkScoreboardTeams;
 	private boolean defaultAllPermsFalse;
 	private boolean enableTempGrantPerms;
+	private boolean setDefaultPermNames;
 	private boolean ignoreDefaultBindings;
 	private boolean useExpBarAsCastTimeBar;
 	private boolean alwaysShowMessageOnCycle;
@@ -292,6 +293,7 @@ public class MagicSpells extends JavaPlugin {
 		ignoreGrantPermsFakeValue = config.getBoolean(path + "ignore-grant-perms-fake-value", true);
 		ignoreCastPerms = config.getBoolean(path + "ignore-cast-perms", false);
 		enableTempGrantPerms = config.getBoolean(path + "enable-tempgrant-perms", true);
+		setDefaultPermNames = config.getBoolean(path + "set-default-perm-names", true);
 
 		separatePlayerSpellsPerWorld = config.getBoolean(path + "separate-player-spells-per-world", false);
 		allowCycleToNoSpell = config.getBoolean(path + "allow-cycle-to-no-spell", false);
@@ -821,18 +823,20 @@ public class MagicSpells extends JavaPlugin {
 			// Add permissions
 			if (!spell.isHelperSpell()) {
 				String permName = spell.getPermissionName();
-				if (!spell.isAlwaysGranted()) {
-					addPermission(pm, "grant." + permName, PermissionDefault.FALSE);
-					permGrantChildren.put(Perm.GRANT.getNode() + permName, true);
-				}
-				addPermission(pm, "learn." + permName, defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
-				addPermission(pm, "cast." + permName, defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
-				addPermission(pm, "teach." + permName, defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
-				if (enableTempGrantPerms) addPermission(pm, "tempgrant." + permName, PermissionDefault.FALSE);
+				if (permName != null) {
+					if (!spell.isAlwaysGranted()) {
+						addPermission(pm, "grant." + permName, PermissionDefault.FALSE);
+						permGrantChildren.put(Perm.GRANT.getNode() + permName, true);
+					}
+					addPermission(pm, "learn." + permName, defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
+					addPermission(pm, "cast." + permName, defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
+					addPermission(pm, "teach." + permName, defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
+					if (enableTempGrantPerms) addPermission(pm, "tempgrant." + permName, PermissionDefault.FALSE);
 
-				permLearnChildren.put(Perm.LEARN.getNode() + permName, true);
-				permCastChildren.put(Perm.CAST.getNode() + permName, true);
-				permTeachChildren.put(Perm.TEACH.getNode() + permName, true);
+					permLearnChildren.put(Perm.LEARN.getNode() + permName, true);
+					permCastChildren.put(Perm.CAST.getNode() + permName, true);
+					permTeachChildren.put(Perm.TEACH.getNode() + permName, true);
+				}
 			}
 
 			// Done
@@ -1207,6 +1211,10 @@ public class MagicSpells extends JavaPlugin {
 
 	public static boolean tempGrantPermsEnabled() {
 		return plugin.enableTempGrantPerms;
+	}
+
+	public static boolean setDefaultPermNames() {
+		return plugin.setDefaultPermNames;
 	}
 
 	public static boolean checkWorldPvpFlag() {

@@ -16,6 +16,7 @@ ignore-grant-perms: false
 ignore-grant-perms-fake-value: true
 ignore-cast-perms: false
 enable-tempgrant-perms: true
+set-default-perm-names: true
 separate-player-spells-per-world: false
 allow-cycle-to-no-spell: false
 reverse-bow-cycle-buttons: false

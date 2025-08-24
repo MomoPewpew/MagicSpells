@@ -212,7 +212,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		}
 		helperSpell = config.getBoolean(path + "helper-spell", false);
 		alwaysGranted = config.getBoolean(path + "always-granted", false);
-		permName = config.getString(path + "permission-name", spellName);
+		permName = config.getString(path + "permission-name", MagicSpells.setDefaultPermNames() ? spellName : null);
 		incantations = config.getStringList(path + "incantations", null);
 		incantationsRegex = config.getStringList(path + "incantations-regex", null);
 

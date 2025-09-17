@@ -26,7 +26,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
 
 import com.nisovin.magicspells.util.*;
 import com.nisovin.magicspells.Subspell;
@@ -62,6 +61,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	private final ItemStack nextPageItem;
 	private final ItemStack spacerItem;
 
+	private final ConfigData<ConfigurationSection> spellsOnDropNonOption;
+
 	public MenuSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -78,6 +79,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		previousPageItem = createItem("previous-page-item", "Previous Page");
 		nextPageItem = createItem("next-page-item", "Next Page");
 		spacerItem = createItem("spacer-item", null);
+
+		spellsOnDropNonOption = getConfigDataConfigurationSection("spells-on-drop", null);
 
 		Set<String> optionKeys = getConfigKeys("options");
 		if (optionKeys == null) {
@@ -465,8 +468,56 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		Player player = (Player) event.getWhoClicked();
 		if (!Util.getStringFromComponent(event.getView().title()).equals(internalName)) return;
 		
-		// Allow clicks in the bottom inventory (player's inventory)
-		if (event.getClickedInventory() != event.getView().getTopInventory()) return;
+		// Handle shift-clicks from player inventory to menu
+		if (event.getClickedInventory() != event.getView().getTopInventory()) {
+			// Player clicked in their own inventory
+			if ((event.getClick() == ClickType.SHIFT_LEFT || event.getClick() == ClickType.SHIFT_RIGHT) && 
+				event.getCurrentItem() != null && !event.getCurrentItem().getType().isAir()) {
+				
+				// Always cancel shift-clicks to prevent unintentional item transfers
+				event.setCancelled(true);
+				
+				// Check if this item has a spell configured for empty slot drops
+				if (spellsOnDropNonOption != null) {
+					ItemStack clickedItem = event.getCurrentItem();
+					MagicItemData magicItem = MagicItems.getMagicItemDataFromItemStack(clickedItem);
+					if (magicItem != null) {
+						String itemName = (String) magicItem.getAttribute(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
+						if (itemName != null) {
+							// Get menu data for spell evaluation context
+							UUID id = player.getUniqueId();
+							MenuData data = menuData.get(id);
+							String[] args = data != null ? data.args() : null;
+							
+							SpellData spellData = new SpellData(player, 0f, args);
+							ConfigurationSection dropSection = spellsOnDropNonOption.get(spellData);
+							if (dropSection != null && dropSection.getString(itemName) != null) {
+								// Handle as empty slot spell
+								String result = handleShiftClickFromInventory(player, clickedItem);
+								if (result.equals("close")) {
+									menuData.remove(id);
+									MagicSpells.scheduleDelayedTask(player::closeInventory, 0);
+									return;
+								} else if (result.equals("reopen")) {
+									// Reopen the menu
+									MenuData mData = menuData.get(id);
+									Map<Integer, ItemStack> itemStacks = buildInventory(player, MagicSpells.NULL_ARGS, mData);
+									Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(), Component.text(internalName));
+									applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS, mData, itemStacks);
+									player.openInventory(newInv);
+									Util.setInventoryTitle(player, title);
+								}
+								return;
+							}
+						}
+					}
+				}
+				// If no spell was triggered, the shift-click is still cancelled but nothing else happens
+				return;
+			}
+			// Allow normal clicks in player inventory
+			return;
+		}
 		
 		// Cancel clicks in the top inventory (menu)
 		event.setCancelled(true);
@@ -500,68 +551,39 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	private String castSpells(Player player, ItemStack item, ClickType click) {
-		// Outside inventory.
-		if (item == null) return stayOpenNonOption ? "ignore" : "close";
-		String key = DataUtil.getString(item, "menuOption");
-		// Probably a filler or air.
-		if (key == null || key.isEmpty() || !options.containsKey(key)) return stayOpenNonOption ? "ignore" : "close";
+		// Check if this is any kind of drag/drop or shift-click attempt
+		boolean isDragAndDrop = click == ClickType.LEFT && player.getItemOnCursor() != null && !player.getItemOnCursor().getType().isAir();
+		boolean isShiftClick = (click == ClickType.SHIFT_LEFT || click == ClickType.SHIFT_RIGHT);
+		boolean isItemTransferAttempt = isDragAndDrop || isShiftClick;
+		
+		// Handle empty slots
+		String key = item != null ? DataUtil.getString(item, "menuOption") : null;
+		boolean isEmptySlot = (item == null) || (key == null || key.isEmpty() || !options.containsKey(key));
+		
+		if (isEmptySlot) {
+			// If this is an item transfer attempt on an empty slot
+			if (isItemTransferAttempt) {
+				// Try to handle empty slot spells if configured
+				if (spellsOnDropNonOption != null) {
+					return handleEmptySlotShiftClick(player, click);
+				}
+				// If no empty slot spells configured, just ignore the drag/drop and keep menu open
+				return "ignore";
+			}
+			// Empty-handed click on empty slot - respect stay-open-non-option setting
+			return stayOpenNonOption ? "ignore" : "close";
+		}
 		MenuOption option = options.get(key);
 		if (option == null) return "close";
 
 		// Handle drag and drop
 		if (click == ClickType.LEFT && player.getItemOnCursor() != null && !player.getItemOnCursor().getType().isAir()) {
 			if (option.spellsOnDrop != null) {
-				// Get menu data for spell evaluation context
-				UUID id = player.getUniqueId();
-				MenuData data = menuData.get(id);
-				float power = option.power;
-				String[] args = null;
+				String result = handleDragAndDrop(player, option.spellsOnDrop, option.power, 
+					option.variableModsClick, option.variableModsClicked, option.stayOpen, 
+					"MenuSpell '" + internalName + "' has an invalid 'spell-on-drop' spell defined for item '");
 				
-				if (data != null) {
-					power *= data.power();
-					args = data.args();
-				}
-
-				// Get the dragged item
-				ItemStack draggedItem = player.getItemOnCursor();
-
-				// Find matching spell for the dragged item
-				MagicItemData draggedMagicItem = MagicItems.getMagicItemDataFromItemStack(draggedItem);
-				if (draggedMagicItem != null) {
-					String itemName = (String) draggedMagicItem.getAttribute(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
-					if (itemName != null) {
-						// Get the spell configuration for this menu session
-						SpellData spellData = new SpellData(player, 0f, args);
-						ConfigurationSection dropSection = option.spellsOnDrop.get(spellData);
-						if (dropSection != null) {
-							// Get and initialize the spell for the dragged item
-							String spellName = dropSection.getString(itemName);
-							if (spellName != null) {
-								Subspell spell = initSubspell(spellName, "MenuSpell '" + internalName + "' has an invalid 'spell-on-drop' spell defined for item '" + itemName + "' in option: " + option.menuOptionName);
-								if (spell != null) {
-									processVariables(option.variableModsClick, player, data);
-
-									// Cast the spell
-									boolean success;
-									if (data != null && data.targetEntity() != null) {
-										success = spell.subcast(player, data.targetEntity(), power, args);
-									} else if (data != null && data.targetLocation() != null) {
-										success = spell.subcast(player, data.targetLocation(), power, args);
-									} else if (bypassNormalCast) {
-										success = spell.subcast(player, power, args);
-									} else {
-										SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
-										success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
-									}
-
-									if (success) processVariables(option.variableModsClicked, player, data);
-
-									return option.stayOpen ? "reopen" : "close";
-								}
-							}
-						}
-					}
-				}
+				if (result != null) return result;
 			}
 		}
 
@@ -607,6 +629,194 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		if (success) processVariables(option.variableModsClicked, player, data);
 
 		return option.stayOpen ? "reopen" : "close";
+	}
+
+	private String handleDragAndDrop(Player player, ConfigData<ConfigurationSection> spellsOnDropConfig, float basePower, 
+									  Multimap<String, VariableMod> variableModsClick, Multimap<String, VariableMod> variableModsClicked, 
+									  boolean stayOpen, String errorContext) {
+		// Get menu data for spell evaluation context
+		UUID id = player.getUniqueId();
+		MenuData data = menuData.get(id);
+		float power = basePower;
+		String[] args = null;
+		
+		if (data != null) {
+			power *= data.power();
+			args = data.args();
+		}
+
+		// Get the dragged item
+		ItemStack draggedItem = player.getItemOnCursor();
+
+		// Find matching spell for the dragged item
+		MagicItemData draggedMagicItem = MagicItems.getMagicItemDataFromItemStack(draggedItem);
+		if (draggedMagicItem != null) {
+			String itemName = (String) draggedMagicItem.getAttribute(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
+			if (itemName != null) {
+				// Get the spell configuration for this menu session
+				SpellData spellData = new SpellData(player, 0f, args);
+				ConfigurationSection dropSection = spellsOnDropConfig.get(spellData);
+				if (dropSection != null) {
+					// Get and initialize the spell for the dragged item
+					String spellName = dropSection.getString(itemName);
+					if (spellName != null) {
+						Subspell spell = initSubspell(spellName, errorContext + itemName + "'");
+						if (spell != null) {
+							processVariables(variableModsClick, player, data);
+
+							// Cast the spell
+							boolean success;
+							if (data != null && data.targetEntity() != null) {
+								success = spell.subcast(player, data.targetEntity(), power, args);
+							} else if (data != null && data.targetLocation() != null) {
+								success = spell.subcast(player, data.targetLocation(), power, args);
+							} else if (bypassNormalCast) {
+								success = spell.subcast(player, power, args);
+							} else {
+								SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
+								success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
+							}
+
+							if (success) processVariables(variableModsClicked, player, data);
+
+							return stayOpen ? "reopen" : "close";
+						}
+					}
+				}
+			}
+		}
+		
+		return null; // Indicates no spell was found/executed
+	}
+
+	private String handlespellsOnDropNonOption(Player player) {
+		String result = handleDragAndDrop(player, spellsOnDropNonOption, 1.0f, null, null, true, 
+			"MenuSpell '" + internalName + "' has an invalid 'empty-slot-spells-on-drop' spell defined for item '");
+		
+		// For item transfer attempts, always keep menu open even if no spell was executed
+		return result != null ? result : "ignore";
+	}
+
+	private String handleEmptySlotShiftClick(Player player, ClickType click) {
+		// For shift-clicks, we need to determine what item would be moved
+		if (click == ClickType.SHIFT_LEFT || click == ClickType.SHIFT_RIGHT) {
+			// For shift-clicks from player inventory to menu, we need to find the item being transferred
+			// This is more complex as we need to simulate the shift-click behavior
+			return handleShiftClickTransfer(player);
+		} else {
+			// Regular drag and drop
+			return handlespellsOnDropNonOption(player);
+		}
+	}
+
+	private String handleShiftClickTransfer(Player player) {
+		// For shift-click on empty slots, we need to check what items in the player's inventory
+		// could be transferred and match them against our empty slot spells configuration
+		
+		// Get menu data for spell evaluation context
+		UUID id = player.getUniqueId();
+		MenuData data = menuData.get(id);
+		float power = 1.0f;
+		String[] args = null;
+		
+		if (data != null) {
+			power = data.power();
+			args = data.args();
+		}
+
+		// Get the spell configuration for this menu session
+		SpellData spellData = new SpellData(player, 0f, args);
+		ConfigurationSection dropSection = spellsOnDropNonOption.get(spellData);
+		if (dropSection == null) {
+			return stayOpenNonOption ? "ignore" : "close";
+		}
+
+		// Check all items in the player's inventory for potential matches
+		for (ItemStack invItem : player.getInventory().getContents()) {
+			if (invItem != null && !invItem.getType().isAir()) {
+				// Find matching spell for this item
+				MagicItemData magicItem = MagicItems.getMagicItemDataFromItemStack(invItem);
+				if (magicItem != null) {
+					String itemName = (String) magicItem.getAttribute(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
+					if (itemName != null) {
+						// Check if there's a spell configured for this item
+						String spellName = dropSection.getString(itemName);
+						if (spellName != null) {
+							Subspell spell = initSubspell(spellName, "MenuSpell '" + internalName + "' has an invalid 'empty-slot-spells-on-drop' spell defined for item '" + itemName + "'");
+							if (spell != null) {
+								// Cast the spell
+								boolean success;
+								if (data != null && data.targetEntity() != null) {
+									success = spell.subcast(player, data.targetEntity(), power, args);
+								} else if (data != null && data.targetLocation() != null) {
+									success = spell.subcast(player, data.targetLocation(), power, args);
+								} else if (bypassNormalCast) {
+									success = spell.subcast(player, power, args);
+								} else {
+									SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
+									success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
+								}
+
+								return success ? "reopen" : "close";
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		// For item transfer attempts, always keep menu open even if no spell was executed
+		return "ignore";
+	}
+
+	private String handleShiftClickFromInventory(Player player, ItemStack clickedItem) {
+		// Get menu data for spell evaluation context
+		UUID id = player.getUniqueId();
+		MenuData data = menuData.get(id);
+		float power = 1.0f;
+		String[] args = null;
+		
+		if (data != null) {
+			power = data.power();
+			args = data.args();
+		}
+
+		// Find matching spell for the clicked item
+		MagicItemData magicItem = MagicItems.getMagicItemDataFromItemStack(clickedItem);
+		if (magicItem != null) {
+			String itemName = (String) magicItem.getAttribute(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
+			if (itemName != null) {
+				// Get the spell configuration for this menu session
+				SpellData spellData = new SpellData(player, 0f, args);
+				ConfigurationSection dropSection = spellsOnDropNonOption.get(spellData);
+				if (dropSection != null) {
+					// Get and initialize the spell for the clicked item
+					String spellName = dropSection.getString(itemName);
+					if (spellName != null) {
+						Subspell spell = initSubspell(spellName, "MenuSpell '" + internalName + "' has an invalid 'empty-slot-spells-on-drop' spell defined for item '" + itemName + "'");
+						if (spell != null) {
+							// Cast the spell
+							boolean success;
+							if (data != null && data.targetEntity() != null) {
+								success = spell.subcast(player, data.targetEntity(), power, args);
+							} else if (data != null && data.targetLocation() != null) {
+								success = spell.subcast(player, data.targetLocation(), power, args);
+							} else if (bypassNormalCast) {
+								success = spell.subcast(player, power, args);
+							} else {
+								SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
+								success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
+							}
+
+							return success ? "reopen" : "close";
+						}
+					}
+				}
+			}
+		}
+		
+		// For item transfer attempts, always keep menu open even if no spell was executed
+		return "ignore";
 	}
 
 	private void processVariables(Multimap<String, VariableMod> varMods, Player player, MenuData data) {

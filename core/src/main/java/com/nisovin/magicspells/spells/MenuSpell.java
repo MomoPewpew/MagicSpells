@@ -565,7 +565,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			if (isItemTransferAttempt) {
 				// Try to handle empty slot spells if configured
 				if (spellsOnDropNonOption != null) {
-					return handleEmptySlotShiftClick(player, click);
+					return handleShiftClickFromInventory(player, player.getItemOnCursor());
 				}
 				// If no empty slot spells configured, just ignore the drag/drop and keep menu open
 				return "ignore";
@@ -689,95 +689,15 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return null; // Indicates no spell was found/executed
 	}
 
-	private String handlespellsOnDropNonOption(Player player) {
-		String result = handleDragAndDrop(player, spellsOnDropNonOption, 1.0f, null, null, true, 
-			"MenuSpell '" + internalName + "' has an invalid 'empty-slot-spells-on-drop' spell defined for item '");
-		
-		// For item transfer attempts, always keep menu open even if no spell was executed
-		return result != null ? result : "ignore";
-	}
-
-	private String handleEmptySlotShiftClick(Player player, ClickType click) {
-		// For shift-clicks, we need to determine what item would be moved
-		if (click == ClickType.SHIFT_LEFT || click == ClickType.SHIFT_RIGHT) {
-			// For shift-clicks from player inventory to menu, we need to find the item being transferred
-			// This is more complex as we need to simulate the shift-click behavior
-			return handleShiftClickTransfer(player);
-		} else {
-			// Regular drag and drop
-			return handlespellsOnDropNonOption(player);
-		}
-	}
-
-	private String handleShiftClickTransfer(Player player) {
-		// For shift-click on empty slots, we need to check what items in the player's inventory
-		// could be transferred and match them against our empty slot spells configuration
-		
-		// Get menu data for spell evaluation context
-		UUID id = player.getUniqueId();
-		MenuData data = menuData.get(id);
-		float power = 1.0f;
-		String[] args = null;
-		
-		if (data != null) {
-			power = data.power();
-			args = data.args();
-		}
-
-		// Get the spell configuration for this menu session
-		SpellData spellData = new SpellData(player, 0f, args);
-		ConfigurationSection dropSection = spellsOnDropNonOption.get(spellData);
-		if (dropSection == null) {
-			return stayOpenNonOption ? "ignore" : "close";
-		}
-
-		// Check all items in the player's inventory for potential matches
-		for (ItemStack invItem : player.getInventory().getContents()) {
-			if (invItem != null && !invItem.getType().isAir()) {
-				// Find matching spell for this item
-				MagicItemData magicItem = MagicItems.getMagicItemDataFromItemStack(invItem);
-				if (magicItem != null) {
-					String itemName = (String) magicItem.getAttribute(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
-					if (itemName != null) {
-						// Check if there's a spell configured for this item
-						String spellName = dropSection.getString(itemName);
-						if (spellName != null) {
-							Subspell spell = initSubspell(spellName, "MenuSpell '" + internalName + "' has an invalid 'empty-slot-spells-on-drop' spell defined for item '" + itemName + "'");
-							if (spell != null) {
-								// Cast the spell
-								boolean success;
-								if (data != null && data.targetEntity() != null) {
-									success = spell.subcast(player, data.targetEntity(), power, args);
-								} else if (data != null && data.targetLocation() != null) {
-									success = spell.subcast(player, data.targetLocation(), power, args);
-								} else if (bypassNormalCast) {
-									success = spell.subcast(player, power, args);
-								} else {
-									SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
-									success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
-								}
-
-								return success ? "reopen" : "close";
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		// For item transfer attempts, always keep menu open even if no spell was executed
-		return "ignore";
-	}
-
 	private String handleShiftClickFromInventory(Player player, ItemStack clickedItem) {
 		// Get menu data for spell evaluation context
 		UUID id = player.getUniqueId();
 		MenuData data = menuData.get(id);
-		float power = 1.0f;
+		float power = clickedItem.getAmount();
 		String[] args = null;
 		
 		if (data != null) {
-			power = data.power();
+			power *= data.power();
 			args = data.args();
 		}
 

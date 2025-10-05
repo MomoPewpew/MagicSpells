@@ -9,6 +9,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.block.Lectern;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.MultipleFacing;
@@ -248,6 +249,6 @@ public class BlockUtils {
 			return false;
 		}
 		BlockState state = block.getState();
-		return state instanceof Container;
+		return state instanceof Container || state instanceof Lectern;
 	}
 }

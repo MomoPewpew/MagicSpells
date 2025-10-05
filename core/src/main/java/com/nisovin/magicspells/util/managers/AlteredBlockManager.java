@@ -4,6 +4,7 @@ import com.nisovin.magicspells.MagicSpells;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.sign.Side;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,14 +96,14 @@ public class AlteredBlockManager {
             switch (from) {
                 case org.bukkit.block.Sign fromSign when to instanceof org.bukkit.block.Sign toSign -> {
                     // Copy sign text - using getSide() for modern API compatibility
-                    var fromSide = fromSign.getSide(org.bukkit.block.sign.Side.FRONT);
-                    var toSide = toSign.getSide(org.bukkit.block.sign.Side.FRONT);
+                    var fromSide = fromSign.getSide(Side.FRONT);
+                    var toSide = toSign.getSide(Side.FRONT);
                     for (int i = 0; i < 4; i++) {
                         toSide.line(i, fromSide.line(i));
                     }
                     // Also copy back side
-                    var fromBackSide = fromSign.getSide(org.bukkit.block.sign.Side.BACK);
-                    var toBackSide = toSign.getSide(org.bukkit.block.sign.Side.BACK);
+                    var fromBackSide = fromSign.getSide(Side.BACK);
+                    var toBackSide = toSign.getSide(Side.BACK);
                     for (int i = 0; i < 4; i++) {
                         toBackSide.line(i, fromBackSide.line(i));
                     }
@@ -110,6 +111,11 @@ public class AlteredBlockManager {
                 case org.bukkit.block.Container fromContainer when to instanceof org.bukkit.block.Container toContainer -> {
                     // Copy container contents
                     toContainer.getInventory().setContents(fromContainer.getInventory().getContents());
+                }
+                case org.bukkit.block.Lectern fromLectern when to instanceof org.bukkit.block.Lectern toLectern -> {
+                    // Copy lectern book and page
+                    toLectern.getInventory().setContents(fromLectern.getInventory().getContents());
+                    toLectern.setPage(fromLectern.getPage());
                 }
                 case org.bukkit.block.CreatureSpawner fromSpawner when to instanceof org.bukkit.block.CreatureSpawner toSpawner -> {
                     // Copy spawner data
@@ -127,9 +133,7 @@ public class AlteredBlockManager {
                     toBanner.setPatterns(fromBanner.getPatterns());
                 }
                 default -> {
-                    // For other block state types, we could use reflection or NBT copying
-                    // but for now, we'll just log that we couldn't copy the state
-                    // MagicSpells.log("Could not copy block state data for type: " + from.getClass().getSimpleName());
+
                 }
             }
         }

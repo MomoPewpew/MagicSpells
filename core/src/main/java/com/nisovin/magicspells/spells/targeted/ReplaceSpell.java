@@ -25,7 +25,6 @@ import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
-import com.nisovin.magicspells.events.MagicSpellsBlockBreakEvent;
 import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
 
 public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell {
@@ -46,6 +45,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean powerAffectsRadius;
 	private final boolean checkPlugins;
 	private final boolean applyPhysics;
+	private final boolean checkIsSupported;
 	private boolean resolveDurationPerBlock;
 	private boolean circleShape;
 	private boolean mergeBlockData;
@@ -67,6 +67,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 		pointBlank = getConfigBoolean("point-blank", false);
 		checkPlugins = getConfigBoolean("check-plugins", true);
 		applyPhysics = getConfigBoolean("apply-physics", false);
+		checkIsSupported = getConfigBoolean("check-is-supported", applyPhysics);
 		replaceRandom = getConfigBoolean("replace-random", true);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
 		resolveDurationPerBlock = getConfigBoolean("resolve-duration-per-block", false);
@@ -273,7 +274,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 						if (newBlockData == null) continue;
 
-						if (applyPhysics && !newBlockData.isSupported(block.getLocation())) continue;
+						if (checkIsSupported && !newBlockData.isSupported(block.getLocation())) continue;
 
 						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData, applyPhysics);
 

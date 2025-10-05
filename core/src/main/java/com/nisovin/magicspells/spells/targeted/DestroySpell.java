@@ -36,6 +36,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 	private Set<Material> blockTypesToThrow;
 	private Set<Material> blockTypesToRemove;
+	private Set<Material> blockTypesToIgnore;
 	private Map<FallingBlock, Long> fallingBlocks;
 
 	private ConfigData<Integer> vertRadius;
@@ -112,6 +113,17 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 				if (m == null)
 					continue;
 				blockTypesToRemove.add(m);
+			}
+		}
+
+		List<String> toIgnore = getConfigStringList("block-types-to-ignore", null);
+		if (toIgnore != null && !toIgnore.isEmpty()) {
+			blockTypesToIgnore = EnumSet.noneOf(Material.class);
+			for (String s : toIgnore) {
+				Material m = Util.getMaterial(s);
+				if (m == null)
+					continue;
+				blockTypesToIgnore.add(m);
 			}
 		}
 
@@ -227,6 +239,10 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 						continue;
 					if (BlockUtils.isAir(b.getType()))
 						continue;
+
+					if (blockTypesToIgnore != null && blockTypesToIgnore.contains(b.getType())) {
+						continue;
+					}
 
 					if (blockTypesToThrow != null) {
 						if (blockTypesToThrow.contains(b.getType())) {

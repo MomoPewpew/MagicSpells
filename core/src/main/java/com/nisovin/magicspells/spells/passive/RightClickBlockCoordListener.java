@@ -6,6 +6,7 @@ import java.util.HashSet;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.EventHandler;
@@ -54,12 +55,16 @@ public class RightClickBlockCoordListener extends PassiveListener {
 
 		Player caster = event.getPlayer();
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
+		
+		String subject = block.getLocation().toString();
+		if (isOnCooldownPerSubject((LivingEntity) caster, subject)) return;
 
 		Location location = event.getClickedBlock().getLocation();
 		MagicLocation loc = new MagicLocation(location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
 		if (!locations.contains(loc)) return;
 
 		boolean casted = passiveSpell.activate(caster, location.add(0.5, 0.5, 0.5));
+		if (casted) setCooldownPerSubject((LivingEntity) caster, null, subject);
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

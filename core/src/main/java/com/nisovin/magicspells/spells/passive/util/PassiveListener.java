@@ -67,5 +67,13 @@ public abstract class PassiveListener implements Listener {
 	public boolean equals(Object other) {
 		return this == other; // Don't want to make things equal unless they are the same object
 	}
+
+	protected void setCooldownPerSubject(LivingEntity caster, LivingEntity target, String subject) {
+		passiveSpell.setCooldownPerSubject(caster, target, subject);
+	}
+
+	protected boolean isOnCooldownPerSubject(LivingEntity caster, String subject) {
+		return passiveSpell.isOnCooldownPerSubject(caster, subject);
+	}
 	
 }

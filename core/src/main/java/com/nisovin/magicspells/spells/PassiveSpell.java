@@ -1,7 +1,9 @@
 package com.nisovin.magicspells.spells;
 
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -34,6 +36,8 @@ public class PassiveSpell extends Spell {
 	private final ConfigData<Integer> delay;
 
 	private final ConfigData<Float> chance;
+	private final ConfigData<Float> cooldownPerSubject;
+	private final ConfigData<Float> serverCooldownPerSubject;
 
 	private boolean disabled = false;
 	private final boolean ignoreCancelled;
@@ -42,6 +46,8 @@ public class PassiveSpell extends Spell {
 	private final boolean cancelDefaultAction;
 	private final boolean requireCancelledEvent;
 	private final boolean cancelDefaultActionWhenCastFails;
+
+	public Map<LivingEntity, Map<String, Long>> cooldownsPerSubject = new HashMap<>();
 
 	public PassiveSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -60,6 +66,8 @@ public class PassiveSpell extends Spell {
 		delay = getConfigDataInt("delay", -1);
 
 		chance = getConfigDataFloat("chance", 100F);
+		cooldownPerSubject = getConfigDataFloat("cooldown-per-subject", 0F);
+		serverCooldownPerSubject = getConfigDataFloat("server-cooldown-per-subject", 0F);
 
 		ignoreCancelled = getConfigBoolean("ignore-cancelled", true);
 		castWithoutTarget = getConfigBoolean("cast-without-target", false);
@@ -362,6 +370,28 @@ public class PassiveSpell extends Spell {
 		EventUtil.call(castedEvent);
 		disabled = false;
 		return true;
+	}
+
+	public void setCooldownPerSubject(LivingEntity caster, LivingEntity target, String subject) {
+		float cooldown = cooldownPerSubject.get(caster, target, 1F, null);
+		float serverCooldown = serverCooldownPerSubject.get(caster, target, 1F, null);
+
+		if (cooldown > 0 && caster != null) cooldownsPerSubject.computeIfAbsent(caster, k -> new HashMap<>()).put(subject, System.currentTimeMillis() + (long) (cooldown * 1000));
+		if (serverCooldown > 0) cooldownsPerSubject.computeIfAbsent(null, k -> new HashMap<>()).put(subject, System.currentTimeMillis() + (long) (serverCooldown * 1000));
+	}
+
+	public boolean isOnCooldownPerSubject(LivingEntity caster, String subject) {
+		if (cooldownsPerSubject.containsKey(caster)) {
+			if (cooldownsPerSubject.get(caster).containsKey(subject)) {
+				return System.currentTimeMillis() < cooldownsPerSubject.get(caster).get(subject);
+			}
+		}
+		if (cooldownsPerSubject.containsKey(null)) {
+			if (cooldownsPerSubject.get(null).containsKey(subject)) {
+				return System.currentTimeMillis() < cooldownsPerSubject.get(null).get(subject);
+			}
+		}
+		return false;
 	}
 
 }

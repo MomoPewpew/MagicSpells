@@ -65,10 +65,13 @@ public class RightClickEntityListener extends PassiveListener {
 		if (!hasSpell(caster) || !canTrigger(caster))
 			return;
 
+		String subject = entity.getUniqueId().toString();
+		if (isOnCooldownPerSubject((LivingEntity) caster, subject)) return;
+
 		boolean casted = entity instanceof LivingEntity ? passiveSpell.activate(caster, (LivingEntity) entity)
 				: passiveSpell.activate(caster, entity.getLocation());
-		if (cancelDefaultAction(casted))
-			event.setCancelled(true);
+		if (casted) setCooldownPerSubject((LivingEntity) caster, null, subject);
+		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 
 }

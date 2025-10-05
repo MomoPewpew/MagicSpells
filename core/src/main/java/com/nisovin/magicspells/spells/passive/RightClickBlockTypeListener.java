@@ -6,6 +6,7 @@ import java.util.Set;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -49,6 +50,9 @@ public class RightClickBlockTypeListener extends PassiveListener {
 		Block block = event.getClickedBlock();
 		if (block == null) return;
 
+		String subject = block.getLocation().toString();
+		if (isOnCooldownPerSubject((LivingEntity) caster, subject)) return;
+
 		BlockData blockData = block.getBlockData();
 
 		if (blockData == null) return;
@@ -61,6 +65,7 @@ public class RightClickBlockTypeListener extends PassiveListener {
 		if (!blockDatas.isEmpty() && !match) return;
 
 		boolean casted = passiveSpell.activate(event.getPlayer(), block.getLocation().add(0.5, 0.5, 0.5));
+		if (casted)setCooldownPerSubject((LivingEntity) caster, null, subject);
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

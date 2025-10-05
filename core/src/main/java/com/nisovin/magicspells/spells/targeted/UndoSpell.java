@@ -1,15 +1,11 @@
 package com.nisovin.magicspells.spells.targeted;
 
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.bukkit.World;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.Spell;
@@ -17,6 +13,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 
@@ -67,36 +64,32 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 			if (loc == null) {
 				return noTarget(caster, args);
 			}
-			undo(caster, loc, power, args);
+			return undo(caster, loc, power, args) ? PostCastAction.HANDLE_NORMALLY : PostCastAction.ALREADY_HANDLED;
 		}
-		return PostCastAction.HANDLE_NORMALLY;
+		return PostCastAction.ALREADY_HANDLED;
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		undo(caster, target, power, args);
-		return true;
+		return undo(caster, target, power, args);
 	}
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
-		undo(caster, target, power, null);
-		return true;
+		return undo(caster, target, power, null);
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
-		undo(null, target, power, args);
-		return true;
+		return undo(null, target, power, args);
 	}
 
 	@Override
 	public boolean castAtLocation(Location target, float power) {
-		undo(null, target, power, null);
-		return true;
+		return undo(null, target, power, null);
 	}
 
-	private void undo(LivingEntity caster, Location loc, float power, String[] args) {
+	private boolean undo(LivingEntity caster, Location loc, float power, String[] args) {
 		int rad = radius.get(caster, null, power, args);
 		if (powerAffectsRadius)
 			rad *= power;
@@ -104,7 +97,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 		World locWorld = loc.getWorld();
 		if (locWorld == null) {
 			MagicSpells.error("Location world is null for UndoSpell.");
-			return;
+			return false;
 		}
 
 		List<Spell> spellsTemp = spells.isEmpty()
@@ -113,15 +106,21 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 						.toList()
 				: new ArrayList<>(spells);
 
+		boolean success = false;
+
 		for (Spell spell : spellsTemp) {
 			for (int y = loc.getBlockY() - rad; y <= loc.getBlockY() + rad; y++) {
 				for (int x = loc.getBlockX() - rad; x <= loc.getBlockX() + rad; x++) {
 					for (int z = loc.getBlockZ() - rad; z <= loc.getBlockZ() + rad; z++) {
 						Block block = loc.getWorld().getBlockAt(x, y, z);
-						MagicSpells.getAlteredBlockManager().getByBlockAndInternalName(block, spell.getInternalName()).forEach(it -> {
-							it.undo(applyPhysics);
-							playSpellEffects(EffectPosition.TARGET, block.getLocation(), power, args);
-						});
+						List<AlteredBlockManager.Change> changes = MagicSpells.getAlteredBlockManager().getByBlockAndInternalName(block, spell.getInternalName());
+						if (!changes.isEmpty()) {
+							success = true;
+							changes.forEach(it -> {
+								it.undo(applyPhysics);
+								playSpellEffects(EffectPosition.TARGET, block.getLocation(), power, args);
+							});
+						}
 					}
 				}
 			}
@@ -131,5 +130,6 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 			playSpellEffects(EffectPosition.CASTER, caster.getLocation(), power, args);
 
 		playSpellEffects(EffectPosition.SPECIAL, loc, power, args);
+		return success;
 	}
 }

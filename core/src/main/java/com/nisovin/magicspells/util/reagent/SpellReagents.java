@@ -58,7 +58,22 @@ public class SpellReagents {
                         case "hunger" -> new HungerReagent(Integer.parseInt(data[1]));
                         case "experience" -> new ExperienceReagent(Integer.parseInt(data[1]));
                         case "levels" -> new LevelReagent(Integer.parseInt(data[1]));
-                        case "durability" -> new DurabilityReagent(Integer.parseInt(data[1]));
+                        case "durability" -> {
+                            int durabilityAmount = Integer.parseInt(data[1]);
+                            if (data.length > 2) {
+                                // MagicItem specified in data[2]
+                                MagicItemData magicItemData = MagicItems.getMagicItemDataFromString(data[2]);
+                                if (magicItemData == null) {
+                                    MagicSpells.error("Failed to process durability reagent MagicItem for " + internalName + " spell: " + data[2]);
+                                    spellReagents.parseSucceeded = false;
+                                    yield null;
+                                }
+                                yield new DurabilityReagent(durabilityAmount, magicItemData);
+                            } else {
+                                // No MagicItem specified, use original behavior
+                                yield new DurabilityReagent(durabilityAmount);
+                            }
+                        }
                         case "money" -> new MoneyReagent(Float.parseFloat(data[1]));
                         case "variable" -> {
                             VariableReagent varReagent = new VariableReagent();

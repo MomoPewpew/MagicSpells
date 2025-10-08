@@ -70,7 +70,7 @@ public class RightClickEntityListener extends PassiveListener {
 
 		boolean casted = entity instanceof LivingEntity ? passiveSpell.activate(caster, (LivingEntity) entity)
 				: passiveSpell.activate(caster, entity.getLocation());
-		if (casted) setCooldownPerSubject((LivingEntity) caster, null, subject);
+		if (casted) setCooldownPerSubject((LivingEntity) caster, entity instanceof LivingEntity ? (LivingEntity) entity : null, subject);
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
 	}
 

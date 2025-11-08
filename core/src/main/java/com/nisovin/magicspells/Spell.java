@@ -79,7 +79,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	protected IntMap<UUID> chargesConsumed;
 
-	protected EnumMap<EffectPosition, List<SpellEffect>> effects;
+	public EnumMap<EffectPosition, List<SpellEffect>> effects;
 
 	protected Set<String> tags;
 	protected Set<CastItem> bindableItems;

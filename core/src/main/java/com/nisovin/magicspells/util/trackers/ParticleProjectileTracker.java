@@ -401,7 +401,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 		}
 
 		// Play effects
-		if (spell != null && specialEffectInterval > 0 && counter % specialEffectInterval == 0) spell.playEffects(EffectPosition.SPECIAL, currentLocation, data);
+		if (spell != null) playSpecialEffects(currentLocation);
 
 		// Acceleration
 		if (acceleration != 0 && accelerationDelay > 0 && counter % accelerationDelay == 0) currentVelocity.multiply(acceleration);
@@ -509,7 +509,21 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 		for (int i = 0; i < intermediateEffects; i++) {
 			old = LocationUtil.setDirection(old.add(v), v);
-			if (spell != null && specialEffectInterval > 0 && counter % specialEffectInterval == 0) spell.playEffects(EffectPosition.SPECIAL, old, data);
+
+			if (spell != null) {
+				playSpecialEffects(old);
+			}
+		}
+	}
+
+	private void playSpecialEffects(Location old) {
+		if (spell.effects == null) return;
+		List<SpellEffect> effectsList = spell.effects.get(EffectPosition.SPECIAL);
+		if (effectsList == null) return;
+		for (SpellEffect effect : effectsList) {
+			Integer interval = effect.specialEffectInterval.get(data);
+			if (interval == null || interval <= 0) interval = specialEffectInterval;
+			if (interval > 0 && counter % interval == 0) effect.playEffect(old, data);
 		}
 	}
 

@@ -69,6 +69,7 @@ public abstract class SpellEffect {
 	private ConfigData<Integer> horizExpandDelay;
 	private ConfigData<Integer> vertExpandDelay;
 	private ConfigData<Integer> effectInterval;
+	public ConfigData<Integer> specialEffectInterval;
 
 	private boolean counterClockwise;
 
@@ -119,6 +120,7 @@ public abstract class SpellEffect {
 		horizExpandDelay = ConfigDataUtil.getInteger(config, path + "horiz-expand-delay", 0);
 		vertExpandDelay = ConfigDataUtil.getInteger(config, path + "vert-expand-delay", 0);
 		effectInterval = ConfigDataUtil.getInteger(config, "effect-interval", TimeUtil.TICKS_PER_SECOND);
+		specialEffectInterval = ConfigDataUtil.getInteger(config, "special-effect-interval", -1);
 
 		dragEntity = ConfigDataUtil.getBoolean(config, "drag-entity", false);
 

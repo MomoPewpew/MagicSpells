@@ -39,12 +39,14 @@ import net.kyori.adventure.text.Component;
 import org.apache.commons.math4.core.jdkmath.JdkMath;
 
 import com.nisovin.magicspells.Subspell;
+import com.nisovin.magicspells.spelleffects.effecttypes.EntityEffect;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MobUtil;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.EntityData;
 import com.nisovin.magicspells.util.TargetInfo;
+import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -472,12 +474,14 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private void spawnMob(LivingEntity caster, Location source, Location loc, LivingEntity target, float power, String[] args) {
 		if (entityData == null || entityData.getEntityType() == null) return;
 
+		int duration = this.duration.get(caster, target, power, args);
+
 		loc.setYaw((float) (JdkMath.random() * 360));
 		LivingEntity entity = (LivingEntity) entityData.spawn(
 			loc.add(0.5, yOffset.get(caster, target, power, args), 0.5),
 			e -> {
 				LivingEntity preSpawned = (LivingEntity) e;
-				prepMob(caster, target, preSpawned, power, args);
+				prepMob(caster, target, preSpawned, power, args, duration);
 
 				int fireTicks = this.fireTicks.get(caster, target, power, args);
 				if (fireTicks > 0) preSpawned.setFireTicks(fireTicks);
@@ -504,12 +508,10 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 		);
 
-		if(mountList != null && !mountList.isEmpty()) createMounts(caster, target, power, args, entity);
+		if(mountList != null && !mountList.isEmpty()) createMounts(caster, target, power, args, entity, duration);
 
 		int targetInterval = this.targetInterval.get(caster, null, power, args);
 		if (targetInterval > 0) new Targeter(caster, entity, power, args);
-
-		int duration = this.duration.get(caster, target, power, args);
 
 		AttackMonitor monitor = new AttackMonitor(caster, entity, target, power, args);
 		MagicSpells.registerEvents(monitor);
@@ -560,7 +562,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		totalEntities++;
 	}
 
-	private void prepMob(LivingEntity caster, LivingEntity target, LivingEntity entity, float power, String[] args) {
+	private void prepMob(LivingEntity caster, LivingEntity target, LivingEntity entity, float power, String[] args, int duration) {
 		entity.setGravity(gravity);
 
 		if (setOwner && entity instanceof Tameable tameable && tameable.isTamed() && caster instanceof AnimalTamer tamer)
@@ -594,6 +596,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			equip.setBootsDropChance(bootsDropChance.get(caster, target, power, args) / 100f);
 		}
 
+		entity.addScoreboardTag(EntityEffect.ENTITY_TAG);
+		if (duration > 0) entity.addScoreboardTag(EntityEffect.EXPIRATION_TIME_MILLIS_TAG + ":" + (System.currentTimeMillis() + (duration * (1000 / TimeUtil.TICKS_PER_SECOND))));
+
 		if (useCasterName && caster != null) {
 			if (caster instanceof Player player) entity.customName(player.displayName());
 			else entity.customName(caster.name());
@@ -607,7 +612,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
     	entity.setRemoveWhenFarAway(false);
 	}
 
-	private void createMounts(LivingEntity caster, LivingEntity target, float power, String[] args, LivingEntity head){
+	private void createMounts(LivingEntity caster, LivingEntity target, float power, String[] args, LivingEntity head, int duration){
 
 		List<Entity> ents = new ArrayList<>();
 
@@ -618,7 +623,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			Entity mount = mountData.spawn(head.getLocation(), e -> {
 				{
 					LivingEntity preSpawned = (LivingEntity) e;
-					prepMob(caster, target, preSpawned, power, args);
+					prepMob(caster, target, preSpawned, power, args, duration);
 
 					int fireTicks = this.fireTicks.get(caster, target, power, args);
 					if (fireTicks > 0) preSpawned.setFireTicks(fireTicks);

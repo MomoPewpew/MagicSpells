@@ -10,6 +10,7 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
+import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.EntityData;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 
@@ -18,6 +19,7 @@ public class EntityEffect extends SpellEffect {
 	public static final Set<Entity> entities = new HashSet<>();
 
 	public static final String ENTITY_TAG = "MS_ENTITY";
+	public static final String EXPIRATION_TIME_MILLIS_TAG = "MS_EXPIRATION_TIME_MILLIS";
 
 	private EntityData entityData;
 
@@ -71,6 +73,7 @@ public class EntityEffect extends SpellEffect {
 
 		return entityData.spawn(loc, data, entity -> {
 			entity.addScoreboardTag(ENTITY_TAG);
+			if (duration > 0) entity.addScoreboardTag(EXPIRATION_TIME_MILLIS_TAG + ":" + (System.currentTimeMillis() + (duration * (1000 / TimeUtil.TICKS_PER_SECOND))));
 			entity.setGravity(gravity);
 			entity.setSilent(silent);
 

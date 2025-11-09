@@ -627,6 +627,8 @@ public class MagicSpells extends JavaPlugin {
 			registerEvents(new MagicItemUpdater.CharacterPersistentDataUpdater());
 		}
 
+		registerEvents(new EntityListener());
+
 		log("...done");
 
 		// Initialize logger

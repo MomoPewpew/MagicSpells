@@ -90,6 +90,7 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 	private boolean stopOnModifierFail;
 	private boolean allowCasterInteract;
 	private boolean powerAffectsVelocity;
+	private boolean sneakInvertsDirection;
 
 	private boolean hitGround;
 	private boolean hitAirAtEnd;
@@ -286,7 +287,23 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 		if (controllable) {
 			currentVelocity = caster.getLocation().getDirection();
+			
+			// Apply sneak direction inversion (reflect across plane perpendicular to player-particle line)
+			if (sneakInvertsDirection && caster instanceof org.bukkit.entity.Player player && player.isSneaking()) {
+				Vector playerToParticle = currentLocation.toVector().subtract(caster.getLocation().toVector());
+				
+				if (playerToParticle.lengthSquared() > 0) {
+					Vector planeNormal = playerToParticle.normalize();
+					
+					// Reflect across plane with normal = player-to-particle direction
+					// Reflection formula: v' = v - 2(v·n)n
+					double dotProduct = currentVelocity.dot(planeNormal);
+					currentVelocity.subtract(planeNormal.multiply(2 * dotProduct));
+				}
+			}
+			
 			if (hugSurface) currentVelocity.setY(0).normalize();
+			
 			currentVelocity.multiply(projectileVelocity / ticksPerSecond);
 			LocationUtil.setDirection(currentLocation, currentVelocity);
 		}
@@ -887,6 +904,14 @@ public class ParticleProjectileTracker implements Runnable, Tracker {
 
 	public void setPowerAffectsVelocity(boolean powerAffectsVelocity) {
 		this.powerAffectsVelocity = powerAffectsVelocity;
+	}
+
+	public boolean shouldSneakInvertDirection() {
+		return sneakInvertsDirection;
+	}
+
+	public void setSneakInvertsDirection(boolean sneakInvertsDirection) {
+		this.sneakInvertsDirection = sneakInvertsDirection;
 	}
 
 	public boolean canHitGround() {

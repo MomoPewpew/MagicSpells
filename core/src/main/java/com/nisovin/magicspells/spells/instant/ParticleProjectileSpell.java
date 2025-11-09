@@ -76,6 +76,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 	private ConfigData<Float> heightFromSurface;
 
 	private boolean controllable;
+	private ConfigData<Boolean> sneakInvertsDirection;
 	private boolean checkPlugins;
 	private boolean changePitch;
 	private boolean hitSelf;
@@ -192,6 +193,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		if (hugSurface) heightFromSurface = getConfigDataFloat("height-from-surface", 0.6F);
 
 		controllable = getConfigBoolean("controllable", false);
+		sneakInvertsDirection = getConfigDataBoolean("sneak-inverts-direction", false);
 		checkPlugins = getConfigBoolean("check-plugins", true);
 		changePitch = getConfigBoolean("change-pitch", true);
 		hitSelf = getConfigBoolean("hit-self", false);
@@ -514,6 +516,7 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		tracker.setHeightFromSurface(hugSurface ? heightFromSurface.get(caster, target, power, args) : 0);
 
 		tracker.setControllable(controllable);
+		tracker.setSneakInvertsDirection(sneakInvertsDirection.get(caster, target, power, args));
 		tracker.setCallEvents(true);
 		tracker.setChangePitch(changePitch);
 		tracker.setHitGround(hitGround);

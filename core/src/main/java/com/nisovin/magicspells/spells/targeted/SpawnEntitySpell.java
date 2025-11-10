@@ -733,7 +733,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 		@EventHandler(ignoreCancelled = true)
 		private void onDamage(EntityDamageByEntityEvent event) {
-			if (attackSpell == null || attackSpell.getSpell() == null || attackSpell.getSpell().onCooldown(caster))
+			if (attackSpell == null || attackSpell.getSpell() == null || attackSpell.getSpell().onCooldown(monster))
 				return;
 
 			Entity damager = event.getDamager();
@@ -746,7 +746,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			if (damager != monster) return;
 
 			if (attackSpell != null && event.getEntity() instanceof LivingEntity damaged) {
-				attackSpell.subcast(caster, monster.getLocation(), damaged, power, args);
+				attackSpell.subcast(monster, monster.getLocation(), damaged, power, args);
 				event.setCancelled(cancelAttack);
 			}
 		}

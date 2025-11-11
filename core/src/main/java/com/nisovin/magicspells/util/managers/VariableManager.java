@@ -91,6 +91,8 @@ public class VariableManager {
 		addVariableType("distancetolocation", DistanceToLocationVariable.class);
 		addVariableType("squareddistancetolocation", SquaredDistanceToLocationVariable.class);
 		addVariableType("playerstring", PlayerStringVariable.class);
+		addVariableType("character", CharacterVariable.class);
+		addVariableType("characterstring", CharacterStringVariable.class);
 
 		// meta variable types
 		addMetaVariableType("location_x", new CoordXVariable());
@@ -187,6 +189,13 @@ public class VariableManager {
 			Variable variable = getVariableType(type);
 			if (variable == null) {
 				MagicSpells.error("Variable '" + var + "' has an invalid variable type defined: " + type);
+				continue;
+			}
+
+			// Check if character manager is required but not available
+			if ((variable instanceof CharacterVariable || variable instanceof CharacterStringVariable) 
+					&& !Bukkit.getPluginManager().isPluginEnabled("SneakyCharacterManager")) {
+				MagicSpells.error("Variable '" + var + "' is a character variable but SneakyCharacterManager plugin is not enabled. This variable will not function properly.");
 				continue;
 			}
 
@@ -301,7 +310,8 @@ public class VariableManager {
 		updateBossBar(variable, player);
 		updateExpBar(variable, player);
 		if (!variable.isPermanent()) return;
-		if (variable instanceof PlayerVariable) dirtyPlayerVars.add(player);
+		if (variable instanceof CharacterVariable || variable instanceof CharacterStringVariable) dirtyPlayerVars.add(player);
+		else if (variable instanceof PlayerVariable) dirtyPlayerVars.add(player);
 		else if (variable instanceof GlobalVariable) dirtyGlobalVars = true;
 		else if (variable instanceof GlobalStringVariable) dirtyGlobalVars = true;
 	}
@@ -321,7 +331,8 @@ public class VariableManager {
 		updateBossBar(variable, player);
 		updateExpBar(variable, player);
 		if (!variable.isPermanent()) return;
-		if (variable instanceof PlayerVariable) dirtyPlayerVars.add(player);
+		if (variable instanceof CharacterVariable || variable instanceof CharacterStringVariable) dirtyPlayerVars.add(player);
+		else if (variable instanceof PlayerVariable) dirtyPlayerVars.add(player);
 		else if (variable instanceof GlobalVariable) dirtyGlobalVars = true;
 		else if (variable instanceof GlobalStringVariable) dirtyGlobalVars = true;
 	}
@@ -365,7 +376,8 @@ public class VariableManager {
 		updateBossBar(variable, player != null ? player.getName() : "");
 		updateExpBar(variable, player != null ? player.getName() : "");
 		if (!variable.isPermanent()) return;
-		if (variable instanceof PlayerVariable) dirtyPlayerVars.add(player != null ? player.getName() : "");
+		if (variable instanceof CharacterVariable || variable instanceof CharacterStringVariable) dirtyPlayerVars.add(player != null ? player.getName() : "");
+		else if (variable instanceof PlayerVariable) dirtyPlayerVars.add(player != null ? player.getName() : "");
 		else if (variable instanceof GlobalVariable) dirtyGlobalVars = true;
 		else if (variable instanceof GlobalStringVariable) dirtyGlobalVars = true;
 	}
@@ -384,7 +396,7 @@ public class VariableManager {
 			}
 			return;
 		}
-		if (var instanceof PlayerVariable) {
+		if (var instanceof CharacterVariable || var instanceof CharacterStringVariable || var instanceof PlayerVariable) {
 			Player pl = PlayerNameUtils.getPlayerExact(player);
 			if (pl == null) return;
 			BossBarManager.Bar bar = MagicSpells.getBossBarManager().getBar(pl, var.getBossBarNamespacedKey());
@@ -402,7 +414,7 @@ public class VariableManager {
 			Util.forEachPlayerOnline(p -> p.sendExperienceChange((float) pct, (int) var.getValue("")));
 			return;
 		}
-		if (var instanceof PlayerVariable) {
+		if (var instanceof CharacterVariable || var instanceof CharacterStringVariable || var instanceof PlayerVariable) {
 			Player p = PlayerNameUtils.getPlayerExact(player);
 			if (p == null) return;
 			p.sendExperienceChange((float) (var.getValue(p) / var.getMaxValue(p)), (int) var.getValue(p));
@@ -495,8 +507,28 @@ public class VariableManager {
 				String line = scanner.nextLine().trim();
 				if (!line.isEmpty()) {
 					String[] s = line.split("=", 2);
-					Variable variable = variables.get(s[0]);
-					if (variable instanceof PlayerVariable && variable.isPermanent()) variable.parseAndSet(player, s[1]);
+					if (s.length < 2) continue;
+
+					// Check if this is a character variable (contains :characterUUID in the key)
+					String key = s[0];
+					if (key.contains(":")) {
+						// Character variable format: variableName:characterUUID=value
+						String[] keyParts = key.split(":", 2);
+						String varName = keyParts[0];
+						String compositeKey = player + ":" + keyParts[1]; // player:characterUUID
+
+						Variable variable = variables.get(varName);
+						// Check CharacterStringVariable first since it extends CharacterVariable
+						if (variable instanceof CharacterStringVariable && variable.isPermanent()) {
+							((CharacterStringVariable) variable).setStringWithCompositeKey(compositeKey, s[1]);
+						} else if (variable instanceof CharacterVariable && variable.isPermanent()) {
+							((CharacterVariable) variable).setWithCompositeKey(compositeKey, Double.parseDouble(s[1]));
+						}
+					} else {
+						// Regular player variable
+						Variable variable = variables.get(key);
+						if (variable instanceof PlayerVariable && variable.isPermanent()) variable.parseAndSet(player, s[1]);
+					}
 				}
 			}
 			scanner.close();
@@ -536,7 +568,51 @@ public class VariableManager {
 		// Update the variables
 		for (String variableName : variables.keySet()) {
 			Variable variable = variables.get(variableName);
-			if (variable instanceof PlayerVariable && variable.isPermanent()) {
+			
+			// Handle character variables (check CharacterStringVariable first since it extends CharacterVariable)
+			if (variable instanceof CharacterStringVariable && variable.isPermanent()) {
+				// Get all values for this character string variable
+				Map<String, String> allValues = ((CharacterStringVariable) variable).getAllStringValues();
+				
+				// Filter for this player and update the existingVariables map
+				for (Map.Entry<String, String> entry : allValues.entrySet()) {
+					String compositeKey = entry.getKey(); // format: playerName:characterUUID
+					if (!compositeKey.startsWith(player + ":")) continue;
+					
+					String characterUUID = compositeKey.substring(player.length() + 1);
+					String fileKey = variableName + ":" + characterUUID; // variableName:characterUUID
+					String val = entry.getValue();
+					
+					if (val.equals(variable.getDefaultStringValue())) {
+						existingVariables.remove(fileKey);
+					} else {
+						existingVariables.put(fileKey, Util.flattenLineBreaks(val));
+					}
+				}
+			}
+			// Handle character numeric variables
+			else if (variable instanceof CharacterVariable && variable.isPermanent()) {
+				// Get all values for this character variable
+				Map<String, Double> allValues = ((CharacterVariable) variable).getAllValues();
+				
+				// Filter for this player and update the existingVariables map
+				for (Map.Entry<String, Double> entry : allValues.entrySet()) {
+					String compositeKey = entry.getKey(); // format: playerName:characterUUID
+					if (!compositeKey.startsWith(player + ":")) continue;
+					
+					String characterUUID = compositeKey.substring(player.length() + 1);
+					String fileKey = variableName + ":" + characterUUID; // variableName:characterUUID
+					String val = entry.getValue().toString();
+					
+					if (val.equals(variable.getDefaultStringValue())) {
+						existingVariables.remove(fileKey);
+					} else {
+						existingVariables.put(fileKey, Util.flattenLineBreaks(val));
+					}
+				}
+			}
+			// Handle player variables
+			else if (variable instanceof PlayerVariable && variable.isPermanent()) {
 				String val = variable.getStringValue(player);
 				if (val.equals(variable.getDefaultStringValue())) {
 					// Remove the variable if it's the default value
@@ -609,7 +685,7 @@ public class VariableManager {
 	public String processVariableMods(Variable variable, VariableMod mod, Player playerToMod, Player caster, Player target, float power, String[] args) {
 		VariableMod.Operation op = mod.getOperation();
 
-		if (variable instanceof PlayerStringVariable || variable instanceof GlobalStringVariable) {
+		if (variable instanceof PlayerStringVariable || variable instanceof CharacterStringVariable || variable instanceof GlobalStringVariable) {
 			switch (op) {
 				case SET -> {
 					String value = mod.getStringValue(caster, target, args);

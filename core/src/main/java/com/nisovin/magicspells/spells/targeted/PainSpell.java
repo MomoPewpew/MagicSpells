@@ -1,8 +1,14 @@
 package com.nisovin.magicspells.spells.targeted;
 
+import java.util.Locale;
+
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.damage.DamageType;
+import org.bukkit.damage.DamageSource;
 
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
@@ -18,12 +24,15 @@ import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.events.SpellApplyDamageEvent;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
 
 public class PainSpell extends TargetedSpell implements TargetedEntitySpell, DamageSpell {
 
 	private String spellDamageType;
-	private DamageCause damageType;
+	private DamageType damageType;
+	private DamageCause damageCause;
 
 	private ConfigData<Double> damage;
 
@@ -39,10 +48,16 @@ public class PainSpell extends TargetedSpell implements TargetedEntitySpell, Dam
 		spellDamageType = getConfigString("spell-damage-type", "");
 		String damageTypeName = getConfigString("damage-type", "MAGIC");
 		try {
-			damageType = DamageCause.valueOf(damageTypeName.toUpperCase());
+			damageCause = DamageCause.valueOf(damageTypeName.toUpperCase());
 		} catch (IllegalArgumentException ignored) {
 			DebugHandler.debugBadEnumValue(DamageCause.class, damageTypeName);
-			damageType = DamageCause.MAGIC;
+			damageCause = DamageCause.MAGIC;
+		}
+
+		damageType = resolveDamageType(damageTypeName);
+		if (damageType == null) {
+			MagicSpells.error("PainSpell '" + internalName + "' has an invalid damage-type '" + damageTypeName + "'. Defaulting to MAGIC.");
+			damageType = DamageType.MAGIC;
 		}
 
 		damage = getConfigDataDouble("damage", 4);
@@ -107,14 +122,14 @@ public class PainSpell extends TargetedSpell implements TargetedEntitySpell, Dam
 		if (powerAffectsDamage) localDamage *= power;
 
 		if (checkPlugins) {
-			MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, damageType, localDamage, this);
+			MagicSpellsEntityDamageByEntityEvent event = new MagicSpellsEntityDamageByEntityEvent(caster, target, damageCause, localDamage, this);
 			EventUtil.call(event);
 			if (event.isCancelled()) return false;
 			if (!avoidDamageModification) localDamage = event.getDamage();
 			target.setLastDamageCause(event);
 		}
 
-		SpellApplyDamageEvent event = new SpellApplyDamageEvent(this, caster, target, localDamage, damageType, spellDamageType);
+		SpellApplyDamageEvent event = new SpellApplyDamageEvent(this, caster, target, localDamage, damageCause, spellDamageType);
 		EventUtil.call(event);
 		localDamage = event.getFinalDamage();
 
@@ -138,13 +153,42 @@ public class PainSpell extends TargetedSpell implements TargetedEntitySpell, Dam
 			return true;
 		}
 
-		if (tryAvoidingAntiCheatPlugins) target.damage(localDamage);
-		else target.damage(localDamage, caster);
+		DamageSource.Builder damageSourceBuilder = DamageSource.builder(damageType);
+		if (caster != null && !tryAvoidingAntiCheatPlugins) damageSourceBuilder.withDirectEntity(caster).withCausingEntity(caster);
+		DamageSource damageSource = damageSourceBuilder.build();
+
+		target.damage(localDamage, damageSource);
 
 		if (caster != null) playSpellEffects(caster, target, power, args);
 		else playSpellEffects(EffectPosition.TARGET, target, power, args);
 
 		return true;
+	}
+
+	private DamageType resolveDamageType(String damageTypeName) {
+		if (damageTypeName == null || damageTypeName.isEmpty()) return DamageType.MAGIC;
+
+		String normalized = damageTypeName.trim();
+		String lowerCase = normalized.toLowerCase(Locale.ROOT);
+
+		NamespacedKey key = NamespacedKey.fromString(lowerCase);
+		if (key == null) key = NamespacedKey.minecraft(lowerCase);
+
+		if (key != null) {
+			Registry<DamageType> damageTypeRegistry = RegistryAccess.registryAccess().getRegistry(RegistryKey.DAMAGE_TYPE);
+			if (damageTypeRegistry != null) {
+				DamageType type = damageTypeRegistry.get(key);
+				if (type != null) return type;
+			}
+		}
+
+		try {
+			Object value = DamageType.class.getField(normalized.toUpperCase(Locale.ROOT)).get(null);
+			if (value instanceof DamageType dt) return dt;
+		} catch (ReflectiveOperationException ignored) {
+		}
+
+		return null;
 	}
 
 }

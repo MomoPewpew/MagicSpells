@@ -94,6 +94,9 @@ public class MagicSpells extends JavaPlugin {
 	// Pass this to methods that want spell arguments passed but doesn't have any to be passed
 	public static final String[] NULL_ARGS = null;
 
+	public static final String ENTITY_TAG = "MS_ENTITY";
+	public static final String EXPIRATION_TIME_MILLIS_TAG = "MS_EXPIRATION_TIME_MILLIS";
+
 	private Set<Material> losTransparentBlocks;
 	private List<Material> ignoreCastItemDurability;
 	private Map<EntityType, String> entityNames;

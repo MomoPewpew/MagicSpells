@@ -6,15 +6,14 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 
 import com.nisovin.magicspells.MagicSpells;
-import com.nisovin.magicspells.spelleffects.effecttypes.EntityEffect;
 
 public class EntityListener implements Listener {
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
         for (Entity entity : event.getChunk().getEntities()) {
-            if (entity.getScoreboardTags().contains(EntityEffect.ENTITY_TAG)) {
+            if (entity.getScoreboardTags().contains(MagicSpells.ENTITY_TAG)) {
                 String expirationTimeMillisTag = entity.getScoreboardTags().stream()
-                    .filter(tag -> tag.startsWith(EntityEffect.EXPIRATION_TIME_MILLIS_TAG + ":"))
+                    .filter(tag -> tag.startsWith(MagicSpells.EXPIRATION_TIME_MILLIS_TAG + ":"))
                     .findFirst()
                     .orElse(null);
                 if (expirationTimeMillisTag == null) continue;

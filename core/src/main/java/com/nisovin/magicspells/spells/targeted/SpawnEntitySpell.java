@@ -39,7 +39,6 @@ import net.kyori.adventure.text.Component;
 import org.apache.commons.math4.core.jdkmath.JdkMath;
 
 import com.nisovin.magicspells.Subspell;
-import com.nisovin.magicspells.spelleffects.effecttypes.EntityEffect;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MobUtil;
@@ -596,8 +595,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			equip.setBootsDropChance(bootsDropChance.get(caster, target, power, args) / 100f);
 		}
 
-		entity.addScoreboardTag(EntityEffect.ENTITY_TAG);
-		if (duration > 0) entity.addScoreboardTag(EntityEffect.EXPIRATION_TIME_MILLIS_TAG + ":" + (System.currentTimeMillis() + (duration * (1000 / TimeUtil.TICKS_PER_SECOND))));
+		entity.addScoreboardTag(MagicSpells.ENTITY_TAG);
+		if (duration > 0) entity.addScoreboardTag(MagicSpells.EXPIRATION_TIME_MILLIS_TAG + ":" + (System.currentTimeMillis() + (duration * (1000 / TimeUtil.TICKS_PER_SECOND))));
 
 		if (useCasterName && caster != null) {
 			if (caster instanceof Player player) entity.customName(player.displayName());

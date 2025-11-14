@@ -62,6 +62,7 @@ public class ArmorStandEffect extends SpellEffect {
 		return (ArmorStand) entityData.spawn(location, data, entity -> {
 			ArmorStand armorStand = (ArmorStand) entity;
 
+			armorStand.addScoreboardTag(MagicSpells.ENTITY_TAG);
 			armorStand.addScoreboardTag(ENTITY_TAG);
 			armorStand.setGravity(gravity);
 			armorStand.setSilent(true);

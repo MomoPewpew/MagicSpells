@@ -5,6 +5,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 
+import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.spelleffects.effecttypes.EntityEffect;
 
 public class EntityListener implements Listener {
@@ -18,11 +19,12 @@ public class EntityListener implements Listener {
                     .orElse(null);
                 if (expirationTimeMillisTag == null) continue;
                 try {
-                    int expirationTimeMillis = Integer.parseInt(expirationTimeMillisTag.split(":")[1]);
+                    long expirationTimeMillis = Long.parseLong(expirationTimeMillisTag.split(":")[1]);
                     if (System.currentTimeMillis() > expirationTimeMillis) {
                         entity.remove();
                     }
                 } catch (NumberFormatException e) {
+                    MagicSpells.error("Error parsing expiration time millis for entity " + entity.getName() + ": " + e.getMessage());
                     continue;
                 }
             }

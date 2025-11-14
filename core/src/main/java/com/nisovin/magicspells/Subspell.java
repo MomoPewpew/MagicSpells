@@ -160,7 +160,7 @@ public class Subspell {
 					}
 					case "chance" -> {
 						try {
-							double chance = Double.parseDouble(value);
+							double chance = Double.parseDouble(value) / 100;
 							this.chance = (caster, target, power, args) -> chance;
 						} catch (NumberFormatException e) {
 							FunctionData<Double> chanceData = FunctionData.build(value, Function.identity(), true);

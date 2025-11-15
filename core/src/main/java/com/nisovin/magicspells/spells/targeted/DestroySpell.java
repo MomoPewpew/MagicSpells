@@ -318,6 +318,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			Location l = b.getLocation().clone().add(0.5, 0.5, 0.5);
 			FallingBlock fb = b.getWorld().spawn(l, FallingBlock.class);
 			fb.setBlockData(blockData);
+			fb.addScoreboardTag(MagicSpells.ENTITY_TAG);
+			fb.addScoreboardTag(MagicSpells.EXPIRATION_TIME_MILLIS_TAG + ':' + (System.currentTimeMillis() + 10000));
 
 			fallingBlocks.put(fb, duration > 0 ? System.currentTimeMillis() + (duration * 50L) : null);
 

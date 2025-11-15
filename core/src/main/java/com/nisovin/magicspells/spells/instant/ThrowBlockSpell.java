@@ -212,6 +212,8 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		if (material != null) {
 			FallingBlock block = location.getWorld().spawn(location, FallingBlock.class);
 			block.setBlockData(material.createBlockData());
+			block.addScoreboardTag(MagicSpells.ENTITY_TAG);
+			block.addScoreboardTag(MagicSpells.EXPIRATION_TIME_MILLIS_TAG + ':' + (System.currentTimeMillis() + 10000));
 
 			block.setGravity(projectileHasGravity);
 			playSpellEffects(EffectPosition.PROJECTILE, block, info.data);

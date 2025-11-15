@@ -64,6 +64,7 @@ public class ArmorStandEffect extends SpellEffect {
 
 			armorStand.addScoreboardTag(MagicSpells.ENTITY_TAG);
 			armorStand.addScoreboardTag(ENTITY_TAG);
+			armorStand.addScoreboardTag(MagicSpells.EXPIRATION_TIME_MILLIS_TAG + ':' + (System.currentTimeMillis() + 100000));
 			armorStand.setGravity(gravity);
 			armorStand.setSilent(true);
 			armorStand.customName(Util.getMiniMessage(MagicSpells.doReplacements(customName, data)));

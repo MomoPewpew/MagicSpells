@@ -66,6 +66,8 @@ private typealias nmsEntityPose = net.minecraft.world.entity.Pose
 class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(helper) {
 
     private val toastKey = ResourceLocation.fromNamespaceAndPath("magicspells", "toast_effect")
+	private val ENTITY_TAG = "MS_ENTITY"
+	private val EXPIRATION_TIME_MILLIS_TAG = "MS_EXPIRATION_TIME_MILLIS"
 
     private var DATA_EFFECT_PARTICLES: EntityDataAccessor<List<ParticleOptions>>? = null
     private var DATA_EFFECT_AMBIENCE_ID: EntityDataAccessor<Boolean>? = null
@@ -253,6 +255,8 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
         })
 
         val markerEntity: Display = player.world.spawnEntity(Location(player.world, clone.x, clone.y, clone.z), org.bukkit.entity.EntityType.BLOCK_DISPLAY) as Display
+        markerEntity.addScoreboardTag(ENTITY_TAG)
+        markerEntity.addScoreboardTag(EXPIRATION_TIME_MILLIS_TAG + ':' + (System.currentTimeMillis() + 86400000))
         markerEntity.displayHeight = 1.0f
         markerEntity.displayWidth = 1.0f
         markerEntity.addScoreboardTag("magicspells_clone_marker")

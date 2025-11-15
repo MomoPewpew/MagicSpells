@@ -34,6 +34,7 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.util.TimeUtil;
 
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.EditSession;
@@ -751,6 +752,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		private void moveBlock(Block block, BlockData data, int x, int y, int z, int duration, boolean keepOld) {
 	        BlockDisplay ent = (BlockDisplay)block.getWorld().spawnEntity(block.getLocation(), EntityType.BLOCK_DISPLAY);
+			ent.addScoreboardTag(MagicSpells.ENTITY_TAG);
+			ent.addScoreboardTag(MagicSpells.EXPIRATION_TIME_MILLIS_TAG + ':' + (System.currentTimeMillis() + duration * TimeUtil.TICKS_PER_SECOND));
 	        Block b = block.getRelative(x, y, z);
 
 	        if (!keepOld) {

@@ -721,6 +721,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		private final float power;
 
 		private LivingEntity target;
+		private boolean inAttackSpell;
 
 		private AttackMonitor(LivingEntity caster, LivingEntity monster, LivingEntity target, float power, String[] args) {
 			this.caster = caster;
@@ -732,6 +733,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 		@EventHandler(ignoreCancelled = true)
 		private void onDamage(EntityDamageByEntityEvent event) {
+			if (event instanceof com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent) return;
+			if (inAttackSpell) return;
+
 			if (attackSpell == null || attackSpell.getSpell() == null || attackSpell.getSpell().onCooldown(monster))
 				return;
 
@@ -745,7 +749,12 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			if (damager != monster) return;
 
 			if (attackSpell != null && event.getEntity() instanceof LivingEntity damaged) {
-				attackSpell.subcast(monster, monster.getLocation(), damaged, power, args);
+				inAttackSpell = true;
+				try {
+					attackSpell.subcast(monster, monster.getLocation(), damaged, power, args);
+				} finally {
+					inAttackSpell = false;
+				}
 				event.setCancelled(cancelAttack);
 			}
 		}

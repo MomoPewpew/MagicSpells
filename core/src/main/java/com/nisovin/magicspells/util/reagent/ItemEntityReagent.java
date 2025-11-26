@@ -1,0 +1,150 @@
+package com.nisovin.magicspells.util.reagent;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import org.bukkit.Material;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.ItemStack;
+
+import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.nisovin.magicspells.util.magicitems.MagicItems;
+
+public class ItemEntityReagent extends Reagent {
+
+	private final MagicItemData itemData;
+	private int amount;
+	private final double radius;
+	private final Material blockMaterial;
+
+	private final int blockDistance;
+
+	public ItemEntityReagent(MagicItemData itemData, int amount, double radius, Material blockMaterial, int blockDistance) {
+		this.itemData = itemData;
+		this.amount = amount;
+		this.radius = radius;
+		this.blockMaterial = blockMaterial;
+		this.blockDistance = blockDistance;
+	}
+
+	@Override
+	public boolean has(LivingEntity livingEntity) {
+		if (livingEntity == null || amount <= 0 || itemData == null) return false;
+
+		int total = 0;
+
+		for (Entity entity : livingEntity.getNearbyEntities(radius, radius, radius)) {
+			if (!(entity instanceof Item itemEntity)) continue;
+			if (!matches(itemEntity)) continue;
+
+			ItemStack stack = itemEntity.getItemStack();
+			if (stack == null) continue;
+
+			total += stack.getAmount();
+			if (total >= amount) return true;
+		}
+
+		return false;
+	}
+
+	private boolean matches(Item itemEntity) {
+		if (blockMaterial != null) {
+			var location = itemEntity.getLocation();
+			var world = location.getWorld();
+			if (world == null) return false;
+
+			int x = location.getBlockX();
+			int y = location.getBlockY();
+			int z = location.getBlockZ();
+
+			if (blockDistance >= 0) {
+				for (int dy = 0; dy <= blockDistance; dy++) {
+					if (world.getBlockAt(x, y - dy, z).getType() == blockMaterial) {
+						return true;
+					}
+				}
+				return false;
+			} else {
+				int upDistance = -blockDistance;
+				for (int dy = 0; dy <= upDistance; dy++) {
+					if (world.getBlockAt(x, y + dy, z).getType() == blockMaterial) {
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
+		ItemStack stack = itemEntity.getItemStack();
+		if (stack == null) return false;
+
+		MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(stack);
+		return stackData != null && itemData.matches(stackData);
+	}
+
+	@Override
+	public void remove(LivingEntity livingEntity) {
+		if (livingEntity == null || amount <= 0 || itemData == null) return;
+
+		int remaining = amount;
+		List<Item> matchingItems = new ArrayList<>();
+
+		for (Entity entity : livingEntity.getNearbyEntities(radius, radius, radius)) {
+			if (!(entity instanceof Item itemEntity)) continue;
+			if (!matches(itemEntity)) continue;
+			matchingItems.add(itemEntity);
+		}
+
+		// Sort by stack size ascending so we remove from the smallest stacks first
+		matchingItems.sort(Comparator.comparingInt(i -> i.getItemStack().getAmount()));
+
+		for (Item itemEntity : matchingItems) {
+			if (remaining <= 0) break;
+
+			ItemStack stack = itemEntity.getItemStack();
+			if (stack == null) continue;
+
+			int stackAmount = stack.getAmount();
+			if (stackAmount <= remaining) {
+				remaining -= stackAmount;
+				itemEntity.remove();
+			} else {
+				stack.setAmount(stackAmount - remaining);
+				itemEntity.setItemStack(stack);
+				remaining = 0;
+			}
+		}
+	}
+
+	@Override
+	public void multiply(float multiplier) {
+		amount = Math.round(amount * multiplier);
+		if (amount < 0) amount = 0;
+	}
+
+	@Override
+	public ItemEntityReagent clone() {
+		return new ItemEntityReagent(itemData.clone(), amount, radius, blockMaterial, blockDistance);
+	}
+
+	@Override
+	public Number get() {
+		return amount;
+	}
+
+	@Override
+	public String toString() {
+		return "ItemEntityReagent{" +
+			"itemData=" + itemData +
+			", amount=" + amount +
+			", radius=" + radius +
+			", blockMaterial=" + (blockMaterial != null ? blockMaterial.name() : "null") +
+			", blockDistance=" + blockDistance +
+			'}';
+	}
+}
+
+

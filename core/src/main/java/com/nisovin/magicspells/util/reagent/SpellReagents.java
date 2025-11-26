@@ -3,9 +3,11 @@ package com.nisovin.magicspells.util.reagent;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 
@@ -75,6 +77,48 @@ public class SpellReagents {
                             }
                         }
                         case "money" -> new MoneyReagent(Float.parseFloat(data[1]));
+                        case "itementity" -> {
+                            if (data.length < 2) {
+                                MagicSpells.error("Failed to process itementity reagent for " + internalName + " spell: " + costVal);
+                                spellReagents.parseSucceeded = false;
+                                yield null;
+                            }
+
+                            MagicItemData magicItemData = MagicItems.getMagicItemDataFromString(data[1]);
+                            if (magicItemData == null) {
+                                MagicSpells.error("Failed to process itementity reagent MagicItem for " + internalName + " spell: " + data[1]);
+                                spellReagents.parseSucceeded = false;
+                                yield null;
+                            }
+
+                            int amount = 1;
+                            if (data.length > 2) {
+                                amount = (int) Float.parseFloat(data[2]);
+                            }
+
+                            double radius = 3D;
+                            if (data.length > 3) {
+                                radius = Double.parseDouble(data[3]);
+                            }
+
+                            Material blockMaterial = null;
+                            int blockDistance = 0;
+
+                            if (data.length > 4) {
+                                blockMaterial = Util.getMaterial(data[4]);
+                                if (blockMaterial == null) {
+                                    MagicSpells.error("Failed to process itementity reagent block material for " + internalName + " spell: " + data[4]);
+                                    spellReagents.parseSucceeded = false;
+                                    yield null;
+                                }
+                            }
+
+                            if (data.length > 5) {
+                                blockDistance = Integer.parseInt(data[5]);
+                            }
+
+                            yield new ItemEntityReagent(magicItemData, amount, radius, blockMaterial, blockDistance);
+                        }
                         case "variable" -> {
                             VariableReagent varReagent = new VariableReagent();
                             varReagent.add(data[1], Double.parseDouble(data[2]));

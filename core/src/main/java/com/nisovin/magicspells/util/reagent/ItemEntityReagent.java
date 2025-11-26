@@ -51,38 +51,42 @@ public class ItemEntityReagent extends Reagent {
 	}
 
 	private boolean matches(Item itemEntity) {
-		if (blockMaterial != null) {
-			var location = itemEntity.getLocation();
-			var world = location.getWorld();
-			if (world == null) return false;
-
-			int x = location.getBlockX();
-			int y = location.getBlockY();
-			int z = location.getBlockZ();
-
-			if (blockDistance >= 0) {
-				for (int dy = 0; dy <= blockDistance; dy++) {
-					if (world.getBlockAt(x, y - dy, z).getType() == blockMaterial) {
-						return true;
-					}
-				}
-				return false;
-			} else {
-				int upDistance = -blockDistance;
-				for (int dy = 0; dy <= upDistance; dy++) {
-					if (world.getBlockAt(x, y + dy, z).getType() == blockMaterial) {
-						return true;
-					}
-				}
-				return false;
-			}
-		}
+		if (!matchesBlock(itemEntity)) return false;
 
 		ItemStack stack = itemEntity.getItemStack();
 		if (stack == null) return false;
 
 		MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(stack);
 		return stackData != null && itemData.matches(stackData);
+	}
+
+	private boolean matchesBlock(Item itemEntity) {
+		if (blockMaterial == null) return true;
+
+		var location = itemEntity.getLocation();
+		var world = location.getWorld();
+		if (world == null) return false;
+
+		int x = location.getBlockX();
+		int y = location.getBlockY();
+		int z = location.getBlockZ();
+
+		if (blockDistance >= 0) {
+			for (int dy = 0; dy <= blockDistance; dy++) {
+				if (world.getBlockAt(x, y - dy, z).getType() == blockMaterial) {
+					return true;
+				}
+			}
+			return false;
+		} else {
+			int upDistance = -blockDistance;
+			for (int dy = 0; dy <= upDistance; dy++) {
+				if (world.getBlockAt(x, y + dy, z).getType() == blockMaterial) {
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 
 	@Override

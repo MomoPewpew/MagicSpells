@@ -98,8 +98,12 @@ public class ItemEntityReagent extends Reagent {
 			matchingItems.add(itemEntity);
 		}
 
-		// Sort by stack size ascending so we remove from the smallest stacks first
-		matchingItems.sort(Comparator.comparingInt(i -> i.getItemStack().getAmount()));
+		// Prioritize items dropped by the livingEntity, then by stack size ascending
+		matchingItems.sort(
+			Comparator
+				.comparing((Item i) -> isDroppedBy(i, livingEntity) ? 0 : 1)
+				.thenComparingInt(i -> i.getItemStack().getAmount())
+		);
 
 		for (Item itemEntity : matchingItems) {
 			if (remaining <= 0) break;
@@ -117,6 +121,14 @@ public class ItemEntityReagent extends Reagent {
 				remaining = 0;
 			}
 		}
+	}
+
+	private boolean isDroppedBy(Item itemEntity, LivingEntity livingEntity) {
+		var uuid = livingEntity.getUniqueId();
+		var owner = itemEntity.getOwner();
+		var thrower = itemEntity.getThrower();
+
+		return (owner != null && owner.equals(uuid)) || (thrower != null && thrower.equals(uuid));
 	}
 
 	@Override

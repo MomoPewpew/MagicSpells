@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -85,6 +87,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	private boolean saveConjurerName;
 
 	private ConfigData<List<String>> itemListData;
+	private ConfigData<Boolean> omitSelectedSlot;
 
 	public ConjureSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -113,6 +116,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		saveConjurerName = getConfigBoolean("save-conjurer-name", false);
 
 		itemListData = getConfigDataStringList("items", null);
+		omitSelectedSlot = getConfigDataBoolean("omit-selected-slot", false);
 
 		pickupDelay = Math.max(pickupDelay, 0);
 	}
@@ -333,7 +337,11 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 						added = true;
 						updateInv = true;
 					} else {
-						added = Util.addToInventory(player, inv, item, stackExisting, ignoreMaxStackSize);
+						Set<Integer> omittedSlots = null;
+						if (Boolean.TRUE.equals(omitSelectedSlot.get(spellData))) {
+							omittedSlots = Collections.singleton(player.getInventory().getHeldItemSlot());
+						}
+						added = Util.addToInventory(player, inv, item, stackExisting, ignoreMaxStackSize, omittedSlots);
 						if (added) updateInv = true;
 					}
 				}

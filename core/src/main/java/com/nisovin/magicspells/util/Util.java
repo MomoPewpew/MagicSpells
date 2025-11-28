@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.Predicate;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.Set;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -389,6 +390,10 @@ public class Util {
 	}
 
 	public static boolean addToInventory(Player player, Inventory inventory, ItemStack item, boolean stackExisting, boolean ignoreMaxStack) {
+		return addToInventory(player, inventory, item, stackExisting, ignoreMaxStack, null);
+	}
+
+	public static boolean addToInventory(Player player, Inventory inventory, ItemStack item, boolean stackExisting, boolean ignoreMaxStack, Set<Integer> omittedSlots) {
 		int amt = item.getAmount();
 		ItemStack[] items = new ItemStack[inventory.getStorageContents().length];
 
@@ -398,7 +403,9 @@ public class Util {
 		}
 
 		if (stackExisting) {
-			for (ItemStack itemStack : items) {
+			for (int i = 0; i < items.length; i++) {
+				if (omittedSlots != null && omittedSlots.contains(i)) continue;
+				ItemStack itemStack = items[i];
 				if (itemStack == null || !isSimilarNoFlags(itemStack, item)) continue;
 
 				if (itemStack.getAmount() + amt <= itemStack.getMaxStackSize()) {
@@ -415,6 +422,7 @@ public class Util {
 
 		if (amt > 0) {
 			for (int i = 0; i < items.length; i++) {
+				if (omittedSlots != null && omittedSlots.contains(i)) continue;
 				if (items[i] != null) continue;
 				if (amt > item.getMaxStackSize() && !ignoreMaxStack) {
 					items[i] = item.clone();

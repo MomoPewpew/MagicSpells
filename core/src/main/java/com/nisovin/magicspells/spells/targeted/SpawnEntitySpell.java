@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import java.util.Set;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -61,6 +62,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 	private List<LivingEntity> entities;
 	private final Map<LivingEntity, EntityPulser> pulsers;
+	private final Map<UUID, List<LivingEntity>> toggledEntities;
 	private static int totalEntities = 0;
 
 	private EntityData entityData;
@@ -89,6 +91,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private ConfigData<Double> targetRange;
 	private ConfigData<Double> targetPriorityRange;
 	private ConfigData<Double> retargetRange;
+
+	private ConfigData<Boolean> toggle;
 
 	private String location;
 
@@ -199,6 +203,8 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		targetPriorityRange = getConfigDataDouble("target-priority-range", 10);
 		retargetRange = getConfigDataDouble("retarget-range", 50);
 
+		toggle = getConfigDataBoolean("toggle", false);
+
 		location = getConfigString("location", "target");
 		nameplateText = Util.getMiniMessage(getConfigString("nameplate-text", null));
 
@@ -249,6 +255,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		removeMountsOnAnyDeath = getConfigBoolean("remove-mounts-if-any-die", true);
 
 		pulsers = new HashMap<>();
+		toggledEntities = new HashMap<>();
 		ticker = new EntityPulserTicker();
 	}
 
@@ -323,12 +330,55 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		ticker.stop();
 		entities.clear();
 		pulsers.clear();
+		toggledEntities.clear();
 		totalEntities = 0;
 	}
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
+			// Handle toggle mode
+			if (toggle.get(caster, null, power, args) && caster instanceof Player player) {
+				UUID playerId = player.getUniqueId();
+				if (toggledEntities.containsKey(playerId)) {
+					List<LivingEntity> playerEntities = toggledEntities.get(playerId);
+					// Check if any entities are still valid and alive
+					boolean hasValidEntities = playerEntities.stream().anyMatch(e -> e != null && e.isValid() && !e.isDead());
+					if (hasValidEntities) {
+						// Remove all entities
+						for (LivingEntity entity : new ArrayList<>(playerEntities)) {
+							if (entity != null && entity.isValid()) {
+								// Remove mounts if present
+								if (mountList != null && !mountList.isEmpty()) {
+									Entity _riding = entity.getVehicle();
+									while (_riding != null) {
+										Entity _prev = _riding;
+										_riding = _riding.getVehicle();
+										if (!(_prev instanceof Player)) _prev.remove();
+									}
+								}
+								
+								// Remove passengers (mounts on top)
+								List<Entity> passengers = new ArrayList<>(entity.getPassengers());
+								for (Entity passenger : passengers) {
+									if (!(passenger instanceof Player)) passenger.remove();
+								}
+								
+								entity.remove();
+								entities.remove(entity);
+								pulsers.remove(entity);
+								totalEntities--;
+							}
+						}
+						toggledEntities.remove(playerId);
+						return PostCastAction.HANDLE_NORMALLY;
+					} else {
+						// Clean up invalid entities
+						toggledEntities.remove(playerId);
+					}
+				}
+			}
+			
 			Location loc = null;
 			LivingEntity target = null;
 
@@ -525,6 +575,13 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		else playSpellEffects(source, entity, power, args);
 
 		entities.add(entity);
+		
+		// Track entity in toggle map if toggle is enabled
+		if (toggle.get(caster, null, power, args) && caster instanceof Player player) {
+			UUID playerId = player.getUniqueId();
+			toggledEntities.computeIfAbsent(playerId, k -> new ArrayList<>()).add(entity);
+		}
+		
 		if (duration > 0) {
 			MagicSpells.scheduleDelayedTask(() -> {
 				if (entity == null || !entity.isValid()) return;
@@ -545,6 +602,18 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 
 				entity.remove();
 				entities.remove(entity);
+				
+				// Remove from toggle map if present
+				if (caster instanceof Player player) {
+					UUID playerId = player.getUniqueId();
+					if (toggledEntities.containsKey(playerId)) {
+						toggledEntities.get(playerId).remove(entity);
+						if (toggledEntities.get(playerId).isEmpty()) {
+							toggledEntities.remove(playerId);
+						}
+					}
+				}
+				
 				totalEntities--;
 			}, duration);
 		}
@@ -705,6 +774,17 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 			}
 			entities.remove(entity);
 			if (pulsers.containsKey(entity)) pulsers.remove(entity);
+			
+			// Remove from toggle map if present
+			for (Map.Entry<UUID, List<LivingEntity>> entry : new HashMap<>(toggledEntities).entrySet()) {
+				List<LivingEntity> playerEntities = entry.getValue();
+				if (playerEntities.remove(entity)) {
+					if (playerEntities.isEmpty()) {
+						toggledEntities.remove(entry.getKey());
+					}
+					break;
+				}
+			}
 
 			if (spellOnDeath != null) {
 				spellOnDeath.subcast(entity, entity, 1F, new String[0]);

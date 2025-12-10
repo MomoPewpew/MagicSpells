@@ -122,6 +122,7 @@ public class PassiveManager {
 		addListener("manachange", ManaChangeListener.class);
 		addListener("missarrow", MissArrowListener.class);
 		addListener("mount", MountListener.class);
+		addListener("mountjump", MountJumpListener.class);
 		addListener("offhandswap", OffhandSwapListener.class);
 		addListener("pickupitem", PickupItemListener.class);
 		addListener("playeranimate", PlayerAnimationListener.class);

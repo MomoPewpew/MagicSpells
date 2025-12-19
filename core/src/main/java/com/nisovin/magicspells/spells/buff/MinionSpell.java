@@ -22,10 +22,12 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MobUtil;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.spells.DamageSpell;
 import com.nisovin.magicspells.util.ValidTargetList;
 import com.nisovin.magicspells.events.SpellTargetEvent;
+import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.managers.AttributeManager;
@@ -77,7 +79,7 @@ public class MinionSpell extends BuffSpell {
 
 	private List<PotionEffect> potionEffects;
 
-	private Set<AttributeManager.AttributeInfo> attributes;
+	private ConfigData<Set<AttributeManager.AttributeInfo>> attributes;
 
 	public MinionSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -131,7 +133,9 @@ public class MinionSpell extends BuffSpell {
 		// Attributes
 		// - [AttributeName] [Number] [Operation]
 		List<String> attributeList = getConfigStringList("attributes", null);
-		if (attributeList != null && !attributeList.isEmpty()) attributes = MagicSpells.getAttributeManager().getAttributes(attributeList);
+		if (attributeList != null && !attributeList.isEmpty()) {
+			attributes = MagicSpells.getAttributeManager().getAttributesConfigData(attributeList, internalName + ".attributes");
+		}
 
 		// Equipment
 		MagicItem magicMainHandItem = MagicItems.getMagicItemFromString(getConfigString("main-hand", ""));
@@ -285,7 +289,10 @@ public class MinionSpell extends BuffSpell {
 		if (potionEffects != null) minion.addPotionEffects(potionEffects);
 
 		// Apply attributes
-		if (attributes != null) MagicSpells.getAttributeManager().addEntityAttributes(minion, attributes);
+		if (attributes != null) {
+			Set<AttributeManager.AttributeInfo> resolved = attributes.get(new SpellData(player, minion, power, args));
+			if (resolved != null) MagicSpells.getAttributeManager().addEntityAttributes(minion, resolved);
+		}
 
 		// Equip the minion
 		final EntityEquipment eq = minion.getEquipment();
@@ -585,7 +592,9 @@ public class MinionSpell extends BuffSpell {
 	}
 
 	public Set<AttributeManager.AttributeInfo> getAttributes() {
-		return attributes;
+		if (attributes == null) return null;
+		if (!attributes.isConstant()) return null;
+		return attributes.get((SpellData) null);
 	}
 
 	public ValidTargetList getMinionTargetList() {

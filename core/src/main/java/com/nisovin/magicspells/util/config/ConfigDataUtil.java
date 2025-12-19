@@ -2,12 +2,19 @@ package com.nisovin.magicspells.util.config;
 
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
+import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.AttributeUtil;
+import com.nisovin.magicspells.util.managers.AttributeManager;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.bukkit.util.Vector;
@@ -27,6 +34,76 @@ import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.ParticleUtil;
 
 public class ConfigDataUtil {
+
+	@NotNull
+	public static ConfigData<AttributeManager.AttributeInfo> getAttributeInfo(@Nullable String value, @Nullable String sourceKey, int index) {
+		if (value == null || value.isBlank()) return (caster, target, power, args) -> null;
+
+		String[] parts = value.trim().split("\\s+");
+		if (parts.length < 3) return (caster, target, power, args) -> null;
+
+		ConfigData<String> attributeName = getString(parts[0]);
+		ConfigData<Double> amount = getDouble(parts[1]);
+		ConfigData<String> operation = getString(parts[2]);
+		UUID uuid = stableUuid(sourceKey, index);
+
+		if (attributeName.isConstant() && amount.isConstant() && operation.isConstant()) {
+			AttributeManager.AttributeInfo info = buildAttributeInfo(value, uuid, attributeName.get(null), amount.get(null), operation.get(null));
+			return (caster, target, power, args) -> info;
+		}
+
+		return new ConfigData<>() {
+			@Override
+			public AttributeManager.AttributeInfo get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+				String name = attributeName.get(caster, target, power, args);
+				if (name == null) return null;
+
+				Double amt = amount.get(caster, target, power, args);
+				if (amt == null) return null;
+
+				String op = operation.get(caster, target, power, args);
+				if (op == null) return null;
+
+				return buildAttributeInfo(value, uuid, name, amt, op);
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+		};
+	}
+
+	@NotNull
+	public static ConfigData<AttributeManager.AttributeInfo> getAttributeInfo(@Nullable String value) {
+		return getAttributeInfo(value, null, 0);
+	}
+
+	@Nullable
+	private static AttributeManager.AttributeInfo buildAttributeInfo(String debugValue, UUID uuid, String attributeName, Double number, String attributeOperation) {
+		if (attributeName == null || number == null || attributeOperation == null) return null;
+
+		Attribute attribute = AttributeUtil.getAttribute(attributeName);
+		if (attribute == null) {
+			MagicSpells.error("AttributeManager has an invalid attribute defined: " + attributeName + " (" + debugValue + ")");
+			return null;
+		}
+
+		AttributeModifier.Operation op = AttributeUtil.getOperation(attributeOperation);
+		if (op == null) {
+			MagicSpells.error("AttributeManager has an invalid attribute operation defined: " + attributeOperation + " (" + debugValue + ")");
+			return null;
+		}
+
+		String name = "MagicSpells " + (attributeName.isEmpty() ? "attribute" : attributeName);
+		return new AttributeManager.AttributeInfo(attribute, new AttributeModifier(uuid, name, number, op));
+	}
+
+	@NotNull
+	private static UUID stableUuid(@Nullable String sourceKey, int index) {
+		String key = (sourceKey == null ? "attributes" : sourceKey) + ":" + index;
+		return UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
+	}
 
 	@NotNull
 	public static ConfigData<Integer> getInteger(@NotNull ConfigurationSection config, @NotNull String path) {

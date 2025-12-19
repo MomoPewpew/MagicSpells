@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.util.managers;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.List;
 import java.util.HashSet;
@@ -13,6 +14,9 @@ import org.bukkit.attribute.AttributeModifier;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.AttributeUtil;
+import com.nisovin.magicspells.util.SpellData;
+import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.config.ConfigDataUtil;
 import com.nisovin.magicspells.handlers.DebugHandler;
 
 public class AttributeManager {
@@ -84,7 +88,7 @@ public class AttributeManager {
 	// get attribute and attribute modifier from string
 	// - [AttributeName] [Number] [Operation]
 	public AttributeInfo getAttributeInfo(String str) {
-		String[] args = str.split(" ");
+		String[] args = str.trim().split("\\s+");
 
 		if (args.length < 3) return null;
 
@@ -113,6 +117,69 @@ public class AttributeManager {
 		}
 
 		return new AttributeInfo(attribute, new AttributeModifier("MagicSpells " + attributeName, number, operation));
+	}
+
+	/**
+	 * Build a cast-time evaluated attribute set.
+	 * <p>
+	 * Each entry is still defined as:
+	 * <pre>
+	 * - [AttributeName] [Number] [Operation]
+	 * </pre>
+	 * But all 3 tokens support variables (and the number token supports math via {@link ConfigDataUtil#getDouble(String)}).
+	 * <p>
+	 * Attribute modifier UUIDs are made stable per {@code sourceKey + index} so that toggle/remove behavior works even
+	 * when values are resolved at cast-time.
+	 */
+	public ConfigData<Set<AttributeInfo>> getAttributesConfigData(List<String> attributes, String sourceKey) {
+		if (attributes == null || attributes.isEmpty()) {
+			return (caster, target, power, args) -> null;
+		}
+
+		final List<ConfigData<AttributeInfo>> suppliers = new ArrayList<>();
+		boolean isConstant = true;
+
+		for (int i = 0; i < attributes.size(); i++) {
+			String raw = attributes.get(i);
+			if (raw == null || raw.isBlank()) continue;
+
+			ConfigData<AttributeInfo> supplier = ConfigDataUtil.getAttributeInfo(raw, sourceKey, i);
+			suppliers.add(supplier);
+			if (isConstant && !supplier.isConstant()) isConstant = false;
+		}
+
+		if (suppliers.isEmpty()) return (caster, target, power, args) -> null;
+
+		if (isConstant) {
+			Set<AttributeInfo> resolved = new HashSet<>();
+			for (ConfigData<AttributeInfo> supplier : suppliers) {
+				AttributeInfo info = supplier.get(null, null, 1f, null);
+				if (info != null) resolved.add(info);
+			}
+			if (resolved.isEmpty()) return (caster, target, power, args) -> null;
+			return (caster, target, power, args) -> resolved;
+		}
+
+		return new ConfigData<>() {
+			@Override
+			public Set<AttributeInfo> get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+				Set<AttributeInfo> resolved = new HashSet<>();
+				for (ConfigData<AttributeInfo> supplier : suppliers) {
+					AttributeInfo info = supplier.get(caster, target, power, args);
+					if (info != null) resolved.add(info);
+				}
+				return resolved.isEmpty() ? null : resolved;
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+		};
+	}
+
+	public Set<AttributeInfo> getAttributesConfigData(List<String> attributes, String sourceKey, SpellData data) {
+		return getAttributesConfigData(attributes, sourceKey).get(data);
 	}
 
 	// get attribute info from string list

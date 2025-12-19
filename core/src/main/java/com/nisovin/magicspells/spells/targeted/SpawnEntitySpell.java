@@ -48,6 +48,7 @@ import com.nisovin.magicspells.util.EntityData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.ai.LookAtEntityGoal;
@@ -123,7 +124,7 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 	private String intervalSpellName;
 
 	private List<PotionEffect> potionEffects;
-	private Set<AttributeManager.AttributeInfo> attributes;
+	private ConfigData<Set<AttributeManager.AttributeInfo>> attributes;
 
 	private Random random = ThreadLocalRandom.current();
 
@@ -228,7 +229,9 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 		// Attributes
 		// - [AttributeName] [Number] [Operation]
 		List<String> attributeList = getConfigStringList("attributes", null);
-		if (attributeList != null && !attributeList.isEmpty()) attributes = MagicSpells.getAttributeManager().getAttributes(attributeList);
+		if (attributeList != null && !attributeList.isEmpty()) {
+			attributes = MagicSpells.getAttributeManager().getAttributesConfigData(attributeList, internalName + ".attributes");
+		}
 
 		List<String> list = getConfigStringList("potion-effects", null);
 		if (list != null && !list.isEmpty()) {
@@ -537,7 +540,10 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				if (potionEffects != null) preSpawned.addPotionEffects(potionEffects);
 
 				// Apply attributes
-				if (attributes != null) MagicSpells.getAttributeManager().addEntityAttributes(preSpawned, attributes);
+				if (attributes != null) {
+					Set<AttributeManager.AttributeInfo> resolved = attributes.get(new SpellData(caster, preSpawned, power, args));
+					if (resolved != null) MagicSpells.getAttributeManager().addEntityAttributes(preSpawned, resolved);
+				}
 
 				if (removeAI) {
 					if (addLookAtPlayerAI) {
@@ -698,7 +704,10 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 					if (potionEffects != null) preSpawned.addPotionEffects(potionEffects);
 
 					// Apply attributes
-					if (attributes != null) MagicSpells.getAttributeManager().addEntityAttributes(preSpawned, attributes);
+					if (attributes != null) {
+						Set<AttributeManager.AttributeInfo> resolved = attributes.get(new SpellData(caster, preSpawned, power, args));
+						if (resolved != null) MagicSpells.getAttributeManager().addEntityAttributes(preSpawned, resolved);
+					}
 
 					if (removeAI) {
 						if (addLookAtPlayerAI) {

@@ -167,6 +167,7 @@ public class ConditionManager {
 		addCondition("hasitemprecise", HasItemPreciseCondition.class);
 		addCondition("wearingprecise", WearingPreciseCondition.class);
 		addCondition("holdingprecise", HoldingPreciseCondition.class);
+		addCondition("holdinglead", HoldingLeadCondition.class);
 		addCondition("receivingredstone", ReceivingRedstoneCondition.class);
 		addCondition("angle", AngleCondition.class);
 		addCondition("thundering", ThunderingCondition.class);

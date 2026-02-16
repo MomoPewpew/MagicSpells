@@ -95,18 +95,24 @@ public class AlteredBlockManager {
             // Handle different block state types
             switch (from) {
                 case org.bukkit.block.Sign fromSign when to instanceof org.bukkit.block.Sign toSign -> {
-                    // Copy sign text - using getSide() for modern API compatibility
+                    // Copy front side text and formatting
                     var fromSide = fromSign.getSide(Side.FRONT);
                     var toSide = toSign.getSide(Side.FRONT);
                     for (int i = 0; i < 4; i++) {
                         toSide.line(i, fromSide.line(i));
                     }
-                    // Also copy back side
+                    toSide.setGlowingText(fromSide.isGlowingText());
+                    toSide.setColor(fromSide.getColor());
+                    // Copy back side text and formatting
                     var fromBackSide = fromSign.getSide(Side.BACK);
                     var toBackSide = toSign.getSide(Side.BACK);
                     for (int i = 0; i < 4; i++) {
                         toBackSide.line(i, fromBackSide.line(i));
                     }
+                    toBackSide.setGlowingText(fromBackSide.isGlowingText());
+                    toBackSide.setColor(fromBackSide.getColor());
+                    // Copy waxed state
+                    toSign.setWaxed(fromSign.isWaxed());
                 }
                 case org.bukkit.block.Container fromContainer when to instanceof org.bukkit.block.Container toContainer -> {
                     // Copy container contents

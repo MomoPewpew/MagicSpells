@@ -39,10 +39,6 @@ dependencies {
         exclude(module: "XGlowExample")
     }
 
-    implementation(group: "com.github.EngineHub", name: "WorldGuard", version: "master") {
-        exclude(module: "worldguard-libs")
-    }
-
     implementation(group: "com.sk89q.worldguard", name: "worldguard-core", version: "7.1.0-SNAPSHOT") { transitive = false }
     implementation(group: "com.sk89q.worldguard", name: "worldguard-bukkit", version: "7.1.0-SNAPSHOT") { transitive = false }
     implementation(group: "com.sk89q.worldedit", name: "worldedit-core", version: "7.4.0-SNAPSHOT") { transitive = false }

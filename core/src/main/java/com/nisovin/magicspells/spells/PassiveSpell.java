@@ -38,6 +38,7 @@ public class PassiveSpell extends Spell {
 	private final ConfigData<Float> chance;
 	private final ConfigData<Float> cooldownPerSubject;
 	private final ConfigData<Float> serverCooldownPerSubject;
+	private final ConfigData<Integer> chargesPerSubject;
 
 	private boolean disabled = false;
 	private final boolean ignoreCancelled;
@@ -48,6 +49,7 @@ public class PassiveSpell extends Spell {
 	private final boolean cancelDefaultActionWhenCastFails;
 
 	public Map<LivingEntity, Map<String, Long>> cooldownsPerSubject = new HashMap<>();
+	private final Map<LivingEntity, Map<String, Integer>> chargesPerSubjectRemaining = new HashMap<>();
 
 	public PassiveSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
@@ -68,6 +70,7 @@ public class PassiveSpell extends Spell {
 		chance = getConfigDataFloat("chance", 100F);
 		cooldownPerSubject = getConfigDataFloat("cooldown-per-subject", 0F);
 		serverCooldownPerSubject = getConfigDataFloat("server-cooldown-per-subject", 0F);
+		chargesPerSubject = getConfigDataInt("charges-per-subject", 0);
 
 		ignoreCancelled = getConfigBoolean("ignore-cancelled", true);
 		castWithoutTarget = getConfigBoolean("cast-without-target", false);
@@ -375,23 +378,48 @@ public class PassiveSpell extends Spell {
 	public void setCooldownPerSubject(LivingEntity caster, LivingEntity target, String subject) {
 		float cooldown = cooldownPerSubject.get(caster, target, 1F, null);
 		float serverCooldown = serverCooldownPerSubject.get(caster, target, 1F, null);
+		int charges = chargesPerSubject.get(caster, target, 1F, null);
 
-		if (cooldown > 0 && caster != null) cooldownsPerSubject.computeIfAbsent(caster, k -> new HashMap<>()).put(subject, System.currentTimeMillis() + (long) (cooldown * 1000));
-		if (serverCooldown > 0) cooldownsPerSubject.computeIfAbsent(null, k -> new HashMap<>()).put(subject, System.currentTimeMillis() + (long) (serverCooldown * 1000));
+		if (cooldown > 0 && caster != null) setSubjectCooldown(caster, subject, cooldown, charges);
+		if (serverCooldown > 0) setSubjectCooldown(null, subject, serverCooldown, charges);
+	}
+
+	private void setSubjectCooldown(LivingEntity key, String subject, float cooldown, int charges) {
+		Map<String, Long> cooldowns = cooldownsPerSubject.computeIfAbsent(key, k -> new HashMap<>());
+		Long existing = cooldowns.get(subject);
+		if (existing != null && System.currentTimeMillis() < existing) return;
+
+		cooldowns.put(subject, System.currentTimeMillis() + (long) (cooldown * 1000));
+		if (charges > 1) {
+			chargesPerSubjectRemaining.computeIfAbsent(key, k -> new HashMap<>()).put(subject, charges - 1);
+		}
 	}
 
 	public boolean isOnCooldownPerSubject(LivingEntity caster, String subject) {
 		if (cooldownsPerSubject.containsKey(caster)) {
 			if (cooldownsPerSubject.get(caster).containsKey(subject)) {
-				return System.currentTimeMillis() < cooldownsPerSubject.get(caster).get(subject);
+				if (System.currentTimeMillis() < cooldownsPerSubject.get(caster).get(subject)) {
+					return !consumeCharge(caster, subject);
+				}
 			}
 		}
 		if (cooldownsPerSubject.containsKey(null)) {
 			if (cooldownsPerSubject.get(null).containsKey(subject)) {
-				return System.currentTimeMillis() < cooldownsPerSubject.get(null).get(subject);
+				if (System.currentTimeMillis() < cooldownsPerSubject.get(null).get(subject)) {
+					return !consumeCharge(null, subject);
+				}
 			}
 		}
 		return false;
+	}
+
+	private boolean consumeCharge(LivingEntity key, String subject) {
+		Map<String, Integer> charges = chargesPerSubjectRemaining.get(key);
+		if (charges == null) return false;
+		Integer remaining = charges.get(subject);
+		if (remaining == null || remaining <= 0) return false;
+		charges.put(subject, remaining - 1);
+		return true;
 	}
 
 }

@@ -38,7 +38,8 @@ import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
 public class EntityData {
 
-	private final Multimap<EntityType, Transformer<?, ?>> options = MultimapBuilder.enumKeys(EntityType.class).arrayListValues().build();
+	private final Multimap<EntityType, Transformer<?, ?>> options = MultimapBuilder.enumKeys(EntityType.class)
+			.arrayListValues().build();
 
 	private ConfigData<EntityType> entityType;
 
@@ -92,8 +93,8 @@ public class EntityData {
 	// Villager
 	private final ConfigData<Villager.Profession> profession;
 
-    // Display
-    private final List<DisplayTransformation> transformations = new ArrayList<>();
+	// Display
+	private final List<DisplayTransformation> transformations = new ArrayList<>();
 
 	// Item Display
 	private final ConfigData<MagicItem> item;
@@ -110,8 +111,10 @@ public class EntityData {
 
 		// Ageable
 		baby = addBoolean(transformers, config, "baby", false, Ageable.class, (ageable, baby) -> {
-			if (baby) ageable.setBaby();
-			else ageable.setAdult();
+			if (baby)
+				ageable.setBaby();
+			else
+				ageable.setAdult();
 		});
 
 		addOptInteger(transformers, config, "age", Ageable.class, Ageable::setAge);
@@ -121,7 +124,8 @@ public class EntityData {
 
 		// AbstractHorse
 		saddled = addBoolean(transformers, config, "saddled", false, AbstractHorse.class, (horse, saddled) -> {
-			if (saddled) horse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
+			if (saddled)
+				horse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
 		});
 
 		// Armor Stand
@@ -146,7 +150,8 @@ public class EntityData {
 		addOptRegistryEntry(transformers, config, "type", Cat.class, Registry.CAT_VARIANT, Cat::setCatType);
 
 		// ChestedHorse
-		chested = addBoolean(transformers, config, "chested", false, ChestedHorse.class, ChestedHorse::setCarryingChest);
+		chested = addBoolean(transformers, config, "chested", false, ChestedHorse.class,
+				ChestedHorse::setCarryingChest);
 
 		// Creeper
 		powered = addBoolean(transformers, config, "powered", false, Creeper.class, Creeper::setPowered);
@@ -155,7 +160,8 @@ public class EntityData {
 		dropItemMaterial = ConfigDataUtil.getMaterial(config, "material", null);
 
 		// Enderman
-		carriedBlockData = addBlockData(transformers, config, "material", null, Enderman.class, Enderman::setCarriedBlock);
+		carriedBlockData = addBlockData(transformers, config, "material", null, Enderman.class,
+				Enderman::setCarriedBlock);
 
 		// Falling Block
 		fallingBlockData = ConfigDataUtil.getBlockData(config, "material", null);
@@ -172,7 +178,8 @@ public class EntityData {
 
 		// Llama
 		llamaColor = addOptEnum(transformers, config, "color", Llama.class, Llama.Color.class, Llama::setColor);
-		addOptMaterial(transformers, config, "material", Llama.class, (llama, material) -> llama.getInventory().setDecor(new ItemStack(material)));
+		addOptMaterial(transformers, config, "material", Llama.class,
+				(llama, material) -> llama.getInventory().setDecor(new ItemStack(material)));
 
 		// Mushroom Cow
 		addOptEnum(transformers, config, "type", MushroomCow.class, MushroomCow.Variant.class, MushroomCow::setVariant);
@@ -182,7 +189,8 @@ public class EntityData {
 		addOptEnum(transformers, config, "hidden-gene", Panda.class, Panda.Gene.class, Panda::setHiddenGene);
 
 		// Parrot
-		parrotVariant = addOptEnum(transformers, config, "type", Parrot.class, Parrot.Variant.class, Parrot::setVariant);
+		parrotVariant = addOptEnum(transformers, config, "type", Parrot.class, Parrot.Variant.class,
+				Parrot::setVariant);
 
 		// Phantom
 		addInteger(transformers, config, "size", 0, Phantom.class, Phantom::setSize);
@@ -205,11 +213,14 @@ public class EntityData {
 
 		// Tropical Fish
 		addOptEnum(transformers, config, "color", TropicalFish.class, DyeColor.class, TropicalFish::setBodyColor);
-		tropicalFishPatternColor = addOptEnum(transformers, config, "pattern-color", TropicalFish.class, DyeColor.class, TropicalFish::setPatternColor);
-		tropicalFishPattern = addOptEnum(transformers, config, "type", TropicalFish.class, TropicalFish.Pattern.class, TropicalFish::setPattern);
+		tropicalFishPatternColor = addOptEnum(transformers, config, "pattern-color", TropicalFish.class, DyeColor.class,
+				TropicalFish::setPatternColor);
+		tropicalFishPattern = addOptEnum(transformers, config, "type", TropicalFish.class, TropicalFish.Pattern.class,
+				TropicalFish::setPattern);
 
 		// Villager
-		profession = addOptRegistryEntry(transformers, config, "type", Villager.class, Registry.VILLAGER_PROFESSION, Villager::setProfession);
+		profession = addOptRegistryEntry(transformers, config, "type", Villager.class, Registry.VILLAGER_PROFESSION,
+				Villager::setProfession);
 
 		// Wolf
 		addBoolean(transformers, config, "angry", false, Wolf.class, Wolf::setAngry);
@@ -217,49 +228,49 @@ public class EntityData {
 
 		if (EntityType.valueOf("BLOCK_DISPLAY") != null) {
 
-            for (int i = 0; i < Integer.MAX_VALUE; i++) {
-				ConfigurationSection transConf = config.getConfigurationSection("transformation" + ((i == 0) ? "" : "-" + (i + 1)));
+			for (int i = 0; i < Integer.MAX_VALUE; i++) {
+				ConfigurationSection transConf = config
+						.getConfigurationSection("transformation" + ((i == 0) ? "" : "-" + (i + 1)));
 
-                if (transConf == null) break;
+				if (transConf == null)
+					break;
 
-                ConfigData<Integer> interpolationDelay = ConfigDataUtil.getInteger(transConf, "interpolation-delay", 0);
-                ConfigData<Integer> interpolationDuration = ConfigDataUtil.getInteger(transConf, "interpolation-duration", 0);
+				ConfigData<Integer> interpolationDelay = ConfigDataUtil.getInteger(transConf, "interpolation-delay", 0);
+				ConfigData<Integer> interpolationDuration = ConfigDataUtil.getInteger(transConf,
+						"interpolation-duration", 0);
 				ConfigData<Integer> loopInterval = ConfigDataUtil.getInteger(transConf, "loop-interval", 0);
 
-                // Display
-                ConfigData<Quaternionf> leftRotation = getQuaternion(transConf,"left-rotation");
-                ConfigData<Quaternionf> rightRotation = getQuaternion(transConf, "right-rotation");
-                ConfigData<Vector3f> translation = getVector(transConf, "translation");
-                ConfigData<Vector3f> scale = getVector(transConf, "scale");
-                ConfigData<Transformation> transformation = (caster, target, power, args) -> null;
-                if (checkNull(leftRotation) && checkNull(rightRotation) && checkNull(translation) && checkNull(scale)) {
-                    if (leftRotation.isConstant() && rightRotation.isConstant() && translation.isConstant() && scale.isConstant()) {
-                        Quaternionf lr = leftRotation.get(null);
-                        Quaternionf rr = rightRotation.get(null);
-                        Vector3f t = translation.get(null);
-                        Vector3f s = scale.get(null);
+				// Display
+				ConfigData<Quaternionf> leftRotation = ConfigDataUtil.getQuaternionf(transConf, "left-rotation",
+						new Quaternionf(0, 0, 0, 1));
+				ConfigData<Quaternionf> rightRotation = ConfigDataUtil.getQuaternionf(transConf, "right-rotation",
+						new Quaternionf(0, 0, 0, 1));
+				ConfigData<Vector3f> translation = ConfigDataUtil.getVector3f(transConf, "translation",
+						new Vector3f(0, 0, 0));
+				ConfigData<Vector3f> scale = ConfigDataUtil.getVector3f(transConf, "scale", new Vector3f(1, 1, 1));
 
-                        Transformation transform = new Transformation(t, lr, s, rr);
-                        transformation = (caster, target, power, args) -> transform;
-                    } else {
-                        transformation = (caster, target, power, args) -> {
-                            Quaternionf lr = leftRotation.get(caster, target, power, args);
-                            if (lr == null) return null;
+				ConfigData<Transformation> transformation;
+				if (leftRotation.isConstant() && rightRotation.isConstant() && translation.isConstant()
+						&& scale.isConstant()) {
+					Quaternionf lr = leftRotation.get(null);
+					Quaternionf rr = rightRotation.get(null);
+					Vector3f t = translation.get(null);
+					Vector3f s = scale.get(null);
 
-                            Quaternionf rr = rightRotation.get(caster, target, power, args);
-                            if (rr == null) return null;
+					Transformation transform = new Transformation(t, lr, s, rr);
+					transformation = (caster, target, power, args) -> transform;
+				} else {
+					transformation = (caster, target, power, args) -> {
+						Quaternionf lr = leftRotation.get(caster, target, power, args);
+						Quaternionf rr = rightRotation.get(caster, target, power, args);
+						Vector3f t = translation.get(caster, target, power, args);
+						Vector3f s = scale.get(caster, target, power, args);
 
-                            Vector3f t = translation.get(caster, target, power, args);
-                            if (t == null) return null;
-
-                            Vector3f s = scale.get(caster, target, power, args);
-                            if (s == null) return null;
-
-                            return new Transformation(t, lr, s, rr);
-                        };
-                    }
-                }
-                transformations.add(new DisplayTransformation(transformation, interpolationDelay, interpolationDuration, loopInterval));
+						return new Transformation(t, lr, s, rr);
+					};
+				}
+				transformations.add(new DisplayTransformation(transformation, interpolationDelay, interpolationDuration,
+						loopInterval));
 			}
 
 			addOptFloat(transformers, config, "view-range", Display.class, Display::setViewRange);
@@ -267,7 +278,8 @@ public class EntityData {
 			addOptFloat(transformers, config, "shadow-strength", Display.class, Display::setShadowStrength);
 			addOptFloat(transformers, config, "width", Display.class, Display::setDisplayWidth);
 			addOptFloat(transformers, config, "height", Display.class, Display::setDisplayHeight);
-			addOptEnum(transformers, config, "billboard", Display.class, Display.Billboard.class, Display::setBillboard);
+			addOptEnum(transformers, config, "billboard", Display.class, Display.Billboard.class,
+					Display::setBillboard);
 			addOptARGBColor(transformers, config, "glow-color-override", Display.class, Display::setGlowColorOverride);
 
 			ConfigData<Integer> blockLight = ConfigDataUtil.getInteger(config, "brightness.block");
@@ -285,10 +297,12 @@ public class EntityData {
 				} else {
 					brightness = (caster, target, power, args) -> {
 						Integer bl = blockLight.get(caster, target, power, args);
-						if (bl == null || bl < 0 || bl > 15) return null;
+						if (bl == null || bl < 0 || bl > 15)
+							return null;
 
 						Integer sl = skyLight.get(caster, target, power, args);
-						if (sl == null || sl < 0 || sl > 15) return null;
+						if (sl == null || sl < 0 || sl > 15)
+							return null;
 
 						return new Display.Brightness(bl, sl);
 					};
@@ -301,7 +315,8 @@ public class EntityData {
 
 			// ItemDisplay
 			item = ConfigDataUtil.getMagicItem(config, "item", null);
-			addOptEnum(transformers, config, "item-display-transform", ItemDisplay.class, ItemDisplay.ItemDisplayTransform.class, ItemDisplay::setItemDisplayTransform);
+			addOptEnum(transformers, config, "item-display-transform", ItemDisplay.class,
+					ItemDisplay.ItemDisplayTransform.class, ItemDisplay::setItemDisplayTransform);
 
 			// TextDisplay
 			addOptComponent(transformers, config, "text", TextDisplay.class, TextDisplay::text);
@@ -310,15 +325,18 @@ public class EntityData {
 			addOptByte(transformers, config, "text-opacity", TextDisplay.class, TextDisplay::setTextOpacity);
 			addOptBoolean(transformers, config, "shadow", TextDisplay.class, TextDisplay::setShadowed);
 			addOptBoolean(transformers, config, "see-through", TextDisplay.class, TextDisplay::setSeeThrough);
-			addOptBoolean(transformers, config, "default-background", TextDisplay.class, TextDisplay::setDefaultBackground);
-			addOptEnum(transformers, config, "alignment", TextDisplay.class, TextDisplay.TextAlignment.class, TextDisplay::setAlignment);
+			addOptBoolean(transformers, config, "default-background", TextDisplay.class,
+					TextDisplay::setDefaultBackground);
+			addOptEnum(transformers, config, "alignment", TextDisplay.class, TextDisplay.TextAlignment.class,
+					TextDisplay::setAlignment);
 		} else {
 			item = null;
 		}
 
 		for (EntityType entityType : EntityType.values()) {
 			Class<? extends Entity> entityClass = entityType.getEntityClass();
-			if (entityClass == null) continue;
+			if (entityClass == null)
+				continue;
 
 			for (Class<?> transformerType : transformers.keys())
 				if (transformerType.isAssignableFrom(entityClass))
@@ -348,45 +366,53 @@ public class EntityData {
 		startLoc.setY(startLoc.getY() + relativeOffset.getY());
 
 		EntityType entityType = this.entityType.get(data);
-		if (entityType == null || (!entityType.isSpawnable() && entityType != EntityType.FALLING_BLOCK && entityType != EntityType.ITEM))
+		if (entityType == null || (!entityType.isSpawnable() && entityType != EntityType.FALLING_BLOCK
+				&& entityType != EntityType.ITEM))
 			return null;
 
-		boolean[] displayHack = new boolean[] {false, false};
+		boolean[] displayHack = new boolean[] { false, false };
 		Entity entity = switch (entityType) {
 			case FALLING_BLOCK -> {
 				BlockData blockData = fallingBlockData.get(data);
-				if (blockData == null) yield null;
+				if (blockData == null)
+					yield null;
 
 				Entity e = startLoc.getWorld().spawnFallingBlock(startLoc, blockData);
-				if (consumer != null) consumer.accept(e);
+				if (consumer != null)
+					consumer.accept(e);
 
 				yield e;
 			}
 			case ITEM -> {
 				Material material = dropItemMaterial.get(data);
-				if (material == null) yield null;
+				if (material == null)
+					yield null;
 
 				Entity e = startLoc.getWorld().dropItem(startLoc, new ItemStack(material));
-				if (consumer != null) consumer.accept(e);
+				if (consumer != null)
+					consumer.accept(e);
 
 				yield e;
 			}
 			default -> {
 				Class<? extends Entity> entityClass = entityType.getEntityClass();
-				if (entityClass == null) yield null;
+				if (entityClass == null)
+					yield null;
 
 				yield startLoc.getWorld().spawn(startLoc, entityClass, e -> {
 					Collection<Transformer<?, ?>> transformers = options.get(entityType);
-					//noinspection rawtypes
+					// noinspection rawtypes
 					for (Transformer transformer : transformers)
-						//noinspection unchecked
+						// noinspection unchecked
 						transformer.apply(e, data);
 
-					if (consumer != null) consumer.accept(e);
+					if (consumer != null)
+						consumer.accept(e);
 
 					if (EntityType.valueOf("ITEM_DISPLAY") != null && e instanceof ItemDisplay) {
 						MagicItem magicItem = item.get(data);
-						if (magicItem != null) ((ItemDisplay) e).setItemStack(magicItem.getItemStack());
+						if (magicItem != null)
+							((ItemDisplay) e).setItemStack(magicItem.getItemStack());
 					}
 
 					if (EntityType.valueOf("BLOCK_DISPLAY") != null && e instanceof Display) {
@@ -403,17 +429,19 @@ public class EntityData {
 			entity.teleport(startLoc);
 			entity.setVisibleByDefault(displayHack[1]);
 
-            transformations.forEach(transformation -> {
+			transformations.forEach(transformation -> {
 				Transformation t = transformation.transformation().get(data);
 				int interpolationDelay = transformation.interpolationDelay().get(data);
 				int interpolationDuration = transformation.interpolationDuration().get(data);
 				int loopInterval = transformation.loopInterval().get(data);
 
 				if (interpolationDelay > 0 || loopInterval > 0) {
-					TransformationRunnable transformationRunnable = new TransformationRunnable((Display) entity, t, interpolationDuration);
+					TransformationRunnable transformationRunnable = new TransformationRunnable((Display) entity, t,
+							interpolationDuration);
 
 					if (loopInterval > 0) {
-						transformationRunnable.task = transformationRunnable.runTaskTimer(MagicSpells.getInstance(), interpolationDelay, loopInterval);
+						transformationRunnable.task = transformationRunnable.runTaskTimer(MagicSpells.getInstance(),
+								interpolationDelay, loopInterval);
 					} else {
 						transformationRunnable.runTaskLater(MagicSpells.getInstance(), interpolationDelay);
 					}
@@ -422,251 +450,109 @@ public class EntityData {
 					((Display) entity).setInterpolationDelay(interpolationDelay);
 					((Display) entity).setTransformation(t);
 				}
-            });
+			});
 		}
 
 		return entity;
 	}
 
-	private <T> ConfigData<Boolean> addBoolean(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, boolean def, Class<T> type, BiConsumer<T, Boolean> setter) {
+	private <T> ConfigData<Boolean> addBoolean(Multimap<Class<?>, Transformer<?, ?>> transformers,
+			ConfigurationSection config, String name, boolean def, Class<T> type, BiConsumer<T, Boolean> setter) {
 		ConfigData<Boolean> supplier = ConfigDataUtil.getBoolean(config, name, def);
 		transformers.put(type, new Transformer<>(supplier, setter));
 
 		return supplier;
 	}
 
-	private <T> ConfigData<Integer> addInteger(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, int def, Class<T> type, BiConsumer<T, Integer> setter) {
+	private <T> ConfigData<Integer> addInteger(Multimap<Class<?>, Transformer<?, ?>> transformers,
+			ConfigurationSection config, String name, int def, Class<T> type, BiConsumer<T, Integer> setter) {
 		ConfigData<Integer> supplier = ConfigDataUtil.getInteger(config, name, def);
 		transformers.put(type, new Transformer<>(supplier, setter));
 
 		return supplier;
 	}
 
-	private <T> ConfigData<BlockData> addBlockData(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, BlockData def, Class<T> type, BiConsumer<T, BlockData> setter) {
+	private <T> ConfigData<BlockData> addBlockData(Multimap<Class<?>, Transformer<?, ?>> transformers,
+			ConfigurationSection config, String name, BlockData def, Class<T> type, BiConsumer<T, BlockData> setter) {
 		ConfigData<BlockData> supplier = ConfigDataUtil.getBlockData(config, name, def);
 		transformers.put(type, new Transformer<>(supplier, setter));
 
 		return supplier;
 	}
 
-	private <T> void addEulerAngle(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, EulerAngle def, Class<T> type, BiConsumer<T, EulerAngle> setter) {
+	private <T> void addEulerAngle(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config,
+			String name, EulerAngle def, Class<T> type, BiConsumer<T, EulerAngle> setter) {
 		ConfigData<EulerAngle> supplier = ConfigDataUtil.getEulerAngle(config, name, def);
 		transformers.put(type, new Transformer<>(supplier, setter));
 	}
 
-	private <T> void addOptBoolean(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Boolean> setter) {
+	private <T> void addOptBoolean(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config,
+			String name, Class<T> type, BiConsumer<T, Boolean> setter) {
 		ConfigData<Boolean> supplier = ConfigDataUtil.getBoolean(config, name);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
 
-	private <T> void addOptByte(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Byte> setter) {
+	private <T> void addOptByte(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config,
+			String name, Class<T> type, BiConsumer<T, Byte> setter) {
 		ConfigData<Byte> supplier = ConfigDataUtil.getByte(config, name);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
 
-	private <T> void addOptInteger(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Integer> setter) {
+	private <T> void addOptInteger(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config,
+			String name, Class<T> type, BiConsumer<T, Integer> setter) {
 		ConfigData<Integer> supplier = ConfigDataUtil.getInteger(config, name);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
 
-	private <T> void addOptFloat(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Float> setter) {
+	private <T> void addOptFloat(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config,
+			String name, Class<T> type, BiConsumer<T, Float> setter) {
 		ConfigData<Float> supplier = ConfigDataUtil.getFloat(config, name);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
 
-	private <T, E extends Enum<E>> ConfigData<E> addOptEnum(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, Class<E> enumType, BiConsumer<T, E> setter) {
+	private <T, E extends Enum<E>> ConfigData<E> addOptEnum(Multimap<Class<?>, Transformer<?, ?>> transformers,
+			ConfigurationSection config, String name, Class<T> type, Class<E> enumType, BiConsumer<T, E> setter) {
 		ConfigData<E> supplier = ConfigDataUtil.getEnum(config, name, enumType, null);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 
 		return supplier;
 	}
 
-	private <T> void addOptMaterial(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Material> setter) {
+	private <T> void addOptMaterial(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config,
+			String name, Class<T> type, BiConsumer<T, Material> setter) {
 		ConfigData<Material> supplier = ConfigDataUtil.getMaterial(config, name, null);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
 
-	private <T> void addOptARGBColor(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Color> setter) {
+	private <T> void addOptARGBColor(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config,
+			String name, Class<T> type, BiConsumer<T, Color> setter) {
 		ConfigData<Color> supplier = ConfigDataUtil.getARGBColor(config, name, null);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
 
-	private <T> void addOptComponent(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, Component> setter) {
+	private <T> void addOptComponent(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config,
+			String name, Class<T> type, BiConsumer<T, Component> setter) {
 		ConfigData<Component> supplier = ConfigDataUtil.getComponent(config, name, null);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
 
-	private <T> void addOptBlockData(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, BiConsumer<T, BlockData> setter) {
+	private <T> void addOptBlockData(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config,
+			String name, Class<T> type, BiConsumer<T, BlockData> setter) {
 		ConfigData<BlockData> supplier = ConfigDataUtil.getBlockData(config, name, null);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 	}
 
-	private <T, R extends Keyed> void addOptRegistryEntry(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, RegistryKey<R> key, BiConsumer<T, R> setter) {
+	private <T, R extends Keyed> void addOptRegistryEntry(Multimap<Class<?>, Transformer<?, ?>> transformers,
+			ConfigurationSection config, String name, Class<T> type, RegistryKey<R> key, BiConsumer<T, R> setter) {
 		addOptRegistryEntry(transformers, config, name, type, RegistryAccess.registryAccess().getRegistry(key), setter);
 	}
 
-	private <T, R extends Keyed> ConfigData<R> addOptRegistryEntry(Multimap<Class<?>, Transformer<?, ?>> transformers, ConfigurationSection config, String name, Class<T> type, Registry<R> registry, BiConsumer<T, R> setter) {
+	private <T, R extends Keyed> ConfigData<R> addOptRegistryEntry(Multimap<Class<?>, Transformer<?, ?>> transformers,
+			ConfigurationSection config, String name, Class<T> type, Registry<R> registry, BiConsumer<T, R> setter) {
 		ConfigData<R> supplier = ConfigDataUtil.getRegistryEntry(config, name, registry, null);
 		transformers.put(type, new Transformer<>(supplier, setter, true));
 
 		return supplier;
-	}
-
-	public ConfigData<Vector3f> getVector(ConfigurationSection config, String path) {
-		if (config.isString(path)) {
-			String value = config.getString(path);
-			if (value == null) return (caster, target, power, args) -> null;
-
-			String[] data = value.split(",");
-			if (data.length != 3) return (caster, target, power, args) -> null;
-
-			try {
-				Vector3f vector = new Vector3f(Float.parseFloat(data[0]), Float.parseFloat(data[1]), Float.parseFloat(data[2]));
-				return (caster, target, power, args) -> vector;
-			} catch (NumberFormatException e) {
-				return (caster, target, power, args) -> null;
-			}
-		}
-
-		if (config.isConfigurationSection(path)) {
-			ConfigurationSection section = config.getConfigurationSection(path);
-			if (section == null) return (caster, target, power, args) -> null;
-
-			ConfigData<Float> x = ConfigDataUtil.getFloat(section, "x");
-			ConfigData<Float> y = ConfigDataUtil.getFloat(section, "y");
-			ConfigData<Float> z = ConfigDataUtil.getFloat(section, "z");
-
-			if (checkNull(x) && checkNull(y) && checkNull(z)) {
-				if (x.isConstant() && y.isConstant() && z.isConstant()) {
-					float vx = x.get(null);
-					float vy = y.get(null);
-					float vz = z.get(null);
-
-					Vector3f vector = new Vector3f(vx, vy, vz);
-					return (caster, target, power, args) -> vector;
-				}
-
-				return new ConfigData<>() {
-
-					@Override
-					public Vector3f get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-						Float vx = x.get(caster, target, power, args);
-						if (vx == null) return null;
-
-						Float vy = y.get(caster, target, power, args);
-						if (vy == null) return null;
-
-						Float vz = z.get(caster, target, power, args);
-						if (vz == null) return null;
-
-						return new Vector3f(vx, vy, vz);
-					}
-
-					@Override
-					public boolean isConstant() {
-						return false;
-					}
-
-				};
-			}
-		}
-
-		return (caster, target, power, args) -> null;
-	}
-
-	private ConfigData<Quaternionf> getQuaternion(ConfigurationSection config, String path) {
-		if (config.isString(path)) {
-			String value = config.getString(path);
-			if (value == null) return (caster, target, power, args) -> null;
-
-			String[] data = value.split(",");
-			if (data.length != 4) return (caster, target, power, args) -> null;
-
-			try {
-				Quaternionf rot = new Quaternionf(Float.parseFloat(data[0]), Float.parseFloat(data[1]), Float.parseFloat(data[2]), Float.parseFloat(data[3]));
-				return (caster, target, power, args) -> rot;
-			} catch (NumberFormatException e) {
-				return (caster, target, power, args) -> null;
-			}
-		}
-
-		ConfigData<Float> angle = ConfigDataUtil.getFloat(config, path + ".angle");
-		ConfigData<Vector3f> axis = getVector(config, path + ".axis");
-		if (checkNull(angle) && checkNull(axis)) {
-			if (angle.isConstant() && axis.isConstant()) {
-				Vector3f ax = axis.get(null);
-				float ang = angle.get(null);
-
-				Quaternionf rot = new Quaternionf();
-				rot.setAngleAxis(ang, ax.x, ax.y, ax.z);
-
-				return (caster, target, power, args) -> rot;
-			}
-
-			return new ConfigData<>() {
-
-				@Override
-				public Quaternionf get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Float ang = angle.get(caster, target, power, args);
-					if (ang == null) return null;
-
-					Vector3f ax = axis.get(caster, target, power, args);
-					if (ax == null) return null;
-
-					return new Quaternionf().setAngleAxis(ang, ax.x, ax.y, ax.z);
-				}
-
-				@Override
-				public boolean isConstant() {
-					return false;
-				}
-
-			};
-		}
-
-		ConfigData<Float> x = ConfigDataUtil.getFloat(config, path + ".x");
-		ConfigData<Float> y = ConfigDataUtil.getFloat(config, path + ".y");
-		ConfigData<Float> z = ConfigDataUtil.getFloat(config, path + ".z");
-		ConfigData<Float> w = ConfigDataUtil.getFloat(config, path + ".w");
-		if (checkNull(x) && checkNull(y) && checkNull(z) && checkNull(w)) {
-			if (x.isConstant() && y.isConstant() && z.isConstant() && w.isConstant()) {
-				float qx = x.get(null);
-				float qy = y.get(null);
-				float qz = z.get(null);
-				float qw = w.get(null);
-
-				Quaternionf rot = new Quaternionf(qx, qy, qz, qw);
-				return (caster, target, power, args) -> rot;
-			}
-
-			return new ConfigData<>() {
-
-				@Override
-				public Quaternionf get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Float qx = x.get(caster, target, power, args);
-					if (qx == null) return null;
-
-					Float qy = y.get(caster, target, power, args);
-					if (qy == null) return null;
-
-					Float qz = z.get(caster, target, power, args);
-					if (qz == null) return null;
-
-					Float qw = w.get(caster, target, power, args);
-					if (qw == null) return null;
-
-					return new Quaternionf(qx, qy, qz, qw);
-				}
-
-				@Override
-				public boolean isConstant() {
-					return false;
-				}
-
-			};
-		}
-
-		return (caster, target, power, args) -> null;
 	}
 
 	private boolean checkNull(ConfigData<?> data) {
@@ -787,7 +673,8 @@ public class EntityData {
 
 		public void apply(T entity, SpellData data) {
 			C value = supplier.get(data);
-			if (!optional || value != null) setter.accept(entity, value);
+			if (!optional || value != null)
+				setter.accept(entity, value);
 		}
 
 	}
@@ -798,8 +685,8 @@ record DisplayTransformation(
 		ConfigData<Transformation> transformation,
 		ConfigData<Integer> interpolationDelay,
 		ConfigData<Integer> interpolationDuration,
-		ConfigData<Integer> loopInterval
-) {}
+		ConfigData<Integer> loopInterval) {
+}
 
 class TransformationRunnable extends BukkitRunnable {
 
@@ -817,9 +704,10 @@ class TransformationRunnable extends BukkitRunnable {
 	@Override
 	public void run() {
 		if (entity == null || !entity.isValid()) {
-            if (task != null) task.cancel();
-        } else {
-            entity.setInterpolationDuration(interpolationDuration);
+			if (task != null)
+				task.cancel();
+		} else {
+			entity.setInterpolationDuration(interpolationDuration);
 			entity.setInterpolationDelay(0);
 			entity.setTransformation(transformation);
 		}

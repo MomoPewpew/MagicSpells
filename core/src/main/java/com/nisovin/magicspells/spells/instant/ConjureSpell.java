@@ -34,7 +34,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.events.ConjureItemEvent;
@@ -62,6 +64,7 @@ import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
 public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, TargetedLocationSpell {
 
 	private static ExpirationHandler expirationHandler = null;
+	private static SoulboundHandler soulboundHandler = null;
 
 	private int delay;
 	private int pickupDelay;
@@ -72,6 +75,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 	private float randomVelocity;
 
+	private boolean soulbound;
 	private boolean offhand;
 	private boolean autoEquip;
 	private boolean stackExisting;
@@ -101,6 +105,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 		randomVelocity = getConfigFloat("random-velocity", 0F);
 
+		soulbound = getConfigBoolean("soulbound", false);
 		offhand = getConfigBoolean("offhand", false);
 		autoEquip = getConfigBoolean("auto-equip", false);
 		stackExisting = getConfigBoolean("stack-existing", true);
@@ -120,13 +125,16 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 		pickupDelay = Math.max(pickupDelay, 0);
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
 
-		if (expiration > 0 && expirationHandler == null) expirationHandler = new ExpirationHandler();
-		
+		if (expiration > 0 && expirationHandler == null)
+			expirationHandler = new ExpirationHandler();
+		if (soulbound && soulboundHandler == null)
+			soulboundHandler = new SoulboundHandler();
+
 	}
 
 	private Object[] processItemList(List<String> itemList) {
@@ -141,7 +149,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			itemMinQuantities = new int[itemList.size()];
 			itemMaxQuantities = new int[itemList.size()];
 			itemChances = new double[itemList.size()];
-			
+
 			for (int i = 0; i < itemList.size(); i++) {
 				try {
 					String str = itemList.get(i);
@@ -150,13 +158,16 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 					int closedBrackets = 0;
 					for (int j = 0; j < str.length(); j++) {
 						char ch = str.charAt(j);
-						if (ch == '{') brackets++;
-						if (ch == '}') closedBrackets++;
+						if (ch == '{')
+							brackets++;
+						if (ch == '}')
+							closedBrackets++;
 					}
 
 					// checks if all brackets are properly closed
 					if (brackets != closedBrackets) {
-						MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid item defined (e1): " + str);
+						MagicSpells
+								.error("ConjureSpell '" + internalName + "' has an invalid item defined (e1): " + str);
 						continue;
 					}
 
@@ -170,8 +181,10 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 					for (int j = 0; j < data.length; j++) {
 						for (char ch : data[j].toCharArray()) {
-							if (ch == '{') brackets++;
-							if (ch == '}') closedBrackets++;
+							if (ch == '{')
+								brackets++;
+							if (ch == '}')
+								closedBrackets++;
 						}
 
 						itemData.append(data[j]).append(" ");
@@ -204,7 +217,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 						itemTypes[i] = scrollSpell.createScroll(spell, uses, null);
 					} else {
 						MagicItem magicItem = MagicItems.getMagicItemFromString(strItemData);
-						if (magicItem == null) continue;
+						if (magicItem == null)
+							continue;
 						itemTypes[i] = magicItem.getItemStack();
 					}
 
@@ -243,33 +257,37 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 					itemChances[i] = chance;
 
 				} catch (Exception e) {
-					MagicSpells.error("ConjureSpell '" + internalName + "' has specified invalid item (e2): " + itemList.get(i));
+					MagicSpells.error(
+							"ConjureSpell '" + internalName + "' has specified invalid item (e2): " + itemList.get(i));
 					itemTypes[i] = null;
 				}
 			}
 		}
 		itemList = null;
-		return new Object[]{itemTypes, itemMinQuantities, itemMaxQuantities, itemChances};
+		return new Object[] { itemTypes, itemMinQuantities, itemMaxQuantities, itemChances };
 	}
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 
-		if (itemListData == null) return PostCastAction.ALREADY_HANDLED;
+		if (itemListData == null)
+			return PostCastAction.ALREADY_HANDLED;
 		if (state == SpellCastState.NORMAL && caster instanceof Player) {
-			if (delay >= 0) MagicSpells.scheduleDelayedTask(() -> conjureItems((Player) caster, power, args), delay);
-			else if (!conjureItems((Player) caster, power, args)) return PostCastAction.ALREADY_HANDLED;
+			if (delay >= 0)
+				MagicSpells.scheduleDelayedTask(() -> conjureItems((Player) caster, power, args), delay);
+			else if (!conjureItems((Player) caster, power, args))
+				return PostCastAction.ALREADY_HANDLED;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
-		
+
 	}
-	
+
 	private boolean conjureItems(Player player, float power, String[] args) {
 		boolean succes = true;
 
 		SpellData spellData = new SpellData(player, power, args);
 		List<String> itemList = this.itemListData.get(spellData);
-		
+
 		Object[] itemResults = processItemList(itemList);
 
 		ItemStack[] itemTypes = (ItemStack[]) itemResults[0];
@@ -278,18 +296,29 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		double[] itemChances = (double[]) itemResults[3];
 
 		List<ItemStack> items = new ArrayList<>();
-		if (calculateDropsIndividually) individual(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
-		else together(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
+		if (calculateDropsIndividually)
+			individual(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
+		else
+			together(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
 
 		Location loc = player.getEyeLocation().add(player.getLocation().getDirection());
 		boolean updateInv = false;
 		for (ItemStack itemOrg : items) {
-			if (itemOrg == null) continue;
+			if (itemOrg == null)
+				continue;
 			ItemStack item = itemOrg.clone();
 
-			if (saveConjurerName == true || item.getMaxStackSize() == 1) {
+			if (saveConjurerName || soulbound || item.getMaxStackSize() == 1) {
 				ItemMeta meta = item.getItemMeta();
-				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING, player.getName());
+				if (saveConjurerName || item.getMaxStackSize() == 1) {
+					meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"),
+							PersistentDataType.STRING, player.getName());
+				}
+				if (soulbound) {
+					meta.getPersistentDataContainer().set(
+							new NamespacedKey(MagicSpells.getInstance(), "soulbound_owner"), PersistentDataType.STRING,
+							player.getUniqueId().toString());
+				}
 				item.setItemMeta(meta);
 			}
 
@@ -299,7 +328,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 				if (item.getType().name().endsWith("HELMET") && InventoryUtil.isNothing(inv.getHelmet())) {
 					inv.setHelmet(item);
 					added = true;
-				} else if (item.getType().name().endsWith("CHESTPLATE") && InventoryUtil.isNothing(inv.getChestplate())) {
+				} else if (item.getType().name().endsWith("CHESTPLATE")
+						&& InventoryUtil.isNothing(inv.getChestplate())) {
 					inv.setChestplate(item);
 					added = true;
 				} else if (item.getType().name().endsWith("LEGGINGS") && InventoryUtil.isNothing(inv.getLeggings())) {
@@ -312,7 +342,9 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			}
 
 			if (!added) {
-				if (addToEnderChest) added = Util.addToInventory(player, player.getEnderChest(), item, stackExisting, ignoreMaxStackSize);
+				if (addToEnderChest)
+					added = Util.addToInventory(player, player.getEnderChest(), item, stackExisting,
+							ignoreMaxStackSize);
 				if (!added && addToInventory) {
 
 					ItemStack preferredItem = null;
@@ -320,10 +352,12 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 						preferredItem = inv.getItem(preferredSlot);
 					}
 
-					if (offhand) player.getEquipment().setItemInOffHand(item);
+					if (offhand)
+						player.getEquipment().setItemInOffHand(item);
 					else if (requiredSlot >= 0) {
 						ItemStack old = inv.getItem(requiredSlot);
-						if (old != null && Util.isSimilarNoFlags(item, old)) item.setAmount(item.getAmount() + old.getAmount());
+						if (old != null && Util.isSimilarNoFlags(item, old))
+							item.setAmount(item.getAmount() + old.getAmount());
 						inv.setItem(requiredSlot, item);
 						added = true;
 						updateInv = true;
@@ -331,7 +365,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 						inv.setItem(preferredSlot, item);
 						added = true;
 						updateInv = true;
-					} else if (preferredSlot >= 0 && Util.isSimilarNoFlags(item, preferredItem) && preferredItem.getAmount() + item.getAmount() < item.getType().getMaxStackSize()) {
+					} else if (preferredSlot >= 0 && Util.isSimilarNoFlags(item, preferredItem)
+							&& preferredItem.getAmount() + item.getAmount() < item.getType().getMaxStackSize()) {
 						item.setAmount(item.getAmount() + preferredItem.getAmount());
 						inv.setItem(preferredSlot, item);
 						added = true;
@@ -342,7 +377,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 							omittedSlots = Collections.singleton(player.getInventory().getHeldItemSlot());
 						}
 						added = Util.addToInventory(player, inv, item, stackExisting, ignoreMaxStackSize, omittedSlots);
-						if (added) updateInv = true;
+						if (added)
+							updateInv = true;
 					}
 				}
 				if (!added && (dropIfInventoryFull || !addToInventory)) {
@@ -369,46 +405,59 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 					}
 					added = true;
 				}
-			} else updateInv = true;
+			} else
+				updateInv = true;
 
-			if (!added) succes = false;
-			else EventUtil.call(new ConjureItemEvent(player, item));
+			if (!added)
+				succes = false;
+			else
+				EventUtil.call(new ConjureItemEvent(player, item));
 		}
 
 		if (succes) {
-			if (updateInv && forceUpdateInventory) player.updateInventory();
+			if (updateInv && forceUpdateInventory)
+				player.updateInventory();
 			playSpellEffects(EffectPosition.CASTER, player);
 		}
 		return succes;
 	}
-	
-	private void individual(List<ItemStack> items, float power, ItemStack[] itemTypes, double[] itemChances, int[] itemMinQuantities, int[] itemMaxQuantities) {
+
+	private void individual(List<ItemStack> items, float power, ItemStack[] itemTypes, double[] itemChances,
+			int[] itemMinQuantities, int[] itemMaxQuantities) {
 		for (int i = 0; i < itemTypes.length; i++) {
 			double r = random.nextDouble() * 100;
-			if (powerAffectsChance) r = r / power;
-			if (itemTypes[i] != null && r < itemChances[i]) addItem(i, items, power, itemTypes, itemMinQuantities, itemMaxQuantities);
+			if (powerAffectsChance)
+				r = r / power;
+			if (itemTypes[i] != null && r < itemChances[i])
+				addItem(i, items, power, itemTypes, itemMinQuantities, itemMaxQuantities);
 		}
 	}
-	
-	private void together(List<ItemStack> items, float power, ItemStack[] itemTypes, double[] itemChances, int[] itemMinQuantities, int[] itemMaxQuantities) {
+
+	private void together(List<ItemStack> items, float power, ItemStack[] itemTypes, double[] itemChances,
+			int[] itemMinQuantities, int[] itemMaxQuantities) {
 		double r = random.nextDouble() * Arrays.stream(itemChances).sum();
 		double m = 0;
 		for (int i = 0; i < itemTypes.length; i++) {
 			if (itemTypes[i] != null && r < itemChances[i] + m) {
 				addItem(i, items, power, itemTypes, itemMinQuantities, itemMaxQuantities);
 				return;
-			} else m += itemChances[i];
+			} else
+				m += itemChances[i];
 		}
 	}
-	
-	private void addItem(int i, List<ItemStack> items, float power, ItemStack[] itemTypes, int[] itemMinQuantities, int[] itemMaxQuantities) {
+
+	private void addItem(int i, List<ItemStack> items, float power, ItemStack[] itemTypes, int[] itemMinQuantities,
+			int[] itemMaxQuantities) {
 		int quant = itemMinQuantities[i];
-		if (itemMaxQuantities[i] > itemMinQuantities[i]) quant = random.nextInt(itemMaxQuantities[i] - itemMinQuantities[i]) + itemMinQuantities[i];
-		if (powerAffectsQuantity) quant = Math.round(quant * power);
+		if (itemMaxQuantities[i] > itemMinQuantities[i])
+			quant = random.nextInt(itemMaxQuantities[i] - itemMinQuantities[i]) + itemMinQuantities[i];
+		if (powerAffectsQuantity)
+			quant = Math.round(quant * power);
 		if (quant > 0) {
 			ItemStack item = itemTypes[i].clone();
 			item.setAmount(quant);
-			if (expiration > 0) expirationHandler.addExpiresLine(item, expiration);
+			if (expiration > 0)
+				expirationHandler.addExpiresLine(item, expiration);
 			items.add(item);
 		}
 	}
@@ -417,13 +466,14 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	public boolean castAtLocation(LivingEntity caster, Location target, float power) {
 		return conjureItemsAtLocation(target, power, caster, null);
 	}
-	
+
 	@Override
 	public boolean castAtLocation(Location target, float power) {
 		return conjureItemsAtLocation(target, power, null, null);
 	}
 
-	private boolean conjureItemsAtLocation(Location location, float power, @NotNull LivingEntity player, @NotNull LivingEntity target) {
+	private boolean conjureItemsAtLocation(Location location, float power, @NotNull LivingEntity player,
+			@NotNull LivingEntity target) {
 
 		SpellData spellData = new SpellData(player, null, power, null);
 		List<String> itemList = this.itemListData.get(spellData);
@@ -435,13 +485,25 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		double[] itemChances = (double[]) itemResults[3];
 
 		List<ItemStack> items = new ArrayList<>();
-		if (calculateDropsIndividually) individual(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
-		else together(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
+		if (calculateDropsIndividually)
+			individual(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
+		else
+			together(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
 
 		Location loc = location.clone();
-		if (!BlockUtils.isAir(loc.getBlock().getType())) loc.add(0, 1, 0);
-		if (!BlockUtils.isAir(loc.getBlock().getType())) loc.add(0, 1, 0);
+		if (!BlockUtils.isAir(loc.getBlock().getType()))
+			loc.add(0, 1, 0);
+		if (!BlockUtils.isAir(loc.getBlock().getType()))
+			loc.add(0, 1, 0);
 		for (ItemStack item : items) {
+
+			if (player != null && soulbound) {
+				ItemMeta meta = item.getItemMeta();
+				meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "soulbound_owner"),
+						PersistentDataType.STRING, player.getUniqueId().toString());
+				item.setItemMeta(meta);
+			}
+
 			int amt = item.getAmount();
 			while (amt > 0) {
 				ItemStack drop = item.clone();
@@ -460,12 +522,14 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 					i.setItemStack(drop);
 					i.setPickupDelay(pickupDelay);
 					if (randomVelocity > 0) {
-						Vector v = new Vector(random.nextDouble() - 0.5, random.nextDouble() / 2, random.nextDouble() - 0.5);
+						Vector v = new Vector(random.nextDouble() - 0.5, random.nextDouble() / 2,
+								random.nextDouble() - 0.5);
 						v.normalize().multiply(randomVelocity);
 						i.setVelocity(v);
 					}
 					i.setGravity(itemHasGravity);
-					if (player != null) i.setThrower(player.getUniqueId());
+					if (player != null)
+						i.setThrower(player.getUniqueId());
 					playSpellEffects(EffectPosition.SPECIAL, i);
 					EventUtil.call(new ConjureItemEvent(player, item));
 				}
@@ -478,27 +542,33 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 
-		if (target instanceof Player player) conjureItems(player, power, null);
-		else return conjureItemsAtLocation(target.getLocation(), power, caster, target);
+		if (target instanceof Player player)
+			conjureItems(player, power, null);
+		else
+			return conjureItemsAtLocation(target.getLocation(), power, caster, target);
 
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 
-		if (target instanceof Player player) conjureItems(player, power, null);
-		else return conjureItemsAtLocation(target.getLocation(), power, null, target);
+		if (target instanceof Player player)
+			conjureItems(player, power, null);
+		else
+			return conjureItemsAtLocation(target.getLocation(), power, null, target);
 
 		return true;
 	}
 
-	@Override
 	public void turnOff() {
 		expirationHandler = null;
+		soulboundHandler = null;
 	}
 
 	private int getDelay() {
@@ -644,11 +714,11 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	public void setCalculateDropsIndividually(boolean calculateDropsIndividually) {
 		this.calculateDropsIndividually = calculateDropsIndividually;
 	}
-	
+
 	private static class ExpirationHandler implements Listener {
 
-		private static CharacterExpirationHandler characterExpirationHandler  = null;
-		
+		private static CharacterExpirationHandler characterExpirationHandler = null;
+
 		private ExpirationHandler() {
 			MagicSpells.registerEvents(this);
 
@@ -660,17 +730,20 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		private void addExpiresLine(ItemStack item, double expireMilis) {
 			ItemMeta meta = item.getItemMeta();
 			List<Component> lore = null;
-			if (meta.hasLore()) lore = meta.lore();
-			if (lore == null) lore = new ArrayList<>();
+			if (meta.hasLore())
+				lore = meta.lore();
+			if (lore == null)
+				lore = new ArrayList<>();
 
 			long expiresAt = System.currentTimeMillis() + (long) expireMilis;
 			lore.add(Util.getMiniMessage(getExpiresText(expiresAt)));
-			meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+			meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"),
+					PersistentDataType.LONG, expiresAt);
 
 			meta.lore(lore);
 			item.setItemMeta(meta);
 		}
-		
+
 		@EventHandler(priority = EventPriority.LOWEST)
 		private void onJoin(PlayerJoinEvent event) {
 			joinOrLoadCharacter(event.getPlayer());
@@ -683,15 +756,16 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			processInventoryContents(armor);
 			inv.setArmorContents(armor);
 		}
-		
+
 		@EventHandler(priority = EventPriority.LOWEST)
 		private void onInvOpen(InventoryOpenEvent event) {
 			processInventory(event.getInventory());
 		}
-		
+
 		@EventHandler(priority = EventPriority.LOWEST)
 		private void onClick(PlayerInteractEvent event) {
-			if (!event.hasItem()) return;
+			if (!event.hasItem())
+				return;
 			ItemStack item = event.getItem();
 			ExpirationResult result = updateExpiresLineIfNeeded(item);
 			if (result == ExpirationResult.EXPIRED) {
@@ -699,22 +773,24 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 				event.setCancelled(true);
 			}
 		}
-		
+
 		@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 		private void onPickup(EntityPickupItemEvent event) {
 			processItemDrop(event.getItem());
-			if (event.getItem().isDead()) event.setCancelled(true);
+			if (event.getItem().isDead())
+				event.setCancelled(true);
 		}
-		
+
 		@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 		private void onDrop(PlayerDropItemEvent event) {
 			processItemDrop(event.getItemDrop());
 		}
-		
+
 		@EventHandler(priority = EventPriority.MONITOR)
 		private void onItemSpawn(ItemSpawnEvent event) {
 			processItemDrop(event.getEntity());
-			if (event.getEntity().isDead()) event.setCancelled(true);
+			if (event.getEntity().isDead())
+				event.setCancelled(true);
 		}
 
 		@EventHandler(priority = EventPriority.LOWEST)
@@ -750,40 +826,49 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			processInventoryContents(contents);
 			inv.setContents(contents);
 		}
-		
+
 		private void processInventoryContents(ItemStack[] contents) {
 			for (int i = 0; i < contents.length; i++) {
 				ExpirationResult result = updateExpiresLineIfNeeded(contents[i]);
-				if (result == ExpirationResult.EXPIRED) contents[i] = null;
+				if (result == ExpirationResult.EXPIRED)
+					contents[i] = null;
 			}
 		}
-		
+
 		private boolean processItemDrop(Item drop) {
 			ItemStack item = drop.getItemStack();
 			ExpirationResult result = updateExpiresLineIfNeeded(item);
-			if (result == ExpirationResult.UPDATE) drop.setItemStack(item);
+			if (result == ExpirationResult.UPDATE)
+				drop.setItemStack(item);
 			else if (result == ExpirationResult.EXPIRED) {
 				drop.remove();
 				return true;
 			}
 			return false;
 		}
-		
+
 		private ExpirationResult updateExpiresLineIfNeeded(ItemStack item) {
-			if (item == null) return ExpirationResult.NO_UPDATE;
-			if (!item.hasItemMeta()) return ExpirationResult.NO_UPDATE;
+			if (item == null)
+				return ExpirationResult.NO_UPDATE;
+			if (!item.hasItemMeta())
+				return ExpirationResult.NO_UPDATE;
 
 			ItemMeta meta = item.getItemMeta();
 
-			Long expiresAt = meta.getPersistentDataContainer().get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG);
-			if (expiresAt == null) return ExpirationResult.NO_UPDATE;
+			Long expiresAt = meta.getPersistentDataContainer()
+					.get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG);
+			if (expiresAt == null)
+				return ExpirationResult.NO_UPDATE;
 
-			if (expiresAt < System.currentTimeMillis()) return ExpirationResult.EXPIRED;
+			if (expiresAt < System.currentTimeMillis())
+				return ExpirationResult.EXPIRED;
 
-			if (!meta.hasLore()) return ExpirationResult.NO_UPDATE;
+			if (!meta.hasLore())
+				return ExpirationResult.NO_UPDATE;
 			List<Component> lore = meta.lore();
 
-			if (lore != null && lore.size() > 0 && ((TextComponent) lore.get(lore.size() - 1)).content().contains("Expires in ")) {
+			if (lore != null && lore.size() > 0
+					&& ((TextComponent) lore.get(lore.size() - 1)).content().contains("Expires in ")) {
 				lore.set(lore.size() - 1, Util.getMiniMessage(getExpiresText(expiresAt)));
 				meta.lore(lore);
 				item.setItemMeta(meta);
@@ -791,22 +876,32 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			}
 			return ExpirationResult.NO_UPDATE;
 		}
-	
+
 		private String getExpiresText(long expiresAt) {
-			if (expiresAt < System.currentTimeMillis()) return ChatColor.GRAY + "Expired";
+			if (expiresAt < System.currentTimeMillis())
+				return ChatColor.GRAY + "Expired";
 			double hours = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_HOUR);
-			if (hours / 24 >= 15) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + ((long) hours / TimeUtil.HOURS_PER_WEEK) + ChatColor.GRAY + " weeks";
-			if (hours / 24 >= 3) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + ((long) hours / TimeUtil.HOURS_PER_DAY) + ChatColor.GRAY + " days";
-			if (hours >= 2) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) hours + ChatColor.GRAY + " hours";
-			if (hours >= 1) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " hour";
+			if (hours / 24 >= 15)
+				return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + ((long) hours / TimeUtil.HOURS_PER_WEEK)
+						+ ChatColor.GRAY + " weeks";
+			if (hours / 24 >= 3)
+				return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + ((long) hours / TimeUtil.HOURS_PER_DAY)
+						+ ChatColor.GRAY + " days";
+			if (hours >= 2)
+				return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) hours + ChatColor.GRAY + " hours";
+			if (hours >= 1)
+				return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " hour";
 			double minutes = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_MINUTE);
-			if (minutes >= 2) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) minutes + ChatColor.GRAY + " minutes";
-			if (minutes >= 1) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " minute";
+			if (minutes >= 2)
+				return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) minutes + ChatColor.GRAY + " minutes";
+			if (minutes >= 1)
+				return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " minute";
 			double seconds = (expiresAt - System.currentTimeMillis()) / ((double) TimeUtil.MILLISECONDS_PER_SECOND);
-			if (seconds >= 2) return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) seconds + ChatColor.GRAY + " seconds";
+			if (seconds >= 2)
+				return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + (long) seconds + ChatColor.GRAY + " seconds";
 			return ChatColor.GRAY + "Expires in " + ChatColor.WHITE + '1' + ChatColor.GRAY + " second";
-		}		
-		
+		}
+
 	}
 
 	private static class CharacterExpirationHandler implements Listener {
@@ -824,13 +919,136 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			}
 		}
 	}
-	
+
+	private static class SoulboundHandler implements Listener {
+
+		private SoulboundHandler() {
+			MagicSpells.registerEvents(this);
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		private void onJoin(PlayerJoinEvent event) {
+			processInventory(event.getPlayer());
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		private void onInvOpen(InventoryOpenEvent event) {
+			if (event.getPlayer() instanceof Player player) {
+				Inventory inv = event.getInventory();
+				if (inv instanceof PlayerInventory || inv.getType() == InventoryType.ENDER_CHEST) {
+					processInventory(player, inv);
+				}
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+		private void onClick(InventoryClickEvent event) {
+			if (!(event.getWhoClicked() instanceof Player player))
+				return;
+			if (isInvalidSoulbound(event.getCurrentItem(), player) || isInvalidSoulbound(event.getCursor(), player)) {
+				event.setCancelled(true);
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+		private void onDrag(InventoryDragEvent event) {
+			if (!(event.getWhoClicked() instanceof Player player))
+				return;
+			if (isInvalidSoulbound(event.getOldCursor(), player)) {
+				event.setCancelled(true);
+				return;
+			}
+			for (ItemStack item : event.getNewItems().values()) {
+				if (isSoulbound(item)) {
+					// This is more complex to cancel partially, so just cancel if any soulbound
+					// item is involved and invalid
+					if (isInvalidSoulbound(item, player)) {
+						event.setCancelled(true);
+						return;
+					}
+				}
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+		private void onPickup(EntityPickupItemEvent event) {
+			ItemStack item = event.getItem().getItemStack();
+			if (!isSoulbound(item))
+				return;
+
+			if (!(event.getEntity() instanceof Player player) || isInvalidSoulbound(item, player)) {
+				event.setCancelled(true);
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		private void onInteract(PlayerInteractEvent event) {
+			if (!event.hasItem())
+				return;
+			if (isInvalidSoulbound(event.getItem(), event.getPlayer())) {
+				event.setCancelled(true);
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		private void onItemSwap(PlayerSwapHandItemsEvent event) {
+			if (isInvalidSoulbound(event.getOffHandItem(), event.getPlayer())
+					|| isInvalidSoulbound(event.getMainHandItem(), event.getPlayer())) {
+				event.setCancelled(true);
+			}
+		}
+
+		@EventHandler(priority = EventPriority.LOWEST)
+		private void onHotbarScroll(PlayerItemHeldEvent event) {
+			ItemStack item = event.getPlayer().getInventory().getItem(event.getNewSlot());
+			if (isInvalidSoulbound(item, event.getPlayer())) {
+				event.setCancelled(true);
+			}
+		}
+
+		private void processInventory(Player player) {
+			processInventory(player, player.getInventory());
+			processInventory(player, player.getEnderChest());
+		}
+
+		private void processInventory(Player player, Inventory inv) {
+			ItemStack[] contents = inv.getContents();
+			boolean changed = false;
+			for (int i = 0; i < contents.length; i++) {
+				if (isInvalidSoulbound(contents[i], player)) {
+					contents[i] = null;
+					changed = true;
+				}
+			}
+			if (changed)
+				inv.setContents(contents);
+		}
+
+		private boolean isSoulbound(ItemStack item) {
+			if (item == null || !item.hasItemMeta())
+				return false;
+			return item.getItemMeta().getPersistentDataContainer()
+					.has(new NamespacedKey(MagicSpells.getInstance(), "soulbound_owner"), PersistentDataType.STRING);
+		}
+
+		private boolean isInvalidSoulbound(ItemStack item, Player player) {
+			if (item == null || !item.hasItemMeta())
+				return false;
+			String ownerUuid = item.getItemMeta().getPersistentDataContainer()
+					.get(new NamespacedKey(MagicSpells.getInstance(), "soulbound_owner"), PersistentDataType.STRING);
+			if (ownerUuid == null)
+				return false;
+			return !ownerUuid.equals(player.getUniqueId().toString());
+		}
+
+	}
+
 	private enum ExpirationResult {
-		
+
 		NO_UPDATE,
 		UPDATE,
 		EXPIRED
-		
+
 	}
-	
+
 }

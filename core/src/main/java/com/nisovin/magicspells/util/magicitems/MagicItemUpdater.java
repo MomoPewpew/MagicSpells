@@ -46,7 +46,8 @@ import static com.nisovin.magicspells.util.magicitems.MagicItems.getMagicItems;
 
 public class MagicItemUpdater {
     // This file is my own person nightmare of not knowing how multi-threading works
-    // There is a chance that this may crash if you have too many players, characters, or vaults
+    // There is a chance that this may crash if you have too many players,
+    // characters, or vaults
     private static int itemUpdateCount = 0;
     private static boolean countItemUpdates = false;
 
@@ -61,7 +62,8 @@ public class MagicItemUpdater {
 
         @EventHandler(ignoreCancelled = true)
         public void onJoin(PlayerJoinEvent event) {
-            if (!MagicSpells.enableUpdateItemData()) return;
+            if (!MagicSpells.enableUpdateItemData())
+                return;
             PlayerInventory inv = event.getPlayer().getInventory();
             updateInventory(inv);
             ItemStack[] armor = inv.getArmorContents();
@@ -70,7 +72,8 @@ public class MagicItemUpdater {
         }
 
         public void joinOrLoadCharacter(Player player) {
-            if (!MagicSpells.enableUpdateItemData()) return;
+            if (!MagicSpells.enableUpdateItemData())
+                return;
             PlayerInventory inv = player.getInventory();
             updateInventory(inv);
             ItemStack[] armor = inv.getArmorContents();
@@ -80,7 +83,8 @@ public class MagicItemUpdater {
 
         @EventHandler(priority = EventPriority.LOWEST)
         public void onInvOpen(InventoryOpenEvent event) {
-            if (!MagicSpells.enableUpdateItemData()) return;
+            if (!MagicSpells.enableUpdateItemData())
+                return;
             updateInventory(event.getInventory());
         }
 
@@ -91,13 +95,16 @@ public class MagicItemUpdater {
         }
 
         private static void updateInventory(ItemStack[] items) {
-            if (items == null) return;
+            if (items == null)
+                return;
             for (int i = 0; i < items.length; i++) {
                 ItemStack itemStack = items[i];
-                if (itemStack == null) continue;
+                if (itemStack == null)
+                    continue;
 
                 ItemMeta meta = itemStack.getItemMeta();
-                if (meta == null) continue;
+                if (meta == null)
+                    continue;
 
                 PersistentDataContainer container = meta.getPersistentDataContainer();
 
@@ -111,8 +118,10 @@ public class MagicItemUpdater {
                     MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(itemStack);
                     MagicItemData magicItemData = MagicItems.getMagicItemDataByInternalName(magicitemName);
 
-                    if (magicItemData == null || stackData == null) continue;
-                    if (magicItemData.matches(stackData)) continue;
+                    if (magicItemData == null || stackData == null)
+                        continue;
+                    if (magicItemData.matches(stackData))
+                        continue;
 
                     items[i] = updateItem(itemStack, magicItems.get(magicitemName));
                 }
@@ -132,7 +141,7 @@ public class MagicItemUpdater {
         }
     }
 
-    private static ItemStack updateItem(ItemStack itemStack, MagicItem magicItem) {
+    public static ItemStack updateItem(ItemStack itemStack, MagicItem magicItem) {
         Integer durability = null;
         Long expiresAt = null;
         String creatorName = null;
@@ -144,16 +153,20 @@ public class MagicItemUpdater {
 
         PersistentDataContainer sourceContainer = sourceMeta.getPersistentDataContainer();
 
-        if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "menuoption"), PersistentDataType.STRING)) {
+        if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "menuoption"),
+                PersistentDataType.STRING)) {
             return itemStack;
         }
 
         if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG)) {
-            expiresAt = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG);
+            expiresAt = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"),
+                    PersistentDataType.LONG);
         }
 
-        if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING)) {
-            creatorName = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING);
+        if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "creator_name"),
+                PersistentDataType.STRING)) {
+            creatorName = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"),
+                    PersistentDataType.STRING);
         }
 
         if (sourceMeta instanceof Damageable damageable) {
@@ -164,7 +177,8 @@ public class MagicItemUpdater {
             bookMeta = sourceBookMeta.clone();
         }
 
-        if (sourceMeta instanceof BlockStateMeta blockStateMeta && blockStateMeta.getBlockState() instanceof Container container) {
+        if (sourceMeta instanceof BlockStateMeta blockStateMeta
+                && blockStateMeta.getBlockState() instanceof Container container) {
             blockInventory = container.getInventory();
         }
 
@@ -176,11 +190,13 @@ public class MagicItemUpdater {
             updatedDamageable.setDamage(durability);
         }
         if (expiresAt != null) {
-            meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG, expiresAt);
+            meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "expires_at"),
+                    PersistentDataType.LONG, expiresAt);
         }
 
         if (creatorName != null) {
-            meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"), PersistentDataType.STRING, creatorName);
+            meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"),
+                    PersistentDataType.STRING, creatorName);
         }
 
         if (meta instanceof BookMeta updatedBookMeta && bookMeta != null) {
@@ -200,14 +216,15 @@ public class MagicItemUpdater {
 
         updatedItem.setItemMeta(meta);
 
-        if (countItemUpdates) itemUpdateCount += amount;
+        if (countItemUpdates)
+            itemUpdateCount += amount;
 
         return updatedItem;
     }
 
     // Add PDC to all items for worlds used prior to PDC
     public static void addMagicItemPDC(boolean updatePlayers, boolean updateWorlds,
-                                       boolean updateVaults, boolean updateCharacters) {
+            boolean updateVaults, boolean updateCharacters) {
 
         MagicSpells.log("Adding PDC to Magic Items.");
         cacheItemData();
@@ -215,16 +232,20 @@ public class MagicItemUpdater {
         countItemUpdates = true;
 
         // Update Player Inventories
-        if (updatePlayers) updatePlayers();
+        if (updatePlayers)
+            updatePlayers();
 
         // Update Characters
-        if (updateCharacters && CompatBasics.pluginEnabled("SneakyCharacterManager")) updateCharacters();
+        if (updateCharacters && CompatBasics.pluginEnabled("SneakyCharacterManager"))
+            updateCharacters();
 
         // Update Vaults
-        if (updateVaults && CompatBasics.pluginEnabled("SneakyVaults")) updateVaults();
+        if (updateVaults && CompatBasics.pluginEnabled("SneakyVaults"))
+            updateVaults();
 
         // Update Chunks
-        if (updateWorlds) scanWorlds();
+        if (updateWorlds)
+            scanWorlds();
     }
 
     private static void cacheItemData() {
@@ -237,14 +258,17 @@ public class MagicItemUpdater {
     }
 
     private static void addItemNames(ItemStack[] items) {
-        if (items == null) return;
+        if (items == null)
+            return;
 
         for (int i = 0; i < items.length; i++) {
             ItemStack itemStack = items[i];
-            if (itemStack == null) continue;
+            if (itemStack == null)
+                continue;
 
             MagicItemData item = MagicItems.getMagicItemDataFromItemStack(itemStack);
-            if (item == null) continue;
+            if (item == null)
+                continue;
 
             for (Map.Entry<String, MagicItemData> entry : magicItemsCache.entrySet()) {
                 if (entry.getValue().matches(item)) {
@@ -303,26 +327,33 @@ public class MagicItemUpdater {
     private static void updateCharacters() {
         // Adapted from SneakyCharacterManager by MomoPewPew & ItzBungo
         if (!SneakyCharacterManager.getInstance().getConfig().getBoolean("manageInventories", true)) {
-            MagicSpells.error("manageInventories is currently set to false in the config, so you probably don't want this command.");
+            MagicSpells.error(
+                    "manageInventories is currently set to false in the config, so you probably don't want this command.");
             return;
         }
         File dir = SneakyCharacterManager.getCharacterDataFolder();
 
         File[] playerData = dir.listFiles();
-        if (playerData == null || playerData.length == 0) return;
+        if (playerData == null || playerData.length == 0)
+            return;
 
         for (File playerDir : playerData) {
-            if(!playerDir.exists() || !playerDir.isDirectory()) continue;
+            if (!playerDir.exists() || !playerDir.isDirectory())
+                continue;
             File[] characterData = playerDir.listFiles();
-            if (characterData == null) continue;
+            if (characterData == null)
+                continue;
 
             for (File characterFile : characterData) {
                 YamlConfiguration config = YamlConfiguration.loadConfiguration(characterFile);
                 String inventoryB64 = config.getString("inventory");
-                if (inventoryB64 == null) continue;
+                if (inventoryB64 == null)
+                    continue;
 
-                ItemStack[] items = net.sneakycharactermanager.paper.util.InventoryUtility.getSavedInventory(inventoryB64);
-                if (items == null || items.length == 0) continue;
+                ItemStack[] items = net.sneakycharactermanager.paper.util.InventoryUtility
+                        .getSavedInventory(inventoryB64);
+                if (items == null || items.length == 0)
+                    continue;
 
                 addItemNames(items);
 
@@ -342,48 +373,54 @@ public class MagicItemUpdater {
     private static void updateVaults() {
         // Adapted from SneakyVaults written by ItzBungo
         File dir = SneakyVaults.getInstance().playerDataFolder;
-        if(!dir.exists() || !dir.isDirectory()) {
+        if (!dir.exists() || !dir.isDirectory()) {
             MagicSpells.error("SneakyVaults folder not found.");
             return;
         }
         File[] playerDataFiles = dir.listFiles();
 
-        if(playerDataFiles == null || playerDataFiles.length == 0) {
+        if (playerDataFiles == null || playerDataFiles.length == 0) {
             MagicSpells.error("No SneakyVaults data files found.");
             return;
         }
 
-        for(File playerDataFile : playerDataFiles) {
+        for (File playerDataFile : playerDataFiles) {
             YamlConfiguration configuration = YamlConfiguration.loadConfiguration(playerDataFile);
             ConfigurationSection vaults = configuration.getConfigurationSection("player_vaults");
-            if(vaults == null) continue;
+            if (vaults == null)
+                continue;
 
-            for(String vault : vaults.getKeys(false)) {
-                if(!vaults.getBoolean(vault + ".paperConverted")) {
+            for (String vault : vaults.getKeys(false)) {
+                if (!vaults.getBoolean(vault + ".paperConverted")) {
                     MagicSpells.error("Vault " + vault + " not found.");
                     continue;
                 }
 
                 String vaultInventory = vaults.getString(vault);
-                if(vaultInventory == null) continue;
+                if (vaultInventory == null)
+                    continue;
                 List<String> vaultItems = vaults.getStringList(vault + ".items");
 
                 Inventory inventory = Bukkit.createInventory(null, 9);
 
-                ItemStack[] items = net.sneakymouse.sneakyvaults.utlitiy.InventoryUtility.inventoryPaperFromBase64(vaultItems).toArray(new ItemStack[0]);
-                if(items.length > inventory.getSize()) {
-                    if(items.length % 9 != 0) {
-                        MagicSpells.error("Error: Saved inventory size is not a multiple of 9. This should be impossible!");
+                ItemStack[] items = net.sneakymouse.sneakyvaults.utlitiy.InventoryUtility
+                        .inventoryPaperFromBase64(vaultItems).toArray(new ItemStack[0]);
+                if (items.length > inventory.getSize()) {
+                    if (items.length % 9 != 0) {
+                        MagicSpells.error(
+                                "Error: Saved inventory size is not a multiple of 9. This should be impossible!");
                         continue;
                     }
-                    inventory = Bukkit.createInventory(null, items.length, ChatUtility.convertToComponent("&ePlayer Vault"));
+                    inventory = Bukkit.createInventory(null, items.length,
+                            ChatUtility.convertToComponent("&ePlayer Vault"));
                 }
 
                 addItemNames(items);
                 inventory.setContents(items);
 
-                List<String> itemEncoded = net.sneakymouse.sneakyvaults.utlitiy.InventoryUtility.inventoryPaperToBase64(inventory);
-                vaults.set(vault  + ".items", itemEncoded);
+                List<String> itemEncoded = net.sneakymouse.sneakyvaults.utlitiy.InventoryUtility
+                        .inventoryPaperToBase64(inventory);
+                vaults.set(vault + ".items", itemEncoded);
 
                 try {
                     configuration.save(playerDataFile);
@@ -447,7 +484,8 @@ public class MagicItemUpdater {
                             int regionX = Integer.parseInt(parts[1]);
                             int regionZ = Integer.parseInt(parts[2]);
 
-                            MagicSpells.error("Scanning region: r." + regionX + "." + regionZ + ".mca in world " + world.getName());
+                            MagicSpells.error("Scanning region: r." + regionX + "." + regionZ + ".mca in world "
+                                    + world.getName());
 
                             for (int chunkX = regionX * 32; chunkX < (regionX + 1) * 32; chunkX++) {
                                 for (int chunkZ = regionZ * 32; chunkZ < (regionZ + 1) * 32; chunkZ++) {
@@ -460,11 +498,13 @@ public class MagicItemUpdater {
                                                 if (chunk.isLoaded() && chunk.getTileEntities() != null) {
                                                     processChunk(chunk);
                                                 } else {
-                                                    MagicSpells.error("Chunk not fully loaded: " + finalChunkX + ", " + finalChunkZ);
+                                                    MagicSpells.error("Chunk not fully loaded: " + finalChunkX + ", "
+                                                            + finalChunkZ);
                                                 }
                                             });
                                         }).exceptionally(ex -> {
-                                            MagicSpells.error("Error loading chunk: " + finalChunkX + ", " + finalChunkZ);
+                                            MagicSpells
+                                                    .error("Error loading chunk: " + finalChunkX + ", " + finalChunkZ);
                                             return null;
                                         });
                                     }
@@ -483,12 +523,11 @@ public class MagicItemUpdater {
                     latch.await();
                     Bukkit.getScheduler().runTaskLater(MagicSpells.getInstance(),
                             () -> MagicSpells.log("All chunk data has been updated."),
-                            1L
-                    );
+                            1L);
                     Bukkit.getScheduler().runTaskLater(MagicSpells.getInstance(),
-                            () -> MagicSpells.log("All tasks complete. " + itemUpdateCount + " items have been updated." + " Please restart to proceed."),
-                            1L
-                    );
+                            () -> MagicSpells.log("All tasks complete. " + itemUpdateCount + " items have been updated."
+                                    + " Please restart to proceed."),
+                            1L);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     MagicSpells.error("Task interrupted while waiting for world scans to complete.");

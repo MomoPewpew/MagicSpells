@@ -363,15 +363,20 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 			if (removed) {
 				event.getEntity().remove();
 				event.setCancelled(true);
-				if (!preventBlocks && event.getBlock().getType() == Material.AIR) {
-					event.getBlock().setBlockData(event.getBlockData(), false);
-					if (info != null)
-						info.targetBlock = event.getBlock();
+				if (!preventBlocks) {
+					Block landBlock = BlockUtils
+							.findNearestAirRecursive(event.getBlock().getLocation().add(0.5, 0.5, 0.5), 3);
+					if (landBlock != null) {
+						landBlock.setBlockData(event.getBlockData(), false);
+						if (info != null)
+							info.targetBlock = landBlock;
+					}
 				}
 
 				if (spellOnLand != null && info != null && !info.spellActivated) {
-					spellOnLand.subcast(info.caster, event.getBlock().getLocation().add(0.5, 0.5, 0.5), info.power,
-							info.args);
+					Location subcastLoc = info.targetBlock != null ? info.targetBlock.getLocation().add(0.5, 0.5, 0.5)
+							: event.getBlock().getLocation().add(0.5, 0.5, 0.5);
+					spellOnLand.subcast(info.caster, subcastLoc, info.power, info.args);
 					info.spellActivated = true;
 				}
 			}

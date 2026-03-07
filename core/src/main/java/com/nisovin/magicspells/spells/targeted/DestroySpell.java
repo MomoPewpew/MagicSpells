@@ -261,7 +261,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 						continue;
 					}
 
-					if (!affectsContainers && BlockUtils.isContainer(b)) continue;
+					if (!affectsContainers && BlockUtils.isContainer(b))
+						continue;
 					if (b.getType().isSolid()) {
 						if (throwChance < 1 && random.nextFloat() > throwChance) {
 							blocksToRemove.add(b);
@@ -283,7 +284,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			}
 
 			if (duration > 0) {
-				AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, b, b.getBlockData(), b.getState());
+				AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, b, b.getBlockData(),
+						b.getState());
 				MagicSpells.getAlteredBlockManager().add(change);
 
 				MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
@@ -309,7 +311,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			BlockData blockData = b.getBlockData();
 
 			if (duration > 0) {
-				AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, b, b.getBlockData(), b.getState());
+				AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, b, b.getBlockData(),
+						b.getState());
 				MagicSpells.getAlteredBlockManager().add(change);
 
 				MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
@@ -376,18 +379,23 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 					event.getEntity().remove();
 					event.setCancelled(true);
-					if (!preventLandingBlocks && event.getBlock().getType() == Material.AIR) {
-						if (endTime != null) {
-							long duration = (endTime - System.currentTimeMillis()) / 50;
+					if (!preventLandingBlocks) {
+						Block landBlock = BlockUtils
+								.findNearestAirRecursive(event.getBlock().getLocation().add(0.5, 0.5, 0.5), 3);
+						if (landBlock != null) {
+							if (endTime != null) {
+								long duration = (endTime - System.currentTimeMillis()) / 50;
 
-							if (duration < 1) return;
+								if (duration >= 1) {
+									AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName,
+											landBlock, landBlock.getBlockData(), landBlock.getState());
+									MagicSpells.getAlteredBlockManager().add(change);
 
-							AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, event.getBlock(), event.getBlock().getBlockData(), event.getBlock().getState());
-							MagicSpells.getAlteredBlockManager().add(change);
-
-							MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
+									MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
+								}
+							}
+							landBlock.setBlockData(event.getBlockData(), false);
 						}
-						event.getBlock().setBlockData(event.getBlockData(), false);
 					}
 				}
 			}

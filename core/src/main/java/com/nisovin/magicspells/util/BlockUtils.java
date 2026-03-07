@@ -50,7 +50,8 @@ public class BlockUtils {
 
 	public static Block getTargetBlock(Spell spell, LivingEntity entity, int range) {
 		try {
-			if (spell != null) return entity.getTargetBlock(spell.getLosTransparentBlocks(), range);
+			if (spell != null)
+				return entity.getTargetBlock(spell.getLosTransparentBlocks(), range);
 			return entity.getTargetBlock(MagicSpells.getTransparentBlocks(), range);
 		} catch (IllegalStateException e) {
 			DebugHandler.debugIllegalState(e);
@@ -183,8 +184,10 @@ public class BlockUtils {
 	}
 
 	public static boolean isSafeToStand(Location location) {
-		if (!isPathable(location.getBlock())) return false;
-		if (!isPathable(location.add(0, 1, 0).getBlock())) return false;
+		if (!isPathable(location.getBlock()))
+			return false;
+		if (!isPathable(location.add(0, 1, 0).getBlock()))
+			return false;
 		return !isPathable(location.subtract(0, 2, 0).getBlock()) || !isPathable(location.subtract(0, 1, 0).getBlock());
 	}
 
@@ -200,7 +203,8 @@ public class BlockUtils {
 		}
 	}
 
-	public static void setBlockData(Block block, BlockData oldBlockData, BlockData newBlockData, boolean mergeBlockData, boolean applyPhysics) {
+	public static void setBlockData(Block block, BlockData oldBlockData, BlockData newBlockData, boolean mergeBlockData,
+			boolean applyPhysics) {
 		BlockData clone = newBlockData.clone();
 
 		if (mergeBlockData) {
@@ -250,5 +254,49 @@ public class BlockUtils {
 		}
 		BlockState state = block.getState();
 		return state instanceof Container || state instanceof Lectern;
+	}
+
+	public static Block findNearestAirRecursive(Location location, int radius) {
+		Block nearest = null;
+		double minDistanceSq = Double.MAX_VALUE;
+
+		int centerX = location.getBlockX();
+		int centerY = location.getBlockY();
+		int centerZ = location.getBlockZ();
+
+		for (int x = centerX - radius; x <= centerX + radius; x++) {
+			for (int y = centerY - radius; y <= centerY + radius; y++) {
+				for (int z = centerZ - radius; z <= centerZ + radius; z++) {
+					Block b = location.getWorld().getBlockAt(x, y, z);
+					if (isAir(b.getType())) {
+						double dx = x - location.getX();
+						double dy = y - location.getY();
+						double dz = z - location.getZ();
+
+						double bias = dy > 0 ? 2.0 : 0.5;
+						double weightedDy = dy * bias;
+						double distanceSq = dx * dx + dz * dz + weightedDy * weightedDy;
+
+						if (distanceSq < minDistanceSq) {
+							minDistanceSq = distanceSq;
+							nearest = b;
+						}
+					}
+				}
+			}
+		}
+
+		if (nearest != null) {
+			while (true) {
+				Block below = nearest.getRelative(BlockFace.DOWN);
+				if (isAir(below.getType())) {
+					nearest = below;
+				} else {
+					break;
+				}
+			}
+		}
+
+		return nearest;
 	}
 }

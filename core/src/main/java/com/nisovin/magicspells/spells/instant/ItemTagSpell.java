@@ -26,7 +26,7 @@ import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 
 public class ItemTagSpell extends InstantSpell implements Listener {
 
-    private final Map<MagicItemData, String> mapping = new HashMap<>();
+    private final Map<MagicItemData, TagMapping> mapping = new HashMap<>();
     private final NamespacedKey nameKey = new NamespacedKey(MagicSpells.getInstance(), "magicitem");
 
     public ItemTagSpell(MagicConfig config, String spellName) {
@@ -34,8 +34,8 @@ public class ItemTagSpell extends InstantSpell implements Listener {
 
         ConfigurationSection mappingSection = getConfigSection("mapping");
         if (mappingSection != null) {
-            for (String internalName : mappingSection.getKeys(false)) {
-                ConfigurationSection itemSection = mappingSection.getConfigurationSection(internalName);
+            for (String key : mappingSection.getKeys(false)) {
+                ConfigurationSection itemSection = mappingSection.getConfigurationSection(key);
                 if (itemSection == null)
                     continue;
 
@@ -43,7 +43,11 @@ public class ItemTagSpell extends InstantSpell implements Listener {
                 if (magicItem == null)
                     continue;
 
-                mapping.put(magicItem.getMagicItemData(), internalName);
+                // Ignore amount by default for tagging
+                magicItem.getMagicItemData().getIgnoredAttributes().add(MagicItemData.MagicItemAttribute.AMOUNT);
+
+                String internalName = itemSection.getString("internal-name", key);
+                mapping.put(magicItem.getMagicItemData(), new TagMapping(internalName, magicItem));
             }
         }
     }
@@ -82,9 +86,11 @@ public class ItemTagSpell extends InstantSpell implements Listener {
             if (itemData == null)
                 continue;
 
-            for (Map.Entry<MagicItemData, String> entry : mapping.entrySet()) {
+            for (Map.Entry<MagicItemData, TagMapping> entry : mapping.entrySet()) {
                 MagicItemData targetData = entry.getKey();
-                String internalName = entry.getValue();
+                TagMapping tagMapping = entry.getValue();
+                String internalName = tagMapping.internalName();
+                MagicItem targetMagicItem = tagMapping.magicItem();
 
                 if (targetData.matches(itemData)) {
                     ItemMeta meta = item.getItemMeta();
@@ -100,11 +106,8 @@ public class ItemTagSpell extends InstantSpell implements Listener {
                     item.setItemMeta(meta);
 
                     // Trigger update
-                    MagicItem targetMagicItem = MagicItems.getMagicItemByInternalName(internalName);
-                    if (targetMagicItem != null) {
-                        contents[i] = MagicItemUpdater.updateItem(item, targetMagicItem);
-                        changed = true;
-                    }
+                    contents[i] = MagicItemUpdater.updateItem(item, targetMagicItem);
+                    changed = true;
                     break;
                 }
             }
@@ -113,6 +116,9 @@ public class ItemTagSpell extends InstantSpell implements Listener {
         if (changed) {
             inventory.setContents(contents);
         }
+    }
+
+    private record TagMapping(String internalName, MagicItem magicItem) {
     }
 
 }

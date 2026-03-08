@@ -46,6 +46,8 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 	private float targetYOffset;
 	private float rotationOffset;
 
+	private Vector lastVelocity;
+
 	private boolean callEvents;
 	private boolean changePitch;
 	private boolean vertSpeedUsed;
@@ -102,7 +104,7 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 	public void initialize() {
 		zoneManager = MagicSpells.getNoMagicZoneManager();
 
-		//relativeOffset
+		// relativeOffset
 		Vector startDirection = startLocation.getDirection().normalize();
 		Vector horizOffset = new Vector(-startDirection.getZ(), 0.0, startDirection.getX()).normalize();
 		startLocation.add(horizOffset.multiply(relativeOffset.getZ())).getBlock().getLocation();
@@ -112,8 +114,10 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 		previousLocation = startLocation.clone();
 		currentLocation = startLocation.clone();
 
-		if (vertSpeedUsed) velocity = startLocation.clone().getDirection().setY(0).multiply(speed).setY(vertSpeed);
-		else velocity = startLocation.clone().getDirection().multiply(speed);
+		if (vertSpeedUsed)
+			velocity = startLocation.clone().getDirection().setY(0).multiply(speed).setY(vertSpeed);
+		else
+			velocity = startLocation.clone().getDirection().multiply(speed);
 		Util.rotateVector(velocity, rotationOffset);
 		entity = startLocation.getWorld().dropItem(startLocation, item.clone());
 		entity.setGravity(projectileHasGravity);
@@ -123,7 +127,8 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 		if (spell != null) {
 			spell.playEffects(EffectPosition.CASTER, caster, data);
 			spell.playEffects(EffectPosition.PROJECTILE, entity, data);
-			spell.playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, startLocation, entity.getLocation(), caster, entity, data);
+			spell.playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, startLocation,
+					entity.getLocation(), caster, entity, data);
 		}
 
 		taskId = MagicSpells.scheduleRepeatingTask(this, tickInterval, tickInterval);
@@ -159,7 +164,8 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 			}
 		}
 
-		if (spell != null && specialEffectInterval > 0 && count % specialEffectInterval == 0) spell.playEffects(EffectPosition.SPECIAL, currentLocation, data);
+		if (spell != null && specialEffectInterval > 0 && count % specialEffectInterval == 0)
+			spell.playEffects(EffectPosition.SPECIAL, currentLocation, data);
 
 		if (zoneManager.willFizzle(currentLocation, spell)) {
 			stop();
@@ -170,23 +176,42 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 			spellOnTick.subcast(caster, currentLocation.clone(), power, args);
 		}
 
-		for (Entity e : entity.getNearbyEntities(count > entityHitDelay ? hitRadius : 0.1, count > entityHitDelay ? vertHitRadius : 0.1, count > entityHitDelay ? hitRadius : 0.1)) {
-			if (!(e instanceof LivingEntity target)) continue;
-			if (!targetList.canTarget(caster, e)) continue;
+		for (Entity e : entity.getNearbyEntities(count > entityHitDelay ? hitRadius : 0.1,
+				count > entityHitDelay ? vertHitRadius : 0.1, count > entityHitDelay ? hitRadius : 0.1)) {
+			if (!(e instanceof LivingEntity target))
+				continue;
+			if (!targetList.canTarget(caster, e))
+				continue;
 
 			SpellTargetEvent event = new SpellTargetEvent(spell, caster, target, power, args);
-			if (!event.callEvent()) continue;
+			if (!event.callEvent())
+				continue;
 
 			target = event.getTarget();
 			float subPower = event.getPower();
 
-			if (spell != null) spell.playEffects(EffectPosition.TARGET, target, new SpellData(caster, target, subPower, args));
-			if (spellOnHitEntity != null) spellOnHitEntity.subcast(caster, target, subPower, args);
-			if (stopOnHitEntity) stop();
+			if (spell != null)
+				spell.playEffects(EffectPosition.TARGET, target, new SpellData(caster, target, subPower, args));
+			if (spellOnHitEntity != null)
+				spellOnHitEntity.subcast(caster, target, subPower, args);
+			if (stopOnHitEntity)
+				stop();
 			return;
 		}
 
-		if (entity.isOnGround()) {
+		Vector currentVelocity = entity.getVelocity();
+		boolean hitGround = entity.isOnGround();
+		if (!hitGround && lastVelocity != null) {
+			// Check for sudden velocity change (collision with wall/ceiling)
+			if (isSuddenChange(lastVelocity.getX(), currentVelocity.getX()) ||
+					isSuddenChange(lastVelocity.getY(), currentVelocity.getY()) ||
+					isSuddenChange(lastVelocity.getZ(), currentVelocity.getZ())) {
+				hitGround = true;
+			}
+		}
+		lastVelocity = currentVelocity;
+
+		if (hitGround) {
 			if (spellOnHitGround != null && !groundSpellCasted) {
 				spellOnHitGround.subcast(caster, entity.getLocation(), power, args);
 				groundSpellCasted = true;
@@ -195,12 +220,24 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 				stop();
 				return;
 			}
-			if (!landed) MagicSpells.scheduleDelayedTask(() -> {
-				if (spellOnDelay != null) spellOnDelay.subcast(caster, entity.getLocation(), power, args);
-				stop();
-			}, spellDelay);
+			if (!landed)
+				MagicSpells.scheduleDelayedTask(() -> {
+					if (spellOnDelay != null)
+						spellOnDelay.subcast(caster, entity.getLocation(), power, args);
+					stop();
+				}, spellDelay);
 			landed = true;
 		}
+	}
+
+	private boolean isSuddenChange(double last, double current) {
+		if (Math.abs(last) < 0.05)
+			return false; // Too slow to be a reliable collision detection
+		if (last > 0 && current < last * 0.1)
+			return true; // Sudden drop or reversal
+		if (last < 0 && current > last * 0.1)
+			return true; // Sudden drop or reversal
+		return false;
 	}
 
 	@Override
@@ -210,10 +247,13 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 
 	public void stop(boolean removeTracker) {
 		if (spell != null) {
-			if (entity != null) spell.playEffects(EffectPosition.DELAYED, entity.getLocation(), data);
-			if (removeTracker) ItemProjectileSpell.getProjectileTrackers().remove(this);
+			if (entity != null)
+				spell.playEffects(EffectPosition.DELAYED, entity.getLocation(), data);
+			if (removeTracker)
+				ItemProjectileSpell.getProjectileTrackers().remove(this);
 		}
-		if (entity != null) entity.remove();
+		if (entity != null)
+			entity.remove();
 		MagicSpells.cancelTask(taskId);
 		stopped = true;
 	}

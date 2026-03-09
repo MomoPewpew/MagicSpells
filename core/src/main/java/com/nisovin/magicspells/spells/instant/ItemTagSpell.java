@@ -101,12 +101,23 @@ public class ItemTagSpell extends InstantSpell implements Listener {
                     if (internalName.equals(currentName))
                         continue;
 
-                    // Update PDC
-                    meta.getPersistentDataContainer().set(nameKey, PersistentDataType.STRING, internalName);
-                    item.setItemMeta(meta);
+                    // It's a match and needs a tag update.
 
-                    // Trigger update
-                    contents[i] = MagicItemUpdater.updateItem(item, targetMagicItem);
+                    // Priority 1: Try to update using a real item from the global items.yml
+                    MagicItem globalItem = MagicItems.getMagicItemByInternalName(internalName);
+                    MagicItem updateSource = globalItem != null ? globalItem : targetMagicItem;
+
+                    ItemStack updated = MagicItemUpdater.updateItem(item, updateSource);
+
+                    // Force the correct tag on the updated item (MagicItemUpdater might have
+                    // overwritten it)
+                    ItemMeta updatedMeta = updated.getItemMeta();
+                    if (updatedMeta != null) {
+                        updatedMeta.getPersistentDataContainer().set(nameKey, PersistentDataType.STRING, internalName);
+                        updated.setItemMeta(updatedMeta);
+                    }
+
+                    contents[i] = updated;
                     changed = true;
                     break;
                 }

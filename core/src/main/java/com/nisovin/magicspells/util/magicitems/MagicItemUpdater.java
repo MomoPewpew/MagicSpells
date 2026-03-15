@@ -214,6 +214,14 @@ public class MagicItemUpdater {
             updatedBlockStateMeta.setBlockState(updatedContainer);
         }
 
+        String regularPrefix = "magicspelldata_";
+        String namespace = MagicSpells.getInstance().getName().toLowerCase();
+        for (NamespacedKey key : sourceContainer.getKeys()) {
+            if (key.getNamespace().equals(namespace) && key.getKey().startsWith(regularPrefix)) {
+                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, sourceContainer.get(key, PersistentDataType.STRING));
+            }
+        }
+
         updatedItem.setItemMeta(meta);
 
         if (countItemUpdates)

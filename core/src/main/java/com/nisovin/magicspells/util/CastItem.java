@@ -2,6 +2,7 @@ package com.nisovin.magicspells.util;
 
 import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.ArrayList;
 
@@ -45,9 +46,11 @@ public class CastItem {
 	private List<String> lore = null;
 
 	private String magicitemName = null;
-	private List<String> persistentData = null;
+	private Map<String, String> persistentData = null;
+	private Map<String, String> permanentData = null;
 
-	private static final NamespacedKey DATA_KEY = new NamespacedKey(MagicSpells.getInstance(), "magicspellsData");
+	private static final String REGULAR_PREFIX = "magicspelldata_";
+	private static final String PERMANENT_PREFIX = "magicspellpermanentdata_";
 	private static final NamespacedKey NAME_KEY = new NamespacedKey(MagicSpells.getInstance(), "magicitem");
 
 	public CastItem() {
@@ -83,15 +86,27 @@ public class CastItem {
 				lore = loreLocal;
 			}
 			if (!MagicSpells.ignoreCastItemPersistentData()) {
-				PersistentDataContainer container = meta.getPersistentDataContainer();
+				persistentData = new HashMap<>();
+				permanentData = new HashMap<>();
 
+				PersistentDataContainer container = meta.getPersistentDataContainer();
 				if (container.has(NAME_KEY, PersistentDataType.STRING)) {
 					magicitemName = container.get(NAME_KEY, PersistentDataType.STRING);
 				}
 
-				if (container.has(DATA_KEY, PersistentDataType.LIST.strings())) {
-					persistentData = container.get(DATA_KEY, PersistentDataType.LIST.strings());
+				String namespace = MagicSpells.getInstance().getName().toLowerCase();
+				for (NamespacedKey key : container.getKeys()) {
+					if (!key.getNamespace().equals(namespace)) continue;
+
+					String keyStr = key.getKey();
+					if (keyStr.startsWith(REGULAR_PREFIX)) {
+						persistentData.put(keyStr.substring(REGULAR_PREFIX.length()), container.get(key, PersistentDataType.STRING));
+					} else if (keyStr.startsWith(PERMANENT_PREFIX)) {
+						permanentData.put(keyStr.substring(PERMANENT_PREFIX.length()), container.get(key, PersistentDataType.STRING));
+					}
 				}
+				if (persistentData.isEmpty()) persistentData = null;
+				if (permanentData.isEmpty()) permanentData = null;
 			}
 		}
 	}
@@ -147,7 +162,11 @@ public class CastItem {
 				}
 
 				if (!MagicSpells.ignoreCastItemPersistentData() && data.hasAttribute(PERSISTENT_DATA)) {
-					persistentData = (List<String>) data.getAttribute(PERSISTENT_DATA);
+					persistentData = (Map<String, String>) data.getAttribute(PERSISTENT_DATA);
+				}
+
+				if (!MagicSpells.ignoreCastItemPersistentData() && data.hasAttribute(PERMANENT_DATA)) {
+					permanentData = (Map<String, String>) data.getAttribute(PERMANENT_DATA);
 				}
 			}
 		}
@@ -183,13 +202,13 @@ public class CastItem {
 			&& (MagicSpells.ignoreCastItemAuthor() || Objects.equals(author, i.author))
 			&& (MagicSpells.ignoreCastItemEnchants() || Objects.equals(enchants, i.enchants))
 			&& (MagicSpells.ignoreCastItemLore() || Objects.equals(lore, i.lore))
-			&& (MagicSpells.ignoreCastItemPersistentData() || Objects.equals(persistentData, i.persistentData))
+			&& (MagicSpells.ignoreCastItemPersistentData() || Objects.equals(permanentData, i.permanentData))
 			&& (MagicSpells.ignoreCastItemPersistentData() || Objects.equals(magicitemName, i.magicitemName));
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(type, name, amount, durability, customModelData, unbreakable, color, potionData, title, author, enchants, lore);
+		return Objects.hash(type, name, amount, durability, customModelData, unbreakable, color, potionData, title, author, enchants, lore, magicitemName, permanentData);
 	}
 
 	@Override

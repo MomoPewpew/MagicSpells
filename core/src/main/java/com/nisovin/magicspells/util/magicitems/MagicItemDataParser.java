@@ -428,15 +428,39 @@ public class MagicItemDataParser {
 						case "pdc":
 						case "persistent-data":
 						case "persistent_data":
-							if (!value.isJsonArray()) continue;
-
-							List<String> pdcList = new ArrayList<>();
-							JsonArray pdcArray = value.getAsJsonArray();
-							for (JsonElement line : pdcArray) {
-								pdcList.add(line.getAsString());
+							Map<String, String> pdcMap = new HashMap<>();
+							if (value.isJsonArray()) {
+								for (JsonElement element : value.getAsJsonArray()) {
+									String[] split = element.getAsString().split(":", 2);
+									if (split.length == 2) pdcMap.put(split[0], split[1]);
+								}
+							} else if (value.isJsonObject()) {
+								for (Map.Entry<String, JsonElement> pdcEntry : value.getAsJsonObject().entrySet()) {
+									pdcMap.put(pdcEntry.getKey(), pdcEntry.getValue().getAsString());
+								}
 							}
 
-							if (!pdcList.isEmpty()) data.setAttribute(PERSISTENT_DATA, pdcList);
+							if (!pdcMap.isEmpty()) data.setAttribute(PERSISTENT_DATA, pdcMap);
+							break;
+						case "pdc-permanent":
+						case "persistent-data-permanent":
+						case "persistent_data-permanent":
+						case "pdc_permanent":
+						case "permanent-data":
+						case "permanent_data":
+							Map<String, String> permanentPdcMap = new HashMap<>();
+							if (value.isJsonArray()) {
+								for (JsonElement element : value.getAsJsonArray()) {
+									String[] split = element.getAsString().split(":", 2);
+									if (split.length == 2) permanentPdcMap.put(split[0], split[1]);
+								}
+							} else if (value.isJsonObject()) {
+								for (Map.Entry<String, JsonElement> permanentEntry : value.getAsJsonObject().entrySet()) {
+									permanentPdcMap.put(permanentEntry.getKey(), permanentEntry.getValue().getAsString());
+								}
+							}
+
+							if (!permanentPdcMap.isEmpty()) data.setAttribute(PERMANENT_DATA, permanentPdcMap);
 							break;
 						case "ignoredattributes":
 						case "ignored-attributes":

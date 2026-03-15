@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.util.itemreader;
 
-import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -12,25 +13,55 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 
 import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME;
+import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.PERMANENT_DATA;
 import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.PERSISTENT_DATA;
 
 public class PersistentDataHandler {
 
-    private static final String CONFIG_NAME = PERSISTENT_DATA.toString();
-    private static final NamespacedKey DATA_KEY = new NamespacedKey(MagicSpells.getInstance(), "magicspellsData");
+    private static final String REGULAR_PREFIX = "magicspelldata_";
+    private static final String PERMANENT_PREFIX = "magicspellpermanentdata_";
     private static final NamespacedKey NAME_KEY = new NamespacedKey(MagicSpells.getInstance(), "magicitem");
 
     public static void process(ConfigurationSection config, ItemMeta meta, MagicItemData data) {
         meta.getPersistentDataContainer().set(NAME_KEY, PersistentDataType.STRING, config.getName());
         data.setAttribute(MAGIC_ITEM_NAME, config.getName());
 
-        if (!config.isList(CONFIG_NAME)) return;
-        if (!meta.getPersistentDataContainer().isEmpty()) return;
+        Map<String, String> pdcMap = parseMap(config, "pdc", "persistent-data", "persistent_data");
+        if (!pdcMap.isEmpty()) {
+            data.setAttribute(PERSISTENT_DATA, pdcMap);
+            for (Map.Entry<String, String> entry : pdcMap.entrySet()) {
+                meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), REGULAR_PREFIX + entry.getKey()), PersistentDataType.STRING, entry.getValue());
+            }
+        }
 
-        List<String> pdcList = config.getStringList(CONFIG_NAME);
+        Map<String, String> permanentPdcMap = parseMap(config, "pdc-permanent", "pdc_permanent", "permanent-data", "permanent_data", "persistent-data-permanent", "persistent_data-permanent");
+        if (!permanentPdcMap.isEmpty()) {
+            data.setAttribute(PERMANENT_DATA, permanentPdcMap);
+            for (Map.Entry<String, String> entry : permanentPdcMap.entrySet()) {
+                meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), PERMANENT_PREFIX + entry.getKey()), PersistentDataType.STRING, entry.getValue());
+            }
+        }
+    }
 
-        meta.getPersistentDataContainer().set(DATA_KEY, PersistentDataType.LIST.strings(), pdcList);
-        data.setAttribute(PERSISTENT_DATA, pdcList);
+    private static Map<String, String> parseMap(ConfigurationSection config, String... keys) {
+        for (String key : keys) {
+            if (config.isConfigurationSection(key)) {
+                ConfigurationSection section = config.getConfigurationSection(key);
+                Map<String, String> map = new HashMap<>();
+                for (String k : section.getKeys(false)) {
+                    map.put(k, section.getString(k));
+                }
+                return map;
+            } else if (config.isList(key)) {
+                Map<String, String> map = new HashMap<>();
+                for (String line : config.getStringList(key)) {
+                    String[] split = line.split(":", 2);
+                    if (split.length == 2) map.put(split[0], split[1]);
+                }
+                return map;
+            }
+        }
+        return new HashMap<>();
     }
 
     public static void processItemMeta(ItemMeta meta, MagicItemData data) {
@@ -39,8 +70,17 @@ public class PersistentDataHandler {
         }
 
         if (data.hasAttribute(PERSISTENT_DATA)) {
-            List<String> pdcList = (List<String>) data.getAttribute(PERSISTENT_DATA);
-            meta.getPersistentDataContainer().set(DATA_KEY, PersistentDataType.LIST.strings(), pdcList);
+            Map<String, String> pdcMap = (Map<String, String>) data.getAttribute(PERSISTENT_DATA);
+            for (Map.Entry<String, String> entry : pdcMap.entrySet()) {
+                meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), REGULAR_PREFIX + entry.getKey()), PersistentDataType.STRING, entry.getValue());
+            }
+        }
+
+        if (data.hasAttribute(PERMANENT_DATA)) {
+            Map<String, String> permanentPdcMap = (Map<String, String>) data.getAttribute(PERMANENT_DATA);
+            for (Map.Entry<String, String> entry : permanentPdcMap.entrySet()) {
+                meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), PERMANENT_PREFIX + entry.getKey()), PersistentDataType.STRING, entry.getValue());
+            }
         }
     }
 
@@ -52,11 +92,22 @@ public class PersistentDataHandler {
             data.setAttribute(MAGIC_ITEM_NAME, magicitemName);
         }
 
-        if (container.has(DATA_KEY, PersistentDataType.LIST.strings())) {
-            List<String> pdcList = container.get(DATA_KEY, PersistentDataType.LIST.strings());
-            data.setAttribute(PERSISTENT_DATA, pdcList);
+        Map<String, String> pdcMap = new HashMap<>();
+        Map<String, String> permanentPdcMap = new HashMap<>();
+
+        for (NamespacedKey key : container.getKeys()) {
+            if (!key.getNamespace().equals(MagicSpells.getInstance().getName().toLowerCase())) continue;
+            
+            String keyStr = key.getKey();
+            if (keyStr.startsWith(REGULAR_PREFIX)) {
+                pdcMap.put(keyStr.substring(REGULAR_PREFIX.length()), container.get(key, PersistentDataType.STRING));
+            } else if (keyStr.startsWith(PERMANENT_PREFIX)) {
+                permanentPdcMap.put(keyStr.substring(PERMANENT_PREFIX.length()), container.get(key, PersistentDataType.STRING));
+            }
         }
 
+        if (!pdcMap.isEmpty()) data.setAttribute(PERSISTENT_DATA, pdcMap);
+        if (!permanentPdcMap.isEmpty()) data.setAttribute(PERMANENT_DATA, permanentPdcMap);
     }
 
 }

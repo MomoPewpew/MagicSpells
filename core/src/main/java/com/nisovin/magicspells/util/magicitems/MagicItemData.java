@@ -149,6 +149,7 @@ public class MagicItemData {
 
 		for (MagicItemAttribute attr : keysSelf) {
 			if (ignoredAttributes.contains(attr)) continue;
+			if (attr == MagicItemAttribute.PERSISTENT_DATA) continue;
 			if (attr == MagicItemAttribute.MAGIC_ITEM_NAME && !checkItemPersistentData()) continue;
 			if (!keysOther.contains(attr)) return false;
 		}
@@ -303,7 +304,8 @@ public class MagicItemData {
 		PATTERNS(List.class),
 		FIREWORK_EFFECTS(List.class),
 		ATTRIBUTES(Multimap.class),
-		PERSISTENT_DATA(List.class),
+		PERSISTENT_DATA(Map.class),
+		PERMANENT_DATA(Map.class),
 		MAGIC_ITEM_NAME(String.class);
 
 		private final Class<?> dataType;

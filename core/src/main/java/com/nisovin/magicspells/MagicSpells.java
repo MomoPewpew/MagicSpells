@@ -91,7 +91,8 @@ public class MagicSpells extends JavaPlugin {
 	// Change this when you want to start tweaking the source and fixing bugs
 	public static Level DEVELOPER_DEBUG_LEVEL = Level.OFF;
 
-	// Pass this to methods that want spell arguments passed but doesn't have any to be passed
+	// Pass this to methods that want spell arguments passed but doesn't have any to
+	// be passed
 	public static final String[] NULL_ARGS = null;
 
 	public static final String ENTITY_TAG = "MS_ENTITY";
@@ -257,10 +258,14 @@ public class MagicSpells extends JavaPlugin {
 		// Load config
 		if (!new File(getDataFolder(), "general.yml").exists()) {
 			saveResource("general.yml", false);
-			if (!new File(getDataFolder(), "mana.yml").exists()) saveResource("mana.yml", false);
-			if (!new File(getDataFolder(), "spells-command.yml").exists()) saveResource("spells-command.yml", false);
-			if (!new File(getDataFolder(), "spells-regular.yml").exists()) saveResource("spells-regular.yml", false);
-			if (!new File(getDataFolder(), "zones.yml").exists()) saveResource("zones.yml", false);
+			if (!new File(getDataFolder(), "mana.yml").exists())
+				saveResource("mana.yml", false);
+			if (!new File(getDataFolder(), "spells-command.yml").exists())
+				saveResource("spells-command.yml", false);
+			if (!new File(getDataFolder(), "spells-regular.yml").exists())
+				saveResource("spells-regular.yml", false);
+			if (!new File(getDataFolder(), "zones.yml").exists())
+				saveResource("zones.yml", false);
 		}
 		config = new MagicConfig();
 		if (!config.isLoaded()) {
@@ -323,16 +328,18 @@ public class MagicSpells extends JavaPlugin {
 		ignoreCastItemAuthor = config.getBoolean(path + "ignore-cast-item-author", true);
 		ignoreCastItemLore = config.getBoolean(path + "ignore-cast-item-lore", true);
 		ignoreCastItemCustomModelData = config.getBoolean(path + "ignore-cast-item-custom-model-data", true);
-		ignoreCastItemDurability = Util.getMaterialList(config.getStringList(path + "ignore-cast-item-durability", new ArrayList<>()), ArrayList::new);
+		ignoreCastItemDurability = Util.getMaterialList(
+				config.getStringList(path + "ignore-cast-item-durability", new ArrayList<>()), ArrayList::new);
 		ignoreCastItemPersistentData = config.getBoolean(path + "ignore-cast-item-persistent-data", true);
 
 		checkItemPersistentData = config.getBoolean(path + "check-item-persistent-data", false);
-		enableUpdateItemData = config.getBoolean(path + "enable-update-item-data", false);
+		enableUpdateItemData = config.getBoolean(path + "enable-update-item-data", true);
 
 		checkWorldPvpFlag = config.getBoolean(path + "check-world-pvp-flag", true);
 		checkScoreboardTeams = config.getBoolean(path + "check-scoreboard-teams", false);
 		showStrCostOnMissingReagents = config.getBoolean(path + "show-str-cost-on-missing-reagents", true);
-		losTransparentBlocks = Util.getMaterialList(config.getStringList(path + "los-transparent-blocks", new ArrayList<>()), HashSet::new);
+		losTransparentBlocks = Util.getMaterialList(
+				config.getStringList(path + "los-transparent-blocks", new ArrayList<>()), HashSet::new);
 		if (losTransparentBlocks.isEmpty()) {
 			losTransparentBlocks.add(Material.AIR);
 			losTransparentBlocks.add(Material.VOID_AIR);
@@ -349,7 +356,8 @@ public class MagicSpells extends JavaPlugin {
 			Set<String> keys = config.getSection(path + "entity-names").getKeys(false);
 			for (String key : keys) {
 				EntityType entityType = MobUtil.getEntityType(key);
-				if (entityType == null) continue;
+				if (entityType == null)
+					continue;
 				entityNames.put(entityType, config.getString(path + "entity-names." + key, ""));
 			}
 		}
@@ -361,7 +369,8 @@ public class MagicSpells extends JavaPlugin {
 		strSpellChange = config.getString(path + "str-spell-change", "You are now using the %s spell.");
 		strSpellChangeEmpty = config.getString(path + "str-spell-change-empty", "You are no longer using a spell.");
 		strOnCooldown = config.getString(path + "str-on-cooldown", "That spell is on cooldown (%c seconds remaining).");
-		strMissingReagents = config.getString(path + "str-missing-reagents", "You do not have the reagents for that spell.");
+		strMissingReagents = config.getString(path + "str-missing-reagents",
+				"You do not have the reagents for that spell.");
 		strCantCast = config.getString(path + "str-cant-cast", "You can't cast that spell right now.");
 		strCantBind = config.getString(path + "str-cant-bind", "You cannot bind that spell to that item.");
 		strWrongWorld = config.getString(path + "str-wrong-world", "You cannot cast that spell here.");
@@ -379,7 +388,8 @@ public class MagicSpells extends JavaPlugin {
 		bossBarManager = new BossBarManager();
 		attributeManager = new AttributeManager();
 		alteredBlockManager = new AlteredBlockManager();
-		if (CompatBasics.pluginEnabled("Vault")) moneyHandler = new MoneyHandler();
+		if (CompatBasics.pluginEnabled("Vault"))
+			moneyHandler = new MoneyHandler();
 		lifeLengthTracker = new LifeLengthTracker();
 
 		// Call loading event
@@ -399,7 +409,8 @@ public class MagicSpells extends JavaPlugin {
 		// Load magic items
 		log("Loading magic items...");
 		hideMagicItemTooltips = config.getBoolean(path + "hide-magic-items-tooltips", false);
-		if (hideMagicItemTooltips) log("... hiding tooltips!");
+		if (hideMagicItemTooltips)
+			log("... hiding tooltips!");
 
 		MagicItems.getMagicItems().clear();
 		String itemStr = "magic-items";
@@ -409,21 +420,28 @@ public class MagicSpells extends JavaPlugin {
 				for (String key : magicItems) {
 					if (config.isString(path + itemStr + "." + key)) {
 						String str = config.getString(path + itemStr + "." + key, null);
-						if (str == null) continue;
+						if (str == null)
+							continue;
 
 						MagicItem magicItem = MagicItems.getMagicItemFromString(str);
-						if (magicItem != null) MagicItems.getMagicItems().put(key, magicItem);
-						else MagicSpells.error("Invalid magic item: " + key + ": " + str);
+						if (magicItem != null)
+							MagicItems.getMagicItems().put(key, magicItem);
+						else
+							MagicSpells.error("Invalid magic item: " + key + ": " + str);
 
 					} else if (config.isSection(path + itemStr + "." + key)) {
 						ConfigurationSection section = config.getSection(path + itemStr + "." + key);
-						if (section == null) continue;
+						if (section == null)
+							continue;
 
 						MagicItem magicItem = MagicItems.getMagicItemFromSection(section);
-						if (magicItem != null) MagicItems.getMagicItems().put(key, magicItem);
-						else MagicSpells.error("Invalid magic item: " + key + ": (section)");
+						if (magicItem != null)
+							MagicItems.getMagicItems().put(key, magicItem);
+						else
+							MagicSpells.error("Invalid magic item: " + key + ": (section)");
 
-					} else MagicSpells.error("Invalid magic item: " + key);
+					} else
+						MagicSpells.error("Invalid magic item: " + key);
 				}
 			}
 		}
@@ -436,7 +454,8 @@ public class MagicSpells extends JavaPlugin {
 			ConfigurationSection recipeSec = config.getSection(path + "recipes");
 			for (String recipeKey : recipeSec.getKeys(false)) {
 				ConfigurationSection recipe = recipeSec.getConfigurationSection(recipeKey);
-				if (recipe == null) continue;
+				if (recipe == null)
+					continue;
 				RecipeHandler.create(recipe);
 			}
 		}
@@ -454,14 +473,20 @@ public class MagicSpells extends JavaPlugin {
 		log("Finalizing perms...");
 		// Finalize spell permissions
 		addPermission(pm, "grant.*", PermissionDefault.FALSE, permGrantChildren);
-		addPermission(pm, "learn.*", defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE, permLearnChildren);
-		addPermission(pm, "cast.*", defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE, permCastChildren);
-		addPermission(pm, "teach.*", defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE, permTeachChildren);
+		addPermission(pm, "learn.*", defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE,
+				permLearnChildren);
+		addPermission(pm, "cast.*", defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE,
+				permCastChildren);
+		addPermission(pm, "teach.*", defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE,
+				permTeachChildren);
 
 		// Op permissions
-		addPermission(pm, "noreagents", opsIgnoreReagents? PermissionDefault.OP : PermissionDefault.FALSE, "Allows casting without needing reagents");
-		addPermission(pm, "nocooldown", opsIgnoreCooldowns? PermissionDefault.OP : PermissionDefault.FALSE, "Allows casting without being affected by cooldowns");
-		addPermission(pm, "nocasttime", opsIgnoreCastTimes? PermissionDefault.OP : PermissionDefault.FALSE, "Allows casting without being affected by cast times");
+		addPermission(pm, "noreagents", opsIgnoreReagents ? PermissionDefault.OP : PermissionDefault.FALSE,
+				"Allows casting without needing reagents");
+		addPermission(pm, "nocooldown", opsIgnoreCooldowns ? PermissionDefault.OP : PermissionDefault.FALSE,
+				"Allows casting without being affected by cooldowns");
+		addPermission(pm, "nocasttime", opsIgnoreCastTimes ? PermissionDefault.OP : PermissionDefault.FALSE,
+				"Allows casting without being affected by cast times");
 		addPermission(pm, "notarget", PermissionDefault.FALSE, "Prevents being targeted by any targeted spells");
 		addPermission(pm, "silent", PermissionDefault.FALSE, "Prevents cast messages from being broadcast to players");
 
@@ -473,7 +498,8 @@ public class MagicSpells extends JavaPlugin {
 		advancedPermChildren.put(Perm.ADVANCED_LIST.getNode(), true);
 		advancedPermChildren.put(Perm.ADVANCED_FORGET.getNode(), true);
 		advancedPermChildren.put(Perm.ADVANCED_SCROLL.getNode(), true);
-		addPermission(pm, "advanced.*", defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.OP, advancedPermChildren);
+		addPermission(pm, "advanced.*", defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.OP,
+				advancedPermChildren);
 
 		// Command permissions
 		addPermission(pm, "command.help", PermissionDefault.OP);
@@ -520,7 +546,8 @@ public class MagicSpells extends JavaPlugin {
 			if (aliases != null && aliases.length > 0) {
 				for (String alias : aliases) {
 					String lowercaseAlias = alias.toLowerCase();
-					if (!spellNames.containsKey(lowercaseAlias)) spellNames.put(lowercaseAlias, spell);
+					if (!spellNames.containsKey(lowercaseAlias))
+						spellNames.put(lowercaseAlias, spell);
 				}
 			}
 			List<String> incs = spell.getIncantations();
@@ -550,7 +577,8 @@ public class MagicSpells extends JavaPlugin {
 		// Load player data using a storage handler
 		log("Initializing storage handler...");
 		storageHandler = new TXTFileStorage(plugin);
-		//storageHandler = new DatabaseStorage(plugin, new SQLiteDatabase(plugin, "spellbooks.db"));
+		// storageHandler = new DatabaseStorage(plugin, new SQLiteDatabase(plugin,
+		// "spellbooks.db"));
 		storageHandler.initialize();
 		log("...done");
 
@@ -568,7 +596,8 @@ public class MagicSpells extends JavaPlugin {
 					scanner = new Scanner(file);
 					while (scanner.hasNext()) {
 						String line = scanner.nextLine();
-						if (line.isEmpty()) continue;
+						if (line.isEmpty())
+							continue;
 						String[] data = line.split(":");
 						long cooldown = Long.parseLong(data[2]);
 						if (cooldown > System.currentTimeMillis()) {
@@ -579,7 +608,7 @@ public class MagicSpells extends JavaPlugin {
 								} else {
 									spell.setCooldownManually(UUID.fromString(data[1]), cooldown);
 								}
-								
+
 								if (data.length > 3 && spell.getCharges() > 0) {
 									spell.setChargesConsumed(UUID.fromString(data[1]), Integer.parseInt(data[3]));
 								}
@@ -589,8 +618,9 @@ public class MagicSpells extends JavaPlugin {
 				} catch (Exception e) {
 					e.printStackTrace();
 				} finally {
-					if (scanner != null) scanner.close();
-//					file.delete();
+					if (scanner != null)
+						scanner.close();
+					// file.delete();
 				}
 			}
 			log("Restored cooldowns");
@@ -613,19 +643,25 @@ public class MagicSpells extends JavaPlugin {
 		registerEvents(new MagicPlayerListener(this));
 		registerEvents(new MagicSpellListener(this));
 		registerEvents(new CastListener(this));
-		if (!incantations.isEmpty()) registerEvents(new MagicChatListener());
+		if (!incantations.isEmpty())
+			registerEvents(new MagicChatListener());
 
 		LeftClickListener leftClickListener = new LeftClickListener();
-		if (leftClickListener.hasLeftClickCastItems()) registerEvents(leftClickListener);
+		if (leftClickListener.hasLeftClickCastItems())
+			registerEvents(leftClickListener);
 
 		RightClickListener rightClickListener = new RightClickListener();
-		if (rightClickListener.hasRightClickCastItems()) registerEvents(rightClickListener);
+		if (rightClickListener.hasRightClickCastItems())
+			registerEvents(rightClickListener);
 
 		ConsumeListener consumeListener = new ConsumeListener();
-		if (consumeListener.hasConsumeCastItems()) registerEvents(consumeListener);
-		if (config.getBoolean(path + "enable-dance-casting", true)) new DanceCastListener(this, config);
+		if (consumeListener.hasConsumeCastItems())
+			registerEvents(consumeListener);
+		if (config.getBoolean(path + "enable-dance-casting", true))
+			new DanceCastListener(this, config);
 
-		if (enableUpdateItemData) registerEvents(new PersistentDataUpdater());
+		if (enableUpdateItemData)
+			registerEvents(new PersistentDataUpdater());
 		if (enableUpdateItemData && CompatBasics.pluginEnabled("SneakyCharacterManager")) {
 			registerEvents(new MagicItemUpdater.CharacterPersistentDataUpdater());
 		}
@@ -691,11 +727,13 @@ public class MagicSpells extends JavaPlugin {
 
 		spells.values().forEach(Spell::initializeVariables);
 
-		if (!variableManager.getVariables().isEmpty()) registerEvents(new VariableListener());
+		if (!variableManager.getVariables().isEmpty())
+			registerEvents(new VariableListener());
 
 		log("...variable meta types loaded: " + variableManager.getMetaVariables().size());
 		log("...variable types loaded: " + variableManager.getVariableTypes().size());
-		log("...variables loaded: " + (variableManager.getVariables().size() - variableManager.getMetaVariables().size()));
+		log("...variables loaded: "
+				+ (variableManager.getVariables().size() - variableManager.getMetaVariables().size()));
 	}
 
 	private void loadSpellEffects(PluginManager pm) {
@@ -744,7 +782,8 @@ public class MagicSpells extends JavaPlugin {
 		pm.callEvent(new PassiveListenersLoadingEvent(plugin, passiveManager));
 
 		for (Spell spell : spells.values()) {
-			if (!(spell instanceof PassiveSpell)) continue;
+			if (!(spell instanceof PassiveSpell))
+				continue;
 			((PassiveSpell) spell).initializeListeners();
 		}
 
@@ -752,13 +791,17 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	private static final int LONG_LOAD_THRESHOLD = 50;
+
 	// DEBUG INFO: level 2, loaded spell spellName
-	private void loadSpells(MagicConfig config, PluginManager pm, Map<String, Boolean> permGrantChildren, Map<String, Boolean> permLearnChildren, Map<String, Boolean> permCastChildren, Map<String, Boolean> permTeachChildren) {
+	private void loadSpells(MagicConfig config, PluginManager pm, Map<String, Boolean> permGrantChildren,
+			Map<String, Boolean> permLearnChildren, Map<String, Boolean> permCastChildren,
+			Map<String, Boolean> permTeachChildren) {
 		long startTimePre = System.currentTimeMillis();
 
 		// Load classes from folders inside the plugin
 		for (File directoryFile : getDataFolder().listFiles(CLASS_DIRECTORY_FILTER)) {
-			if (!directoryFile.isDirectory()) continue;
+			if (!directoryFile.isDirectory())
+				continue;
 
 			classLoaders.add(createSpellClassLoader(directoryFile));
 		}
@@ -768,21 +811,25 @@ public class MagicSpells extends JavaPlugin {
 
 		// Get spells from config
 		Set<String> spellKeys = config.getSpellKeys();
-		if (spellKeys == null) return;
+		if (spellKeys == null)
+			return;
 
 		Map<String, Constructor<? extends Spell>> constructors = new HashMap<>();
 		for (String spellName : spellKeys) {
-			if (!config.getBoolean("spells." + spellName + ".enabled", true)) continue;
+			if (!config.getBoolean("spells." + spellName + ".enabled", true))
+				continue;
 			long startTime = System.currentTimeMillis();
 			String className = "";
-			if (config.contains("spells." + spellName + ".spell-class")) className = config.getString("spells." + spellName + ".spell-class", "");
+			if (config.contains("spells." + spellName + ".spell-class"))
+				className = config.getString("spells." + spellName + ".spell-class", "");
 
 			if (className == null || className.isEmpty()) {
 				error("Spell '" + spellName + "' does not have a spell-class property");
 				continue;
 			}
 
-			if (className.startsWith(".")) className = "com.nisovin.magicspells.spells" + className;
+			if (className.startsWith("."))
+				className = "com.nisovin.magicspells.spells" + className;
 
 			Constructor<? extends Spell> constructor = constructors.get(className);
 
@@ -833,10 +880,14 @@ public class MagicSpells extends JavaPlugin {
 						addPermission(pm, "grant." + permName, PermissionDefault.FALSE);
 						permGrantChildren.put(Perm.GRANT.getNode() + permName, true);
 					}
-					addPermission(pm, "learn." + permName, defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
-					addPermission(pm, "cast." + permName, defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
-					addPermission(pm, "teach." + permName, defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
-					if (enableTempGrantPerms) addPermission(pm, "tempgrant." + permName, PermissionDefault.FALSE);
+					addPermission(pm, "learn." + permName,
+							defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
+					addPermission(pm, "cast." + permName,
+							defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
+					addPermission(pm, "teach." + permName,
+							defaultAllPermsFalse ? PermissionDefault.FALSE : PermissionDefault.TRUE);
+					if (enableTempGrantPerms)
+						addPermission(pm, "tempgrant." + permName, PermissionDefault.FALSE);
 
 					permLearnChildren.put(Perm.LEARN.getNode() + permName, true);
 					permCastChildren.put(Perm.CAST.getNode() + permName, true);
@@ -848,11 +899,13 @@ public class MagicSpells extends JavaPlugin {
 			debug(2, "Loaded spell: " + spellName);
 
 			long elapsed = System.currentTimeMillis() - startTime;
-			if (elapsed > LONG_LOAD_THRESHOLD) getLogger().warning("LONG SPELL LOAD TIME: " + spellName + ": " + elapsed + "ms");
+			if (elapsed > LONG_LOAD_THRESHOLD)
+				getLogger().warning("LONG SPELL LOAD TIME: " + spellName + ": " + elapsed + "ms");
 		}
 
 		long finalElapsed = System.currentTimeMillis() - startTimePre;
-		if (lastReloadTime != 0) getLogger().warning("Loaded in " + finalElapsed + "ms (previously " + lastReloadTime + " ms)");
+		if (lastReloadTime != 0)
+			getLogger().warning("Loaded in " + finalElapsed + "ms (previously " + lastReloadTime + " ms)");
 		getLogger().warning("Need help? Check out our discord: discord.gg/6bYqnNy");
 		lastReloadTime = finalElapsed;
 	}
@@ -865,7 +918,8 @@ public class MagicSpells extends JavaPlugin {
 	public ClassLoader createSpellClassLoader(File dataFolder) {
 		final List<File> jarList = new ArrayList<>();
 		for (File file : dataFolder.listFiles()) {
-			if (file.getName().endsWith(".jar")) jarList.add(file);
+			if (file.getName().endsWith(".jar"))
+				jarList.add(file);
 		}
 		return createSpellClassLoader(jarList, dataFolder);
 	}
@@ -895,25 +949,31 @@ public class MagicSpells extends JavaPlugin {
 		addPermission(pm, perm, permDefault, null, description);
 	}
 
-	private void addPermission(PluginManager pm, String perm, PermissionDefault permDefault, Map<String,Boolean> children) {
+	private void addPermission(PluginManager pm, String perm, PermissionDefault permDefault,
+			Map<String, Boolean> children) {
 		addPermission(pm, perm, permDefault, children, null);
 	}
 
-	private void addPermission(PluginManager pm, String perm, PermissionDefault permDefault, Map<String,Boolean> children, String description) {
+	private void addPermission(PluginManager pm, String perm, PermissionDefault permDefault,
+			Map<String, Boolean> children, String description) {
 		if (pm.getPermission("magicspells." + perm) == null) {
-			if (description == null) pm.addPermission(new Permission("magicspells." + perm, permDefault, children));
-			else pm.addPermission(new Permission("magicspells." + perm, description, permDefault, children));
+			if (description == null)
+				pm.addPermission(new Permission("magicspells." + perm, permDefault, children));
+			else
+				pm.addPermission(new Permission("magicspells." + perm, description, permDefault, children));
 		}
 	}
 
 	public static void setupEffectlib() {
-		if (plugin.effectManager != null) return;
+		if (plugin.effectManager != null)
+			return;
 		plugin.effectManager = new EffectManager(plugin);
 		plugin.effectManager.enableDebug(plugin.debug);
 	}
 
 	public static void disposeEffectlib() {
-		if (plugin.effectManager == null) return;
+		if (plugin.effectManager == null)
+			return;
 		plugin.effectManager.cancel(true);
 		plugin.effectManager.dispose();
 		plugin.effectManager = null;
@@ -923,13 +983,15 @@ public class MagicSpells extends JavaPlugin {
 		for (Spell s : MagicSpells.getSpells().values()) {
 			Set<EffectTracker> effectTrackers = s.getEffectTrackers();
 			for (EffectTracker tracker : effectTrackers) {
-				if (!(tracker.getEffect() instanceof EffectLibEffect)) continue;
+				if (!(tracker.getEffect() instanceof EffectLibEffect))
+					continue;
 				tracker.stop();
 			}
 
 			Set<AsyncEffectTracker> asyncEffectTrackers = s.getAsyncEffectTrackers();
 			for (AsyncEffectTracker tracker : asyncEffectTrackers) {
-				if (!(tracker.getEffect() instanceof EffectLibEffect)) continue;
+				if (!(tracker.getEffect() instanceof EffectLibEffect))
+					continue;
 				tracker.stop();
 			}
 		}
@@ -941,6 +1003,7 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Gets the instance of the MagicSpells plugin
+	 * 
 	 * @return the MagicSpells plugin
 	 */
 	public static MagicSpells getInstance() {
@@ -949,6 +1012,7 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Gets all the spells currently loaded
+	 * 
 	 * @return a Collection of Spell objects
 	 */
 	public static Collection<Spell> spells() {
@@ -957,6 +1021,7 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Gets a spell by its internal name (the key name in the config file)
+	 * 
 	 * @param spellName the internal name of the spell to find
 	 * @return the Spell found, or null if no spell with that name was found
 	 */
@@ -965,7 +1030,9 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	/**
-	 * Gets a spell by its in-game name (the name specified with the 'name' config option)
+	 * Gets a spell by its in-game name (the name specified with the 'name' config
+	 * option)
+	 * 
 	 * @param spellName the in-game name of the spell to find
 	 * @return the Spell found, or null if no spell with that name was found
 	 */
@@ -974,14 +1041,17 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	/**
-	 * Gets a player's spellbook, which contains known spells and handles spell permissions.
+	 * Gets a player's spellbook, which contains known spells and handles spell
+	 * permissions.
 	 * If a player does not have a spellbook, one will be created.
+	 * 
 	 * @param player the player to get a spellbook for
 	 * @return the player's spellbook
 	 */
 	public static Spellbook getSpellbook(Player player) {
 		Spellbook spellbook = plugin.spellbooks.computeIfAbsent(player.getName(), playerName -> new Spellbook(player));
-		if (spellbook == null) throw new IllegalStateException();
+		if (spellbook == null)
+			throw new IllegalStateException();
 		return spellbook;
 	}
 
@@ -991,6 +1061,7 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Gets a list of blocks that are considered transparent
+	 * 
 	 * @return list of block types
 	 */
 	public static Set<Material> getTransparentBlocks() {
@@ -998,7 +1069,9 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	/**
-	 * Gets a map of entity types and their configured names, to be used when sending messages to players
+	 * Gets a map of entity types and their configured names, to be used when
+	 * sending messages to players
+	 * 
 	 * @return the map
 	 */
 	public static Map<EntityType, String> getEntityNames() {
@@ -1006,7 +1079,9 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	/**
-	 * Checks whether to ignore the durability on the given type when using it as a cast item.
+	 * Checks whether to ignore the durability on the given type when using it as a
+	 * cast item.
+	 * 
 	 * @param type the type to check
 	 * @return whether to ignore durability
 	 */
@@ -1300,6 +1375,7 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Gets the handler for no-magic zones.
+	 * 
 	 * @return the no-magic zone handler
 	 */
 	public static NoMagicZoneManager getNoMagicZoneManager() {
@@ -1312,6 +1388,7 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Gets the mana handler, which handles all mana transactions.
+	 * 
 	 * @return the mana handler
 	 */
 	public static ManaHandler getManaHandler() {
@@ -1412,6 +1489,7 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Sets the mana handler, which handles all mana transactions.
+	 * 
 	 * @param handler the mana handler
 	 */
 	public static void setManaHandler(ManaHandler handler) {
@@ -1421,6 +1499,7 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Sets the storage handler, which handles data storage.
+	 * 
 	 * @param handler the storage handler
 	 */
 	public static void setStorageHandler(StorageHandler handler) {
@@ -1433,7 +1512,8 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	/**
-	 * Sends a message to a player, first making the specified replacements. This method also does color replacement and has multi-line functionality.
+	 * Sends a message to a player, first making the specified replacements. This
+	 * method also does color replacement and has multi-line functionality.
 	 *
 	 * @param recipient    the player to send the message to
 	 * @param message      the message to send
@@ -1444,7 +1524,8 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	/**
-	 * Sends a message to a player. This method also does color replacement and has multi-line functionality.
+	 * Sends a message to a player. This method also does color replacement and has
+	 * multi-line functionality.
 	 *
 	 * @param recipient the living entity to send the message to
 	 * @param message   the message to send
@@ -1455,19 +1536,22 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	/**
-	 * Sends a message to a player, first making the specified replacements.This method also does color replacement and has multi-line functionality.
+	 * Sends a message to a player, first making the specified replacements.This
+	 * method also does color replacement and has multi-line functionality.
 	 *
 	 * @param message      the message to send
 	 * @param recipient    the player to send the message to
 	 * @param args         the arguments of associated spell cast
 	 * @param replacements the replacements to be made, in pairs
 	 */
-	public static void sendMessageAndFormat(String message, LivingEntity recipient, String[] args, String... replacements) {
+	public static void sendMessageAndFormat(String message, LivingEntity recipient, String[] args,
+			String... replacements) {
 		sendMessageAndFormat(message, recipient, recipient, null, args, replacements);
 	}
 
 	/**
-	 * Sends a message to a player, first making the specified replacements.This method also does color replacement and has multi-line functionality.
+	 * Sends a message to a player, first making the specified replacements.This
+	 * method also does color replacement and has multi-line functionality.
 	 *
 	 * @param message      the message to send
 	 * @param recipient    the player to send the message to
@@ -1476,17 +1560,22 @@ public class MagicSpells extends JavaPlugin {
 	 * @param args         the arguments of associated spell cast
 	 * @param replacements the replacements to be made, in pairs
 	 */
-	public static void sendMessageAndFormat(String message, LivingEntity recipient, LivingEntity caster, LivingEntity target, String[] args, String... replacements) {
-		if (!(recipient instanceof Player) || message == null || message.isEmpty()) return;
+	public static void sendMessageAndFormat(String message, LivingEntity recipient, LivingEntity caster,
+			LivingEntity target, String[] args, String... replacements) {
+		if (!(recipient instanceof Player) || message == null || message.isEmpty())
+			return;
 
 		message = doReplacements(message, caster, target, args, replacements);
 
 		recipient.sendMessage(Util.getMiniMessage(getTextColor() + message));
 	}
 
-	private static final Pattern chatVarMatchPattern = Pattern.compile("%var:(\\w+)(?::(\\d+))?%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	private static final Pattern chatVarMatchPattern = Pattern.compile("%var:(\\w+)(?::(\\d+))?%",
+			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
 	public static String doSubjectVariableReplacements(Player player, String string) {
-		if (string == null || string.isEmpty() || plugin.variableManager == null) return string;
+		if (string == null || string.isEmpty() || plugin.variableManager == null)
+			return string;
 
 		Matcher matcher = chatVarMatchPattern.matcher(string);
 		StringBuilder builder = new StringBuilder();
@@ -1517,10 +1606,14 @@ public class MagicSpells extends JavaPlugin {
 		return matcher.appendTail(builder).toString();
 	}
 
-	private static final Pattern chatPlayerVarMatchPattern = Pattern.compile("%playervar:(" + RegexUtil.USERNAME_REGEXP + "):(\\w+)(?::(\\d+))?%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	private static final Pattern chatPlayerVarMatchPattern = Pattern.compile(
+			"%playervar:(" + RegexUtil.USERNAME_REGEXP + "):(\\w+)(?::(\\d+))?%",
+			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
 	public static String doVariableReplacements(Player player, String string) {
 		string = doSubjectVariableReplacements(player, string);
-		if (string == null || string.isEmpty() || plugin.variableManager == null) return string;
+		if (string == null || string.isEmpty() || plugin.variableManager == null)
+			return string;
 
 		Matcher matcher = chatPlayerVarMatchPattern.matcher(string);
 		StringBuilder builder = new StringBuilder();
@@ -1537,7 +1630,8 @@ public class MagicSpells extends JavaPlugin {
 			String value;
 			if (place != null) {
 				if (variable instanceof GlobalStringVariable || variable instanceof PlayerStringVariable) {
-					value = TxtUtil.getStringNumber(variable.getStringValue(variableOwnerName), Integer.parseInt(place));
+					value = TxtUtil.getStringNumber(variable.getStringValue(variableOwnerName),
+							Integer.parseInt(place));
 				} else {
 					value = TxtUtil.getStringNumber(variable.getValue(variableOwnerName), Integer.parseInt(place));
 				}
@@ -1551,9 +1645,12 @@ public class MagicSpells extends JavaPlugin {
 		return matcher.appendTail(builder).toString();
 	}
 
-	private static final Pattern chatTargetedVarMatchPattern = Pattern.compile("%(castervar|targetvar):(\\w+)(?::(\\d+))?%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	private static final Pattern chatTargetedVarMatchPattern = Pattern
+			.compile("%(castervar|targetvar):(\\w+)(?::(\\d+))?%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
 	public static String doTargetedVariableReplacements(Player caster, Player target, String string) {
-		if (string == null || string.isEmpty() || plugin.variableManager == null) return string;
+		if (string == null || string.isEmpty() || plugin.variableManager == null)
+			return string;
 
 		Matcher matcher = chatTargetedVarMatchPattern.matcher(string);
 		StringBuilder builder = new StringBuilder();
@@ -1568,7 +1665,8 @@ public class MagicSpells extends JavaPlugin {
 			}
 
 			varOwner = matcher.group(1).equalsIgnoreCase("targetvar") ? target : caster;
-			if (varOwner == null) continue;
+			if (varOwner == null)
+				continue;
 
 			String value, place = matcher.group(3);
 			if (place != null) {
@@ -1592,7 +1690,8 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static String doReplacements(String message, SpellData data) {
-		if (data == null) return doReplacements(message, null, null, null, (String[]) null);
+		if (data == null)
+			return doReplacements(message, null, null, null, (String[]) null);
 		return doReplacements(message, data.caster(), data.target(), data.args(), (String[]) null);
 	}
 
@@ -1608,8 +1707,10 @@ public class MagicSpells extends JavaPlugin {
 		return doReplacements(message, caster, null, args, replacements);
 	}
 
-	public static String doReplacements(String message, LivingEntity caster, LivingEntity target, String[] args, String... replacements) {
-		if (message == null || message.isEmpty()) return message;
+	public static String doReplacements(String message, LivingEntity caster, LivingEntity target, String[] args,
+			String... replacements) {
+		if (message == null || message.isEmpty())
+			return message;
 
 		message = doArgumentSubstitution(message, args);
 		message = doVariableReplacements(message, caster, target);
@@ -1619,9 +1720,12 @@ public class MagicSpells extends JavaPlugin {
 		return message;
 	}
 
-	private static final Pattern ARGUMENT_PATTERN = Pattern.compile("%arg:(\\d+):(\\w+)%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	private static final Pattern ARGUMENT_PATTERN = Pattern.compile("%arg:(\\d+):(\\w+)%",
+			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
 	public static String doArgumentSubstitution(String string, String[] args) {
-		if (string == null || string.isEmpty()) return string;
+		if (string == null || string.isEmpty())
+			return string;
 
 		Matcher matcher = ARGUMENT_PATTERN.matcher(string);
 		StringBuilder builder = new StringBuilder();
@@ -1630,7 +1734,8 @@ public class MagicSpells extends JavaPlugin {
 			int argIndex = Integer.parseInt(matcher.group(1)) - 1;
 
 			String newValue = matcher.group(2);
-			if (args != null && argIndex >= 0 && argIndex < args.length) newValue = args[argIndex];
+			if (args != null && argIndex >= 0 && argIndex < args.length)
+				newValue = args[argIndex];
 
 			matcher.appendReplacement(builder, Matcher.quoteReplacement(newValue));
 		}
@@ -1638,9 +1743,13 @@ public class MagicSpells extends JavaPlugin {
 		return matcher.appendTail(builder).toString();
 	}
 
-	private static final Pattern VARIABLE_PATTERN = Pattern.compile("%(var|castervar|targetvar|varasbar|playervar:(" + RegexUtil.USERNAME_REGEXP + ")):(\\w+)(?::(\\w+))?%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	private static final Pattern VARIABLE_PATTERN = Pattern.compile(
+			"%(var|castervar|targetvar|varasbar|playervar:(" + RegexUtil.USERNAME_REGEXP + ")):(\\w+)(?::(\\w+))?%",
+			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
 	public static String doVariableReplacements(String message, LivingEntity caster, LivingEntity target) {
-		if (message == null || message.isEmpty()) return message;
+		if (message == null || message.isEmpty())
+			return message;
 
 		Player playerCaster = caster instanceof Player player ? player : null;
 		Player playerTarget = target instanceof Player player ? player : null;
@@ -1654,7 +1763,8 @@ public class MagicSpells extends JavaPlugin {
 			String placeString = matcher.group(4);
 
 			Variable variable = getVariableManager().getVariable(matcher.group(3));
-			if (variable == null) continue;
+			if (variable == null)
+				continue;
 
 			int place = -1;
 			if (placeString != null) {
@@ -1662,13 +1772,15 @@ public class MagicSpells extends JavaPlugin {
 					place = Integer.parseInt(placeString);
 				} catch (NumberFormatException ignored) {
 					placeStringIsNumeric = false;
-					if (!matcher.group(1).toLowerCase().equals("varasbar")) continue;
+					if (!matcher.group(1).toLowerCase().equals("varasbar"))
+						continue;
 				}
 			}
 
 			String value = switch (matcher.group(1).toLowerCase()) {
 				case "var", "castervar" -> {
-					if (playerCaster == null) yield null;
+					if (playerCaster == null)
+						yield null;
 
 					if (place != -1) {
 						if (variable instanceof GlobalStringVariable || variable instanceof PlayerStringVariable)
@@ -1680,7 +1792,8 @@ public class MagicSpells extends JavaPlugin {
 					yield variable.getStringValue(playerCaster);
 				}
 				case "targetvar" -> {
-					if (playerTarget == null) yield null;
+					if (playerTarget == null)
+						yield null;
 
 					if (place != -1) {
 						if (variable instanceof GlobalStringVariable || variable instanceof PlayerStringVariable)
@@ -1692,7 +1805,8 @@ public class MagicSpells extends JavaPlugin {
 					yield variable.getStringValue(playerTarget);
 				}
 				case "varasbar" -> {
-					if (playerCaster == null) yield null;
+					if (playerCaster == null)
+						yield null;
 
 					double max = place;
 
@@ -1704,7 +1818,8 @@ public class MagicSpells extends JavaPlugin {
 						}
 					}
 
-					if (max == -1) max = 100;
+					if (max == -1)
+						max = 100;
 
 					yield TxtUtil.getProgressBar(variable.getValue(playerCaster), max);
 				}
@@ -1721,7 +1836,8 @@ public class MagicSpells extends JavaPlugin {
 					yield variable.getStringValue(player);
 				}
 			};
-			if (value == null) continue;
+			if (value == null)
+				continue;
 
 			matcher.appendReplacement(builder, Matcher.quoteReplacement(value));
 		}
@@ -1729,7 +1845,10 @@ public class MagicSpells extends JavaPlugin {
 		return matcher.appendTail(builder).toString();
 	}
 
-	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("%(papi|casterpapi|targetpapi|playerpapi:(" + RegexUtil.USERNAME_REGEXP + ")):([^%]+)%", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile(
+			"%(papi|casterpapi|targetpapi|playerpapi:(" + RegexUtil.USERNAME_REGEXP + ")):([^%]+)%",
+			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
 	public static String doPlaceholderReplacements(String message, LivingEntity caster, LivingEntity target) {
 		if (message == null || message.isEmpty() || !Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"))
 			return message;
@@ -1746,10 +1865,12 @@ public class MagicSpells extends JavaPlugin {
 				case "targetpapi" -> playerTarget;
 				default -> Bukkit.getOfflinePlayer(matcher.group(2));
 			};
-			if (owner == null) continue;
+			if (owner == null)
+				continue;
 
 			String placeholder = '%' + matcher.group(3) + '%';
-			matcher.appendReplacement(builder, Matcher.quoteReplacement(PlaceholderAPI.setPlaceholders(owner, placeholder)));
+			matcher.appendReplacement(builder,
+					Matcher.quoteReplacement(PlaceholderAPI.setPlaceholders(owner, placeholder)));
 		}
 
 		return matcher.appendTail(builder).toString();
@@ -1757,29 +1878,36 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Formats a string by performing the specified replacements.
-	 * @param message the string to format
+	 * 
+	 * @param message      the string to format
 	 * @param replacements the replacements to make, in pairs.
 	 * @return the formatted string
 	 */
 	public static String formatMessage(String message, String... replacements) {
-		if (message == null || message.isEmpty() || replacements == null || replacements.length == 0) return message;
+		if (message == null || message.isEmpty() || replacements == null || replacements.length == 0)
+			return message;
 
 		String msg = message;
 		for (int i = 0; i < replacements.length; i += 2) {
-			if (replacements[i] == null) continue;
+			if (replacements[i] == null)
+				continue;
 
-			if (replacements[i + 1] != null) msg = msg.replace(replacements[i], replacements[i + 1]);
-			else msg = msg.replace(replacements[i], "");
+			if (replacements[i + 1] != null)
+				msg = msg.replace(replacements[i], replacements[i + 1]);
+			else
+				msg = msg.replace(replacements[i], "");
 		}
 		return msg;
 	}
 
 	public static boolean requireReplacement(String message) {
 		Matcher matcher = ARGUMENT_PATTERN.matcher(message);
-		if (matcher.find()) return true;
+		if (matcher.find())
+			return true;
 
 		matcher = VARIABLE_PATTERN.matcher(message);
-		if (matcher.find()) return true;
+		if (matcher.find())
+			return true;
 
 		matcher = PLACEHOLDER_PATTERN.matcher(message);
 		return matcher.find();
@@ -1790,7 +1918,8 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static void registerEvents(final Listener listener, EventPriority customPriority) {
-		if (customPriority == null) customPriority = EventPriority.NORMAL;
+		if (customPriority == null)
+			customPriority = EventPriority.NORMAL;
 		Method[] methods;
 		try {
 			methods = listener.getClass().getDeclaredMethods();
@@ -1801,10 +1930,12 @@ public class MagicSpells extends JavaPlugin {
 
 		for (final Method method : methods) {
 			final EventHandler eh = method.getAnnotation(EventHandler.class);
-			if (eh == null) continue;
+			if (eh == null)
+				continue;
 			EventPriority priority = eh.priority();
 
-			if (hasAnnotation(method, OverridePriority.class)) priority = customPriority;
+			if (hasAnnotation(method, OverridePriority.class))
+				priority = customPriority;
 
 			final Class<?> checkClass = method.getParameterTypes()[0];
 			if (!Event.class.isAssignableFrom(checkClass) || method.getParameterTypes().length != 1) {
@@ -1815,21 +1946,27 @@ public class MagicSpells extends JavaPlugin {
 			final Class<? extends Event> eventClass = checkClass.asSubclass(Event.class);
 			method.setAccessible(true);
 			EventExecutor executor = new EventExecutor() {
-				final String eventKey = plugin.enableProfiling ? "Event:" + listener.getClass().getName().replace("com.nisovin.magicspells.", "") + '.' + method.getName() + '(' + eventClass.getSimpleName() + ')' : null;
+				final String eventKey = plugin.enableProfiling
+						? "Event:" + listener.getClass().getName().replace("com.nisovin.magicspells.", "") + '.'
+								+ method.getName() + '(' + eventClass.getSimpleName() + ')'
+						: null;
 
 				@Override
 				public void execute(@NotNull Listener listener, @NotNull Event event) {
 					try {
-						if (!eventClass.isAssignableFrom(event.getClass())) return;
+						if (!eventClass.isAssignableFrom(event.getClass()))
+							return;
 						long start = System.nanoTime();
 						method.invoke(listener, event);
 						if (plugin.enableProfiling) {
 							Long total = plugin.profilingTotalTime.get(eventKey);
-							if (total == null) total = (long) 0;
+							if (total == null)
+								total = (long) 0;
 							total += System.nanoTime() - start;
 							plugin.profilingTotalTime.put(eventKey, total);
 							Integer runs = plugin.profilingRuns.get(eventKey);
-							if (runs == null) runs = 0;
+							if (runs == null)
+								runs = 0;
 							runs += 1;
 							plugin.profilingRuns.put(eventKey, runs);
 						}
@@ -1838,7 +1975,8 @@ public class MagicSpells extends JavaPlugin {
 					}
 				}
 			};
-			plugin.getServer().getPluginManager().registerEvent(eventClass, listener, priority, executor, plugin, eh.ignoreCancelled());
+			plugin.getServer().getPluginManager().registerEvent(eventClass, listener, priority, executor, plugin,
+					eh.ignoreCancelled());
 		}
 	}
 
@@ -1877,7 +2015,8 @@ public class MagicSpells extends JavaPlugin {
 		}
 
 		File folder = new File(plugin.getDataFolder(), "errors");
-		if (!folder.exists()) folder.mkdir();
+		if (!folder.exists())
+			folder.mkdir();
 
 		plugin.getLogger().severe("AN EXCEPTION HAS OCCURED:");
 		try (PrintWriter writer = new PrintWriter(new File(folder, System.currentTimeMillis() + ".txt"));) {
@@ -1904,10 +2043,10 @@ public class MagicSpells extends JavaPlugin {
 		if (limit > 0) {
 			try (Stream<Path> errorPaths = Files.list(folder.toPath())) {
 				errorPaths
-					.map(Path::toFile)
-					.sorted(Comparator.comparing(File::lastModified, Comparator.reverseOrder()))
-					.skip(limit)
-					.forEach(File::delete);
+						.map(Path::toFile)
+						.sorted(Comparator.comparing(File::lastModified, Comparator.reverseOrder()))
+						.skip(limit)
+						.forEach(File::delete);
 			} catch (Exception e) {
 				plugin.getLogger().severe("Error while cleaning up error folder:");
 				e.printStackTrace();
@@ -1916,12 +2055,15 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static void profilingReport() {
-		if (plugin.profilingTotalTime == null) return;
-		if (plugin.profilingRuns == null) return;
+		if (plugin.profilingTotalTime == null)
+			return;
+		if (plugin.profilingRuns == null)
+			return;
 
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(new File(plugin.getDataFolder(), "profiling_report_" + System.currentTimeMillis() + ".txt"));
+			writer = new PrintWriter(
+					new File(plugin.getDataFolder(), "profiling_report_" + System.currentTimeMillis() + ".txt"));
 			long totalTime = 0;
 			writer.println("Key\tRuns\tAvg\tTotal");
 			for (String key : plugin.profilingTotalTime.keySet()) {
@@ -1936,7 +2078,8 @@ public class MagicSpells extends JavaPlugin {
 			error("Failed to save profiling report");
 			handleException(ex);
 		} finally {
-			if (writer != null) writer.close();
+			if (writer != null)
+				writer.close();
 		}
 		plugin.profilingTotalTime.clear();
 		plugin.profilingRuns.clear();
@@ -1945,6 +2088,7 @@ public class MagicSpells extends JavaPlugin {
 	/**
 	 * Writes a debug message to the console if the debug option is enabled.
 	 * Uses debug level 2.
+	 * 
 	 * @param message the message to write to the console
 	 */
 	public static void debug(String message) {
@@ -1953,11 +2097,13 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Writes a debug message to the console if the debug option is enabled.
-	 * @param level the debug level to log with
+	 * 
+	 * @param level   the debug level to log with
 	 * @param message the message to write to the console
 	 */
 	public static void debug(int level, String message) {
-		if (plugin.debug && level <= plugin.debugLevel) log(Level.INFO, message);
+		if (plugin.debug && level <= plugin.debugLevel)
+			log(Level.INFO, message);
 	}
 
 	public static void log(String message) {
@@ -1970,7 +2116,8 @@ public class MagicSpells extends JavaPlugin {
 
 	/**
 	 * Writes an error message to the console.
-	 * @param level the error level
+	 * 
+	 * @param level   the error level
 	 * @param message the error message
 	 */
 	public static void log(Level level, String message) {
@@ -1978,21 +2125,25 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	public static void addProfile(String key, long time) {
-		if (!plugin.enableProfiling) return;
+		if (!plugin.enableProfiling)
+			return;
 
 		Long total = plugin.profilingTotalTime.get(key);
-		if (total == null) total = (long) 0;
+		if (total == null)
+			total = (long) 0;
 		total += time;
 		plugin.profilingTotalTime.put(key, total);
 		Integer runs = plugin.profilingRuns.get(key);
-		if (runs == null) runs = 0;
+		if (runs == null)
+			runs = 0;
 		runs += 1;
 		plugin.profilingRuns.put(key, runs);
 	}
 
 	/**
 	 * Teaches a player a spell (adds it to their spellbook)
-	 * @param player the player to teach
+	 * 
+	 * @param player    the player to teach
 	 * @param spellName the spell name, either the in-game name or the internal name
 	 * @return whether the spell was taught to the player
 	 */
@@ -2000,17 +2151,20 @@ public class MagicSpells extends JavaPlugin {
 		Spell spell = plugin.spellNames.get(spellName.toLowerCase());
 		if (spell == null) {
 			spell = plugin.spells.get(spellName.toLowerCase());
-			if (spell == null) return false;
+			if (spell == null)
+				return false;
 		}
 
 		Spellbook spellbook = getSpellbook(player);
 
-		if (spellbook.hasSpell(spell) || !spellbook.canLearn(spell)) return false;
+		if (spellbook.hasSpell(spell) || !spellbook.canLearn(spell))
+			return false;
 
 		// Call event
 		SpellLearnEvent event = new SpellLearnEvent(spell, player, LearnSource.OTHER, null);
 		EventUtil.call(event);
-		if (event.isCancelled()) return false;
+		if (event.isCancelled())
+			return false;
 
 		spellbook.addSpell(spell);
 		spellbook.save();
@@ -2023,7 +2177,8 @@ public class MagicSpells extends JavaPlugin {
 		// Save cooldowns
 		if (cooldownsPersistThroughReload) {
 			File file = new File(getDataFolder(), "cooldowns.txt");
-			if (file.exists()) file.delete();
+			if (file.exists())
+				file.delete();
 			try {
 				Writer writer = new FileWriter(file);
 				Map<UUID, Long> cooldowns;
@@ -2031,17 +2186,18 @@ public class MagicSpells extends JavaPlugin {
 				for (Spell spell : spells.values()) {
 					if (spell.nextCastServer > System.currentTimeMillis()) {
 						writer.append(spell.getInternalName())
-							.append(String.valueOf(':'))
-							.append("server")
-							.append(String.valueOf(':'))
-							.append(String.valueOf(spell.nextCastServer))
-							.append(String.valueOf('\n'));
+								.append(String.valueOf(':'))
+								.append("server")
+								.append(String.valueOf(':'))
+								.append(String.valueOf(spell.nextCastServer))
+								.append(String.valueOf('\n'));
 					}
 
 					cooldowns = spell.getCooldowns();
 					for (UUID id : cooldowns.keySet()) {
 						cooldown = cooldowns.get(id);
-						if (cooldown <= System.currentTimeMillis()) continue;
+						if (cooldown <= System.currentTimeMillis())
+							continue;
 						writer.append(spell.getInternalName())
 								.append(String.valueOf(':'))
 								.append(id.toString())
@@ -2050,7 +2206,7 @@ public class MagicSpells extends JavaPlugin {
 
 						if (spell.charges > 0) {
 							writer.append(String.valueOf(':'))
-								.append(String.valueOf(spell.getCharges(id)));
+									.append(String.valueOf(spell.getCharges(id)));
 						}
 
 						writer.append(String.valueOf('\n'));
@@ -2070,11 +2226,13 @@ public class MagicSpells extends JavaPlugin {
 			Iterator<SpellEffect> iterator;
 			if (spell.getEffects() != null) {
 				for (Map.Entry<EffectPosition, List<SpellEffect>> entry : spell.getEffects().entrySet()) {
-					if (entry == null) continue;
+					if (entry == null)
+						continue;
 
 					position = entry.getKey();
 					spellEffects = entry.getValue();
-					if (position == null || spellEffects == null) continue;
+					if (position == null || spellEffects == null)
+						continue;
 
 					iterator = spellEffects.iterator();
 					while (iterator.hasNext()) {

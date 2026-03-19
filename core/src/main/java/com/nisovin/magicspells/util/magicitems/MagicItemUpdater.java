@@ -120,7 +120,7 @@ public class MagicItemUpdater {
 
                     if (magicItemData == null || stackData == null)
                         continue;
-                    if (magicItemData.matches(stackData))
+                    if (magicItemData.equals(stackData))
                         continue;
 
                     items[i] = updateItem(itemStack, magicItems.get(magicitemName));
@@ -218,7 +218,8 @@ public class MagicItemUpdater {
         String namespace = MagicSpells.getInstance().getName().toLowerCase();
         for (NamespacedKey key : sourceContainer.getKeys()) {
             if (key.getNamespace().equals(namespace) && key.getKey().startsWith(regularPrefix)) {
-                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, sourceContainer.get(key, PersistentDataType.STRING));
+                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING,
+                        sourceContainer.get(key, PersistentDataType.STRING));
             }
         }
 

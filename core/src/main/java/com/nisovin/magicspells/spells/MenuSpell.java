@@ -26,6 +26,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 
 import com.nisovin.magicspells.util.*;
 import com.nisovin.magicspells.Subspell;
@@ -756,6 +757,13 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 			String amount = MagicSpells.getVariableManager().processVariableMods(variable, mod, player, player, null, data.power(), data.args());
 			MagicSpells.debug(3, "Variable '" + entry.getKey() + "' for player '" + player.getName() + "' modified by " + amount + " as a result of spell cast '" + internalName + "'");
+		}
+	}
+
+	@EventHandler
+	public void onInvDrag(InventoryDragEvent event) {
+		if (Util.getStringFromComponent(event.getView().title()).equals(internalName)) {
+			event.setCancelled(true);
 		}
 	}
 

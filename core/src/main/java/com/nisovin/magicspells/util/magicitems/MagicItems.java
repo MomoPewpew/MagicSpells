@@ -319,7 +319,13 @@ public class MagicItems {
 			// See if this is managed by an alternative reader
 			ItemStack item = AlternativeReaderManager.deserialize(section);
 			if (item != null) {
-				MagicItem magicItem = new MagicItem(item, getMagicItemDataFromItemStack(item));
+				MagicItemData itemData = getMagicItemDataFromItemStack(item);
+				ItemMeta meta = item.getItemMeta();
+				if (meta != null) {
+					PersistentDataHandler.process(section, meta, itemData);
+					item.setItemMeta(meta);
+				}
+				MagicItem magicItem = new MagicItem(item, itemData);
 
 				if (section.isList("ignored-attributes")) {
 					EnumSet<MagicItemAttribute> ignoredAttributes = magicItem.getMagicItemData().getIgnoredAttributes();

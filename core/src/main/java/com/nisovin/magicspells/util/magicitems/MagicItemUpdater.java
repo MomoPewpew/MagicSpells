@@ -40,6 +40,7 @@ import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.compat.CompatBasics;
+import com.nisovin.magicspells.events.MagicSpellsLoadedEvent;
 
 import static com.nisovin.magicspells.MagicSpells.setCheckItemPersistentData;
 import static com.nisovin.magicspells.util.magicitems.MagicItems.getMagicItems;
@@ -61,14 +62,17 @@ public class MagicItemUpdater {
     public static class PersistentDataUpdater implements Listener {
 
         @EventHandler(ignoreCancelled = true)
-        public void onJoin(PlayerJoinEvent event) {
+        public void onMagicSpellsLoaded(MagicSpellsLoadedEvent event) {
             if (!MagicSpells.enableUpdateItemData())
                 return;
-            PlayerInventory inv = event.getPlayer().getInventory();
-            updateInventory(inv);
-            ItemStack[] armor = inv.getArmorContents();
-            updateInventory(armor);
-            inv.setArmorContents(armor);
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                joinOrLoadCharacter(player);
+            }
+        }
+
+        @EventHandler(ignoreCancelled = true)
+        public void onJoin(PlayerJoinEvent event) {
+            joinOrLoadCharacter(event.getPlayer());
         }
 
         public void joinOrLoadCharacter(Player player) {

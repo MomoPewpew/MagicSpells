@@ -3,6 +3,7 @@ package com.nisovin.magicspells.spells.targeted;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.command.CommandSender;
+import org.bukkit.block.Block;
 
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
@@ -12,23 +13,60 @@ import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
+import com.nisovin.magicspells.util.BlockUtils;
+import com.nisovin.magicspells.util.compat.EventUtil;
+import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 
-public class DummySpell extends TargetedSpell implements TargetedEntitySpell, TargetedLocationSpell, TargetedEntityFromLocationSpell {
+public class DummySpell extends TargetedSpell
+		implements TargetedEntitySpell, TargetedLocationSpell, TargetedEntityFromLocationSpell {
+
+	private boolean requireEntityTarget;
 
 	public DummySpell(MagicConfig config, String spellName) {
 		super(config, spellName);
+		requireEntityTarget = getConfigBoolean("require-entity-target", true);
 	}
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
-			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			if (requireEntityTarget) {
+				TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
+				if (target.noTarget())
+					return noTarget(caster, args, target);
 
-			playSpellEffects(caster, target.target(), target.power(), args);
-			sendMessages(caster, target.target(), args);
+				playSpellEffects(caster, target.target(), target.power(), args);
+				sendMessages(caster, target.target(), args);
 
-			return PostCastAction.NO_MESSAGES;
+				return PostCastAction.NO_MESSAGES;
+			} else {
+				Location loc = null;
+				try {
+					Block block = getTargetedBlock(caster, power, args);
+					if (block != null && !BlockUtils.isAir(block.getType()))
+						loc = block.getLocation().add(0.5, 0, 0.5);
+				} catch (IllegalStateException ignored) {
+				}
+
+				if (loc == null)
+					return noTarget(caster, args);
+
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, loc, power, args);
+				EventUtil.call(event);
+				if (event.isCancelled())
+					loc = null;
+				else {
+					loc = event.getTargetLocation();
+					power = event.getPower();
+				}
+
+				if (loc == null)
+					return noTarget(caster, args);
+
+				sendMessages(caster, args);
+
+				return PostCastAction.NO_MESSAGES;
+			}
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
@@ -36,28 +74,32 @@ public class DummySpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		playSpellEffects(caster, target, power, args);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		playSpellEffects(caster, target, power, null);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		playSpellEffects(EffectPosition.TARGET, target, power, args);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		playSpellEffects(EffectPosition.TARGET, target, power, null);
 		return true;
 	}
@@ -87,29 +129,34 @@ public class DummySpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			String[] args) {
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		playSpellEffects(caster, from, target, new SpellData(caster, target, power, args));
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		playSpellEffects(caster, from, target, new SpellData(caster, target, power, null));
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		playSpellEffects(from, target, new SpellData(null, target, power, args));
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		playSpellEffects(from, target, new SpellData(null, target, power, null));
 		return true;
 	}
@@ -118,5 +165,5 @@ public class DummySpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	public boolean castFromConsole(CommandSender sender, String[] args) {
 		return true;
 	}
-	
+
 }

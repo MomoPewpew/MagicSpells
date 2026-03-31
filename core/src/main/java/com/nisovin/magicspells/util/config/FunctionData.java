@@ -403,15 +403,14 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 
 		@Override
 		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (location == null && target == null && caster == null)
+				return 0d;
+
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null)
 				return 0d;
 
-			org.bukkit.Location loc = null;
-			if (target != null)
-				loc = target.getLocation();
-			else if (caster != null)
-				loc = caster.getLocation();
+			Location loc = location == null ? target != null ? target.getLocation() : caster.getLocation() : location;
 
 			if (loc == null)
 				return 0d;
@@ -469,13 +468,13 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 
 		@Override
 		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
-			if (target == null)
+			if (target == null && location == null)
 				return 0d;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null)
 				return 0d;
 
-			org.bukkit.Location loc = target.getLocation();
+			Location loc = location == null ? target.getLocation() : location;
 			double value = MagicSpells.getVariableManager().getValueAtLocation(variable, loc);
 			return places >= 0 ? Precision.round(value, places) : value;
 		}

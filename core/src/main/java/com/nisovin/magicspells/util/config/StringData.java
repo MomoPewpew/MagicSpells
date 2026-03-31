@@ -294,15 +294,13 @@ public class StringData implements ConfigData<String> {
 
 		@Override
 		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (location == null && target == null && caster == null)
+				return placeholder;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null)
 				return placeholder;
 
-			org.bukkit.Location loc = null;
-			if (target != null)
-				loc = target.getLocation();
-			else if (caster != null)
-				loc = caster.getLocation();
+			Location loc = location == null ? target != null ? target.getLocation() : caster.getLocation() : location;
 
 			if (loc == null)
 				return placeholder;
@@ -336,7 +334,7 @@ public class StringData implements ConfigData<String> {
 			if (var == null)
 				return placeholder;
 
-			org.bukkit.Location loc = caster.getLocation();
+			Location loc = caster.getLocation();
 			if (places >= 0) {
 				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc),
 						places);
@@ -360,13 +358,13 @@ public class StringData implements ConfigData<String> {
 
 		@Override
 		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
-			if (target == null)
+			if (target == null && location == null)
 				return placeholder;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
 			if (var == null)
 				return placeholder;
 
-			org.bukkit.Location loc = target.getLocation();
+			Location loc = location == null ? target.getLocation() : location;
 			if (places >= 0) {
 				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc),
 						places);

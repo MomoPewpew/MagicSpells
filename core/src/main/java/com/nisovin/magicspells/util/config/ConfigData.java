@@ -19,8 +19,8 @@ public interface ConfigData<T> {
 
 	default T get(SpellData data) {
 		if (data == null)
-			return get(null, null, 1f, null);
-		return get(data.caster(), data.target(), data.power(), data.args());
+			return get(null, null, null, 1f, null);
+		return get(data.caster(), data.target(), data.location(), data.power(), data.args());
 	}
 
 	default boolean isConstant() {

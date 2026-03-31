@@ -57,19 +57,30 @@ public class VariableCondition extends OperatorCondition {
 
 	@Override
 	public boolean check(LivingEntity caster, Location location) {
-		return variableType(caster);
+		return variableType(location);
 	}
 
 	private boolean variableType(LivingEntity target) {
-		if (!(target instanceof Player pl)) return false;
-		if (variableCompared != null) return variable(pl, MagicSpells.getVariableManager().getValue(variableCompared, pl));
-		return variable(pl, value);
+		String targetName = target instanceof Player ? target.getName() : target.getName();
+		if (variableCompared != null) return variable(target, MagicSpells.getVariableManager().getValue(variableCompared, targetName));
+		return variable(target, value);
 	}
 
-	private boolean variable(Player player, double v) {
-		if (equals) return MagicSpells.getVariableManager().getValue(variable, player) == v;
-		else if (moreThan) return MagicSpells.getVariableManager().getValue(variable, player) > v;
-		else if (lessThan) return MagicSpells.getVariableManager().getValue(variable, player) < v;
+	private boolean variableType(Location location) {
+		if (variableCompared != null) return variable(location, MagicSpells.getVariableManager().getValueAtLocation(variableCompared, location));
+		return variable(location, value);
+	}
+
+	private boolean variable(Object target, double v) {
+		double val;
+		if (target instanceof Player pl) val = MagicSpells.getVariableManager().getValue(variable, pl);
+		else if (target instanceof Location loc) val = MagicSpells.getVariableManager().getValueAtLocation(variable, loc);
+		else if (target instanceof LivingEntity le) val = MagicSpells.getVariableManager().getValue(variable, le.getName());
+		else return false;
+		
+		if (equals) return val == v;
+		if (moreThan) return val > v;
+		if (lessThan) return val < v;
 		return false;
 	}
 

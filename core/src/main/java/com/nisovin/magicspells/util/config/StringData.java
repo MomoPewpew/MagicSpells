@@ -22,7 +22,7 @@ public class StringData implements ConfigData<String> {
 
 	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("""
 		%(?:\
-		((var|castervar|targetvar):(\\w+)(?::(\\d+))?)|\
+		((var|castervar|targetvar|locationvar|casterlocationvar|targetlocationvar):(\\w+)(?::(\\d+))?)|\
 		(defaultvar:(\\w+))|\
 		(playervar:([a-zA-Z0-9_]{3,16}):(\\w+)(?::(\\d+))?)|\
 		(arg:(\\d+):([\\w-]+))|\
@@ -71,9 +71,11 @@ public class StringData implements ConfigData<String> {
 				}
 			}
 
-			return owner.equalsIgnoreCase("targetvar") ?
-				new TargetVariableData(matcher.group(), variable, places) :
-				new CasterVariableData(matcher.group(), variable, places);
+			if (owner.equalsIgnoreCase("targetvar")) return new TargetVariableData(matcher.group(), variable, places);
+			if (owner.equalsIgnoreCase("locationvar")) return new LocationVariableData(matcher.group(), variable, places);
+			if (owner.equalsIgnoreCase("casterlocationvar")) return new CasterLocationVariableData(matcher.group(), variable, places);
+			if (owner.equalsIgnoreCase("targetlocationvar")) return new TargetLocationVariableData(matcher.group(), variable, places);
+			return new CasterVariableData(matcher.group(), variable, places);
 		}
 
 		if (matcher.group(5) != null) {
@@ -262,6 +264,91 @@ public class StringData implements ConfigData<String> {
 			}
 
 			return var.getStringValue(player);
+		}
+
+	}
+
+	public static class LocationVariableData extends PlaceholderData {
+
+		private final String variable;
+		private final int places;
+
+		public LocationVariableData(String placeholder, String variable, int places) {
+			super(placeholder);
+			this.variable = variable;
+			this.places = places;
+		}
+
+		@Override
+		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			Variable var = MagicSpells.getVariableManager().getVariable(variable);
+			if (var == null) return placeholder;
+
+			org.bukkit.Location loc = null;
+			if (target != null) loc = target.getLocation();
+			else if (caster != null) loc = caster.getLocation();
+
+			if (loc == null) return placeholder;
+
+			if (places >= 0) {
+				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc), places);
+			}
+
+			return MagicSpells.getVariableManager().getStringValueAtLocation(variable, loc);
+		}
+
+	}
+
+	public static class CasterLocationVariableData extends PlaceholderData {
+
+		private final String variable;
+		private final int places;
+
+		public CasterLocationVariableData(String placeholder, String variable, int places) {
+			super(placeholder);
+			this.variable = variable;
+			this.places = places;
+		}
+
+		@Override
+		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			if (caster == null) return placeholder;
+			Variable var = MagicSpells.getVariableManager().getVariable(variable);
+			if (var == null) return placeholder;
+
+			org.bukkit.Location loc = caster.getLocation();
+			if (places >= 0) {
+				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc), places);
+			}
+
+			return MagicSpells.getVariableManager().getStringValueAtLocation(variable, loc);
+		}
+
+	}
+
+	public static class TargetLocationVariableData extends PlaceholderData {
+
+		private final String variable;
+		private final int places;
+
+		public TargetLocationVariableData(String placeholder, String variable, int places) {
+			super(placeholder);
+			this.variable = variable;
+			this.places = places;
+		}
+
+		@Override
+		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			if (target == null) return placeholder;
+			Variable var = MagicSpells.getVariableManager().getVariable(variable);
+			if (var == null) return placeholder;
+
+			org.bukkit.Location loc = target.getLocation();
+			if (places >= 0) {
+				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc), places);
+			}
+
+			return MagicSpells.getVariableManager().getStringValueAtLocation(variable, loc);
 		}
 
 	}

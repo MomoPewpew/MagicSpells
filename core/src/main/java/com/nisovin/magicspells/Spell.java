@@ -102,6 +102,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected List<String> varModsCast;
 	protected List<String> varModsCasted;
 	protected List<String> varModsTarget;
+	protected List<String> varModsLocation;
+	protected Multimap<String, VariableMod> variableModsLocation;
 
 	protected boolean debug;
 	protected boolean obeyLos;
@@ -391,6 +393,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		varModsCast = config.getStringList(path + "variable-mods-cast", null);
 		varModsCasted = config.getStringList(path + "variable-mods-casted", null);
 		varModsTarget = config.getStringList(path + "variable-mods-target", null);
+		varModsLocation = config.getStringList(path + "variable-mods-location", null);
 
 		// Hierarchy options
 		prerequisites = config.getStringList(path + "prerequisites", null);
@@ -508,6 +511,20 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 					variableModsTarget.put(var, varMod);
 				} catch (Exception e) {
 					MagicSpells.error("Invalid variable-mods-target option for spell '" + internalName + "': " + s);
+				}
+			}
+		}
+
+		if (varModsLocation != null && !varModsLocation.isEmpty()) {
+			variableModsLocation = LinkedListMultimap.create();
+			for (String s : varModsLocation) {
+				try {
+					String[] data = s.split(" ", 2);
+					String var = data[0];
+					VariableMod varMod = new VariableMod(data[1]);
+					variableModsLocation.put(var, varMod);
+				} catch (Exception e) {
+					MagicSpells.error("Invalid variable-mods-location option for spell '" + internalName + "': " + s);
 				}
 			}
 		}
@@ -2123,6 +2140,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	public Multimap<String, VariableMod> getVariableModsTarget() {
 		return variableModsTarget;
+	}
+
+	public Multimap<String, VariableMod> getVariableModsLocation() {
+		return variableModsLocation;
 	}
 
 	public ValidTargetList getValidTargetList() {

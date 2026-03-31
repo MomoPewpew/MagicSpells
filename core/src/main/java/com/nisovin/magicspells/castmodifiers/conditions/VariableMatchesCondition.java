@@ -32,7 +32,11 @@ public class VariableMatchesCondition extends Condition {
 
 	@Override
 	public boolean check(LivingEntity caster, Location location) {
-		return variableMatches(caster, null);
+		if (!(caster instanceof Player pl)) return false;
+		return Objects.equals(
+				MagicSpells.getVariableManager().getStringValue(variable, pl),
+				MagicSpells.getVariableManager().getStringValueAtLocation(variable, location)
+		);
 	}
 
 	private boolean variableMatches(LivingEntity caster, LivingEntity target) {

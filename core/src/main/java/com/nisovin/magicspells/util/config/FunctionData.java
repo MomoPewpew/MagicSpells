@@ -30,7 +30,7 @@ import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;
 public class FunctionData<T extends Number> implements ConfigData<T> {
 
 	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile(
-		"%(?:(?<var>(?<varType>var|castervar|targetvar):(?<varName>\\w+)(?::(?<varPlaces>\\d+))?)" +
+		"%(?:(?<var>(?<varType>var|castervar|targetvar|locationvar|casterlocationvar|targetlocationvar):(?<varName>\\w+)(?::(?<varPlaces>\\d+))?)" +
 		"|(?<defaultVar>defaultvar:(?<defaultVarName>\\w+))" +
 		"|(?<playerVar>playervar:(?<playerName>[a-zA-Z0-9_]{3,16}):(?<playerVarName>\\w+)(?::(?<playerVarPlaces>\\d+))?)" +
 		"|(?<arg>arg:(?<argIndex>\\d+):(?<argDefault>" + RegexUtil.DOUBLE_PATTERN + "))" +
@@ -174,9 +174,11 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				}
 			}
 
-			return owner.equalsIgnoreCase("targetvar") ?
-				new TargetVariableData(variable, places) :
-				new CasterVariableData(variable, places);
+			if (owner.equalsIgnoreCase("targetvar")) return new TargetVariableData(variable, places);
+			if (owner.equalsIgnoreCase("locationvar")) return new LocationVariableData(variable, places);
+			if (owner.equalsIgnoreCase("casterlocationvar")) return new CasterLocationVariableData(variable, places);
+			if (owner.equalsIgnoreCase("targetlocationvar")) return new TargetLocationVariableData(variable, places);
+			return new CasterVariableData(variable, places);
 		}
 
 		if (matcher.group("defaultVar") != null) {
@@ -351,6 +353,94 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				}
 			} else value = var.getValue(player);
 
+			return places >= 0 ? Precision.round(value, places) : value;
+		}
+
+		@Override
+		public boolean isConstant() {
+			return false;
+		}
+
+	}
+
+	public static class LocationVariableData implements ConfigData<Double> {
+
+		private final String variable;
+		private final int places;
+
+		public LocationVariableData(String variable, int places) {
+			this.variable = variable;
+			this.places = places;
+		}
+
+		@Override
+		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			Variable var = MagicSpells.getVariableManager().getVariable(variable);
+			if (var == null) return 0d;
+
+			org.bukkit.Location loc = null;
+			if (target != null) loc = target.getLocation();
+			else if (caster != null) loc = caster.getLocation();
+
+			if (loc == null) return 0d;
+
+			double value = MagicSpells.getVariableManager().getValueAtLocation(variable, loc);
+			return places >= 0 ? Precision.round(value, places) : value;
+		}
+
+		@Override
+		public boolean isConstant() {
+			return false;
+		}
+
+	}
+
+	public static class CasterLocationVariableData implements ConfigData<Double> {
+
+		private final String variable;
+		private final int places;
+
+		public CasterLocationVariableData(String variable, int places) {
+			this.variable = variable;
+			this.places = places;
+		}
+
+		@Override
+		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			if (caster == null) return 0d;
+			Variable var = MagicSpells.getVariableManager().getVariable(variable);
+			if (var == null) return 0d;
+
+			org.bukkit.Location loc = caster.getLocation();
+			double value = MagicSpells.getVariableManager().getValueAtLocation(variable, loc);
+			return places >= 0 ? Precision.round(value, places) : value;
+		}
+
+		@Override
+		public boolean isConstant() {
+			return false;
+		}
+
+	}
+
+	public static class TargetLocationVariableData implements ConfigData<Double> {
+
+		private final String variable;
+		private final int places;
+
+		public TargetLocationVariableData(String variable, int places) {
+			this.variable = variable;
+			this.places = places;
+		}
+
+		@Override
+		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			if (target == null) return 0d;
+			Variable var = MagicSpells.getVariableManager().getVariable(variable);
+			if (var == null) return 0d;
+
+			org.bukkit.Location loc = target.getLocation();
+			double value = MagicSpells.getVariableManager().getValueAtLocation(variable, loc);
 			return places >= 0 ? Precision.round(value, places) : value;
 		}
 

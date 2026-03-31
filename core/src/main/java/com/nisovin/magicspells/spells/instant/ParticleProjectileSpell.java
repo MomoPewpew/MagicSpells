@@ -29,7 +29,8 @@ import com.nisovin.magicspells.util.trackers.ParticleProjectileTracker;
 
 import org.apache.commons.math4.core.jdkmath.AccurateMath;
 
-public class ParticleProjectileSpell extends InstantSpell implements TargetedLocationSpell, TargetedEntitySpell, TargetedEntityFromLocationSpell {
+public class ParticleProjectileSpell extends InstantSpell
+		implements TargetedLocationSpell, TargetedEntitySpell, TargetedEntityFromLocationSpell {
 
 	private static Set<ParticleProjectileTracker> trackerSet;
 
@@ -142,11 +143,14 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		horizontalRotation = getConfigDataDouble("horizontal-rotation", 0F);
 		xRotation = getConfigDataDouble("x-rotation", 0F);
 
-		projectileVertGravity = getConfigDataFloat("projectile-vert-gravity", getConfigDataFloat("projectile-gravity", 0F));
+		projectileVertGravity = getConfigDataFloat("projectile-vert-gravity",
+				getConfigDataFloat("projectile-gravity", 0F));
 		projectileHorizGravity = getConfigDataFloat("projectile-horiz-gravity", 0F);
 
-		projectileVertSpread = getConfigDataFloat("projectile-vertical-spread", getConfigDataFloat("projectile-spread", 0F));
-		projectileHorizSpread = getConfigDataFloat("projectile-horizontal-spread", getConfigDataFloat("projectile-spread", 0F));
+		projectileVertSpread = getConfigDataFloat("projectile-vertical-spread",
+				getConfigDataFloat("projectile-spread", 0F));
+		projectileHorizSpread = getConfigDataFloat("projectile-horizontal-spread",
+				getConfigDataFloat("projectile-spread", 0F));
 
 		tickInterval = getConfigDataInt("tick-interval", 2);
 		spellInterval = getConfigDataInt("spell-interval", 20);
@@ -168,13 +172,16 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		if (groundMaterialNames != null) {
 			for (String str : groundMaterialNames) {
 				Material material = Util.getMaterial(str);
-				if (material == null) continue;
-				if (!material.isBlock()) continue;
+				if (material == null)
+					continue;
+				if (!material.isBlock())
+					continue;
 				groundMaterials.add(material);
 			}
 		} else {
 			for (Material material : Material.values()) {
-				if (BlockUtils.isPathable(material)) continue;
+				if (BlockUtils.isPathable(material))
+					continue;
 				groundMaterials.add(material);
 			}
 		}
@@ -183,14 +190,17 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		if (disallowedGroundMaterialNames != null) {
 			for (String str : disallowedGroundMaterialNames) {
 				Material material = Util.getMaterial(str);
-				if (material == null) continue;
-				if (!material.isBlock()) continue;
+				if (material == null)
+					continue;
+				if (!material.isBlock())
+					continue;
 				disallowedGroundMaterials.add(material);
 			}
 		}
 
 		hugSurface = getConfigBoolean("hug-surface", false);
-		if (hugSurface) heightFromSurface = getConfigDataFloat("height-from-surface", 0.6F);
+		if (hugSurface)
+			heightFromSurface = getConfigDataFloat("height-from-surface", 0.6F);
 
 		controllable = getConfigBoolean("controllable", false);
 		sneakInvertsDirection = getConfigDataBoolean("sneak-inverts-direction", false);
@@ -208,7 +218,8 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		stopOnModifierFail = getConfigBoolean("stop-on-modifier-fail", true);
 		allowCasterInteract = getConfigBoolean("allow-caster-interact", true);
 		powerAffectsVelocity = getConfigBoolean("power-affects-velocity", true);
-		if (stopOnHitEntity) maxEntitiesHit = (caster, target, power, args) -> 1;
+		if (stopOnHitEntity)
+			maxEntitiesHit = (caster, target, location, power, args) -> 1;
 
 		// Target List
 		validTargetList.enforce(ValidTargetList.TargetingElement.TARGET_SELF, hitSelf);
@@ -248,66 +259,77 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 
 		defaultSpell = new Subspell(defaultSpellName);
 		if (!defaultSpell.process()) {
-			if (!defaultSpellName.isEmpty()) MagicSpells.error(prefix + " has an invalid spell defined!");
+			if (!defaultSpellName.isEmpty())
+				MagicSpells.error(prefix + " has an invalid spell defined!");
 			defaultSpell = null;
 		}
 
 		airSpell = new Subspell(airSpellName);
 		if (!airSpell.process()) {
-			if (!airSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-air defined!");
+			if (!airSpellName.equals(defaultSpellName))
+				MagicSpells.error(prefix + " has an invalid spell-on-hit-air defined!");
 			airSpell = null;
 		}
 
 		selfSpell = new Subspell(selfSpellName);
 		if (!selfSpell.process()) {
-			if (!selfSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-self defined!");
+			if (!selfSpellName.equals(defaultSpellName))
+				MagicSpells.error(prefix + " has an invalid spell-on-hit-self defined!");
 			selfSpell = null;
 		}
 
 		tickSpell = new Subspell(tickSpellName);
 		if (!tickSpell.process()) {
-			if (!tickSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-tick defined!");
+			if (!tickSpellName.equals(defaultSpellName))
+				MagicSpells.error(prefix + " has an invalid spell-on-tick defined!");
 			tickSpell = null;
 		}
 
 		groundSpell = new Subspell(groundSpellName);
 		if (!groundSpell.process()) {
-			if (!groundSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-ground defined!");
+			if (!groundSpellName.equals(defaultSpellName))
+				MagicSpells.error(prefix + " has an invalid spell-on-hit-ground defined!");
 			groundSpell = null;
 		}
 
 		entitySpell = new Subspell(entitySpellName);
 		if (!entitySpell.process()) {
-			if (!entitySpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-hit-entity defined!");
+			if (!entitySpellName.equals(defaultSpellName))
+				MagicSpells.error(prefix + " has an invalid spell-on-hit-entity defined!");
 			entitySpell = null;
 		}
 
 		durationSpell = new Subspell(durationSpellName);
 		if (!durationSpell.process()) {
-			if (!durationSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-duration-end defined!");
+			if (!durationSpellName.equals(defaultSpellName))
+				MagicSpells.error(prefix + " has an invalid spell-on-duration-end defined!");
 			durationSpell = null;
 		}
 
 		modifierSpell = new Subspell(modifierSpellName);
 		if (!modifierSpell.process()) {
-			if (!modifierSpellName.equals(defaultSpellName)) MagicSpells.error(prefix + " has an invalid spell-on-modifier-fail defined!");
+			if (!modifierSpellName.equals(defaultSpellName))
+				MagicSpells.error(prefix + " has an invalid spell-on-modifier-fail defined!");
 			modifierSpell = null;
 		}
 
 		entityLocationSpell = new Subspell(entityLocationSpellName);
 		if (!entityLocationSpell.process()) {
-			if (!entityLocationSpellName.isEmpty()) MagicSpells.error(prefix + " has an invalid spell-on-entity-location defined!");
+			if (!entityLocationSpellName.isEmpty())
+				MagicSpells.error(prefix + " has an invalid spell-on-entity-location defined!");
 			entityLocationSpell = null;
 		}
 
 		if (interactions != null && !interactions.isEmpty()) {
 			for (String str : interactions) {
 				String[] params = str.split(" ");
-				if (params[0] == null) continue;
+				if (params[0] == null)
+					continue;
 
 				Subspell projectile = new Subspell(params[0]);
 				if (!projectile.process() || !(projectile.getSpell() instanceof ParticleProjectileSpell)) {
-					MagicSpells.error(prefix + " has an interaction with '" + params[0] + "' but that's not a valid particle projectile!");
+					MagicSpells.error(prefix + " has an interaction with '" + params[0]
+							+ "' but that's not a valid particle projectile!");
 					continue;
 				}
 
@@ -316,10 +338,12 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 					continue;
 				}
 
-				if (params[1] == null) continue;
+				if (params[1] == null)
+					continue;
 				Subspell collisionSpell = new Subspell(params[1]);
 				if (!collisionSpell.process()) {
-					MagicSpells.error(prefix + " has an interaction with '" + params[0] + "' and their spell on collision '" + params[1] + "' is not a valid spell!");
+					MagicSpells.error(prefix + " has an interaction with '" + params[0]
+							+ "' and their spell on collision '" + params[1] + "' is not a valid spell!");
 					continue;
 				}
 				interactionSpells.put(params[0], collisionSpell);
@@ -363,7 +387,8 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 	@Override
 	public boolean castAtLocation(Location target, float power, String[] args) {
 		Location targetLoc = target.clone();
-		if (Float.isNaN(targetLoc.getPitch())) targetLoc.setPitch(0);
+		if (Float.isNaN(targetLoc.getPitch()))
+			targetLoc.setPitch(0);
 		ParticleProjectileTracker tracker = new ParticleProjectileTracker(null, power, args);
 		setupTracker(tracker, null, null, power, args);
 		tracker.start(target);
@@ -376,11 +401,15 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		if (!caster.getLocation().getWorld().equals(target.getLocation().getWorld())) return false;
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			String[] args) {
+		if (!validTargetList.canTarget(caster, target))
+			return false;
+		if (!caster.getLocation().getWorld().equals(target.getLocation().getWorld()))
+			return false;
 		Location targetLoc = from.clone();
-		if (Float.isNaN(targetLoc.getPitch())) targetLoc.setPitch(0);
+		if (Float.isNaN(targetLoc.getPitch()))
+			targetLoc.setPitch(0);
 		ParticleProjectileTracker tracker = new ParticleProjectileTracker(caster, power, args);
 		setupTracker(tracker, caster, target, power, args);
 		tracker.startTarget(from, target);
@@ -395,10 +424,13 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
-		if (!from.getWorld().equals(target.getLocation().getWorld())) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
+		if (!from.getWorld().equals(target.getLocation().getWorld()))
+			return false;
 		Location targetLoc = from.clone();
-		if (Float.isNaN(targetLoc.getPitch())) targetLoc.setPitch(0);
+		if (Float.isNaN(targetLoc.getPitch()))
+			targetLoc.setPitch(0);
 		ParticleProjectileTracker tracker = new ParticleProjectileTracker(null, power, args);
 		setupTracker(tracker, null, target, power, args);
 		tracker.startTarget(from, target);
@@ -413,8 +445,10 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		if (!caster.getLocation().getWorld().equals(target.getLocation().getWorld())) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
+		if (!caster.getLocation().getWorld().equals(target.getLocation().getWorld()))
+			return false;
 		ParticleProjectileTracker tracker = new ParticleProjectileTracker(caster, power, args);
 		setupTracker(tracker, caster, target, power, args);
 		tracker.startTarget(caster.getLocation(), target);
@@ -448,7 +482,8 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		return playSpellEffectLibEffects(position, location, data);
 	}
 
-	public Map<SpellEffect, Entity> playEntityEffectsProjectile(EffectPosition position, Location location, SpellData data) {
+	public Map<SpellEffect, Entity> playEntityEffectsProjectile(EffectPosition position, Location location,
+			SpellData data) {
 		return playSpellEntityEffects(position, location, data);
 	}
 
@@ -456,17 +491,21 @@ public class ParticleProjectileSpell extends InstantSpell implements TargetedLoc
 		return playSpellArmorStandEffects(position, location, data);
 	}
 
-	private void setupTracker(ParticleProjectileTracker tracker, LivingEntity caster, LivingEntity target, float power, String[] args) {
+	private void setupTracker(ParticleProjectileTracker tracker, LivingEntity caster, LivingEntity target, float power,
+			String[] args) {
 		tracker.setSpell(this);
 
 		float startXOffset = (float) relativeOffset.getX();
-		if (startXOffset == 1) startXOffset = this.startXOffset.get(caster, target, power, args);
+		if (startXOffset == 1)
+			startXOffset = this.startXOffset.get(caster, target, power, args);
 
 		float startYOffset = (float) relativeOffset.getY();
-		if (startYOffset == 1) startYOffset = this.startYOffset.get(caster, target, power, args);
+		if (startYOffset == 1)
+			startYOffset = this.startYOffset.get(caster, target, power, args);
 
 		float startZOffset = (float) relativeOffset.getZ();
-		if (startZOffset == 0) startZOffset = this.startZOffset.get(caster, target, power, args);
+		if (startZOffset == 0)
+			startZOffset = this.startZOffset.get(caster, target, power, args);
 
 		tracker.setStartXOffset(startXOffset);
 		tracker.setStartYOffset(startYOffset);

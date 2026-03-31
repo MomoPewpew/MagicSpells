@@ -41,11 +41,11 @@ public class ConfigDataUtil {
 	public static ConfigData<AttributeManager.AttributeInfo> getAttributeInfo(@Nullable String value,
 			@Nullable String sourceKey, int index) {
 		if (value == null || value.isBlank())
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 
 		String[] parts = value.trim().split("\\s+");
 		if (parts.length < 3)
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 
 		ConfigData<String> attributeName = getString(parts[0]);
 		ConfigData<Double> amount = getDouble(parts[1]);
@@ -55,22 +55,23 @@ public class ConfigDataUtil {
 		if (attributeName.isConstant() && amount.isConstant() && operation.isConstant()) {
 			AttributeManager.AttributeInfo info = buildAttributeInfo(value, uuid, attributeName.get(null),
 					amount.get(null), operation.get(null));
-			return (caster, target, power, args) -> info;
+			return (caster, target, location, power, args) -> info;
 		}
 
 		return new ConfigData<>() {
 			@Override
-			public AttributeManager.AttributeInfo get(LivingEntity caster, LivingEntity target, float power,
+			public AttributeManager.AttributeInfo get(LivingEntity caster, LivingEntity target, Location location,
+					float power,
 					String[] args) {
-				String name = attributeName.get(caster, target, power, args);
+				String name = attributeName.get(caster, target, null, power, args);
 				if (name == null)
 					return null;
 
-				Double amt = amount.get(caster, target, power, args);
+				Double amt = amount.get(caster, target, null, power, args);
 				if (amt == null)
 					return null;
 
-				String op = operation.get(caster, target, power, args);
+				String op = operation.get(caster, target, null, power, args);
 				if (op == null)
 					return null;
 
@@ -123,36 +124,36 @@ public class ConfigDataUtil {
 	public static ConfigData<Integer> getInteger(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (config.isInt(path)) {
 			int value = config.getInt(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Integer> data = FunctionData.build(config.getString(path), Double::intValue);
 			if (data == null)
-				return (caster, target, power, args) -> null;
+				return (caster, target, location, power, args) -> null;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> null;
+		return (caster, target, location, power, args) -> null;
 	}
 
 	@NotNull
 	public static ConfigData<Integer> getInteger(@NotNull ConfigurationSection config, @NotNull String path, int def) {
 		if (config.isInt(path)) {
 			int value = config.getInt(path, def);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Integer> data = FunctionData.build(config.getString(path), Double::intValue, def);
 			if (data == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -160,7 +161,7 @@ public class ConfigDataUtil {
 			ConfigData<Integer> def) {
 		if (config.isInt(path)) {
 			int value = config.getInt(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
@@ -178,11 +179,11 @@ public class ConfigDataUtil {
 	public static ConfigData<Integer> getInteger(@NotNull String string) {
 		try {
 			int value = Integer.parseInt(string);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		} catch (NumberFormatException e) {
 			FunctionData<Integer> data = FunctionData.build(string, Double::intValue);
 			if (data == null)
-				return (caster, target, power, args) -> null;
+				return (caster, target, location, power, args) -> null;
 
 			return data;
 		}
@@ -192,36 +193,36 @@ public class ConfigDataUtil {
 	public static ConfigData<Long> getLong(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (config.isInt(path) || config.isLong(path)) {
 			long value = config.getLong(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Long> data = FunctionData.build(config.getString(path), Double::longValue);
 			if (data == null)
-				return (caster, target, power, args) -> null;
+				return (caster, target, location, power, args) -> null;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> null;
+		return (caster, target, location, power, args) -> null;
 	}
 
 	@NotNull
 	public static ConfigData<Long> getLong(@NotNull ConfigurationSection config, @NotNull String path, long def) {
 		if (config.isInt(path) || config.isLong(path)) {
 			long value = config.getLong(path, def);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Long> data = FunctionData.build(config.getString(path), Double::longValue, def);
 			if (data == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -229,7 +230,7 @@ public class ConfigDataUtil {
 			ConfigData<Long> def) {
 		if (config.isInt(path) || config.isLong(path)) {
 			long value = config.getLong(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
@@ -247,36 +248,36 @@ public class ConfigDataUtil {
 	public static ConfigData<Short> getShort(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (config.isInt(path)) {
 			short value = (short) config.getInt(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Short> data = FunctionData.build(config.getString(path), Double::shortValue);
 			if (data == null)
-				return (caster, target, power, args) -> null;
+				return (caster, target, location, power, args) -> null;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> null;
+		return (caster, target, location, power, args) -> null;
 	}
 
 	@NotNull
 	public static ConfigData<Short> getShort(@NotNull ConfigurationSection config, @NotNull String path, short def) {
 		if (config.isInt(path)) {
 			short value = (short) config.getInt(path, def);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Short> data = FunctionData.build(config.getString(path), Double::shortValue, def);
 			if (data == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -284,7 +285,7 @@ public class ConfigDataUtil {
 			ConfigData<Short> def) {
 		if (config.isInt(path)) {
 			short value = (short) config.getInt(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
@@ -302,36 +303,36 @@ public class ConfigDataUtil {
 	public static ConfigData<Byte> getByte(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (config.isInt(path)) {
 			byte value = (byte) config.getInt(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Byte> data = FunctionData.build(config.getString(path), Double::byteValue);
 			if (data == null)
-				return (caster, target, power, args) -> null;
+				return (caster, target, location, power, args) -> null;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> null;
+		return (caster, target, location, power, args) -> null;
 	}
 
 	@NotNull
 	public static ConfigData<Byte> getByte(@NotNull ConfigurationSection config, @NotNull String path, byte def) {
 		if (config.isInt(path)) {
 			byte value = (byte) config.getInt(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Byte> data = FunctionData.build(config.getString(path), Double::byteValue, def);
 			if (data == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -339,7 +340,7 @@ public class ConfigDataUtil {
 			ConfigData<Byte> def) {
 		if (config.isInt(path)) {
 			byte value = (byte) config.getInt(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
@@ -357,36 +358,36 @@ public class ConfigDataUtil {
 	public static ConfigData<Double> getDouble(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
 			double value = config.getDouble(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Double> data = FunctionData.build(config.getString(path), Function.identity());
 			if (data == null)
-				return (caster, target, power, args) -> null;
+				return (caster, target, location, power, args) -> null;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> null;
+		return (caster, target, location, power, args) -> null;
 	}
 
 	@NotNull
 	public static ConfigData<Double> getDouble(@NotNull ConfigurationSection config, @NotNull String path, double def) {
 		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
 			double value = config.getDouble(path, def);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Double> data = FunctionData.build(config.getString(path), Function.identity(), def);
 			if (data == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -394,7 +395,7 @@ public class ConfigDataUtil {
 			ConfigData<Double> def) {
 		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
 			double value = config.getDouble(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
@@ -412,11 +413,11 @@ public class ConfigDataUtil {
 	public static ConfigData<Double> getDouble(@NotNull String string) {
 		try {
 			double value = Double.parseDouble(string);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		} catch (NumberFormatException e) {
 			FunctionData<Double> data = FunctionData.build(string, Function.identity());
 			if (data == null)
-				return (caster, target, power, args) -> null;
+				return (caster, target, location, power, args) -> null;
 
 			return data;
 		}
@@ -426,36 +427,36 @@ public class ConfigDataUtil {
 	public static ConfigData<Float> getFloat(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
 			float value = (float) config.getDouble(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Float> data = FunctionData.build(config.getString(path), Double::floatValue);
 			if (data == null)
-				return (caster, target, power, args) -> null;
+				return (caster, target, location, power, args) -> null;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> null;
+		return (caster, target, location, power, args) -> null;
 	}
 
 	@NotNull
 	public static ConfigData<Float> getFloat(@NotNull ConfigurationSection config, @NotNull String path, float def) {
 		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
 			float value = (float) config.getDouble(path, def);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
 			FunctionData<Float> data = FunctionData.build(config.getString(path), Double::floatValue, def);
 			if (data == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			return data;
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -463,7 +464,7 @@ public class ConfigDataUtil {
 			ConfigData<Float> def) {
 		if (config.isInt(path) || config.isLong(path) || config.isDouble(path)) {
 			float value = (float) config.getDouble(path);
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 		}
 
 		if (config.isString(path)) {
@@ -482,7 +483,7 @@ public class ConfigDataUtil {
 			@Nullable String def) {
 		String value = config.getString(path, def);
 		if (value == null)
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 
 		return getString(value);
 	}
@@ -490,11 +491,11 @@ public class ConfigDataUtil {
 	@NotNull
 	public static ConfigData<String> getString(@Nullable String value) {
 		if (value == null)
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 
 		StringData data = new StringData(value);
 		if (data.isConstant())
-			return (caster, target, power, args) -> value;
+			return (caster, target, location, power, args) -> value;
 
 		List<ConfigData<String>> values = data.getValues();
 		List<String> fragments = data.getFragments();
@@ -511,17 +512,18 @@ public class ConfigDataUtil {
 		if (supplier.isConstant()) {
 			String value = supplier.get(null);
 			if (value == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			Component component = Util.getMiniMessage(value);
-			return (caster, target, power, args) -> component;
+			return (caster, target, location, power, args) -> component;
 		}
 
 		return new ConfigData<>() {
 
 			@Override
-			public Component get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				String value = supplier.get(caster, target, power, args);
+			public Component get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
+				String value = supplier.get(caster, target, null, power, args);
 				if (value == null)
 					return def;
 
@@ -539,44 +541,46 @@ public class ConfigDataUtil {
 	public static ConfigData<Boolean> getBoolean(@NotNull ConfigurationSection config, @NotNull String path) {
 		if (config.isBoolean(path)) {
 			boolean val = config.getBoolean(path);
-			return (caster, target, power, args) -> val;
+			return (caster, target, location, power, args) -> val;
 		}
 
 		if (config.isString(path)) {
 			ConfigData<String> supplier = getString(config, path, null);
-			return (caster, target, power, args) -> Boolean.parseBoolean(supplier.get(caster, target, power, args));
+			return (caster, target, location, power, args) -> Boolean
+					.parseBoolean(supplier.get(caster, target, null, power, args));
 		}
 
-		return (caster, target, power, args) -> null;
+		return (caster, target, location, power, args) -> null;
 	}
 
 	public static ConfigData<Boolean> getBoolean(@NotNull ConfigurationSection config, @NotNull String path,
 			boolean def) {
 		if (config.isBoolean(path)) {
 			boolean val = config.getBoolean(path);
-			return (caster, target, power, args) -> val;
+			return (caster, target, location, power, args) -> val;
 		}
 
 		if (config.isString(path)) {
 			ConfigData<String> supplier = getString(config, path, Boolean.toString(def));
-			return (caster, target, power, args) -> Boolean.parseBoolean(supplier.get(caster, target, power, args));
+			return (caster, target, location, power, args) -> Boolean
+					.parseBoolean(supplier.get(caster, target, null, power, args));
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	public static ConfigData<Boolean> getBoolean(@NotNull ConfigurationSection config, @NotNull String path,
 			ConfigData<Boolean> def) {
 		if (config.isBoolean(path)) {
 			boolean val = config.getBoolean(path);
-			return (caster, target, power, args) -> val;
+			return (caster, target, location, power, args) -> val;
 		}
 
 		if (config.isString(path)) {
 			ConfigData<String> supplier = getString(config, path, null);
-			return (caster, target, power, args) -> {
-				String value = supplier.get(caster, target, power, args);
-				return value == null ? def.get(caster, target, power, args) : Boolean.parseBoolean(value);
+			return (caster, target, location, power, args) -> {
+				String value = supplier.get(caster, target, null, power, args);
+				return value == null ? def.get(caster, target, null, power, args) : Boolean.parseBoolean(value);
 			};
 		}
 
@@ -590,21 +594,21 @@ public class ConfigDataUtil {
 			@Nullable T def) {
 		String value = config.getString(path);
 		if (value == null)
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		try {
 			T val = Enum.valueOf(type, value.toUpperCase());
-			return (caster, target, power, args) -> val;
+			return (caster, target, location, power, args) -> val;
 		} catch (IllegalArgumentException e) {
 			ConfigData<String> supplier = getString(value);
 			if (supplier.isConstant())
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			return new ConfigData<>() {
 
 				@Override
-				public T get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					String val = supplier.get(caster, target, power, args);
+				public T get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+					String val = supplier.get(caster, target, null, power, args);
 					if (val == null)
 						return def;
 
@@ -628,21 +632,22 @@ public class ConfigDataUtil {
 			@Nullable Material def) {
 		String value = config.getString(path);
 		if (value == null)
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		Material val = Util.getMaterial(value);
 		if (val != null)
-			return (caster, target, power, args) -> val;
+			return (caster, target, location, power, args) -> val;
 
 		ConfigData<String> supplier = getString(value);
 		if (supplier.isConstant())
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		return new ConfigData<>() {
 
 			@Override
-			public Material get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				String val = supplier.get(caster, target, power, args);
+			public Material get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
+				String val = supplier.get(caster, target, null, power, args);
 				if (val == null)
 					return def;
 
@@ -662,17 +667,18 @@ public class ConfigDataUtil {
 			@Nullable String def) {
 		String value = config.getString(path);
 		if (value == null)
-			return (caster, target, power, args) -> MagicItems.getMagicItemFromString(def);
+			return (caster, target, location, power, args) -> MagicItems.getMagicItemFromString(def);
 
 		ConfigData<String> supplier = getString(value);
 		if (supplier.isConstant())
-			return (caster, target, power, args) -> MagicItems.getMagicItemFromString(value);
+			return (caster, target, location, power, args) -> MagicItems.getMagicItemFromString(value);
 
 		return new ConfigData<>() {
 
 			@Override
-			public MagicItem get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				String val = supplier.get(caster, target, power, args);
+			public MagicItem get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
+				String val = supplier.get(caster, target, null, power, args);
 				if (val == null)
 					return MagicItems.getMagicItemFromString(def);
 
@@ -691,17 +697,18 @@ public class ConfigDataUtil {
 	public static ConfigData<MagicItem> getMagicItem(@NotNull String string) {
 		String value = string;
 		if (value == null)
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 
 		ConfigData<String> supplier = getString(value);
 		if (supplier.isConstant())
-			return (caster, target, power, args) -> MagicItems.getMagicItemFromString(value);
+			return (caster, target, location, power, args) -> MagicItems.getMagicItemFromString(value);
 
 		return new ConfigData<>() {
 
 			@Override
-			public MagicItem get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				String val = supplier.get(caster, target, power, args);
+			public MagicItem get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
+				String val = supplier.get(caster, target, null, power, args);
 				if (val == null)
 					return MagicItems.getMagicItemFromString(string);
 
@@ -722,21 +729,22 @@ public class ConfigDataUtil {
 			@NotNull String path, @Nullable PotionEffectType def) {
 		String value = config.getString(path);
 		if (value == null)
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		PotionEffectType type = Util.getPotionEffectType(value);
 		if (type != null)
-			return (caster, target, power, args) -> type;
+			return (caster, target, location, power, args) -> type;
 
 		ConfigData<String> supplier = getString(value);
 		if (supplier.isConstant())
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		return new ConfigData<>() {
 
 			@Override
-			public PotionEffectType get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				String val = supplier.get(caster, target, power, args);
+			public PotionEffectType get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
+				String val = supplier.get(caster, target, null, power, args);
 				if (val == null)
 					return def;
 
@@ -757,21 +765,22 @@ public class ConfigDataUtil {
 			@Nullable Particle def) {
 		String value = config.getString(path);
 		if (value == null)
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		Particle val = ParticleUtil.getParticle(value);
 		if (val != null)
-			return (caster, target, power, args) -> val;
+			return (caster, target, location, power, args) -> val;
 
 		ConfigData<String> supplier = getString(value);
 		if (supplier.isConstant())
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		return new ConfigData<>() {
 
 			@Override
-			public Particle get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				String val = supplier.get(caster, target, power, args);
+			public Particle get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
+				String val = supplier.get(caster, target, null, power, args);
 				if (val == null)
 					return def;
 
@@ -792,21 +801,22 @@ public class ConfigDataUtil {
 			@Nullable BlockData def) {
 		String value = config.getString(path);
 		if (value == null)
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		try {
 			BlockData val = Bukkit.createBlockData(value.trim().toLowerCase());
-			return (caster, target, power, args) -> val;
+			return (caster, target, location, power, args) -> val;
 		} catch (IllegalArgumentException e) {
 			ConfigData<String> supplier = getString(value);
 			if (supplier.isConstant())
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			return new ConfigData<>() {
 
 				@Override
-				public BlockData get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					String val = supplier.get(caster, target, power, args);
+				public BlockData get(LivingEntity caster, LivingEntity target, Location location, float power,
+						String[] args) {
+					String val = supplier.get(caster, target, null, power, args);
 					if (val == null)
 						return def;
 
@@ -830,24 +840,24 @@ public class ConfigDataUtil {
 			@NotNull String path, @NotNull Registry<T> registry, @Nullable T def) {
 		String value = config.getString(path);
 		if (value == null)
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		NamespacedKey key = NamespacedKey.fromString(value);
 		if (key != null) {
 			T val = registry.get(key);
 			if (val != null)
-				return (caster, target, power, args) -> val;
+				return (caster, target, location, power, args) -> val;
 		}
 
 		ConfigData<String> supplier = getString(value);
 		if (supplier.isConstant())
-			return (caster, target, power, args) -> def;
+			return (caster, target, location, power, args) -> def;
 
 		return new ConfigData<>() {
 
 			@Override
-			public T get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				String val = supplier.get(caster, target, power, args);
+			public T get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+				String val = supplier.get(caster, target, null, power, args);
 				if (val == null)
 					return def;
 
@@ -873,25 +883,25 @@ public class ConfigDataUtil {
 		if (config.isString(path)) {
 			String value = config.getString(path);
 			if (value == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			String[] data = value.split(",");
 			if (data.length != 3)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			try {
 				Vector vector = new Vector(Double.parseDouble(data[0]), Double.parseDouble(data[1]),
 						Double.parseDouble(data[2]));
-				return (caster, target, power, args) -> vector;
+				return (caster, target, location, power, args) -> vector;
 			} catch (NumberFormatException e) {
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 			}
 		}
 
 		if (config.isConfigurationSection(path)) {
 			ConfigurationSection section = config.getConfigurationSection(path);
 			if (section == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			ConfigData<Double> x = getDouble(section, "x", def.getX());
 			ConfigData<Double> y = getDouble(section, "y", def.getY());
@@ -899,16 +909,16 @@ public class ConfigDataUtil {
 
 			if (x.isConstant() && y.isConstant() && z.isConstant()) {
 				Vector vector = new Vector(x.get(null), y.get(null), z.get(null));
-				return (caster, target, power, args) -> vector;
+				return (caster, target, location, power, args) -> vector;
 			}
 
-			return (caster, target, power, args) -> new Vector(
-					x.get(caster, target, power, args),
-					y.get(caster, target, power, args),
-					z.get(caster, target, power, args));
+			return (caster, target, location, power, args) -> new Vector(
+					x.get(caster, target, null, power, args),
+					y.get(caster, target, null, power, args),
+					z.get(caster, target, null, power, args));
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -917,25 +927,25 @@ public class ConfigDataUtil {
 		if (config.isString(path)) {
 			String value = config.getString(path);
 			if (value == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			String[] data = value.split(",");
 			if (data.length != 3)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			try {
 				EulerAngle angle = new EulerAngle(Double.parseDouble(data[0]), Double.parseDouble(data[1]),
 						Double.parseDouble(data[2]));
-				return (caster, target, power, args) -> angle;
+				return (caster, target, location, power, args) -> angle;
 			} catch (NumberFormatException e) {
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 			}
 		}
 
 		if (config.isConfigurationSection(path)) {
 			ConfigurationSection section = config.getConfigurationSection(path);
 			if (section == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			ConfigData<Double> x = getDouble(section, "x", def.getX());
 			ConfigData<Double> y = getDouble(section, "y", def.getY());
@@ -943,16 +953,16 @@ public class ConfigDataUtil {
 
 			if (x.isConstant() && y.isConstant() && z.isConstant()) {
 				EulerAngle angle = new EulerAngle(x.get(null), y.get(null), z.get(null));
-				return (caster, target, power, args) -> angle;
+				return (caster, target, location, power, args) -> angle;
 			}
 
-			return (caster, target, power, args) -> new EulerAngle(
-					x.get(caster, target, power, args),
-					y.get(caster, target, power, args),
-					z.get(caster, target, power, args));
+			return (caster, target, location, power, args) -> new EulerAngle(
+					x.get(caster, target, null, power, args),
+					y.get(caster, target, null, power, args),
+					z.get(caster, target, null, power, args));
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -963,24 +973,25 @@ public class ConfigDataUtil {
 			if (supplier.isConstant()) {
 				String value = supplier.get(null);
 				if (value == null)
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 				String[] parts = value.split(",");
 				if (parts.length != 3)
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 				try {
 					Vector3f vector = new Vector3f(Float.parseFloat(parts[0]), Float.parseFloat(parts[1]),
 							Float.parseFloat(parts[2]));
-					return (caster, target, power, args) -> vector;
+					return (caster, target, location, power, args) -> vector;
 				} catch (NumberFormatException e) {
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 				}
 			}
 
 			return new ConfigData<>() {
 
 				@Override
-				public Vector3f get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					String value = supplier.get(caster, target, power, args);
+				public Vector3f get(LivingEntity caster, LivingEntity target, Location location, float power,
+						String[] args) {
+					String value = supplier.get(caster, target, null, power, args);
 					if (value == null)
 						return def;
 					String[] parts = value.split(",");
@@ -1005,7 +1016,7 @@ public class ConfigDataUtil {
 		if (config.isConfigurationSection(path)) {
 			ConfigurationSection section = config.getConfigurationSection(path);
 			if (section == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			ConfigData<Float> x = getFloat(section, "x", def.x);
 			ConfigData<Float> y = getFloat(section, "y", def.y);
@@ -1013,15 +1024,17 @@ public class ConfigDataUtil {
 
 			if (x.isConstant() && y.isConstant() && z.isConstant()) {
 				Vector3f vector = new Vector3f(x.get(null), y.get(null), z.get(null));
-				return (caster, target, power, args) -> vector;
+				return (caster, target, location, power, args) -> vector;
 			}
 
 			return new ConfigData<>() {
 
 				@Override
-				public Vector3f get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					return new Vector3f(x.get(caster, target, power, args), y.get(caster, target, power, args),
-							z.get(caster, target, power, args));
+				public Vector3f get(LivingEntity caster, LivingEntity target, Location location, float power,
+						String[] args) {
+					return new Vector3f(x.get(caster, target, null, power, args),
+							y.get(caster, target, null, power, args),
+							z.get(caster, target, null, power, args));
 				}
 
 				@Override
@@ -1032,7 +1045,7 @@ public class ConfigDataUtil {
 			};
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -1043,24 +1056,25 @@ public class ConfigDataUtil {
 			if (supplier.isConstant()) {
 				String value = supplier.get(null);
 				if (value == null)
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 				String[] parts = value.split(",");
 				if (parts.length != 4)
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 				try {
 					Quaternionf rot = new Quaternionf(Float.parseFloat(parts[0]), Float.parseFloat(parts[1]),
 							Float.parseFloat(parts[2]), Float.parseFloat(parts[3]));
-					return (caster, target, power, args) -> rot;
+					return (caster, target, location, power, args) -> rot;
 				} catch (NumberFormatException e) {
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 				}
 			}
 
 			return new ConfigData<>() {
 
 				@Override
-				public Quaternionf get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					String value = supplier.get(caster, target, power, args);
+				public Quaternionf get(LivingEntity caster, LivingEntity target, Location location, float power,
+						String[] args) {
+					String value = supplier.get(caster, target, null, power, args);
 					if (value == null)
 						return def;
 					String[] parts = value.split(",");
@@ -1085,7 +1099,7 @@ public class ConfigDataUtil {
 		if (config.isConfigurationSection(path)) {
 			ConfigurationSection section = config.getConfigurationSection(path);
 			if (section == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			if (section.contains("angle") && section.contains("axis")) {
 				ConfigData<Float> angle = getFloat(section, "angle", 0);
@@ -1094,16 +1108,17 @@ public class ConfigDataUtil {
 				if (angle.isConstant() && axis.isConstant()) {
 					Quaternionf quat = new Quaternionf().rotationAxis((float) Math.toRadians(angle.get(null)),
 							axis.get(null));
-					return (caster, target, power, args) -> quat;
+					return (caster, target, location, power, args) -> quat;
 				}
 
 				return new ConfigData<>() {
 
 					@Override
-					public Quaternionf get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+					public Quaternionf get(LivingEntity caster, LivingEntity target, Location location, float power,
+							String[] args) {
 						return new Quaternionf().rotationAxis(
-								(float) Math.toRadians(angle.get(caster, target, power, args)),
-								axis.get(caster, target, power, args));
+								(float) Math.toRadians(angle.get(caster, target, null, power, args)),
+								axis.get(caster, target, null, power, args));
 					}
 
 					@Override
@@ -1121,15 +1136,17 @@ public class ConfigDataUtil {
 
 			if (x.isConstant() && y.isConstant() && z.isConstant() && w.isConstant()) {
 				Quaternionf quat = new Quaternionf(x.get(null), y.get(null), z.get(null), w.get(null));
-				return (caster, target, power, args) -> quat;
+				return (caster, target, location, power, args) -> quat;
 			}
 
 			return new ConfigData<>() {
 
 				@Override
-				public Quaternionf get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					return new Quaternionf(x.get(caster, target, power, args), y.get(caster, target, power, args),
-							z.get(caster, target, power, args), w.get(caster, target, power, args));
+				public Quaternionf get(LivingEntity caster, LivingEntity target, Location location, float power,
+						String[] args) {
+					return new Quaternionf(x.get(caster, target, null, power, args),
+							y.get(caster, target, null, power, args),
+							z.get(caster, target, null, power, args), w.get(caster, target, null, power, args));
 				}
 
 				@Override
@@ -1140,7 +1157,7 @@ public class ConfigDataUtil {
 			};
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	public static ConfigData<Color> getColor(@NotNull ConfigurationSection config, @NotNull String path,
@@ -1148,22 +1165,24 @@ public class ConfigDataUtil {
 		if (config.isInt(path) || config.isString(path)) {
 			String value = config.getString(path);
 			if (value == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			ConfigData<String> supplier = getString(value);
 			if (supplier.isConstant()) {
 				Color color = ColorUtil.getColorFromHexString(value, false);
 				if (color == null)
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 
-				return (caster, target, power, args) -> color;
+				return (caster, target, location, power, args) -> color;
 			}
 
 			return new ConfigData<>() {
 
 				@Override
-				public Color get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Color color = ColorUtil.getColorFromHexString(supplier.get(caster, target, power, args), false);
+				public Color get(LivingEntity caster, LivingEntity target, Location location, float power,
+						String[] args) {
+					Color color = ColorUtil.getColorFromHexString(supplier.get(caster, target, null, power, args),
+							false);
 					return color == null ? def : color;
 				}
 
@@ -1178,7 +1197,7 @@ public class ConfigDataUtil {
 		if (config.isConfigurationSection(path)) {
 			ConfigurationSection section = config.getConfigurationSection(path);
 			if (section == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			ConfigData<Integer> red = getInteger(section, "red");
 			ConfigData<Integer> green = getInteger(section, "green");
@@ -1189,19 +1208,20 @@ public class ConfigDataUtil {
 				Integer g = green.get(null);
 				Integer b = blue.get(null);
 				if (r == null || g == null || b == null || r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 
 				Color c = Color.fromRGB(r, g, b);
-				return (caster, target, power, args) -> c;
+				return (caster, target, location, power, args) -> c;
 			}
 
 			return new ConfigData<>() {
 
 				@Override
-				public Color get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Integer r = red.get(caster, target, power, args);
-					Integer g = green.get(caster, target, power, args);
-					Integer b = blue.get(caster, target, power, args);
+				public Color get(LivingEntity caster, LivingEntity target, Location location, float power,
+						String[] args) {
+					Integer r = red.get(caster, target, null, power, args);
+					Integer g = green.get(caster, target, null, power, args);
+					Integer b = blue.get(caster, target, null, power, args);
 					if (r == null || g == null || b == null || r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
 						return def;
 
@@ -1216,7 +1236,7 @@ public class ConfigDataUtil {
 			};
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	public static ConfigData<Color> getARGBColor(@NotNull ConfigurationSection config, @NotNull String path,
@@ -1224,22 +1244,24 @@ public class ConfigDataUtil {
 		if (config.isInt(path) || config.isString(path)) {
 			String value = config.getString(path);
 			if (value == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			ConfigData<String> supplier = getString(value);
 			if (supplier.isConstant()) {
 				Color color = ColorUtil.getColorFromARGHexString(value, false);
 				if (color == null)
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 
-				return (caster, target, power, args) -> color;
+				return (caster, target, location, power, args) -> color;
 			}
 
 			return new ConfigData<>() {
 
 				@Override
-				public Color get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Color color = ColorUtil.getColorFromARGHexString(supplier.get(caster, target, power, args), false);
+				public Color get(LivingEntity caster, LivingEntity target, Location location, float power,
+						String[] args) {
+					Color color = ColorUtil
+							.getColorFromARGHexString(supplier.get(caster, target, null, power, args), false);
 					return color == null ? def : color;
 				}
 
@@ -1254,7 +1276,7 @@ public class ConfigDataUtil {
 		if (config.isConfigurationSection(path)) {
 			ConfigurationSection section = config.getConfigurationSection(path);
 			if (section == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			ConfigData<Integer> alpha = getInteger(section, "alpha");
 			ConfigData<Integer> red = getInteger(section, "red");
@@ -1268,20 +1290,21 @@ public class ConfigDataUtil {
 				Integer b = blue.get(null);
 				if (a == null || r == null || g == null || b == null || a < 0 || a > 255 || r < 0 || r > 255 || g < 0
 						|| g > 255 || b < 0 || b > 255)
-					return (caster, target, power, args) -> def;
+					return (caster, target, location, power, args) -> def;
 
 				Color c = Color.fromARGB(a, r, g, b);
-				return (caster, target, power, args) -> c;
+				return (caster, target, location, power, args) -> c;
 			}
 
 			return new ConfigData<>() {
 
 				@Override
-				public Color get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-					Integer a = alpha.get(caster, target, power, args);
-					Integer r = red.get(caster, target, power, args);
-					Integer g = green.get(caster, target, power, args);
-					Integer b = blue.get(caster, target, power, args);
+				public Color get(LivingEntity caster, LivingEntity target, Location location, float power,
+						String[] args) {
+					Integer a = alpha.get(caster, target, null, power, args);
+					Integer r = red.get(caster, target, null, power, args);
+					Integer g = green.get(caster, target, null, power, args);
+					Integer b = blue.get(caster, target, null, power, args);
 					if (a == null || r == null || g == null || b == null || a < 0 || a > 255 || r < 0 || r > 255
 							|| g < 0 || g > 255 || b < 0 || b > 255)
 						return def;
@@ -1297,7 +1320,7 @@ public class ConfigDataUtil {
 			};
 		}
 
-		return (caster, target, power, args) -> def;
+		return (caster, target, location, power, args) -> def;
 	}
 
 	@NotNull
@@ -1311,25 +1334,26 @@ public class ConfigDataUtil {
 		if (color.isConstant() && size.isConstant()) {
 			Color c = color.get(null);
 			if (c == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			Float s = size.get(null);
 			if (s == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			DustOptions options = new DustOptions(c, s);
-			return (caster, target, power, args) -> options;
+			return (caster, target, location, power, args) -> options;
 		}
 
 		return new ConfigData<>() {
 
 			@Override
-			public DustOptions get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				Color c = color.get(caster, target, power, args);
+			public DustOptions get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
+				Color c = color.get(caster, target, null, power, args);
 				if (c == null)
 					return def;
 
-				Float s = size.get(caster, target, power, args);
+				Float s = size.get(caster, target, null, power, args);
 				if (s == null)
 					return def;
 
@@ -1357,33 +1381,34 @@ public class ConfigDataUtil {
 		if (color.isConstant() && toColor.isConstant() && size.isConstant()) {
 			Color c = color.get(null);
 			if (c == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			Color tc = toColor.get(null);
 			if (tc == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			Float s = size.get(null);
 			if (s == null)
-				return (caster, target, power, args) -> def;
+				return (caster, target, location, power, args) -> def;
 
 			DustTransition transition = new DustTransition(c, tc, s);
-			return (caster, target, power, args) -> transition;
+			return (caster, target, location, power, args) -> transition;
 		}
 
 		return new ConfigData<>() {
 
 			@Override
-			public DustTransition get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-				Color c = color.get(caster, target, power, args);
+			public DustTransition get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
+				Color c = color.get(caster, target, null, power, args);
 				if (c == null)
 					return def;
 
-				Color tc = toColor.get(caster, target, power, args);
+				Color tc = toColor.get(caster, target, null, power, args);
 				if (tc == null)
 					return def;
 
-				Float s = size.get(caster, target, power, args);
+				Float s = size.get(caster, target, null, power, args);
 				if (s == null)
 					return def;
 
@@ -1402,7 +1427,7 @@ public class ConfigDataUtil {
 	public static ConfigData<List<String>> getStringList(@NotNull ConfigurationSection config, @NotNull String path) {
 		List<String> value = config.getStringList(path);
 		if (value.isEmpty())
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 
 		return getStringList(value);
 	}
@@ -1410,7 +1435,7 @@ public class ConfigDataUtil {
 	@NotNull
 	public static ConfigData<List<String>> getStringList(@Nullable List<String> value) {
 		if (value == null || value.isEmpty()) {
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 		}
 
 		List<ConfigData<String>> configDataList = new ArrayList<>();
@@ -1421,10 +1446,11 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public List<String> get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			public List<String> get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
 				List<String> results = new ArrayList<>();
 				for (ConfigData<String> configData : configDataList) {
-					results.add(configData.get(caster, target, power, args));
+					results.add(configData.get(caster, target, null, power, args));
 				}
 				return results;
 			}
@@ -1446,14 +1472,14 @@ public class ConfigDataUtil {
 		if (config.isList(path)) {
 			List<String> value = config.getStringList(path);
 			if (value.isEmpty())
-				return (caster, target, power, args) -> null;
+				return (caster, target, location, power, args) -> null;
 			return getIntList(value);
 		}
 
 		// Handle single string value
 		String singleValue = config.getString(path);
 		if (singleValue == null)
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 
 		List<String> singleItemList = new ArrayList<>();
 		singleItemList.add(singleValue);
@@ -1463,7 +1489,7 @@ public class ConfigDataUtil {
 	@NotNull
 	public static ConfigData<List<Integer>> getIntList(@Nullable List<String> value) {
 		if (value == null || value.isEmpty()) {
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 		}
 
 		List<ConfigData<Integer>> configDataList = new ArrayList<>();
@@ -1474,10 +1500,11 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public List<Integer> get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			public List<Integer> get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
 				List<Integer> results = new ArrayList<>();
 				for (ConfigData<Integer> configData : configDataList) {
-					results.add(configData.get(caster, target, power, args));
+					results.add(configData.get(caster, target, null, power, args));
 				}
 				return results;
 			}
@@ -1498,11 +1525,11 @@ public class ConfigDataUtil {
 	public static ConfigData<ConfigurationSection> getConfigurationSection(@NotNull ConfigurationSection config,
 			@NotNull String path) {
 		if (!config.isConfigurationSection(path))
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 
 		ConfigurationSection section = config.getConfigurationSection(path);
 		if (section == null)
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 
 		ConfigurationSection sectionData = new YamlConfiguration();
 
@@ -1541,12 +1568,13 @@ public class ConfigDataUtil {
 		return new ConfigData<>() {
 
 			@Override
-			public ConfigurationSection get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			public ConfigurationSection get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
 				ConfigurationSection results = new YamlConfiguration();
 
 				for (String key : sectionData.getKeys(false)) {
 					ConfigData<?> data = (ConfigData<?>) sectionData.get(key);
-					results.set(key, data.get(caster, target, power, args));
+					results.set(key, data.get(caster, target, null, power, args));
 				}
 
 				return results;

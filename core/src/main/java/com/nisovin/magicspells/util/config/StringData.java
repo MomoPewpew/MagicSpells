@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.Location;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 
@@ -21,15 +22,15 @@ import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;
 public class StringData implements ConfigData<String> {
 
 	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("""
-		%(?:\
-		((var|castervar|targetvar|locationvar|casterlocationvar|targetlocationvar):(\\w+)(?::(\\d+))?)|\
-		(defaultvar:(\\w+))|\
-		(playervar:([a-zA-Z0-9_]{3,16}):(\\w+)(?::(\\d+))?)|\
-		(arg:(\\d+):([\\w-]+))|\
-		((papi|casterpapi|targetpapi):([^%]+))|\
-		(playerpapi:([a-zA-Z0-9_]{3,16}):([^%]+))\
-		)%|\
-		%([at])""", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+			%(?:\
+			((var|castervar|targetvar|locationvar|casterlocationvar|targetlocationvar):(\\w+)(?::(\\d+))?)|\
+			(defaultvar:(\\w+))|\
+			(playervar:([a-zA-Z0-9_]{3,16}):(\\w+)(?::(\\d+))?)|\
+			(arg:(\\d+):([\\w-]+))|\
+			((papi|casterpapi|targetpapi):([^%]+))|\
+			(playerpapi:([a-zA-Z0-9_]{3,16}):([^%]+))\
+			)%|\
+			%([at])""", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
 	private final List<ConfigData<String>> values;
 	private final List<String> fragments;
@@ -42,7 +43,8 @@ public class StringData implements ConfigData<String> {
 		int end = 0;
 		while (matcher.find()) {
 			ConfigData<String> data = createData(matcher);
-			if (data == null) continue;
+			if (data == null)
+				continue;
 
 			fragments.add(value.substring(end, matcher.start()));
 			values.add(data);
@@ -71,10 +73,14 @@ public class StringData implements ConfigData<String> {
 				}
 			}
 
-			if (owner.equalsIgnoreCase("targetvar")) return new TargetVariableData(matcher.group(), variable, places);
-			if (owner.equalsIgnoreCase("locationvar")) return new LocationVariableData(matcher.group(), variable, places);
-			if (owner.equalsIgnoreCase("casterlocationvar")) return new CasterLocationVariableData(matcher.group(), variable, places);
-			if (owner.equalsIgnoreCase("targetlocationvar")) return new TargetLocationVariableData(matcher.group(), variable, places);
+			if (owner.equalsIgnoreCase("targetvar"))
+				return new TargetVariableData(matcher.group(), variable, places);
+			if (owner.equalsIgnoreCase("locationvar"))
+				return new LocationVariableData(matcher.group(), variable, places);
+			if (owner.equalsIgnoreCase("casterlocationvar"))
+				return new CasterLocationVariableData(matcher.group(), variable, places);
+			if (owner.equalsIgnoreCase("targetlocationvar"))
+				return new TargetLocationVariableData(matcher.group(), variable, places);
 			return new CasterVariableData(matcher.group(), variable, places);
 		}
 
@@ -109,7 +115,8 @@ public class StringData implements ConfigData<String> {
 			} catch (NumberFormatException e) {
 				return null;
 			}
-			if (index == 0) return null;
+			if (index == 0)
+				return null;
 
 			return new ArgumentData(index - 1, def);
 		}
@@ -118,9 +125,8 @@ public class StringData implements ConfigData<String> {
 			String owner = matcher.group(15);
 			String papiPlaceholder = '%' + matcher.group(16) + '%';
 
-			return owner.equalsIgnoreCase("targetpapi") ?
-				new TargetPAPIData(matcher.group(), papiPlaceholder) :
-				new CasterPAPIData(matcher.group(), papiPlaceholder);
+			return owner.equalsIgnoreCase("targetpapi") ? new TargetPAPIData(matcher.group(), papiPlaceholder)
+					: new CasterPAPIData(matcher.group(), papiPlaceholder);
 		}
 
 		if (matcher.group(17) != null) {
@@ -142,13 +148,14 @@ public class StringData implements ConfigData<String> {
 	}
 
 	@Override
-	public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (values.isEmpty()) return fragments.get(0);
+	public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+		if (values.isEmpty())
+			return fragments.get(0);
 
 		StringBuilder builder = new StringBuilder();
 		for (int i = 0; i < fragments.size() - 1; i++) {
 			builder.append(fragments.get(i));
-			builder.append(values.get(i).get(caster, target, power, args));
+			builder.append(values.get(i).get(caster, target, null, power, args));
 		}
 		builder.append(fragments.get(fragments.size() - 1));
 
@@ -194,9 +201,11 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (args != null && args.length > index) return args[index];
-			else return def;
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (args != null && args.length > index)
+				return args[index];
+			else
+				return def;
 		}
 
 		@Override
@@ -219,11 +228,13 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!(caster instanceof Player player)) return placeholder;
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (!(caster instanceof Player player))
+				return placeholder;
 
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return placeholder;
+			if (var == null)
+				return placeholder;
 
 			if (places >= 0) {
 				if (var instanceof PlayerStringVariable || var instanceof GlobalStringVariable)
@@ -250,11 +261,13 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!(target instanceof Player player)) return placeholder;
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (!(target instanceof Player player))
+				return placeholder;
 
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return placeholder;
+			if (var == null)
+				return placeholder;
 
 			if (places >= 0) {
 				if (var instanceof PlayerStringVariable || var instanceof GlobalStringVariable)
@@ -280,18 +293,23 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return placeholder;
+			if (var == null)
+				return placeholder;
 
 			org.bukkit.Location loc = null;
-			if (target != null) loc = target.getLocation();
-			else if (caster != null) loc = caster.getLocation();
+			if (target != null)
+				loc = target.getLocation();
+			else if (caster != null)
+				loc = caster.getLocation();
 
-			if (loc == null) return placeholder;
+			if (loc == null)
+				return placeholder;
 
 			if (places >= 0) {
-				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc), places);
+				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc),
+						places);
 			}
 
 			return MagicSpells.getVariableManager().getStringValueAtLocation(variable, loc);
@@ -311,14 +329,17 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (caster == null) return placeholder;
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (caster == null)
+				return placeholder;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return placeholder;
+			if (var == null)
+				return placeholder;
 
 			org.bukkit.Location loc = caster.getLocation();
 			if (places >= 0) {
-				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc), places);
+				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc),
+						places);
 			}
 
 			return MagicSpells.getVariableManager().getStringValueAtLocation(variable, loc);
@@ -338,14 +359,17 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (target == null) return placeholder;
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (target == null)
+				return placeholder;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return placeholder;
+			if (var == null)
+				return placeholder;
 
 			org.bukkit.Location loc = target.getLocation();
 			if (places >= 0) {
-				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc), places);
+				return TxtUtil.getStringNumber(MagicSpells.getVariableManager().getValueAtLocation(variable, loc),
+						places);
 			}
 
 			return MagicSpells.getVariableManager().getStringValueAtLocation(variable, loc);
@@ -363,9 +387,10 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return placeholder;
+			if (var == null)
+				return placeholder;
 
 			return var.getDefaultStringValue();
 		}
@@ -386,9 +411,10 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return placeholder;
+			if (var == null)
+				return placeholder;
 
 			if (places >= 0) {
 				if (var instanceof PlayerStringVariable || var instanceof GlobalStringVariable)
@@ -413,7 +439,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(caster instanceof Player player))
 				return placeholder;
 
@@ -433,7 +459,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(target instanceof Player player))
 				return placeholder;
 
@@ -455,8 +481,9 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return placeholder;
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"))
+				return placeholder;
 			return PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(player), papiPlaceholder);
 		}
 
@@ -469,7 +496,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			return caster != null ? caster.getName() : placeholder;
 		}
 	}
@@ -481,7 +508,7 @@ public class StringData implements ConfigData<String> {
 		}
 
 		@Override
-		public String get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public String get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			return target != null ? target.getName() : placeholder;
 		}
 	}

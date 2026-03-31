@@ -53,9 +53,11 @@ public class DisguiseSpell extends BuffSpell {
 
 		if (isConfigSection("disguise")) {
 			ConfigurationSection disguiseSection = getConfigSection("disguise");
-			if (disguiseSection != null) entityData = new EntityData(disguiseSection);
+			if (disguiseSection != null)
+				entityData = new EntityData(disguiseSection);
 
-			MagicSpells.error("DisguiseSpell '" + internalName + "' is using the legacy 'disguise' section, which is planned for removal. Please switch to a 'disguise' string.");
+			MagicSpells.error("DisguiseSpell '" + internalName
+					+ "' is using the legacy 'disguise' section, which is planned for removal. Please switch to a 'disguise' string.");
 			return;
 		}
 
@@ -70,7 +72,7 @@ public class DisguiseSpell extends BuffSpell {
 		if (supplier.isConstant()) {
 			try {
 				Disguise disguise = DisguiseParser.parseDisguise(disguiseString);
-				disguiseData = (caster, target, power, args) -> disguise;
+				disguiseData = (caster, target, location, power, args) -> disguise;
 			} catch (Throwable t) {
 				MagicSpells.error("DisguiseSpell '" + internalName + "' has an invalid 'disguise' defined.");
 				DebugHandler.debug(t);
@@ -80,7 +82,7 @@ public class DisguiseSpell extends BuffSpell {
 			return;
 		}
 
-		disguiseData = (caster, target, power, args) -> {
+		disguiseData = (caster, target, location, power, args) -> {
 			try {
 				return DisguiseParser.parseDisguise(supplier.get(caster, target, power, args));
 			} catch (Throwable ignored) {
@@ -93,7 +95,8 @@ public class DisguiseSpell extends BuffSpell {
 	public void initialize() {
 		super.initialize();
 
-		if (disguiseData != null) return;
+		if (disguiseData != null)
+			return;
 
 		if (entityData == null || entityData.getEntityType() == null)
 			MagicSpells.error("DisguiseSpell '" + internalName + "' has an invalid disguise defined!");
@@ -104,7 +107,8 @@ public class DisguiseSpell extends BuffSpell {
 		// STRING
 		if (disguiseData != null) {
 			Disguise disguise = disguiseData.get(entity, null, power, args);
-			if (disguise == null) return false;
+			if (disguise == null)
+				return false;
 
 			DisguiseAPI.disguiseEntity(entity, disguise);
 			entities.add(entity.getUniqueId());
@@ -112,15 +116,20 @@ public class DisguiseSpell extends BuffSpell {
 			return true;
 		}
 
-		if (entityData == null) return false;
+		if (entityData == null)
+			return false;
 
 		DisguiseType disguiseType = DisguiseType.getType(entityData.getEntityType().get(entity, null, power, args));
 
 		Disguise disguise;
-		if (disguiseType.isPlayer()) disguise = new PlayerDisguise(playerName, skinName);
-		else if (disguiseType.isMob()) disguise = new MobDisguise(disguiseType);
-		else if (disguiseType.isMisc()) disguise = new MiscDisguise(disguiseType);
-		else return false;
+		if (disguiseType.isPlayer())
+			disguise = new PlayerDisguise(playerName, skinName);
+		else if (disguiseType.isMob())
+			disguise = new MobDisguise(disguiseType);
+		else if (disguiseType.isMisc())
+			disguise = new MiscDisguise(disguiseType);
+		else
+			return false;
 
 		FlagWatcher watcher = disguise.getWatcher();
 		watcher.setBurning(burning);
@@ -152,7 +161,8 @@ public class DisguiseSpell extends BuffSpell {
 
 			if (tameableWatcher instanceof WolfWatcher wolfWatcher) {
 				DyeColor color = entityData.getColor().get(entity, null, power, args);
-				if (color != null) wolfWatcher.setCollarColor(color);
+				if (color != null)
+					wolfWatcher.setCollarColor(color);
 			}
 		}
 
@@ -160,10 +170,12 @@ public class DisguiseSpell extends BuffSpell {
 			creeperWatcher.setPowered(entityData.getPowered().get(entity, null, power, args));
 
 		if (watcher instanceof DroppedItemWatcher droppedItemWatcher)
-			droppedItemWatcher.setItemStack(new ItemStack(entityData.getDroppedItemStack().get(entity, null, power, args)));
+			droppedItemWatcher
+					.setItemStack(new ItemStack(entityData.getDroppedItemStack().get(entity, null, power, args)));
 
 		if (watcher instanceof EndermanWatcher endermanWatcher)
-			endermanWatcher.setItemInMainHand(entityData.getCarriedBlockData().get(entity, null, power, args).getMaterial());
+			endermanWatcher
+					.setItemInMainHand(entityData.getCarriedBlockData().get(entity, null, power, args).getMaterial());
 
 		if (watcher instanceof FallingBlockWatcher fallingBlockWatcher)
 			fallingBlockWatcher.setBlockData(entityData.getFallingBlockData().get(entity, null, power, args));
@@ -176,7 +188,8 @@ public class DisguiseSpell extends BuffSpell {
 
 		if (watcher instanceof SheepWatcher sheepWatcher) {
 			DyeColor color = entityData.getColor().get(entity, null, power, args);
-			if (color != null) sheepWatcher.setColor(color);
+			if (color != null)
+				sheepWatcher.setColor(color);
 
 			sheepWatcher.setSheared(entityData.getSheared().get(entity, null, power, args));
 		}
@@ -186,13 +199,15 @@ public class DisguiseSpell extends BuffSpell {
 
 		if (watcher instanceof TropicalFishWatcher tropicalFishWatcher) {
 			tropicalFishWatcher.setBodyColor(entityData.getColor().get(entity, null, power, args));
-			tropicalFishWatcher.setPatternColor(entityData.getTropicalFishPatternColor().get(entity, null, power, args));
+			tropicalFishWatcher
+					.setPatternColor(entityData.getTropicalFishPatternColor().get(entity, null, power, args));
 			tropicalFishWatcher.setPattern(entityData.getTropicalFishPattern().get(entity, null, power, args));
 		}
 
 		if (watcher instanceof VillagerWatcher villagerWatcher) {
 			Villager.Profession profession = entityData.getProfession().get(entity, null, power, args);
-			if (profession != null) villagerWatcher.setProfession(profession);
+			if (profession != null)
+				villagerWatcher.setProfession(profession);
 		}
 
 		DisguiseAPI.disguiseEntity(entity, disguise);
@@ -216,7 +231,8 @@ public class DisguiseSpell extends BuffSpell {
 	protected void turnOff() {
 		for (UUID id : entities) {
 			Entity entity = Bukkit.getEntity(id);
-			if (entity == null) continue;
+			if (entity == null)
+				continue;
 			DisguiseAPI.undisguiseToAll(entity);
 		}
 		entities.clear();

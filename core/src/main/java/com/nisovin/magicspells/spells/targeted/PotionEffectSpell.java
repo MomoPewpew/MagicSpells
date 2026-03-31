@@ -47,7 +47,8 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 		potionEffectData = getConfigList("potion-effects", null);
 
-		type = ConfigDataUtil.getPotionEffectType(config.getMainConfig(), "spells." + internalName + ".type", PotionEffectType.SPEED);
+		type = ConfigDataUtil.getPotionEffectType(config.getMainConfig(), "spells." + internalName + ".type",
+				PotionEffectType.SPEED);
 
 		duration = getConfigDataInt("duration", 0);
 		strength = getConfigDataInt("strength", 0);
@@ -65,17 +66,20 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 	public void initialize() {
 		super.initialize();
 
-		if (potionEffectData == null) return;
+		if (potionEffectData == null)
+			return;
 
 		potionEffects = new ArrayList<>();
 		for (Object potionEffectObj : potionEffectData) {
 			if (potionEffectObj instanceof String potionEffectString) {
 				String[] data = potionEffectString.split(" ");
-				if (data.length == 0) continue;
+				if (data.length == 0)
+					continue;
 
 				PotionEffectType type = Util.getPotionEffectType(data[0]);
 				if (type == null) {
-					MagicSpells.error("Invalid potion effect string '" + potionEffectString + "' in PotionEffectSpell '" + internalName + "'.");
+					MagicSpells.error("Invalid potion effect string '" + potionEffectString + "' in PotionEffectSpell '"
+							+ internalName + "'.");
 					continue;
 				}
 
@@ -84,7 +88,8 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 					try {
 						duration = Integer.parseInt(data[1]);
 					} catch (NumberFormatException e) {
-						MagicSpells.error("Invalid duration '" + duration + "' in potion effect string '" + potionEffectString + "' in PotionEffectSpell '" + internalName + "'.");
+						MagicSpells.error("Invalid duration '" + duration + "' in potion effect string '"
+								+ potionEffectString + "' in PotionEffectSpell '" + internalName + "'.");
 						continue;
 					}
 				}
@@ -94,7 +99,8 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 					try {
 						strength = Integer.parseInt(data[2]);
 					} catch (NumberFormatException e) {
-						MagicSpells.error("Invalid strength '" + strength + "' in potion effect string '" + potionEffectString + "' in PotionEffectSpell '" + internalName + "'.");
+						MagicSpells.error("Invalid strength '" + strength + "' in potion effect string '"
+								+ potionEffectString + "' in PotionEffectSpell '" + internalName + "'.");
 						continue;
 					}
 				}
@@ -104,7 +110,8 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 				boolean icon = data.length < 6 || Boolean.parseBoolean(data[5]);
 
 				if (data.length > 6)
-					MagicSpells.error("Trailing data found in potion effect string '" + potionEffectString + "' in PotionEffectSpell '" + internalName + "'.");
+					MagicSpells.error("Trailing data found in potion effect string '" + potionEffectString
+							+ "' in PotionEffectSpell '" + internalName + "'.");
 
 				if (spellPowerAffectsDuration || spellPowerAffectsStrength) {
 					int finalDuration = duration;
@@ -112,49 +119,56 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 					ConfigData<PotionEffect> effect;
 					if (!spellPowerAffectsStrength)
-						effect = (caster, target, power, args) -> new PotionEffect(type, Math.round(finalDuration * power), finalStrength, ambient, particles, icon);
+						effect = (caster, target, location, power, args) -> new PotionEffect(type,
+								Math.round(finalDuration * power), finalStrength, ambient, particles, icon);
 					else if (!spellPowerAffectsDuration)
-						effect = (caster, target, power, args) -> new PotionEffect(type, finalDuration, Math.round(finalStrength * power), ambient, particles, icon);
+						effect = (caster, target, location, power, args) -> new PotionEffect(type, finalDuration,
+								Math.round(finalStrength * power), ambient, particles, icon);
 					else
-						effect = (caster, target, power, args) -> new PotionEffect(type, Math.round(finalDuration * power), Math.round(finalStrength * power), ambient, particles, icon);
+						effect = (caster, target, location, power, args) -> new PotionEffect(type,
+								Math.round(finalDuration * power), Math.round(finalStrength * power), ambient,
+								particles, icon);
 
 					potionEffects.add(effect);
 				} else {
 					PotionEffect effect = new PotionEffect(type, duration, strength, ambient, particles, icon);
-					potionEffects.add((caster, target, power, args) -> effect);
+					potionEffects.add((caster, target, location, power, args) -> effect);
 				}
 			} else if (potionEffectObj instanceof Map<?, ?> potionEffectMap) {
 				ConfigurationSection section = ConfigReaderUtil.mapToSection(potionEffectMap);
 
-				ConfigData<PotionEffectType> type = ConfigDataUtil.getPotionEffectType(section, "type", PotionEffectType.SPEED);
+				ConfigData<PotionEffectType> type = ConfigDataUtil.getPotionEffectType(section, "type",
+						PotionEffectType.SPEED);
 				ConfigData<Integer> duration = ConfigDataUtil.getInteger(section, "duration", 0);
 				ConfigData<Integer> strength = ConfigDataUtil.getInteger(section, "strength", 0);
 				ConfigData<Boolean> ambient = ConfigDataUtil.getBoolean(section, "ambient", false);
 				ConfigData<Boolean> hidden = ConfigDataUtil.getBoolean(section, "hidden", false);
 				ConfigData<Boolean> icon = ConfigDataUtil.getBoolean(section, "icon", true);
 
-				ConfigData<PotionEffect> effect = (caster, target, power, args) -> {
+				ConfigData<PotionEffect> effect = (caster, target, location, power, args) -> {
 					int d = duration.get(caster, target, power, args);
-					if (spellPowerAffectsDuration) d = Math.round(d * power);
+					if (spellPowerAffectsDuration)
+						d = Math.round(d * power);
 
 					int s = strength.get(caster, target, power, args);
-					if (spellPowerAffectsStrength) s = Math.round(s * power);
+					if (spellPowerAffectsStrength)
+						s = Math.round(s * power);
 
 					return new PotionEffect(
-						type.get(caster, target, power, args),
-						d,
-						s,
-						ambient.get(caster, target, power, args),
-						!hidden.get(caster, target, power, args),
-						icon.get(caster, target, power, args)
-					);
+							type.get(caster, target, power, args),
+							d,
+							s,
+							ambient.get(caster, target, power, args),
+							!hidden.get(caster, target, power, args),
+							icon.get(caster, target, power, args));
 				};
 
 				potionEffects.add(effect);
 			}
 		}
 
-		if (potionEffects.isEmpty()) potionEffects = null;
+		if (potionEffects.isEmpty())
+			potionEffects = null;
 		potionEffectData = null;
 	}
 
@@ -164,7 +178,8 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 			LivingEntity target;
 			if (targeted) {
 				TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-				if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+				if (targetInfo.noTarget())
+					return noTarget(caster, args, targetInfo);
 
 				target = targetInfo.target();
 				power = targetInfo.power();
@@ -172,8 +187,10 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 				SpellTargetEvent targetEvent = new SpellTargetEvent(this, caster, caster, power, args);
 				targetEvent.callEvent();
 
-				if (targetEvent.isCastCancelled()) return PostCastAction.ALREADY_HANDLED;
-				else if (targetEvent.isCancelled()) return noTarget(caster, args);
+				if (targetEvent.isCastCancelled())
+					return PostCastAction.ALREADY_HANDLED;
+				else if (targetEvent.isCancelled())
+					return noTarget(caster, args);
 
 				target = targetEvent.getTarget();
 				power = targetEvent.getPower();
@@ -191,7 +208,8 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		handlePotionEffects(caster, target, power, args);
 		playSpellEffects(caster, target, power, args);
 		return true;
@@ -204,7 +222,8 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		handlePotionEffects(null, target, power, args);
 		playSpellEffects(EffectPosition.TARGET, target, power, args);
 		return true;
@@ -220,10 +239,12 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 			PotionEffectType type = this.type.get(caster, target, power, args);
 
 			int duration = this.duration.get(caster, target, power, args);
-			if (spellPowerAffectsDuration) duration = Math.round(duration * power);
+			if (spellPowerAffectsDuration)
+				duration = Math.round(duration * power);
 
 			int strength = this.strength.get(caster, target, power, args);
-			if (spellPowerAffectsStrength) strength = Math.round(strength * power);
+			if (spellPowerAffectsStrength)
+				strength = Math.round(strength * power);
 
 			boolean ambient = this.ambient.get(caster, target, power, args);
 			boolean particles = !this.hidden.get(caster, target, power, args);
@@ -233,7 +254,8 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 			callDamageEvent(caster, target, effect);
 
-			if (override && target.hasPotionEffect(type)) target.removePotionEffect(type);
+			if (override && target.hasPotionEffect(type))
+				target.removePotionEffect(type);
 			target.addPotionEffect(effect);
 
 			return;
@@ -244,17 +266,21 @@ public class PotionEffectSpell extends TargetedSpell implements TargetedEntitySp
 
 			callDamageEvent(caster, target, effect);
 
-			if (override && target.hasPotionEffect(effect.getType())) target.removePotionEffect(effect.getType());
+			if (override && target.hasPotionEffect(effect.getType()))
+				target.removePotionEffect(effect.getType());
 			target.addPotionEffect(effect);
 		}
 	}
 
 	private void callDamageEvent(LivingEntity caster, LivingEntity target, PotionEffect effect) {
 		DamageCause cause = null;
-		if (effect.getType() == PotionEffectType.POISON) cause = DamageCause.POISON;
-		else if (effect.getType() == PotionEffectType.WITHER) cause = DamageCause.WITHER;
+		if (effect.getType() == PotionEffectType.POISON)
+			cause = DamageCause.POISON;
+		else if (effect.getType() == PotionEffectType.WITHER)
+			cause = DamageCause.WITHER;
 
-		if (cause != null) new SpellApplyDamageEvent(this, caster, target, effect.getAmplifier(), cause, "").callEvent();
+		if (cause != null)
+			new SpellApplyDamageEvent(this, caster, target, effect.getAmplifier(), cause, "").callEvent();
 	}
 
 }

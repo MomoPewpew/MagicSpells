@@ -26,7 +26,7 @@ public class CustomDataFloat extends CustomData {
 
 		try {
 			float value = Float.parseFloat(data);
-			customData = (caster, target, power, args) -> value;
+			customData = (caster, target, location, power, args) -> value;
 		} catch (NumberFormatException e) {
 			customData = FunctionData.build(data, Double::floatValue, 0f);
 			if (customData == null) {
@@ -65,7 +65,8 @@ public class CustomDataFloat extends CustomData {
 	}
 
 	public static float from(CustomData data, SpellTargetEvent event) {
-		return ((CustomDataFloat) data).get(event.getCaster(), event.getTarget(), event.getPower(), event.getSpellArgs());
+		return ((CustomDataFloat) data).get(event.getCaster(), event.getTarget(), event.getPower(),
+				event.getSpellArgs());
 	}
 
 	public static float from(CustomData data, SpellTargetLocationEvent event) {

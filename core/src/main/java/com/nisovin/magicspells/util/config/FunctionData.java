@@ -16,6 +16,7 @@ import de.slikey.exp4j.ExpressionBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.Location;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 
@@ -30,14 +31,15 @@ import com.nisovin.magicspells.variables.variabletypes.PlayerStringVariable;
 public class FunctionData<T extends Number> implements ConfigData<T> {
 
 	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile(
-		"%(?:(?<var>(?<varType>var|castervar|targetvar|locationvar|casterlocationvar|targetlocationvar):(?<varName>\\w+)(?::(?<varPlaces>\\d+))?)" +
-		"|(?<defaultVar>defaultvar:(?<defaultVarName>\\w+))" +
-		"|(?<playerVar>playervar:(?<playerName>[a-zA-Z0-9_]{3,16}):(?<playerVarName>\\w+)(?::(?<playerVarPlaces>\\d+))?)" +
-		"|(?<arg>arg:(?<argIndex>\\d+):(?<argDefault>" + RegexUtil.DOUBLE_PATTERN + "))" +
-		"|(?<papi>(?<papiType>papi|casterpapi|targetpapi):(?<papiPlaceholder>[^%]+))" +
-		"|(?<playerPapi>playerpapi:(?<playerPapiName>[a-zA-Z0-9_]{3,16}):(?<playerPapiPlaceholder>[^%]+)))%",
-		Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
-	);
+			"%(?:(?<var>(?<varType>var|castervar|targetvar|locationvar|casterlocationvar|targetlocationvar):(?<varName>\\w+)(?::(?<varPlaces>\\d+))?)"
+					+
+					"|(?<defaultVar>defaultvar:(?<defaultVarName>\\w+))" +
+					"|(?<playerVar>playervar:(?<playerName>[a-zA-Z0-9_]{3,16}):(?<playerVarName>\\w+)(?::(?<playerVarPlaces>\\d+))?)"
+					+
+					"|(?<arg>arg:(?<argIndex>\\d+):(?<argDefault>" + RegexUtil.DOUBLE_PATTERN + "))" +
+					"|(?<papi>(?<papiType>papi|casterpapi|targetpapi):(?<papiPlaceholder>[^%]+))" +
+					"|(?<playerPapi>playerpapi:(?<playerPapiName>[a-zA-Z0-9_]{3,16}):(?<playerPapiPlaceholder>[^%]+)))%",
+			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
 	private final Map<String, ConfigData<Double>> variables;
 	private final Function<Double, T> converter;
@@ -45,7 +47,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 	private final ConfigData<T> dataDef;
 	private final T def;
 
-	public FunctionData(@NotNull Expression expression, @NotNull Map<String, ConfigData<Double>> variables, @NotNull Function<Double, T> converter) {
+	public FunctionData(@NotNull Expression expression, @NotNull Map<String, ConfigData<Double>> variables,
+			@NotNull Function<Double, T> converter) {
 		this.expression = expression;
 		this.variables = variables;
 		this.converter = converter;
@@ -53,7 +56,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		this.def = null;
 	}
 
-	public FunctionData(@NotNull Expression expression, @NotNull Map<String, ConfigData<Double>> variables, @NotNull Function<Double, T> converter, @NotNull T def) {
+	public FunctionData(@NotNull Expression expression, @NotNull Map<String, ConfigData<Double>> variables,
+			@NotNull Function<Double, T> converter, @NotNull T def) {
 		this.expression = expression;
 		this.variables = variables;
 		this.converter = converter;
@@ -61,7 +65,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		this.def = def;
 	}
 
-	public FunctionData(@NotNull Expression expression, @NotNull Map<String, ConfigData<Double>> variables, @NotNull Function<Double, T> converter, @NotNull ConfigData<T> def) {
+	public FunctionData(@NotNull Expression expression, @NotNull Map<String, ConfigData<Double>> variables,
+			@NotNull Function<Double, T> converter, @NotNull ConfigData<T> def) {
 		this.expression = expression;
 		this.variables = variables;
 		this.converter = converter;
@@ -70,53 +75,64 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 	}
 
 	@Nullable
-	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString, @NotNull Function<Double, T> converter) {
+	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString,
+			@NotNull Function<Double, T> converter) {
 		return build(expressionString, converter, false);
 	}
 
 	@Nullable
-	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString, @NotNull Function<Double, T> converter, boolean silent) {
+	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString,
+			@NotNull Function<Double, T> converter, boolean silent) {
 		Map<String, ConfigData<Double>> variables = new HashMap<>();
 
 		Expression expression = buildExpression(expressionString, variables, silent);
-		if (expression == null) return null;
+		if (expression == null)
+			return null;
 
 		return new FunctionData<>(expression, variables, converter);
 	}
 
 	@Nullable
-	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString, @NotNull Function<Double, T> converter, @NotNull T def) {
+	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString,
+			@NotNull Function<Double, T> converter, @NotNull T def) {
 		return build(expressionString, converter, def, false);
 	}
 
 	@Nullable
-	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString, @NotNull Function<Double, T> converter, @NotNull T def, boolean silent) {
+	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString,
+			@NotNull Function<Double, T> converter, @NotNull T def, boolean silent) {
 		Map<String, ConfigData<Double>> variables = new HashMap<>();
 
 		Expression expression = buildExpression(expressionString, variables, silent);
-		if (expression == null) return null;
+		if (expression == null)
+			return null;
 
 		return new FunctionData<>(expression, variables, converter, def);
 	}
 
 	@Nullable
-	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString, @NotNull Function<Double, T> converter, @NotNull ConfigData<T> def) {
+	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString,
+			@NotNull Function<Double, T> converter, @NotNull ConfigData<T> def) {
 		return build(expressionString, converter, def, false);
 	}
 
 	@Nullable
-	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString, @NotNull Function<Double, T> converter, @NotNull ConfigData<T> def, boolean silent) {
+	public static <T extends Number> FunctionData<T> build(@Nullable String expressionString,
+			@NotNull Function<Double, T> converter, @NotNull ConfigData<T> def, boolean silent) {
 		Map<String, ConfigData<Double>> variables = new HashMap<>();
 
 		Expression expression = buildExpression(expressionString, variables, silent);
-		if (expression == null) return null;
+		if (expression == null)
+			return null;
 
 		return new FunctionData<>(expression, variables, converter, def);
 	}
 
 	@Nullable
-	public static Expression buildExpression(@Nullable String expressionString, @NotNull Map<String, ConfigData<Double>> variables, boolean silent) {
-		if (expressionString == null || expressionString.isEmpty()) return null;
+	public static Expression buildExpression(@Nullable String expressionString,
+			@NotNull Map<String, ConfigData<Double>> variables, boolean silent) {
+		if (expressionString == null || expressionString.isEmpty())
+			return null;
 
 		Matcher matcher = PLACEHOLDER_PATTERN.matcher(expressionString);
 		StringBuilder builder = new StringBuilder();
@@ -136,15 +152,16 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		Expression expression;
 		try {
 			expression = new ExpressionBuilder(builder.toString())
-				.functions(CustomFunctions.getFunctions())
-				.variables(variables.keySet())
-				.variable("power")
-				.build();
+					.functions(CustomFunctions.getFunctions())
+					.variables(variables.keySet())
+					.variable("power")
+					.build();
 
 			ValidationResult result = expression.validate(false);
 			if (!result.isValid()) {
 				if (!silent)
-					MagicSpells.error("Invalid expression '" + expressionString + "': [" + String.join(", ", result.getErrors()) + "]");
+					MagicSpells.error("Invalid expression '" + expressionString + "': ["
+							+ String.join(", ", result.getErrors()) + "]");
 				return null;
 			}
 
@@ -170,14 +187,18 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				try {
 					places = Integer.parseInt(placesString);
 				} catch (NumberFormatException e) {
-					return (caster, target, power, args) -> 0d;
+					return (caster, target, location, power, args) -> 0d;
 				}
 			}
 
-			if (owner.equalsIgnoreCase("targetvar")) return new TargetVariableData(variable, places);
-			if (owner.equalsIgnoreCase("locationvar")) return new LocationVariableData(variable, places);
-			if (owner.equalsIgnoreCase("casterlocationvar")) return new CasterLocationVariableData(variable, places);
-			if (owner.equalsIgnoreCase("targetlocationvar")) return new TargetLocationVariableData(variable, places);
+			if (owner.equalsIgnoreCase("targetvar"))
+				return new TargetVariableData(variable, places);
+			if (owner.equalsIgnoreCase("locationvar"))
+				return new LocationVariableData(variable, places);
+			if (owner.equalsIgnoreCase("casterlocationvar"))
+				return new CasterLocationVariableData(variable, places);
+			if (owner.equalsIgnoreCase("targetlocationvar"))
+				return new TargetLocationVariableData(variable, places);
 			return new CasterVariableData(variable, places);
 		}
 
@@ -196,7 +217,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				try {
 					places = Integer.parseInt(placesString);
 				} catch (NumberFormatException e) {
-					return (caster, target, power, args) -> 0d;
+					return (caster, target, location, power, args) -> 0d;
 				}
 			}
 
@@ -210,9 +231,10 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 			try {
 				index = Integer.parseInt(matcher.group("argIndex"));
 			} catch (NumberFormatException e) {
-				return (caster, target, power, args) -> 0d;
+				return (caster, target, location, power, args) -> 0d;
 			}
-			if (index == 0) return (caster, target, power, args) -> 0d;
+			if (index == 0)
+				return (caster, target, location, power, args) -> 0d;
 
 			return new ArgumentData(index - 1, def);
 		}
@@ -221,9 +243,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 			String owner = matcher.group("papiType");
 			String papiPlaceholder = '%' + matcher.group("papiPlaceholder") + '%';
 
-			return owner.equalsIgnoreCase("targetpapi") ?
-				new TargetPAPIData(papiPlaceholder) :
-				new CasterPAPIData(papiPlaceholder);
+			return owner.equalsIgnoreCase("targetpapi") ? new TargetPAPIData(papiPlaceholder)
+					: new CasterPAPIData(papiPlaceholder);
 		}
 
 		if (matcher.group("playerPapi") != null) {
@@ -233,20 +254,20 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 			return new PlayerPAPIData(papiPlaceholder, player);
 		}
 
-		return (caster, target, power, args) -> 0d;
+		return (caster, target, location, power, args) -> 0d;
 	}
 
 	@Override
-	public T get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+	public T get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 		for (Map.Entry<String, ConfigData<Double>> entry : variables.entrySet())
-			expression.setVariable(entry.getKey(), entry.getValue().get(caster, target, power, args));
+			expression.setVariable(entry.getKey(), entry.getValue().get(caster, target, null, power, args));
 
 		expression.setVariable("power", power);
 
 		try {
 			return converter.apply(expression.evaluate());
 		} catch (Exception e) {
-			return dataDef != null ? dataDef.get(caster, target, power, args) : def;
+			return dataDef != null ? dataDef.get(caster, target, null, power, args) : def;
 		}
 	}
 
@@ -274,14 +295,15 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			if (args != null && args.length > index) {
 				try {
 					return Double.parseDouble(args[index]);
 				} catch (NumberFormatException e) {
 					return def;
 				}
-			} else return def;
+			} else
+				return def;
 		}
 
 		@Override
@@ -302,11 +324,13 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!(caster instanceof Player player)) return 0d;
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (!(caster instanceof Player player))
+				return 0d;
 
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return 0d;
+			if (var == null)
+				return 0d;
 
 			double value;
 			if (var instanceof PlayerStringVariable || var instanceof GlobalStringVariable) {
@@ -315,7 +339,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				} catch (NumberFormatException e) {
 					return 0d;
 				}
-			} else value = var.getValue(player);
+			} else
+				value = var.getValue(player);
 
 			return places >= 0 ? Precision.round(value, places) : value;
 		}
@@ -338,11 +363,13 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!(target instanceof Player player)) return 0d;
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (!(target instanceof Player player))
+				return 0d;
 
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return 0d;
+			if (var == null)
+				return 0d;
 
 			double value;
 			if (var instanceof PlayerStringVariable || var instanceof GlobalStringVariable) {
@@ -351,7 +378,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				} catch (NumberFormatException e) {
 					return 0d;
 				}
-			} else value = var.getValue(player);
+			} else
+				value = var.getValue(player);
 
 			return places >= 0 ? Precision.round(value, places) : value;
 		}
@@ -374,15 +402,19 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return 0d;
+			if (var == null)
+				return 0d;
 
 			org.bukkit.Location loc = null;
-			if (target != null) loc = target.getLocation();
-			else if (caster != null) loc = caster.getLocation();
+			if (target != null)
+				loc = target.getLocation();
+			else if (caster != null)
+				loc = caster.getLocation();
 
-			if (loc == null) return 0d;
+			if (loc == null)
+				return 0d;
 
 			double value = MagicSpells.getVariableManager().getValueAtLocation(variable, loc);
 			return places >= 0 ? Precision.round(value, places) : value;
@@ -406,10 +438,12 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (caster == null) return 0d;
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (caster == null)
+				return 0d;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return 0d;
+			if (var == null)
+				return 0d;
 
 			org.bukkit.Location loc = caster.getLocation();
 			double value = MagicSpells.getVariableManager().getValueAtLocation(variable, loc);
@@ -434,10 +468,12 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (target == null) return 0d;
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (target == null)
+				return 0d;
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return 0d;
+			if (var == null)
+				return 0d;
 
 			org.bukkit.Location loc = target.getLocation();
 			double value = MagicSpells.getVariableManager().getValueAtLocation(variable, loc);
@@ -464,9 +500,10 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return 0d;
+			if (var == null)
+				return 0d;
 
 			double value;
 			if (var instanceof PlayerStringVariable || var instanceof GlobalStringVariable) {
@@ -475,7 +512,8 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 				} catch (NumberFormatException e) {
 					return 0d;
 				}
-			} else value = var.getValue(player);
+			} else
+				value = var.getValue(player);
 
 			return places >= 0 ? Precision.round(value, places) : value;
 		}
@@ -490,26 +528,27 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 	public static class DefaultVariableData implements ConfigData<Double> {
 
 		private final String variable;
-	
+
 		public DefaultVariableData(String variable) {
 			this.variable = variable;
 		}
-	
+
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			Variable var = MagicSpells.getVariableManager().getVariable(variable);
-			if (var == null) return 0d;
-	
+			if (var == null)
+				return 0d;
+
 			double value = var.getDefaultValue();
-	
+
 			return value;
 		}
-	
+
 		@Override
 		public boolean isConstant() {
 			return false;
 		}
-	}	
+	}
 
 	public static class CasterPAPIData implements ConfigData<Double> {
 
@@ -520,7 +559,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(caster instanceof Player player))
 				return 0d;
 
@@ -549,7 +588,7 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI") || !(target instanceof Player player))
 				return 0d;
 
@@ -580,8 +619,9 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 		}
 
 		@Override
-		public Double get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return 0d;
+		public Double get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
+			if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"))
+				return 0d;
 
 			String value = PlaceholderAPI.setPlaceholders(Bukkit.getOfflinePlayer(player), placeholder);
 

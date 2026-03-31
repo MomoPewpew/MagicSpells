@@ -33,10 +33,11 @@ public class ArmorStandEffect extends SpellEffect {
 	@Override
 	protected void loadFromConfig(ConfigurationSection config) {
 		ConfigurationSection section = config.getConfigurationSection("armorstand");
-		if (section == null) return;
+		if (section == null)
+			return;
 
 		entityData = new EntityData(section);
-		entityData.setEntityType((caster, target, power, args) -> EntityType.ARMOR_STAND);
+		entityData.setEntityType((caster, target, location, power, args) -> EntityType.ARMOR_STAND);
 
 		gravity = section.getBoolean("gravity", false);
 
@@ -45,15 +46,18 @@ public class ArmorStandEffect extends SpellEffect {
 
 		String strMagicItem = section.getString("head", "");
 		MagicItem magicItem = MagicItems.getMagicItemFromString(strMagicItem);
-		if (magicItem != null) headItem = magicItem.getItemStack();
+		if (magicItem != null)
+			headItem = magicItem.getItemStack();
 
 		strMagicItem = section.getString("mainhand", "");
 		magicItem = MagicItems.getMagicItemFromString(strMagicItem);
-		if (magicItem != null) mainhandItem = magicItem.getItemStack();
+		if (magicItem != null)
+			mainhandItem = magicItem.getItemStack();
 
 		strMagicItem = section.getString("offhand", "");
 		magicItem = MagicItems.getMagicItemFromString(strMagicItem);
-		if (magicItem != null) offhandItem = magicItem.getItemStack();
+		if (magicItem != null)
+			offhandItem = magicItem.getItemStack();
 
 	}
 
@@ -64,7 +68,8 @@ public class ArmorStandEffect extends SpellEffect {
 
 			armorStand.addScoreboardTag(MagicSpells.ENTITY_TAG);
 			armorStand.addScoreboardTag(ENTITY_TAG);
-			armorStand.addScoreboardTag(MagicSpells.EXPIRATION_TIME_MILLIS_TAG + ':' + (System.currentTimeMillis() + 100000));
+			armorStand.addScoreboardTag(
+					MagicSpells.EXPIRATION_TIME_MILLIS_TAG + ':' + (System.currentTimeMillis() + 100000));
 			armorStand.setGravity(gravity);
 			armorStand.setSilent(true);
 			armorStand.customName(Util.getMiniMessage(MagicSpells.doReplacements(customName, data)));

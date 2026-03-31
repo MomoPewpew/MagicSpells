@@ -258,9 +258,9 @@ public class EntityData {
 					Vector3f s = scale.get(null);
 
 					Transformation transform = new Transformation(t, lr, s, rr);
-					transformation = (caster, target, power, args) -> transform;
+					transformation = (caster, target, location, power, args) -> transform;
 				} else {
-					transformation = (caster, target, power, args) -> {
+					transformation = (caster, target, location, power, args) -> {
 						Quaternionf lr = leftRotation.get(caster, target, power, args);
 						Quaternionf rr = rightRotation.get(caster, target, power, args);
 						Vector3f t = translation.get(caster, target, power, args);
@@ -284,7 +284,7 @@ public class EntityData {
 
 			ConfigData<Integer> blockLight = ConfigDataUtil.getInteger(config, "brightness.block");
 			ConfigData<Integer> skyLight = ConfigDataUtil.getInteger(config, "brightness.sky");
-			ConfigData<Display.Brightness> brightness = (caster, target, power, args) -> null;
+			ConfigData<Display.Brightness> brightness = (caster, target, location, power, args) -> null;
 			if (checkNull(blockLight) && checkNull(skyLight)) {
 				if (blockLight.isConstant() && skyLight.isConstant()) {
 					int bl = blockLight.get(null);
@@ -292,10 +292,10 @@ public class EntityData {
 
 					if (0 <= bl && bl <= 15 && 0 <= sl && sl <= 15) {
 						Display.Brightness b = new Display.Brightness(bl, sl);
-						brightness = (caster, target, power, args) -> b;
+						brightness = (caster, target, location, power, args) -> b;
 					}
 				} else {
-					brightness = (caster, target, power, args) -> {
+					brightness = (caster, target, location, power, args) -> {
 						Integer bl = blockLight.get(caster, target, power, args);
 						if (bl == null || bl < 0 || bl > 15)
 							return null;

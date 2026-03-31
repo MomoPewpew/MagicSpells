@@ -48,10 +48,10 @@ public class Subspell {
 	private boolean invert = false;
 	private boolean passPower = true;
 	private boolean passTargeting = false;
-	private ConfigData<Integer> delay = (caster, target, power, args) -> -1;
-	private ConfigData<Double> chance = (caster, target, power, args) -> -1D;
-	private ConfigData<Float> subPower = (caster, target, power, args) -> 1F;
-	private ConfigData<String[]> args = (caster, target, power, args) -> null;
+	private ConfigData<Integer> delay = (caster, target, location, power, args) -> -1;
+	private ConfigData<Double> chance = (caster, target, location, power, args) -> -1D;
+	private ConfigData<Float> subPower = (caster, target, location, power, args) -> 1F;
+	private ConfigData<String[]> args = (caster, target, location, power, args) -> null;
 
 	private boolean isTargetedEntity = false;
 	private boolean isTargetedLocation = false;
@@ -65,7 +65,8 @@ public class Subspell {
 
 		if (split.length > 1) {
 			split[1] = split[1].trim();
-			if (split[1].endsWith(")")) split[1] = split[1].substring(0, split[1].length() - 1);
+			if (split[1].endsWith(")"))
+				split[1] = split[1].substring(0, split[1].length() - 1);
 
 			String[] castArguments = split[1].split(";");
 			for (String castArgument : castArguments) {
@@ -110,12 +111,12 @@ public class Subspell {
 
 							if (constant) {
 								String[] arg = arguments.toArray(new String[0]);
-								args = (caster, target, power, args) -> arg;
+								args = (caster, target, location, power, args) -> arg;
 
 								continue;
 							}
 
-							args = (caster, target, power, args) -> {
+							args = (caster, target, location, power, args) -> {
 								String[] ret = new String[argumentData.size()];
 								for (int i = 0; i < argumentData.size(); i++)
 									ret[i] = argumentData.get(i).get(caster, target, power, args);
@@ -133,7 +134,7 @@ public class Subspell {
 					case "power" -> {
 						try {
 							float subPower = Float.parseFloat(value);
-							this.subPower = (caster, target, power, args) -> subPower;
+							this.subPower = (caster, target, location, power, args) -> subPower;
 						} catch (NumberFormatException e) {
 							FunctionData<Float> subPowerData = FunctionData.build(value, Double::floatValue, true);
 							if (subPowerData == null) {
@@ -147,7 +148,7 @@ public class Subspell {
 					case "delay" -> {
 						try {
 							int delay = Integer.parseInt(value);
-							this.delay = (caster, target, power, args) -> delay;
+							this.delay = (caster, target, location, power, args) -> delay;
 						} catch (NumberFormatException e) {
 							FunctionData<Integer> delayData = FunctionData.build(value, Double::intValue, true);
 							if (delayData == null) {
@@ -161,7 +162,7 @@ public class Subspell {
 					case "chance" -> {
 						try {
 							double chance = Double.parseDouble(value) / 100;
-							this.chance = (caster, target, power, args) -> chance;
+							this.chance = (caster, target, location, power, args) -> chance;
 						} catch (NumberFormatException e) {
 							FunctionData<Double> chanceData = FunctionData.build(value, Function.identity(), true);
 							if (chanceData == null) {
@@ -172,7 +173,8 @@ public class Subspell {
 							chance = chanceData;
 						}
 					}
-					default -> MagicSpells.error("Invalid cast argument '" + castArgument + "' on subspell '" + data + "'.");
+					default ->
+						MagicSpells.error("Invalid cast argument '" + castArgument + "' on subspell '" + data + "'.");
 				}
 			}
 		}
@@ -192,19 +194,22 @@ public class Subspell {
 					isTargetedEntityFromLocation = false;
 				}
 				case ENTITY -> {
-					if (!isTargetedEntity) return false;
+					if (!isTargetedEntity)
+						return false;
 
 					isTargetedLocation = false;
 					isTargetedEntityFromLocation = false;
 				}
 				case LOCATION -> {
-					if (!isTargetedLocation) return false;
+					if (!isTargetedLocation)
+						return false;
 
 					isTargetedEntity = false;
 					isTargetedEntityFromLocation = false;
 				}
 				case ENTITY_FROM_LOCATION -> {
-					if (!isTargetedEntityFromLocation) return false;
+					if (!isTargetedEntityFromLocation)
+						return false;
 
 					isTargetedEntity = false;
 					isTargetedLocation = false;
@@ -231,39 +236,50 @@ public class Subspell {
 		return isTargetedEntityFromLocation;
 	}
 
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target, float power, @Nullable String[] args) {
+	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target,
+			float power, @Nullable String[] args) {
 		return subcast(caster, location, target, power, args, passTargeting, true);
 	}
 
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target, float power, @Nullable String[] args, boolean passTargeting) {
+	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target,
+			float power, @Nullable String[] args, boolean passTargeting) {
 		return subcast(caster, location, target, power, args, passTargeting, true);
 	}
 
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target, float power, @Nullable String[] args, boolean passTargeting, boolean useTargetForLocation) {
+	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target,
+			float power, @Nullable String[] args, boolean passTargeting, boolean useTargetForLocation) {
 		if (invert) {
 			if (caster != null) {
 				LivingEntity temp = caster;
 				caster = target;
 				target = temp;
-			} else caster = target;
+			} else
+				caster = target;
 		}
 
 		CastTargeting targeting = this.targeting;
 		if (targeting == CastTargeting.NORMAL) {
-			if (spell instanceof TargetedEntityFromLocationSpell) targeting = CastTargeting.ENTITY_FROM_LOCATION;
-			else if (spell instanceof TargetedEntitySpell) targeting = CastTargeting.ENTITY;
-			else if (spell instanceof TargetedLocationSpell) targeting = CastTargeting.LOCATION;
-			else targeting = CastTargeting.NONE;
+			if (spell instanceof TargetedEntityFromLocationSpell)
+				targeting = CastTargeting.ENTITY_FROM_LOCATION;
+			else if (spell instanceof TargetedEntitySpell)
+				targeting = CastTargeting.ENTITY;
+			else if (spell instanceof TargetedLocationSpell)
+				targeting = CastTargeting.LOCATION;
+			else
+				targeting = CastTargeting.NONE;
 		}
 
 		return switch (targeting) {
 			case ENTITY_FROM_LOCATION ->
-				spell instanceof TargetedEntityFromLocationSpell && castAtEntityFromLocation(caster, location, target, power, passTargeting);
+				spell instanceof TargetedEntityFromLocationSpell
+						&& castAtEntityFromLocation(caster, location, target, power, passTargeting);
 			case ENTITY -> spell instanceof TargetedEntitySpell && castAtEntity(caster, target, power, passTargeting);
 			case LOCATION ->
-				spell instanceof TargetedLocationSpell && castAtLocation(caster, useTargetForLocation ? target.getLocation() : location, power);
+				spell instanceof TargetedLocationSpell
+						&& castAtLocation(caster, useTargetForLocation ? target.getLocation() : location, power);
 			case NONE -> {
-				if (caster == null) yield false;
+				if (caster == null)
+					yield false;
 
 				PostCastAction action = cast(caster, power);
 				yield action == PostCastAction.HANDLE_NORMALLY || action == PostCastAction.NO_MESSAGES;
@@ -272,24 +288,30 @@ public class Subspell {
 		};
 	}
 
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull LivingEntity target, float power, @Nullable String[] args) {
+	public boolean subcast(@Nullable LivingEntity caster, @NotNull LivingEntity target, float power,
+			@Nullable String[] args) {
 		return subcast(caster, target, power, args, passTargeting);
 	}
 
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull LivingEntity target, float power, @Nullable String[] args, boolean passTargeting) {
+	public boolean subcast(@Nullable LivingEntity caster, @NotNull LivingEntity target, float power,
+			@Nullable String[] args, boolean passTargeting) {
 		if (invert) {
 			if (caster != null) {
 				LivingEntity temp = caster;
 				caster = target;
 				target = temp;
-			} else caster = target;
+			} else
+				caster = target;
 		}
 
 		CastTargeting targeting = this.targeting;
 		if (targeting == CastTargeting.NORMAL) {
-			if (spell instanceof TargetedEntitySpell) targeting = CastTargeting.ENTITY;
-			else if (spell instanceof TargetedLocationSpell) targeting = CastTargeting.LOCATION;
-			else targeting = CastTargeting.NONE;
+			if (spell instanceof TargetedEntitySpell)
+				targeting = CastTargeting.ENTITY;
+			else if (spell instanceof TargetedLocationSpell)
+				targeting = CastTargeting.LOCATION;
+			else
+				targeting = CastTargeting.NONE;
 		}
 
 		return switch (targeting) {
@@ -297,7 +319,8 @@ public class Subspell {
 			case LOCATION ->
 				spell instanceof TargetedLocationSpell && castAtLocation(caster, target.getLocation(), power);
 			case NONE -> {
-				if (caster == null) yield false;
+				if (caster == null)
+					yield false;
 
 				PostCastAction action = cast(caster, power);
 				yield action == PostCastAction.HANDLE_NORMALLY || action == PostCastAction.NO_MESSAGES;
@@ -306,19 +329,24 @@ public class Subspell {
 		};
 	}
 
-	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location target, float power, @Nullable String[] args) {
-		if (invert && caster != null) return subcast(caster, target, caster, power, args);
+	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location target, float power,
+			@Nullable String[] args) {
+		if (invert && caster != null)
+			return subcast(caster, target, caster, power, args);
 
 		CastTargeting targeting = this.targeting;
 		if (targeting == CastTargeting.NORMAL) {
-			if (spell instanceof TargetedLocationSpell) targeting = CastTargeting.LOCATION;
-			else targeting = CastTargeting.NONE;
+			if (spell instanceof TargetedLocationSpell)
+				targeting = CastTargeting.LOCATION;
+			else
+				targeting = CastTargeting.NONE;
 		}
 
 		return switch (targeting) {
 			case LOCATION -> spell instanceof TargetedLocationSpell && castAtLocation(caster, target, power);
 			case NONE -> {
-				if (caster == null) yield false;
+				if (caster == null)
+					yield false;
 
 				PostCastAction action = cast(caster, power);
 				yield action == PostCastAction.HANDLE_NORMALLY || action == PostCastAction.NO_MESSAGES;
@@ -328,8 +356,10 @@ public class Subspell {
 	}
 
 	public boolean subcast(@NotNull LivingEntity caster, float power, @Nullable String[] args) {
-		if (invert) return subcast(caster, caster, power, args);
-		if (targeting != CastTargeting.NORMAL && targeting != CastTargeting.NONE) return false;
+		if (invert)
+			return subcast(caster, caster, power, args);
+		if (targeting != CastTargeting.NORMAL && targeting != CastTargeting.NONE)
+			return false;
 
 		PostCastAction action = cast(caster, power);
 		return action == PostCastAction.HANDLE_NORMALLY || action == PostCastAction.NO_MESSAGES;
@@ -340,13 +370,16 @@ public class Subspell {
 	}
 
 	public PostCastAction cast(LivingEntity caster, float power, String[] args) {
-		if (!passPower) power = 1f;
+		if (!passPower)
+			power = 1f;
 
 		double chance = this.chance.get(caster, power, args);
-		if ((chance > 0 && chance < 1) && random.nextDouble() > chance) return PostCastAction.ALREADY_HANDLED;
+		if ((chance > 0 && chance < 1) && random.nextDouble() > chance)
+			return PostCastAction.ALREADY_HANDLED;
 
 		int delay = this.delay.get(caster, power, args);
-		if (delay < 0) return castReal(caster, power, args);
+		if (delay < 0)
+			return castReal(caster, power, args);
 
 		float finalPower = power;
 		MagicSpells.scheduleDelayedTask(() -> castReal(caster, finalPower, args), delay);
@@ -362,7 +395,8 @@ public class Subspell {
 			case HARD, FULL -> spell.cast(caster, power, args).action;
 			case DIRECT -> spell.castSpell(caster, SpellCastState.NORMAL, power, args);
 			case PARTIAL -> {
-				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0, null, 0);
+				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0,
+						null, 0);
 				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL)
 					yield PostCastAction.ALREADY_HANDLED;
 
@@ -384,14 +418,18 @@ public class Subspell {
 		return castAtEntity(caster, target, power, null, passTargeting | this.passTargeting);
 	}
 
-	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args, boolean passTargeting) {
-		if (!passPower) power = 1f;
+	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args,
+			boolean passTargeting) {
+		if (!passPower)
+			power = 1f;
 
 		double chance = this.chance.get(caster, power, args);
-		if ((chance > 0 && chance < 1) && random.nextDouble() > chance) return false;
+		if ((chance > 0 && chance < 1) && random.nextDouble() > chance)
+			return false;
 
 		int delay = this.delay.get(caster, power, args);
-		if (delay < 0) return castAtEntityReal(caster, target, power, args, passTargeting);
+		if (delay < 0)
+			return castAtEntityReal(caster, target, power, args, passTargeting);
 
 		float finalPower = power;
 		MagicSpells.scheduleDelayedTask(() -> castAtEntityReal(caster, target, finalPower, args, passTargeting), delay);
@@ -399,66 +437,81 @@ public class Subspell {
 		return true;
 	}
 
-	private boolean castAtEntityReal(LivingEntity caster, LivingEntity target, float basePower, String[] args, boolean passTargeting) {
-		if (!isTargetedEntity) return isTargetedLocation && castAtLocationReal(caster, target.getLocation(), basePower, args);
+	private boolean castAtEntityReal(LivingEntity caster, LivingEntity target, float basePower, String[] args,
+			boolean passTargeting) {
+		if (!isTargetedEntity)
+			return isTargetedLocation && castAtLocationReal(caster, target.getLocation(), basePower, args);
 
 		float power = basePower * subPower.get(caster, basePower, args);
 		args = this.args.get(caster, power, args);
 
 		return switch (mode) {
 			case HARD -> {
-				if (caster == null) yield false;
+				if (caster == null)
+					yield false;
 
 				SpellCastResult result = spell.cast(caster, power, args);
-				yield result.state == SpellCastState.NORMAL && (result.action == PostCastAction.HANDLE_NORMALLY || result.action == PostCastAction.NO_MESSAGES);
+				yield result.state == SpellCastState.NORMAL && (result.action == PostCastAction.HANDLE_NORMALLY
+						|| result.action == PostCastAction.NO_MESSAGES);
 			}
 			case DIRECT -> {
-				if (passTargeting) yield passTargetingEntity(caster, target, power, args);
+				if (passTargeting)
+					yield passTargetingEntity(caster, target, power, args);
 				else {
 					TargetedEntitySpell targetedSpell = (TargetedEntitySpell) spell;
-					yield caster != null ? targetedSpell.castAtEntity(caster, target, power, args) : targetedSpell.castAtEntity(target, power, args);
+					yield caster != null ? targetedSpell.castAtEntity(caster, target, power, args)
+							: targetedSpell.castAtEntity(target, power, args);
 				}
 			}
 			case PARTIAL -> {
-				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0, null, 0);
-				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL) yield false;
+				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0,
+						null, 0);
+				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL)
+					yield false;
 
 				SpellTargetEvent targetEvent = new SpellTargetEvent(spell, caster, target, castEvent.getPower(), args);
-				if (!targetEvent.callEvent()) yield false;
+				if (!targetEvent.callEvent())
+					yield false;
 
 				target = targetEvent.getTarget();
 				power = targetEvent.getPower();
 
 				boolean success;
-				if (passTargeting) success = passTargetingEntity(caster, target, power, args);
+				if (passTargeting)
+					success = passTargetingEntity(caster, target, power, args);
 				else {
 					TargetedEntitySpell targetedEntitySpell = (TargetedEntitySpell) spell;
-					success = caster != null ? targetedEntitySpell.castAtEntity(caster, target, power, args) :
-						targetedEntitySpell.castAtEntity(target, power, args);
+					success = caster != null ? targetedEntitySpell.castAtEntity(caster, target, power, args)
+							: targetedEntitySpell.castAtEntity(target, power, args);
 				}
 
 				if (success)
 					new SpellCastedEvent(spell, caster, SpellCastState.NORMAL, power, args, 0, null,
-						PostCastAction.HANDLE_NORMALLY).callEvent();
+							PostCastAction.HANDLE_NORMALLY).callEvent();
 
 				yield success;
 			}
 			case FULL -> {
-				if (caster == null) yield false;
+				if (caster == null)
+					yield false;
 
 				SpellCastEvent castEvent = spell.preCast(caster, power, args);
-				if (castEvent == null) yield false;
+				if (castEvent == null)
+					yield false;
 
 				PostCastAction action = PostCastAction.HANDLE_NORMALLY;
 				boolean success = false;
 				if (castEvent.getSpellCastState() == SpellCastState.NORMAL) {
-					SpellTargetEvent targetEvent = new SpellTargetEvent(spell, caster, target, castEvent.getPower(), args);
+					SpellTargetEvent targetEvent = new SpellTargetEvent(spell, caster, target, castEvent.getPower(),
+							args);
 					if (targetEvent.callEvent()) {
 						target = targetEvent.getTarget();
 						power = targetEvent.getPower();
 
-						if (passTargeting) success = passTargetingEntity(caster, target, power, args);
-						else ((TargetedEntitySpell) spell).castAtEntity(caster, target, power, args);
+						if (passTargeting)
+							success = passTargetingEntity(caster, target, power, args);
+						else
+							((TargetedEntitySpell) spell).castAtEntity(caster, target, power, args);
 					}
 				}
 
@@ -467,7 +520,8 @@ public class Subspell {
 						action = PostCastAction.NO_MESSAGES;
 						targetedSpell.sendMessages(caster, target, args);
 					}
-				} else action = PostCastAction.ALREADY_HANDLED;
+				} else
+					action = PostCastAction.ALREADY_HANDLED;
 
 				spell.postCast(castEvent, action);
 
@@ -479,13 +533,15 @@ public class Subspell {
 	public boolean passTargetingEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		ValidTargetList list = spell.getValidTargetList();
 		ValidTargetList originalList = list.clone();
-		if (Objects.equals(caster, target) && !list.canTargetSelf()) list.setTargetCaster(true);
+		if (Objects.equals(caster, target) && !list.canTargetSelf())
+			list.setTargetCaster(true);
 		if (!list.canTargetEntity(target)) {
 			list.addEntityTarget(target);
 			spell.setValidTargetList(list);
 		}
 
-		boolean success = caster != null ? ((TargetedEntitySpell) spell).castAtEntity(caster, target, power, args) : ((TargetedEntitySpell) spell).castAtEntity(target, power, args);
+		boolean success = caster != null ? ((TargetedEntitySpell) spell).castAtEntity(caster, target, power, args)
+				: ((TargetedEntitySpell) spell).castAtEntity(target, power, args);
 		spell.setValidTargetList(originalList);
 		return success;
 	}
@@ -495,13 +551,16 @@ public class Subspell {
 	}
 
 	public boolean castAtLocation(LivingEntity caster, Location target, String[] args, float power) {
-		if (!passPower) power = 1f;
+		if (!passPower)
+			power = 1f;
 
 		double chance = this.chance.get(caster, power, args);
-		if ((chance > 0 && chance < 1) && random.nextDouble() > chance) return false;
+		if ((chance > 0 && chance < 1) && random.nextDouble() > chance)
+			return false;
 
 		int delay = this.delay.get(caster, power, args);
-		if (delay < 0) return castAtLocationReal(caster, target, power, args);
+		if (delay < 0)
+			return castAtLocationReal(caster, target, power, args);
 
 		float finalPower = power;
 		MagicSpells.scheduleDelayedTask(() -> castAtLocationReal(caster, target, finalPower, args), delay);
@@ -510,54 +569,63 @@ public class Subspell {
 	}
 
 	private boolean castAtLocationReal(LivingEntity caster, Location target, float basePower, String[] args) {
-		if (!isTargetedLocation) return false;
+		if (!isTargetedLocation)
+			return false;
 
 		float power = basePower * subPower.get(caster, basePower, args);
 		args = this.args.get(caster, power, args);
 
 		return switch (mode) {
 			case HARD -> {
-				if (caster == null) yield false;
+				if (caster == null)
+					yield false;
 
 				SpellCastResult result = spell.cast(caster, power, args);
 				yield result.state == SpellCastState.NORMAL && (result.action == PostCastAction.HANDLE_NORMALLY ||
-					result.action == PostCastAction.NO_MESSAGES);
+						result.action == PostCastAction.NO_MESSAGES);
 			}
 			case DIRECT -> {
 				TargetedLocationSpell targetedSpell = (TargetedLocationSpell) spell;
 				yield caster != null ? targetedSpell.castAtLocation(caster, target, power, args)
-					: targetedSpell.castAtLocation(target, power, args);
+						: targetedSpell.castAtLocation(target, power, args);
 			}
 			case PARTIAL -> {
-				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0, null, 0);
-				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL) yield false;
+				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0,
+						null, 0);
+				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL)
+					yield false;
 
-				SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(spell, caster, target, castEvent.getPower(), args);
-				if (!targetEvent.callEvent()) yield false;
+				SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(spell, caster, target,
+						castEvent.getPower(), args);
+				if (!targetEvent.callEvent())
+					yield false;
 
 				target = targetEvent.getTargetLocation();
 				power = targetEvent.getPower();
 
 				TargetedLocationSpell targetedSpell = (TargetedLocationSpell) spell;
-				boolean success = caster != null ? targetedSpell.castAtLocation(caster, target, power, args) :
-					targetedSpell.castAtLocation(target, power, args);
+				boolean success = caster != null ? targetedSpell.castAtLocation(caster, target, power, args)
+						: targetedSpell.castAtLocation(target, power, args);
 
 				if (success)
 					new SpellCastedEvent(spell, caster, SpellCastState.NORMAL, power, args, 0, null,
-						PostCastAction.HANDLE_NORMALLY).callEvent();
+							PostCastAction.HANDLE_NORMALLY).callEvent();
 
 				yield success;
 			}
 			case FULL -> {
-				if (caster == null) yield false;
+				if (caster == null)
+					yield false;
 
 				SpellCastEvent castEvent = spell.preCast(caster, power, args);
-				if (castEvent == null) yield false;
+				if (castEvent == null)
+					yield false;
 
 				PostCastAction action = PostCastAction.HANDLE_NORMALLY;
 				boolean success = false;
 				if (castEvent.getSpellCastState() == SpellCastState.NORMAL) {
-					SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(spell, caster, target, castEvent.getPower(), args);
+					SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(spell, caster, target,
+							castEvent.getPower(), args);
 					if (targetEvent.callEvent()) {
 						target = targetEvent.getTargetLocation();
 						power = targetEvent.getPower();
@@ -566,7 +634,8 @@ public class Subspell {
 					}
 				}
 
-				if (!success) action = PostCastAction.ALREADY_HANDLED;
+				if (!success)
+					action = PostCastAction.ALREADY_HANDLED;
 
 				spell.postCast(castEvent, action);
 
@@ -579,90 +648,111 @@ public class Subspell {
 		return castAtEntityFromLocation(caster, from, target, power, null, passTargeting);
 	}
 
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, boolean passTargeting) {
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			boolean passTargeting) {
 		return castAtEntityFromLocation(caster, from, target, power, null, passTargeting | this.passTargeting);
 	}
 
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args, boolean passTargeting) {
-		if (!passPower) power = 1f;
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			String[] args, boolean passTargeting) {
+		if (!passPower)
+			power = 1f;
 
 		double chance = this.chance.get(caster, power, args);
-		if ((chance > 0 && chance < 1) && random.nextDouble() > chance) return false;
+		if ((chance > 0 && chance < 1) && random.nextDouble() > chance)
+			return false;
 
 		int delay = this.delay.get(caster, power, args);
-		if (delay < 0) return castAtEntityFromLocationReal(caster, from, target, power, args, passTargeting);
+		if (delay < 0)
+			return castAtEntityFromLocationReal(caster, from, target, power, args, passTargeting);
 
 		float finalPower = power;
-		MagicSpells.scheduleDelayedTask(() -> castAtEntityFromLocationReal(caster, from, target, finalPower, args, passTargeting), delay);
+		MagicSpells.scheduleDelayedTask(
+				() -> castAtEntityFromLocationReal(caster, from, target, finalPower, args, passTargeting), delay);
 
 		return true;
 	}
 
-	private boolean castAtEntityFromLocationReal(LivingEntity caster, Location from, LivingEntity target, float basePower, String[] args, boolean passTargeting) {
-		if (!isTargetedEntityFromLocation) return false;
+	private boolean castAtEntityFromLocationReal(LivingEntity caster, Location from, LivingEntity target,
+			float basePower, String[] args, boolean passTargeting) {
+		if (!isTargetedEntityFromLocation)
+			return false;
 
 		float power = basePower * subPower.get(caster, basePower, args);
 		args = this.args.get(caster, power, args);
 
 		return switch (mode) {
 			case HARD -> {
-				if (caster == null) yield false;
+				if (caster == null)
+					yield false;
 
 				SpellCastResult result = spell.cast(caster, power, args);
 				yield result.state == SpellCastState.NORMAL && (result.action == PostCastAction.HANDLE_NORMALLY ||
-					result.action == PostCastAction.NO_MESSAGES);
+						result.action == PostCastAction.NO_MESSAGES);
 			}
 			case DIRECT -> {
-				if (passTargeting) yield passTargetingEntityFromLocation(caster, from, target, power, args);
+				if (passTargeting)
+					yield passTargetingEntityFromLocation(caster, from, target, power, args);
 				else {
 					TargetedEntityFromLocationSpell targetedSpell = (TargetedEntityFromLocationSpell) spell;
-					yield caster != null ? targetedSpell.castAtEntityFromLocation(caster, from, target, power, args) :
-						targetedSpell.castAtEntityFromLocation(from, target, power, args);
+					yield caster != null ? targetedSpell.castAtEntityFromLocation(caster, from, target, power, args)
+							: targetedSpell.castAtEntityFromLocation(from, target, power, args);
 				}
 			}
 			case PARTIAL -> {
-				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0, null, 0);
-				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL) yield false;
+				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0,
+						null, 0);
+				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL)
+					yield false;
 
-				SpellTargetEvent targetEntityEvent = new SpellTargetEvent(spell, caster, target, castEvent.getPower(), args);
-				if (!targetEntityEvent.callEvent()) yield false;
+				SpellTargetEvent targetEntityEvent = new SpellTargetEvent(spell, caster, target, castEvent.getPower(),
+						args);
+				if (!targetEntityEvent.callEvent())
+					yield false;
 
-				SpellTargetLocationEvent targetLocationEvent = new SpellTargetLocationEvent(spell, caster, from, targetEntityEvent.getPower(), args);
-				if (!targetLocationEvent.callEvent()) yield false;
+				SpellTargetLocationEvent targetLocationEvent = new SpellTargetLocationEvent(spell, caster, from,
+						targetEntityEvent.getPower(), args);
+				if (!targetLocationEvent.callEvent())
+					yield false;
 
 				target = targetEntityEvent.getTarget();
 				power = targetLocationEvent.getPower();
 				from = targetLocationEvent.getTargetLocation();
 
 				boolean success;
-				if (passTargeting) success = passTargetingEntityFromLocation(caster, from, target, power, args);
+				if (passTargeting)
+					success = passTargetingEntityFromLocation(caster, from, target, power, args);
 				else {
 					TargetedEntityFromLocationSpell targetedSpell = (TargetedEntityFromLocationSpell) spell;
 					success = caster != null ? targetedSpell.castAtEntityFromLocation(caster, from, target, power, args)
-						: targetedSpell.castAtEntityFromLocation(from, target, power, args);
+							: targetedSpell.castAtEntityFromLocation(from, target, power, args);
 				}
 
 				if (success)
 					new SpellCastedEvent(spell, caster, SpellCastState.NORMAL, power, args, 0, null,
-						PostCastAction.HANDLE_NORMALLY).callEvent();
+							PostCastAction.HANDLE_NORMALLY).callEvent();
 
 				yield success;
 			}
 			case FULL -> {
-				if (caster == null) yield false;
+				if (caster == null)
+					yield false;
 
 				SpellCastEvent castEvent = spell.preCast(caster, power, args);
-				if (castEvent == null) yield false;
+				if (castEvent == null)
+					yield false;
 
 				PostCastAction action = PostCastAction.HANDLE_NORMALLY;
 				boolean success = false;
 				if (castEvent.getSpellCastState() == SpellCastState.NORMAL) {
-					SpellTargetEvent targetEntityEvent = new SpellTargetEvent(spell, caster, target, castEvent.getPower(), args);
+					SpellTargetEvent targetEntityEvent = new SpellTargetEvent(spell, caster, target,
+							castEvent.getPower(), args);
 					if (targetEntityEvent.callEvent()) {
 						target = targetEntityEvent.getTarget();
 						power = targetEntityEvent.getPower();
 
-						SpellTargetLocationEvent targetLocationEvent = new SpellTargetLocationEvent(spell, caster, from, power, args);
+						SpellTargetLocationEvent targetLocationEvent = new SpellTargetLocationEvent(spell, caster, from,
+								power, args);
 						if (targetLocationEvent.callEvent()) {
 							power = targetLocationEvent.getPower();
 							from = targetLocationEvent.getTargetLocation();
@@ -670,7 +760,8 @@ public class Subspell {
 							if (passTargeting)
 								success = passTargetingEntityFromLocation(caster, from, target, power, args);
 							else
-								success = ((TargetedEntityFromLocationSpell) spell).castAtEntityFromLocation(caster, from, target, power, args);
+								success = ((TargetedEntityFromLocationSpell) spell).castAtEntityFromLocation(caster,
+										from, target, power, args);
 						}
 					}
 				}
@@ -680,7 +771,8 @@ public class Subspell {
 						action = PostCastAction.NO_MESSAGES;
 						targetedSpell.sendMessages(caster, target, args);
 					}
-				} else action = PostCastAction.ALREADY_HANDLED;
+				} else
+					action = PostCastAction.ALREADY_HANDLED;
 
 				spell.postCast(castEvent, action);
 
@@ -689,21 +781,25 @@ public class Subspell {
 		};
 	}
 
-	public boolean passTargetingEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
+	public boolean passTargetingEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			String[] args) {
 		ValidTargetList list = spell.getValidTargetList();
 		ValidTargetList originalList = list.clone();
-		if (Objects.equals(caster, target) && !list.canTargetSelf()) list.setTargetCaster(true);
+		if (Objects.equals(caster, target) && !list.canTargetSelf())
+			list.setTargetCaster(true);
 		if (!list.canTargetEntity(target)) {
 			list.addEntityTarget(target);
 			spell.setValidTargetList(list);
 		}
 
-		boolean success = caster != null ? ((TargetedEntityFromLocationSpell) spell).castAtEntityFromLocation(caster, from, target, power, args) : ((TargetedEntityFromLocationSpell) spell).castAtEntityFromLocation(from, target, power, args);
+		boolean success = caster != null
+				? ((TargetedEntityFromLocationSpell) spell).castAtEntityFromLocation(caster, from, target, power, args)
+				: ((TargetedEntityFromLocationSpell) spell).castAtEntityFromLocation(from, target, power, args);
 		spell.setValidTargetList(originalList);
 		return success;
 	}
 
-	public void setCastMode(CastMode mode){
+	public void setCastMode(CastMode mode) {
 		this.mode = mode;
 	}
 

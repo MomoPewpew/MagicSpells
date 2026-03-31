@@ -11,6 +11,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.Location;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.AttributeUtil;
@@ -23,9 +24,12 @@ public class AttributeManager {
 
 	// add attributes to item meta
 	public ItemMeta addMetaAttribute(ItemMeta meta, Attribute attribute, AttributeModifier modifier) {
-		if (meta == null) throw new NullPointerException("itemMeta");
-		if (attribute == null) throw new NullPointerException("attribute");
-		if (modifier == null) throw new NullPointerException("modifier");
+		if (meta == null)
+			throw new NullPointerException("itemMeta");
+		if (attribute == null)
+			throw new NullPointerException("attribute");
+		if (modifier == null)
+			throw new NullPointerException("modifier");
 		try {
 			meta.addAttributeModifier(attribute, modifier);
 		} catch (IllegalArgumentException exception) {
@@ -41,12 +45,14 @@ public class AttributeManager {
 
 	// add attributes to item stack
 	public void addItemAttribute(ItemStack item, Attribute attribute, AttributeModifier modifier) {
-		if (item == null) throw new NullPointerException("itemStack");
+		if (item == null)
+			throw new NullPointerException("itemStack");
 		item.setItemMeta(addMetaAttribute(item.getItemMeta(), attribute, modifier));
 	}
 
 	public void addItemAttribute(ItemStack item, AttributeInfo attributeInfo) {
-		if (item == null) throw new NullPointerException("itemStack");
+		if (item == null)
+			throw new NullPointerException("itemStack");
 		item.setItemMeta(addMetaAttribute(item.getItemMeta(), attributeInfo));
 	}
 
@@ -56,10 +62,14 @@ public class AttributeManager {
 
 	// add attributes to the living entity
 	public void addEntityAttribute(LivingEntity livingEntity, Attribute attribute, AttributeModifier modifier) {
-		if (livingEntity == null) throw new NullPointerException("livingEntity");
-		if (attribute == null) throw new NullPointerException("attribute");
-		if (modifier == null) throw new NullPointerException("modifier");
-		if (livingEntity.getAttribute(attribute) == null) throw new NullPointerException("inapplicable attribute");
+		if (livingEntity == null)
+			throw new NullPointerException("livingEntity");
+		if (attribute == null)
+			throw new NullPointerException("attribute");
+		if (modifier == null)
+			throw new NullPointerException("modifier");
+		if (livingEntity.getAttribute(attribute) == null)
+			throw new NullPointerException("inapplicable attribute");
 		try {
 			livingEntity.getAttribute(attribute).addModifier(modifier);
 		} catch (IllegalArgumentException exception) {
@@ -82,7 +92,8 @@ public class AttributeManager {
 	}
 
 	public boolean hasEntityAttribute(LivingEntity entity, AttributeInfo attributeInfo) {
-		return entity.getAttribute(attributeInfo.getAttribute()).getModifiers().contains(attributeInfo.getAttributeModifier());
+		return entity.getAttribute(attributeInfo.getAttribute()).getModifiers()
+				.contains(attributeInfo.getAttributeModifier());
 	}
 
 	// get attribute and attribute modifier from string
@@ -90,7 +101,8 @@ public class AttributeManager {
 	public AttributeInfo getAttributeInfo(String str) {
 		String[] args = str.trim().split("\\s+");
 
-		if (args.length < 3) return null;
+		if (args.length < 3)
+			return null;
 
 		String attributeName = args[0];
 
@@ -123,17 +135,21 @@ public class AttributeManager {
 	 * Build a cast-time evaluated attribute set.
 	 * <p>
 	 * Each entry is still defined as:
+	 * 
 	 * <pre>
 	 * - [AttributeName] [Number] [Operation]
 	 * </pre>
-	 * But all 3 tokens support variables (and the number token supports math via {@link ConfigDataUtil#getDouble(String)}).
+	 * 
+	 * But all 3 tokens support variables (and the number token supports math via
+	 * {@link ConfigDataUtil#getDouble(String)}).
 	 * <p>
-	 * Attribute modifier UUIDs are made stable per {@code sourceKey + index} so that toggle/remove behavior works even
+	 * Attribute modifier UUIDs are made stable per {@code sourceKey + index} so
+	 * that toggle/remove behavior works even
 	 * when values are resolved at cast-time.
 	 */
 	public ConfigData<Set<AttributeInfo>> getAttributesConfigData(List<String> attributes, String sourceKey) {
 		if (attributes == null || attributes.isEmpty()) {
-			return (caster, target, power, args) -> null;
+			return (caster, target, location, power, args) -> null;
 		}
 
 		final List<ConfigData<AttributeInfo>> suppliers = new ArrayList<>();
@@ -141,32 +157,39 @@ public class AttributeManager {
 
 		for (int i = 0; i < attributes.size(); i++) {
 			String raw = attributes.get(i);
-			if (raw == null || raw.isBlank()) continue;
+			if (raw == null || raw.isBlank())
+				continue;
 
 			ConfigData<AttributeInfo> supplier = ConfigDataUtil.getAttributeInfo(raw, sourceKey, i);
 			suppliers.add(supplier);
-			if (isConstant && !supplier.isConstant()) isConstant = false;
+			if (isConstant && !supplier.isConstant())
+				isConstant = false;
 		}
 
-		if (suppliers.isEmpty()) return (caster, target, power, args) -> null;
+		if (suppliers.isEmpty())
+			return (caster, target, location, power, args) -> null;
 
 		if (isConstant) {
 			Set<AttributeInfo> resolved = new HashSet<>();
 			for (ConfigData<AttributeInfo> supplier : suppliers) {
 				AttributeInfo info = supplier.get(null, null, 1f, null);
-				if (info != null) resolved.add(info);
+				if (info != null)
+					resolved.add(info);
 			}
-			if (resolved.isEmpty()) return (caster, target, power, args) -> null;
-			return (caster, target, power, args) -> resolved;
+			if (resolved.isEmpty())
+				return (caster, target, location, power, args) -> null;
+			return (caster, target, location, power, args) -> resolved;
 		}
 
 		return new ConfigData<>() {
 			@Override
-			public Set<AttributeInfo> get(LivingEntity caster, LivingEntity target, float power, String[] args) {
+			public Set<AttributeInfo> get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
 				Set<AttributeInfo> resolved = new HashSet<>();
 				for (ConfigData<AttributeInfo> supplier : suppliers) {
 					AttributeInfo info = supplier.get(caster, target, power, args);
-					if (info != null) resolved.add(info);
+					if (info != null)
+						resolved.add(info);
 				}
 				return resolved.isEmpty() ? null : resolved;
 			}
@@ -184,12 +207,14 @@ public class AttributeManager {
 
 	// get attribute info from string list
 	public Set<AttributeInfo> getAttributes(List<String> attributes) {
-		if (attributes == null || attributes.isEmpty()) return null;
+		if (attributes == null || attributes.isEmpty())
+			return null;
 		Set<AttributeInfo> attributeMap = new HashSet<>();
 
 		for (String str : attributes) {
 			AttributeInfo attributeInfo = getAttributeInfo(str);
-			if (attributeInfo == null) continue;
+			if (attributeInfo == null)
+				continue;
 			attributeMap.add(attributeInfo);
 		}
 
@@ -198,16 +223,21 @@ public class AttributeManager {
 
 	// clear meta attributes
 	public ItemMeta removeMetaAttributeModifier(ItemMeta meta, Attribute attribute, AttributeModifier modifier) {
-		if (meta == null) throw new NullPointerException("itemMeta");
-		if (attribute == null) throw new NullPointerException("attribute");
-		if (modifier == null) throw new NullPointerException("modifier");
+		if (meta == null)
+			throw new NullPointerException("itemMeta");
+		if (attribute == null)
+			throw new NullPointerException("attribute");
+		if (modifier == null)
+			throw new NullPointerException("modifier");
 		meta.removeAttributeModifier(attribute, modifier);
 		return meta;
 	}
 
 	public ItemMeta clearMetaAttributeModifiers(ItemMeta meta, Attribute attribute) {
-		if (meta == null) throw new NullPointerException("itemMeta");
-		if (attribute == null) throw new NullPointerException("attribute");
+		if (meta == null)
+			throw new NullPointerException("itemMeta");
+		if (attribute == null)
+			throw new NullPointerException("attribute");
 		Collection<AttributeModifier> modifiers = meta.getAttributeModifiers(attribute);
 		modifiers.forEach(modifier -> meta.removeAttributeModifier(attribute, modifier));
 		return meta;
@@ -215,7 +245,8 @@ public class AttributeManager {
 
 	public ItemMeta clearMetaAttributeModifiers(ItemMeta meta, Set<AttributeInfo> attributeInfos) {
 		for (AttributeInfo attributeInfo : attributeInfos) {
-			meta = removeMetaAttributeModifier(meta, attributeInfo.getAttribute(), attributeInfo.getAttributeModifier());
+			meta = removeMetaAttributeModifier(meta, attributeInfo.getAttribute(),
+					attributeInfo.getAttributeModifier());
 		}
 		return meta;
 	}
@@ -234,22 +265,29 @@ public class AttributeManager {
 	}
 
 	// clear entity attributes
-	public void removeEntityAttributeModifier(LivingEntity livingEntity, Attribute attribute, AttributeModifier modifier) {
-		if (livingEntity == null) throw new NullPointerException("livingEntity");
-		if (attribute == null) throw new NullPointerException("attribute");
-		if (modifier == null) throw new NullPointerException("modifier");
+	public void removeEntityAttributeModifier(LivingEntity livingEntity, Attribute attribute,
+			AttributeModifier modifier) {
+		if (livingEntity == null)
+			throw new NullPointerException("livingEntity");
+		if (attribute == null)
+			throw new NullPointerException("attribute");
+		if (modifier == null)
+			throw new NullPointerException("modifier");
 		livingEntity.getAttribute(attribute).removeModifier(modifier);
 	}
 
 	public void clearEntityAttributeModifiers(LivingEntity livingEntity, Attribute attribute) {
-		if (livingEntity == null) throw new NullPointerException("livingEntity");
-		if (attribute == null) throw new NullPointerException("attribute");
+		if (livingEntity == null)
+			throw new NullPointerException("livingEntity");
+		if (attribute == null)
+			throw new NullPointerException("attribute");
 		Collection<AttributeModifier> modifiers = livingEntity.getAttribute(attribute).getModifiers();
 		modifiers.forEach(modifier -> livingEntity.getAttribute(attribute).removeModifier(modifier));
 	}
 
 	public void clearEntityAttributeModifiers(LivingEntity livingEntity, Set<AttributeInfo> attributeInfos) {
-		attributeInfos.forEach(attributeInfo -> removeEntityAttributeModifier(livingEntity, attributeInfo.getAttribute(), attributeInfo.getAttributeModifier()));
+		attributeInfos.forEach(attributeInfo -> removeEntityAttributeModifier(livingEntity,
+				attributeInfo.getAttribute(), attributeInfo.getAttributeModifier()));
 	}
 
 	public static class AttributeInfo {

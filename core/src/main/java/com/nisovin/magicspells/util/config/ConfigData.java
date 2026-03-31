@@ -10,7 +10,8 @@ public interface ConfigData<T> {
 	T get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args);
 
 	default T get(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		return get(caster, target, null, power, args);
+		return get(caster, target, target == null ? caster == null ? null : caster.getLocation() : target.getLocation(),
+				power, args);
 	}
 
 	default T get(LivingEntity caster, float power, String[] args) {

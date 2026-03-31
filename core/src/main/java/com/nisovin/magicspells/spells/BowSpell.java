@@ -84,7 +84,8 @@ public class BowSpell extends Spell {
 			names.forEach(str -> bowNames.add(Util.getMiniMessage(str)));
 		} else {
 			String bowNameString = getConfigString("bow-name", null);
-			if (bowNameString != null) bowName = Util.getMiniMessage(bowNameString);
+			if (bowNameString != null)
+				bowName = Util.getMiniMessage(bowNameString);
 		}
 
 		List<String> disallowedNames = getConfigStringList("disallowed-bow-names", null);
@@ -95,9 +96,11 @@ public class BowSpell extends Spell {
 
 		if (config.isList("spells." + internalName + ".can-trigger")) {
 			List<String> targets = getConfigStringList("can-trigger", new ArrayList<>());
-			if (targets.isEmpty()) targets.add("players");
+			if (targets.isEmpty())
+				targets.add("players");
 			triggerList = new ValidTargetList(this, targets);
-		} else triggerList = new ValidTargetList(this, getConfigString("can-trigger", "players"));
+		} else
+			triggerList = new ValidTargetList(this, getConfigString("can-trigger", "players"));
 
 		bowItems = getFilter("bow-items");
 		ammoItems = getFilter("ammo-items");
@@ -120,15 +123,20 @@ public class BowSpell extends Spell {
 		minimumForce = getConfigFloat("minimum-force", 0F);
 		maximumForce = getConfigFloat("maximum-force", 3F);
 
-		if (minimumForce < 0F) minimumForce = 0F;
-		else if (minimumForce > 1F) minimumForce = 3F;
-		if (maximumForce < 0F) maximumForce = 0F;
-		else if (maximumForce > 3F) maximumForce = 3F;
+		if (minimumForce < 0F)
+			minimumForce = 0F;
+		else if (minimumForce > 1F)
+			minimumForce = 3F;
+		if (maximumForce < 0F)
+			maximumForce = 0F;
+		else if (maximumForce > 3F)
+			maximumForce = 3F;
 	}
 
 	private List<MagicItemData> getFilter(String key) {
 		List<String> itemStrings = getConfigStringList(key, null);
-		if (itemStrings == null || itemStrings.isEmpty()) return null;
+		if (itemStrings == null || itemStrings.isEmpty())
+			return null;
 
 		List<MagicItemData> itemData = new ArrayList<>();
 		for (String itemString : itemStrings) {
@@ -149,12 +157,16 @@ public class BowSpell extends Spell {
 		super.initialize();
 
 		spellOnShoot = initSubspell(spellOnShootName, "BowSpell '" + internalName + "' has an invalid spell defined!");
-		spellOnHitEntity = initSubspell(spellOnHitEntityName, "BowSpell '" + internalName + "' has an invalid spell-on-hit-entity defined!");
-		spellOnHitGround = initSubspell(spellOnHitGroundName, "BowSpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
+		spellOnHitEntity = initSubspell(spellOnHitEntityName,
+				"BowSpell '" + internalName + "' has an invalid spell-on-hit-entity defined!");
+		spellOnHitGround = initSubspell(spellOnHitGroundName,
+				"BowSpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
 
 		spellOnEntityLocation = new Subspell(spellOnEntityLocationName);
 		if (!spellOnEntityLocation.process()) {
-			if (!spellOnEntityLocationName.isEmpty()) MagicSpells.error("ProjectileSpell '" + internalName + "' has an invalid spell-on-entity-location defined!");
+			if (!spellOnEntityLocationName.isEmpty())
+				MagicSpells.error(
+						"ProjectileSpell '" + internalName + "' has an invalid spell-on-entity-location defined!");
 			spellOnEntityLocation = null;
 		}
 
@@ -163,7 +175,8 @@ public class BowSpell extends Spell {
 			registerEvents(hitListener);
 		}
 
-		if (!requireBind) registerEvents(new ShootListener());
+		if (!requireBind)
+			registerEvents(new ShootListener());
 	}
 
 	@Override
@@ -193,56 +206,74 @@ public class BowSpell extends Spell {
 	}
 
 	public void handleBowCast(EntityShootBowEvent event) {
-		if (!cancelShot && event.isCancelled()) return;
-		if (!(event.getProjectile() instanceof Arrow)) return;
-		if (denyOffhand && event.getHand() == EquipmentSlot.OFF_HAND) return;
+		if (!cancelShot && event.isCancelled())
+			return;
+		if (!(event.getProjectile() instanceof Arrow))
+			return;
+		if (denyOffhand && event.getHand() == EquipmentSlot.OFF_HAND)
+			return;
 
 		LivingEntity caster = event.getEntity();
-		if (!triggerList.canTarget(caster, true)) return;
+		if (!triggerList.canTarget(caster, true))
+			return;
 
 		if (caster instanceof Player) {
 			Spellbook spellbook = MagicSpells.getSpellbook((Player) caster);
-			if (!spellbook.hasSpell(this) || !spellbook.canCast(this)) return;
+			if (!spellbook.hasSpell(this) || !spellbook.canCast(this))
+				return;
 		}
 
 		ItemStack bow = event.getBow();
-		if (bow == null || (bow.getType() != Material.BOW && bow.getType() != Material.CROSSBOW)) return;
+		if (bow == null || (bow.getType() != Material.BOW && bow.getType() != Material.CROSSBOW))
+			return;
 
 		float force = event.getForce();
-		if (force < minimumForce || force > maximumForce) return;
+		if (force < minimumForce || force > maximumForce)
+			return;
 
 		Component name = bow.getItemMeta().displayName();
-		if (bowNames != null && !bowNames.contains(name)) return;
-		if (disallowedBowNames != null && disallowedBowNames.contains(name)) return;
-		if (bowName != null && !bowName.equals(name)) return;
+		if (bowNames != null && !bowNames.contains(name))
+			return;
+		if (disallowedBowNames != null && disallowedBowNames.contains(name))
+			return;
+		if (bowName != null && !bowName.equals(name))
+			return;
 
-		if (bowItems != null && !check(bow, bowItems)) return;
-		if (disallowedBowItems != null && check(bow, disallowedBowItems)) return;
+		if (bowItems != null && !check(bow, bowItems))
+			return;
+		if (disallowedBowItems != null && check(bow, disallowedBowItems))
+			return;
 
 		ItemStack ammo = event.getConsumable();
-		if (ammoItems != null && !check(ammo, ammoItems)) return;
-		if (disallowedAmmoItems != null && check(ammo, disallowedAmmoItems)) return;
+		if (ammoItems != null && !check(ammo, ammoItems))
+			return;
+		if (disallowedAmmoItems != null && check(ammo, disallowedAmmoItems))
+			return;
 
 		SpellCastEvent castEvent = preCast(caster, useBowForce ? force : 1f, null);
 		if (castEvent == null) {
-			if (cancelShotOnFail) event.setCancelled(true);
+			if (cancelShotOnFail)
+				event.setCancelled(true);
 			return;
 		}
 
 		if (castEvent.getSpellCastState() == SpellCastState.NORMAL) {
-			if (cancelShot) event.setCancelled(true);
+			if (cancelShot)
+				event.setCancelled(true);
 			if (!event.isCancelled()) {
 				Entity projectile = event.getProjectile();
 
-				ArrowData arrowData = new ArrowData(this, new SpellData(caster, null, castEvent.getPower(), null));
+				ArrowData arrowData = new ArrowData(this, new SpellData(caster, castEvent.getPower()));
 				List<ArrowData> arrowDataList = null;
 				if (projectile.hasMetadata(METADATA_KEY)) {
 					List<MetadataValue> metas = projectile.getMetadata(METADATA_KEY);
 					for (MetadataValue meta : metas) {
-						if (!MagicSpells.plugin.equals(meta.getOwningPlugin())) continue;
+						if (!MagicSpells.plugin.equals(meta.getOwningPlugin()))
+							continue;
 
 						arrowDataList = (List<ArrowData>) meta.value();
-						if (arrowDataList != null) arrowDataList.add(arrowData);
+						if (arrowDataList != null)
+							arrowDataList.add(arrowData);
 						break;
 					}
 				}
@@ -255,11 +286,14 @@ public class BowSpell extends Spell {
 				}
 
 				playSpellEffects(EffectPosition.PROJECTILE, projectile, arrowData.spellData);
-				playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, caster.getLocation(), projectile.getLocation(), caster, projectile, arrowData.spellData);
+				playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, caster.getLocation(),
+						projectile.getLocation(), caster, projectile, arrowData.spellData);
 			}
 
-			if (spellOnShoot != null) spellOnShoot.subcast(caster, castEvent.getPower(), null);
-		} else if (cancelShotOnFail) event.setCancelled(true);
+			if (spellOnShoot != null)
+				spellOnShoot.subcast(caster, castEvent.getPower(), null);
+		} else if (cancelShotOnFail)
+			event.setCancelled(true);
 
 		postCast(castEvent, PostCastAction.HANDLE_NORMALLY);
 	}
@@ -286,82 +320,104 @@ public class BowSpell extends Spell {
 
 		@EventHandler(priority = EventPriority.MONITOR)
 		public void onArrowHitGround(ProjectileHitEvent event) {
-			if (event.getHitBlock() == null) return;
+			if (event.getHitBlock() == null)
+				return;
 
 			Projectile proj = event.getEntity();
-			if (!proj.hasMetadata(METADATA_KEY)) return;
+			if (!proj.hasMetadata(METADATA_KEY))
+				return;
 
 			List<MetadataValue> metas = proj.getMetadata(METADATA_KEY);
 			boolean remove = false;
 			for (MetadataValue meta : metas) {
-				if (!MagicSpells.plugin.equals(meta.getOwningPlugin())) continue;
+				if (!MagicSpells.plugin.equals(meta.getOwningPlugin()))
+					continue;
 
 				ProjectileSource shooter = proj.getShooter();
-				if (!(shooter instanceof LivingEntity caster)) break;
+				if (!(shooter instanceof LivingEntity caster))
+					break;
 
 				List<ArrowData> arrowDataList = (List<ArrowData>) meta.value();
-				if (arrowDataList == null || arrowDataList.isEmpty()) break;
+				if (arrowDataList == null || arrowDataList.isEmpty())
+					break;
 
 				for (ArrowData data : arrowDataList) {
 					Subspell groundSpell = data.bowSpell.spellOnHitGround;
-					if (groundSpell == null) continue;
+					if (groundSpell == null)
+						continue;
 
-					SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(data.bowSpell, caster, proj.getLocation(), data.spellData.power());
-					if (!targetEvent.callEvent()) continue;
+					SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(data.bowSpell, caster,
+							proj.getLocation(), data.spellData.power());
+					if (!targetEvent.callEvent())
+						continue;
 
 					groundSpell.subcast(caster, targetEvent.getTargetLocation(), targetEvent.getPower(), null);
 
-					if (data.bowSpell.removeArrow) remove = true;
+					if (data.bowSpell.removeArrow)
+						remove = true;
 				}
 
 				break;
 			}
 
 			proj.removeMetadata(METADATA_KEY, MagicSpells.plugin);
-			if (remove) proj.remove();
+			if (remove)
+				proj.remove();
 		}
 
 		@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 		public void onArrowHitEntity(EntityDamageByEntityEvent event) {
 			Entity damager = event.getDamager();
-			if (!(damager instanceof Arrow arrow)) return;
-			if (!damager.hasMetadata(METADATA_KEY)) return;
+			if (!(damager instanceof Arrow arrow))
+				return;
+			if (!damager.hasMetadata(METADATA_KEY))
+				return;
 
 			List<MetadataValue> metas = damager.getMetadata(METADATA_KEY);
 			boolean remove = false;
 			for (MetadataValue meta : metas) {
-				if (!MagicSpells.plugin.equals(meta.getOwningPlugin())) continue;
+				if (!MagicSpells.plugin.equals(meta.getOwningPlugin()))
+					continue;
 
 				Entity damaged = event.getEntity();
-				if (!(damaged instanceof LivingEntity target)) break;
+				if (!(damaged instanceof LivingEntity target))
+					break;
 
 				ProjectileSource shooter = arrow.getShooter();
-				if (!(shooter instanceof LivingEntity caster)) break;
+				if (!(shooter instanceof LivingEntity caster))
+					break;
 
 				List<ArrowData> arrowDataList = (List<ArrowData>) meta.value();
-				if (arrowDataList == null || arrowDataList.isEmpty()) break;
+				if (arrowDataList == null || arrowDataList.isEmpty())
+					break;
 
 				for (ArrowData data : arrowDataList) {
 					Subspell entitySpell = data.bowSpell.spellOnHitEntity;
 					Subspell entityLocationSpell = data.bowSpell.spellOnEntityLocation;
 
-					SpellTargetEvent targetEvent = new SpellTargetEvent(data.bowSpell, caster, target, data.spellData.power());
-					if (!targetEvent.callEvent()) continue;
+					SpellTargetEvent targetEvent = new SpellTargetEvent(data.bowSpell, caster, target,
+							data.spellData.power());
+					if (!targetEvent.callEvent())
+						continue;
 
 					LivingEntity subTarget = targetEvent.getTarget();
 					float subPower = targetEvent.getPower();
 
-					if (entitySpell != null) entitySpell.subcast(caster, caster.getLocation(), subTarget, subPower, null);
-					if (entityLocationSpell != null) entityLocationSpell.subcast(caster, arrow.getLocation(), subPower, null);
+					if (entitySpell != null)
+						entitySpell.subcast(caster, caster.getLocation(), subTarget, subPower, null);
+					if (entityLocationSpell != null)
+						entityLocationSpell.subcast(caster, arrow.getLocation(), subPower, null);
 
-					if (data.bowSpell.removeArrow) remove = true;
+					if (data.bowSpell.removeArrow)
+						remove = true;
 				}
 
 				break;
 			}
 
 			damager.removeMetadata(METADATA_KEY, MagicSpells.plugin);
-			if (remove) damager.remove();
+			if (remove)
+				damager.remove();
 		}
 
 	}

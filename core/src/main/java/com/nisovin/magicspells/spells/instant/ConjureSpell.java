@@ -475,7 +475,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	private boolean conjureItemsAtLocation(Location location, float power, @NotNull LivingEntity player,
 			@NotNull LivingEntity target) {
 
-		SpellData spellData = new SpellData(player, null, power, null);
+		SpellData spellData = new SpellData(player, power);
 		List<String> itemList = this.itemListData.get(spellData);
 
 		Object[] itemResults = processItemList(itemList);

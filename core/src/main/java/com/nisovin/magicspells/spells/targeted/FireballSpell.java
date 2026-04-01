@@ -245,7 +245,7 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 		CastData data = fireballs.get(fireball);
 
 		playSpellEffects(EffectPosition.TARGET, fireball.getLocation(),
-				new SpellData(caster, event.getLocation(), data.power(), data.args()));
+				new SpellData(caster, fireball.getLocation(), data.power(), data.args()));
 
 		if (noExplosion) {
 			event.setCancelled(true);

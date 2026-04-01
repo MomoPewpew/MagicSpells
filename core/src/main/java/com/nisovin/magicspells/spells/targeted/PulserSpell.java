@@ -56,8 +56,10 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 	private final List<String> spellNames;
 	private final List<String> spellNamesOnRightClick;
+	private final List<String> spellNamesOnPlace;
 	private List<Subspell> spells;
 	private List<Subspell> spellsOnRightClick;
+	private List<Subspell> spellsOnPlace;
 
 	private final String spellNameOnBreak;
 	private Subspell spellOnBreak;
@@ -90,6 +92,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 		spellNames = getConfigStringList("spells", null);
 		spellNamesOnRightClick = getConfigStringList("spells-on-right-click", null);
+		spellNamesOnPlace = getConfigStringList("spells-on-place", null);
 		spellNameOnBreak = getConfigString("spell-on-break", "");
 
 		strAtCap = getConfigString("str-at-cap", "You have too many effects at once.");
@@ -104,6 +107,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 		spells = new ArrayList<>();
 		spellsOnRightClick = new ArrayList<>();
+		spellsOnPlace = new ArrayList<>();
 		if (spellNames != null && !spellNames.isEmpty()) {
 			for (String spellName : spellNames) {
 				Subspell spell = new Subspell(spellName);
@@ -118,6 +122,14 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 				if (!spell.process())
 					continue;
 				spellsOnRightClick.add(spell);
+			}
+		}
+		if (spellNamesOnPlace != null && !spellNamesOnPlace.isEmpty()) {
+			for (String spellName : spellNamesOnPlace) {
+				Subspell spell = new Subspell(spellName);
+				if (!spell.process())
+					continue;
+				spellsOnPlace.add(spell);
 			}
 		}
 
@@ -242,6 +254,13 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			playSpellEffects(caster, block.getLocation().add(0.5, 0.5, 0.5), power, args);
 		else
 			playSpellEffects(EffectPosition.TARGET, block.getLocation().add(0.5, 0.5, 0.5), power, args);
+
+		if (spellsOnPlace != null && !spellsOnPlace.isEmpty()) {
+			Location loc = block.getLocation().add(0.5, 0.5, 0.5);
+			for (Subspell spell : spellsOnPlace) {
+				spell.subcast(caster, loc, power, args);
+			}
+		}
 	}
 
 	private boolean interactionDebounce = false;

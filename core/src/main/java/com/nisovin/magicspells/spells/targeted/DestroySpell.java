@@ -190,7 +190,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args) {
 		doIt(caster, target, from, target.getLocation(), power, args);
-		playSpellEffects(caster, from, target, new SpellData(caster, target, power, args));
+		playSpellEffects(caster, from, target, new SpellData(caster, target, from, power, args));
 		return true;
 	}
 
@@ -283,8 +283,6 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		float fallingBlockDamage = resolveDamagePerBlock ? 0 : this.fallingBlockDamage.get(caster, target, power, args);
 		int fallingBlockHeight = resolveMaxHeightPerBlock ? 0
 				: this.fallingBlockMaxHeight.get(caster, target, power, args);
-
-		SpellData data = new SpellData(caster, target, power, args);
 		for (Block b : blocksToThrow) {
 			if (checkPlugins && caster instanceof Player) {
 				MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(b, (Player) caster, bypassDippGen);
@@ -304,6 +302,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			}
 
 			Location l = b.getLocation().clone().add(0.5, 0.5, 0.5);
+			SpellData data = new SpellData(caster, target, l, power, args);
 			FallingBlock fb = b.getWorld().spawn(l, FallingBlock.class);
 			fb.setBlockData(blockData);
 			fb.addScoreboardTag(MagicSpells.ENTITY_TAG);

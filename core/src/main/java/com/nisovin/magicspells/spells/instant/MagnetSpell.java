@@ -79,16 +79,20 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 
 	private List<Item> getNearbyItems(LivingEntity caster, Location center, float power, String[] args) {
 		double radius = this.radius.get(caster, null, power, args);
-		if (powerAffectsRadius) radius *= power;
+		if (powerAffectsRadius)
+			radius *= power;
 		radius = Math.min(radius, MagicSpells.getGlobalRadius());
 
 		Collection<Entity> entities = center.getWorld().getNearbyEntities(center, radius, radius, radius);
 		List<Item> ret = new ArrayList<>();
 		for (Entity e : entities) {
-			if (!(e instanceof Item i)) continue;
+			if (!(e instanceof Item i))
+				continue;
 			ItemStack stack = i.getItemStack();
-			if (InventoryUtil.isNothing(stack)) continue;
-			if (i.isDead()) continue;
+			if (InventoryUtil.isNothing(stack))
+				continue;
+			if (i.isDead())
+				continue;
 
 			if (forcePickup) {
 				i.setPickupDelay(0);
@@ -104,20 +108,26 @@ public class MagnetSpell extends InstantSpell implements TargetedLocationSpell {
 		double velocity = 0;
 		if (!resolveVelocityPerItem) {
 			velocity = this.velocity.get(caster, null, power, args);
-			if (powerAffectsVelocity) velocity *= power;
+			if (powerAffectsVelocity)
+				velocity *= power;
 		}
 
-		SpellData data = new SpellData(caster, power, args);
-		for (Item i : items) magnet(caster, location, i, power, args, data, velocity);
+		SpellData data = new SpellData(caster, location, power, args);
+		for (Item i : items)
+			magnet(caster, location, i, power, args, data, velocity);
 	}
 
-	private void magnet(LivingEntity caster, Location origin, Item item, float power, String[] args, SpellData data, double velocity) {
-		if (removeItemGravity) item.setGravity(false);
-		if (teleport) item.teleportAsync(origin);
+	private void magnet(LivingEntity caster, Location origin, Item item, float power, String[] args, SpellData data,
+			double velocity) {
+		if (removeItemGravity)
+			item.setGravity(false);
+		if (teleport)
+			item.teleportAsync(origin);
 		else {
 			if (resolveVelocityPerItem) {
 				velocity = this.velocity.get(caster, null, power, args);
-				if (powerAffectsVelocity) velocity *= power;
+				if (powerAffectsVelocity)
+					velocity *= power;
 			}
 
 			item.setVelocity(origin.toVector().subtract(item.getLocation().toVector()).normalize().multiply(velocity));

@@ -51,8 +51,10 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 		super.initialize();
 
 		Spell spell = MagicSpells.getSpellByInternalName(markSpellName);
-		if (spell instanceof MarkSpell) markSpell = (MarkSpell) spell;
-		else MagicSpells.error("RecallSpell '" + internalName + "' has an invalid mark-spell defined!");
+		if (spell instanceof MarkSpell)
+			markSpell = (MarkSpell) spell;
+		else
+			MagicSpells.error("RecallSpell '" + internalName + "' has an invalid mark-spell defined!");
 	}
 
 	@Override
@@ -61,12 +63,16 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 			Location markLocation = null;
 			if (args != null && args.length == 1 && caster.hasPermission("magicspells.advanced." + internalName)) {
 				Player target = PlayerNameUtils.getPlayer(args[0]);
-				if (useBedLocation && target != null) markLocation = target.getBedSpawnLocation();
+				if (useBedLocation && target != null)
+					markLocation = target.getBedSpawnLocation();
 				else if (markSpell != null) {
-					Location loc = markSpell.getEffectiveMark(target != null ? target.getName().toLowerCase() : args[0].toLowerCase());
-					if (loc != null) markLocation = loc;
+					Location loc = markSpell
+							.getEffectiveMark(target != null ? target.getName().toLowerCase() : args[0].toLowerCase());
+					if (loc != null)
+						markLocation = loc;
 				}
-			} else markLocation = getRecallLocation(caster);
+			} else
+				markLocation = getRecallLocation(caster);
 
 			if (markLocation == null) {
 				sendMessage(strNoMark, caster, args);
@@ -95,7 +101,7 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 
 			caster.teleportAsync(markLocation);
 
-			SpellData data = new SpellData(caster, power, args);
+			SpellData data = new SpellData(caster, markLocation, power, args);
 			playSpellEffects(EffectPosition.CASTER, from, data);
 			playSpellEffects(EffectPosition.TARGET, markLocation, data);
 		}
@@ -104,10 +110,12 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 
 		Location mark = getRecallLocation(caster);
-		if (mark == null) return false;
+		if (mark == null)
+			return false;
 
 		target.teleportAsync(mark);
 		return true;
@@ -119,8 +127,10 @@ public class RecallSpell extends InstantSpell implements TargetedEntitySpell {
 	}
 
 	private Location getRecallLocation(LivingEntity caster) {
-		if (useBedLocation && caster instanceof Player) return ((Player) caster).getBedSpawnLocation();
-		if (markSpell == null) return null;
+		if (useBedLocation && caster instanceof Player)
+			return ((Player) caster).getBedSpawnLocation();
+		if (markSpell == null)
+			return null;
 		return markSpell.getEffectiveMark(caster);
 	}
 

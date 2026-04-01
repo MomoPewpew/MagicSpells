@@ -35,34 +35,37 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 	private boolean dropNormal;
 	private boolean checkPlugins;
 	private boolean playBreakEffect;
-	
+
 	public ZapSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
-		
+
 		List<String> allowed = getConfigStringList("allowed-block-types", null);
 		if (allowed != null) {
 			allowedBlockTypes = EnumSet.noneOf(Material.class);
 			for (String s : allowed) {
 				Material m = Util.getMaterial(s);
-				if (m == null) continue;
+				if (m == null)
+					continue;
 
 				allowedBlockTypes.add(m);
 			}
 		}
-		
-		List<String> disallowed = getConfigStringList("disallowed-block-types", Arrays.asList("bedrock", "lava", "water"));
+
+		List<String> disallowed = getConfigStringList("disallowed-block-types",
+				Arrays.asList("bedrock", "lava", "water"));
 		if (disallowed != null) {
 			disallowedBlockTypes = EnumSet.noneOf(Material.class);
 			for (String s : disallowed) {
 				Material m = Util.getMaterial(s);
-				if (m == null) continue;
-				
+				if (m == null)
+					continue;
+
 				disallowedBlockTypes.add(m);
 			}
 		}
 
 		strCantZap = getConfigString("str-cant-zap", "");
-		
+
 		dropBlock = getConfigBoolean("drop-block", false);
 		dropNormal = getConfigBoolean("drop-normal", true);
 		checkPlugins = getConfigBoolean("check-plugins", true);
@@ -79,16 +82,22 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 				target = null;
 			}
 			if (target != null) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(), power);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target.getLocation(),
+						power);
 				EventUtil.call(event);
-				if (event.isCancelled()) target = null;
-				else target = event.getTargetLocation().getBlock();
+				if (event.isCancelled())
+					target = null;
+				else
+					target = event.getTargetLocation().getBlock();
 			}
-			if (target == null) return noTarget(caster, strCantZap, args);
+			if (target == null)
+				return noTarget(caster, strCantZap, args);
 
-			if (!canZap(target)) return noTarget(caster, strCantZap, args);
+			if (!canZap(target))
+				return noTarget(caster, strCantZap, args);
 			boolean ok = zap(target, (Player) caster, power, args);
-			if (!ok) return noTarget(caster, strCantZap, args);
+			if (!ok)
+				return noTarget(caster, strCantZap, args);
 
 		}
 		return PostCastAction.HANDLE_NORMALLY;
@@ -96,7 +105,8 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player)) return false;
+		if (!(caster instanceof Player))
+			return false;
 		Block block = target.getBlock();
 		if (canZap(block)) {
 			zap(block, (Player) caster, power, args);
@@ -139,30 +149,38 @@ public class ZapSpell extends TargetedSpell implements TargetedLocationSpell {
 		if (checkPlugins && !playerNull) {
 			MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(target, player, bypassDippGen);
 			MagicSpells.plugin.getServer().getPluginManager().callEvent(event);
-			if (event.isCancelled()) return false;
+			if (event.isCancelled())
+				return false;
 		}
 
 		if (dropBlock) {
-			if (dropNormal) target.breakNaturally();
-			else target.getWorld().dropItemNaturally(target.getLocation(), target.getState().getData().toItemStack(1));
+			if (dropNormal)
+				target.breakNaturally();
+			else
+				target.getWorld().dropItemNaturally(target.getLocation(), target.getState().getData().toItemStack(1));
 		}
 
-		if (playBreakEffect) target.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
+		if (playBreakEffect)
+			target.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
 
-		SpellData data = new SpellData(player, power, args);
-		if (!playerNull) playSpellEffects(EffectPosition.CASTER, player, data);
+		SpellData data = new SpellData(player, target.getLocation(), power, args);
+		if (!playerNull)
+			playSpellEffects(EffectPosition.CASTER, player, data);
 		playSpellEffects(EffectPosition.TARGET, target.getLocation(), data);
-		if (!playerNull) playSpellEffectsTrail(player.getLocation(), target.getLocation(), data);
+		if (!playerNull)
+			playSpellEffectsTrail(player.getLocation(), target.getLocation(), data);
 
 		target.setType(Material.AIR);
 		return true;
 	}
-	
+
 	private boolean canZap(Block target) {
 		Material type = target.getType();
-		if (disallowedBlockTypes.contains(type)) return false;
-		if (allowedBlockTypes.isEmpty()) return true;
+		if (disallowedBlockTypes.contains(type))
+			return false;
+		if (allowedBlockTypes.isEmpty())
+			return true;
 		return allowedBlockTypes.contains(type);
 	}
-	
+
 }

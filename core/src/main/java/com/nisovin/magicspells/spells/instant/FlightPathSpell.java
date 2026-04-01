@@ -55,7 +55,8 @@ public class FlightPathSpell extends InstantSpell {
 
 	@Override
 	public void turnOff() {
-		if (flightHandler == null) return;
+		if (flightHandler == null)
+			return;
 		flightHandler.turnOff();
 		flightHandler = null;
 	}
@@ -84,18 +85,21 @@ public class FlightPathSpell extends InstantSpell {
 		private void addFlight(ActiveFlight flight, float power, String[] args) {
 			flights.put(flight.player.getUniqueId(), flight);
 			flight.start();
-			if (task < 0) task = MagicSpells.scheduleRepeatingTask(this, 0, interval.get(flight.player, null, power, args));
+			if (task < 0)
+				task = MagicSpells.scheduleRepeatingTask(this, 0, interval.get(flight.player, null, power, args));
 		}
 
 		private void init() {
-			if (initialized) return;
+			if (initialized)
+				return;
 			initialized = true;
 			MagicSpells.registerEvents(this);
 		}
 
 		private void cancel(Player player) {
 			ActiveFlight flight = flights.remove(player.getUniqueId());
-			if (flight != null) flight.cancel();
+			if (flight != null)
+				flight.cancel();
 		}
 
 		private void turnOff() {
@@ -126,8 +130,10 @@ public class FlightPathSpell extends InstantSpell {
 			Iterator<ActiveFlight> iterator = flights.values().iterator();
 			while (iterator.hasNext()) {
 				ActiveFlight flight = iterator.next();
-				if (flight.isDone()) iterator.remove();
-				else flight.fly();
+				if (flight.isDone())
+					iterator.remove();
+				else
+					flight.fly();
 			}
 			if (flights.isEmpty()) {
 				MagicSpells.cancelTask(task);
@@ -163,7 +169,7 @@ public class FlightPathSpell extends InstantSpell {
 			wasFlyingAllowed = caster.getAllowFlight();
 			lastLocation = caster.getLocation();
 
-			data = new SpellData(caster, power, args);
+			data = new SpellData(caster, lastLocation, power, args);
 
 			speed = FlightPathSpell.this.speed.get(caster, null, power, args);
 			targetX = FlightPathSpell.this.targetX.get(caster, null, power, args);
@@ -179,7 +185,8 @@ public class FlightPathSpell extends InstantSpell {
 		}
 
 		private void fly() {
-			if (state == FlightState.DONE) return;
+			if (state == FlightState.DONE)
+				return;
 			// Check for stuck
 			if (player.getLocation().distanceSquared(lastLocation) < 0.4) {
 				sameLocCount++;
@@ -198,7 +205,8 @@ public class FlightPathSpell extends InstantSpell {
 				if (y >= cruisingAltitude) {
 					entityToPush.setVelocity(new Vector(0, 0, 0));
 					state = FlightState.CRUISING;
-				} else entityToPush.setVelocity(new Vector(0, 2, 0));
+				} else
+					entityToPush.setVelocity(new Vector(0, 2, 0));
 			} else if (state == FlightState.CRUISING) {
 				player.setFlying(true);
 				double x = entityToPush.getLocation().getX();
@@ -216,7 +224,9 @@ public class FlightPathSpell extends InstantSpell {
 			} else if (state == FlightState.LANDING) {
 				player.setFlying(false);
 				Location l = entityToPush.getLocation();
-				if (!BlockUtils.isAir(l.getBlock().getType()) || !BlockUtils.isAir(l.subtract(0, 1, 0).getBlock().getType()) || !BlockUtils.isAir(l.subtract(0, 2, 0).getBlock().getType())) {
+				if (!BlockUtils.isAir(l.getBlock().getType())
+						|| !BlockUtils.isAir(l.subtract(0, 1, 0).getBlock().getType())
+						|| !BlockUtils.isAir(l.subtract(0, 2, 0).getBlock().getType())) {
 					player.setFallDistance(0f);
 					cancel();
 					return;

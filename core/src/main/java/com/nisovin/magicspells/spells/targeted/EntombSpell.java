@@ -24,19 +24,19 @@ import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
-	
+
 	private Set<Block> blocks;
 
 	private Material material;
 	private String materialName;
-	
+
 	private ConfigData<Integer> duration;
 
 	private boolean allowBreaking;
 	private boolean closeTopAndBottom;
 
 	private String blockDestroyMessage;
-	
+
 	public EntombSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -46,17 +46,17 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 			MagicSpells.error("EntombSpell '" + internalName + "' has an invalid block defined!");
 			material = null;
 		}
-		
+
 		duration = getConfigDataInt("duration", 20);
 
 		allowBreaking = getConfigBoolean("allow-breaking", true);
 		closeTopAndBottom = getConfigBoolean("close-top-and-bottom", true);
 
 		blockDestroyMessage = getConfigString("block-destroy-message", "");
-		
+
 		blocks = new HashSet<>();
 	}
-	
+
 	@Override
 	public void turnOff() {
 		super.turnOff();
@@ -67,16 +67,17 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 		}
 		blocks.clear();
 	}
-	
+
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<LivingEntity> targetInfo = getTargetedEntity(caster, power, args);
-			if (targetInfo.noTarget()) return noTarget(caster, args, targetInfo);
+			if (targetInfo.noTarget())
+				return noTarget(caster, args, targetInfo);
 
 			LivingEntity target = targetInfo.target();
 			power = targetInfo.power();
-			
+
 			createTomb(caster, target, power, args);
 			sendMessages(caster, target, args);
 			playSpellEffects(caster, target, power, args);
@@ -86,10 +87,11 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		createTomb(caster, target, power, args);
 		playSpellEffects(caster, target, power, args);
 		return true;
@@ -102,7 +104,8 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		createTomb(null, target, power, args);
 		playSpellEffects(EffectPosition.TARGET, target, power, args);
 		return true;
@@ -116,16 +119,16 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 	private void createTomb(LivingEntity caster, LivingEntity target, float power, String[] args) {
 		List<Block> tempBlocks = new ArrayList<>();
 		List<Block> tombBlocks = new ArrayList<>();
-		
+
 		Block feet = target.getLocation().getBlock();
 		float pitch = target.getLocation().getPitch();
 		float yaw = target.getLocation().getYaw();
-		
+
 		Location tpLoc = feet.getLocation().add(0.5, 0, 0.5);
 		tpLoc.setYaw(yaw);
 		tpLoc.setPitch(pitch);
 		target.teleportAsync(tpLoc);
-		
+
 		tempBlocks.add(feet.getRelative(1, 0, 0));
 		tempBlocks.add(feet.getRelative(1, 1, 0));
 		tempBlocks.add(feet.getRelative(-1, 0, 0));
@@ -134,20 +137,21 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 		tempBlocks.add(feet.getRelative(0, 1, 1));
 		tempBlocks.add(feet.getRelative(0, 0, -1));
 		tempBlocks.add(feet.getRelative(0, 1, -1));
-		
+
 		if (closeTopAndBottom) {
 			tempBlocks.add(feet.getRelative(0, -1, 0));
 			tempBlocks.add(feet.getRelative(0, 2, 0));
 		}
 
-		SpellData data = new SpellData(caster, target, power, args);
+		SpellData data = new SpellData(caster, target, tpLoc, power, args);
 		for (Block b : tempBlocks) {
-			if (!BlockUtils.isAir(b.getType())) continue;
+			if (!BlockUtils.isAir(b.getType()))
+				continue;
 			tombBlocks.add(b);
 			b.setType(material);
 			playSpellEffects(EffectPosition.SPECIAL, b.getLocation().add(0.5, 0.5, 0.5), data);
 		}
-		
+
 		blocks.addAll(tombBlocks);
 
 		int duration = this.duration.get(caster, target, power, args);
@@ -161,16 +165,19 @@ public class EntombSpell extends TargetedSpell implements TargetedEntitySpell {
 			block.setType(Material.AIR);
 			playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, block.getLocation().add(0.5, 0.5, 0.5), data);
 		}
-		
+
 		entomb.forEach(blocks::remove);
 	}
 
 	@EventHandler
 	public void onBlockBreak(BlockBreakEvent event) {
-		if (!blocks.contains(event.getBlock())) return;
+		if (!blocks.contains(event.getBlock()))
+			return;
 		event.setCancelled(true);
-		if (allowBreaking) event.getBlock().setType(Material.AIR);
-		if (!blockDestroyMessage.isEmpty()) MagicSpells.sendMessage(event.getPlayer(), blockDestroyMessage);
+		if (allowBreaking)
+			event.getBlock().setType(Material.AIR);
+		if (!blockDestroyMessage.isEmpty())
+			MagicSpells.sendMessage(event.getPlayer(), blockDestroyMessage);
 	}
 
 }

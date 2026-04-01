@@ -33,7 +33,8 @@ import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
 
-public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpell, TargetedEntitySpell, TargetedEntityFromLocationSpell {
+public class BlockBeamSpell extends InstantSpell
+		implements TargetedLocationSpell, TargetedEntitySpell, TargetedEntityFromLocationSpell {
 
 	private final Set<List<LivingEntity>> entities;
 
@@ -85,11 +86,14 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 
 		String item = getConfigString("block-type", "stone");
 		MagicItem magicItem = MagicItems.getMagicItemFromString(item);
-		if (magicItem != null && magicItem.getItemStack() != null) headItem = magicItem.getItemStack();
+		if (magicItem != null && magicItem.getItemStack() != null)
+			headItem = magicItem.getItemStack();
 		else {
 			Material material = Util.getMaterial(item);
-			if (material != null && material.isBlock()) headItem = new ItemStack(material);
-			else MagicSpells.error("BlockBeamSpell '" + internalName + "' has an invalid block-type defined!");
+			if (material != null && material.isBlock())
+				headItem = new ItemStack(material);
+			else
+				MagicSpells.error("BlockBeamSpell '" + internalName + "' has an invalid block-type defined!");
 		}
 
 		relativeOffset = getConfigVector("relative-offset", "0,0.5,0");
@@ -133,19 +137,22 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 
 		hitSpell = new Subspell(hitSpellName);
 		if (!hitSpell.process()) {
-			if (!hitSpellName.isEmpty()) MagicSpells.error("BlockBeamSpell '" + internalName + "' has an invalid spell defined!");
+			if (!hitSpellName.isEmpty())
+				MagicSpells.error("BlockBeamSpell '" + internalName + "' has an invalid spell defined!");
 			hitSpell = null;
 		}
 
 		endSpell = new Subspell(endSpellName);
 		if (!endSpell.process()) {
-			if (!endSpellName.isEmpty()) MagicSpells.error("BlockBeamSpell '" + internalName + "' has an invalid spell-on-end defined!");
+			if (!endSpellName.isEmpty())
+				MagicSpells.error("BlockBeamSpell '" + internalName + "' has an invalid spell-on-end defined!");
 			endSpell = null;
 		}
 
 		groundSpell = new Subspell(groundSpellName);
 		if (!groundSpell.process()) {
-			if (!groundSpellName.isEmpty()) MagicSpells.error("BlockBeamSpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
+			if (!groundSpellName.isEmpty())
+				MagicSpells.error("BlockBeamSpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
 			groundSpell = null;
 		}
 
@@ -164,13 +171,15 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
-		if (state == SpellCastState.NORMAL) shootBeam(caster, null, caster.getLocation(), power, args);
+		if (state == SpellCastState.NORMAL)
+			shootBeam(caster, null, caster.getLocation(), power, args);
 		return PostCastAction.HANDLE_NORMALLY;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		shootBeam(caster, target, caster.getLocation(), power, args);
 		return true;
 	}
@@ -202,8 +211,10 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			String[] args) {
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		shootBeam(caster, target, from, power, args);
 		return true;
 	}
@@ -221,34 +232,43 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 	@EventHandler(ignoreCancelled = true)
 	public void onSpellTarget(SpellTargetEvent e) {
 		LivingEntity target = e.getTarget();
-		if (target.hasMetadata("MSBlockBeam")) e.setCancelled(true);
+		if (target.hasMetadata("MSBlockBeam"))
+			e.setCancelled(true);
 	}
 
 	private void shootBeam(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
-		if (headItem == null) return;
+		if (headItem == null)
+			return;
 
-		SpellData data = new SpellData(caster, target, power, args);
+		SpellData data = new SpellData(caster, target, from, power, args);
 		playSpellEffects(EffectPosition.CASTER, caster, data);
 
 		Location loc = from.clone();
-		if (!changePitch) loc.setPitch(0);
+		if (!changePitch)
+			loc.setPitch(0);
 
 		float beamVertOffset = this.beamVertOffset.get(caster, target, power, args);
-		if (beamVertOffset != 0) loc.setPitch(loc.getPitch() - beamVertOffset);
+		if (beamVertOffset != 0)
+			loc.setPitch(loc.getPitch() - beamVertOffset);
 
 		float beamHorizOffset = this.beamHorizOffset.get(caster, target, power, args);
-		if (beamHorizOffset != 0) loc.setYaw(loc.getYaw() + beamHorizOffset);
+		if (beamHorizOffset != 0)
+			loc.setYaw(loc.getYaw() + beamHorizOffset);
 
 		Vector startDir;
-		if (target == null) startDir = loc.getDirection();
-		else startDir = target.getLocation().toVector().subtract(loc.toVector()).normalize();
+		if (target == null)
+			startDir = loc.getDirection();
+		else
+			startDir = target.getLocation().toVector().subtract(loc.toVector()).normalize();
 
-		//apply relative offset
+		// apply relative offset
 		Vector relativeOffset;
 
 		double yOffset = this.yOffset.get(caster, target, power, args);
-		if (yOffset != 0) relativeOffset = this.relativeOffset.clone().setY(yOffset);
-		else relativeOffset = this.relativeOffset;
+		if (yOffset != 0)
+			relativeOffset = this.relativeOffset.clone().setY(yOffset);
+		else
+			relativeOffset = this.relativeOffset;
 
 		Vector horizOffset = new Vector(-startDir.getZ(), 0, startDir.getX()).normalize();
 		loc.add(horizOffset.multiply(relativeOffset.getZ()));
@@ -256,12 +276,14 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 		loc.setY(loc.getY() + relativeOffset.getY());
 
 		float interval = this.interval.get(caster, target, power, args);
-		if (interval < 0.01) interval = 0.01f;
+		if (interval < 0.01)
+			interval = 0.01f;
 
 		Vector dir;
-		if (target == null) dir = loc.getDirection().multiply(interval);
+		if (target == null)
+			dir = loc.getDirection().multiply(interval);
 		else {
-			//apply target relative offset
+			// apply target relative offset
 			Location targetLoc = target.getLocation();
 			Vector targetDir = targetLoc.getDirection();
 
@@ -297,29 +319,36 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 		HashSet<Entity> immune = new HashSet<>();
 		float d = 0;
 
-		mainLoop:
-		while (d < maxDistance) {
+		mainLoop: while (d < maxDistance) {
 			d += interval;
 			loc.add(dir);
 
-			if (rotation != 0) Util.rotateVector(dir, rotation);
-			if (gravity != 0) dir.add(new Vector(0, gravity, 0));
-			if (rotation != 0 || gravity != 0) loc.setDirection(dir);
+			if (rotation != 0)
+				Util.rotateVector(dir, rotation);
+			if (gravity != 0)
+				dir.add(new Vector(0, gravity, 0));
+			if (rotation != 0 || gravity != 0)
+				loc.setDirection(dir);
 
-			if (zoneManager.willFizzle(loc, this)) break;
+			if (zoneManager.willFizzle(loc, this))
+				break;
 
-			//check block collision
+			// check block collision
 			if (!isTransparent(loc.getBlock())) {
 				playSpellEffects(EffectPosition.DISABLED, loc, data);
-				if (groundSpell != null) groundSpell.subcast(caster, loc, power, args);
-				if (stopOnHitGround) break;
+				if (groundSpell != null)
+					groundSpell.subcast(caster, loc, power, args);
+				if (stopOnHitGround)
+					break;
 			}
 
 			double pitch = loc.getPitch() * Math.PI / 180;
 
 			ArmorStand armorStand;
-			if (!small) armorStand = loc.getWorld().spawn(loc.clone().subtract(0, 1.7, 0), ArmorStand.class);
-			else armorStand = loc.getWorld().spawn(loc.clone().subtract(0, 0.9, 0), ArmorStand.class);
+			if (!small)
+				armorStand = loc.getWorld().spawn(loc.clone().subtract(0, 1.7, 0), ArmorStand.class);
+			else
+				armorStand = loc.getWorld().spawn(loc.clone().subtract(0, 0.9, 0), ArmorStand.class);
 
 			armorStand.getEquipment().setHelmet(headItem);
 			armorStand.setGravity(false);
@@ -339,38 +368,45 @@ public class BlockBeamSpell extends InstantSpell implements TargetedLocationSpel
 
 			playSpellEffects(EffectPosition.SPECIAL, loc, data);
 
-			//check entities in the beam range
+			// check entities in the beam range
 			for (LivingEntity e : loc.getNearbyLivingEntities(hitRadius, verticalHitRadius)) {
-				if (e == caster || !e.isValid() || immune.contains(e)) continue;
-				if (validTargetList != null && !validTargetList.canTarget(e)) continue;
+				if (e == caster || !e.isValid() || immune.contains(e))
+					continue;
+				if (validTargetList != null && !validTargetList.canTarget(e))
+					continue;
 
 				SpellTargetEvent event = new SpellTargetEvent(this, caster, e, power, args);
-				if (!event.callEvent()) continue;
+				if (!event.callEvent())
+					continue;
 
 				LivingEntity subTarget = event.getTarget();
 				float subPower = event.getPower();
 
-				if (hitSpell != null) hitSpell.subcast(caster, subTarget, subPower, args);
+				if (hitSpell != null)
+					hitSpell.subcast(caster, subTarget, subPower, args);
 
 				playSpellEffects(EffectPosition.TARGET, subTarget, data);
 				playSpellEffectsTrail(caster.getLocation(), subTarget.getLocation(), data);
 				immune.add(e);
 
-				if (stopOnHitEntity) break mainLoop;
+				if (stopOnHitEntity)
+					break mainLoop;
 			}
 		}
 
-		//end of the beam
+		// end of the beam
 		if (!zoneManager.willFizzle(loc, this) && d >= maxDistance) {
 			playSpellEffects(EffectPosition.DELAYED, loc, data);
-			if (endSpell != null) endSpell.subcast(caster, loc, power, args);
+			if (endSpell != null)
+				endSpell.subcast(caster, loc, power, args);
 		}
 
 		entities.add(armorStandList);
 
 		int removeDelay = this.removeDelay.get(caster, target, power, args);
 		MagicSpells.scheduleDelayedTask(() -> {
-			for (LivingEntity entity : armorStandList) entity.remove();
+			for (LivingEntity entity : armorStandList)
+				entity.remove();
 			entities.remove(armorStandList);
 		}, removeDelay);
 	}

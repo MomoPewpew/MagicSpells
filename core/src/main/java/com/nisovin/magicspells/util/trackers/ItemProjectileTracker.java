@@ -93,7 +93,7 @@ public class ItemProjectileTracker implements Runnable, Tracker {
 		this.args = args;
 		this.startLocation = startLocation;
 
-		data = new SpellData(caster, power, args);
+		data = new SpellData(caster, startLocation, power, args);
 	}
 
 	public void start() {

@@ -373,11 +373,11 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			this.pulseCount = 0;
 			this.cancelOnDeath = PulserSpell.this.cancelOnDeath;
 
-			data = new SpellData(caster, power, args);
+			data = new SpellData(caster, this.location, power, args);
 
-			totalPulses = PulserSpell.this.totalPulses.get(caster, null, power, args);
+			totalPulses = PulserSpell.this.totalPulses.get(data);
 
-			double maxDistance = PulserSpell.this.maxDistance.get(caster, null, power, args);
+			double maxDistance = PulserSpell.this.maxDistance.get(data);
 			maxDistanceSq = maxDistance * maxDistance;
 
 			if (effects == null)

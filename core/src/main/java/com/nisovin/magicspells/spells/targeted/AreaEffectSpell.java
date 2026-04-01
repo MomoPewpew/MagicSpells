@@ -81,7 +81,8 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 			Subspell spell = new Subspell(spellName);
 
 			if (!spell.process()) {
-				MagicSpells.error("AreaEffectSpell '" + internalName + "' attempted to use invalid spell '" + spellName + '\'');
+				MagicSpells.error(
+						"AreaEffectSpell '" + internalName + "' attempted to use invalid spell '" + spellName + '\'');
 				continue;
 			}
 
@@ -96,29 +97,35 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			Location loc = null;
-			if (pointBlank) loc = caster.getLocation();
+			if (pointBlank)
+				loc = caster.getLocation();
 			else {
 				try {
 					Block block = getTargetedBlock(caster, power, args);
-					if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation().add(0.5, 0, 0.5);
+					if (block != null && !BlockUtils.isAir(block.getType()))
+						loc = block.getLocation().add(0.5, 0, 0.5);
+				} catch (IllegalStateException ignored) {
 				}
-				catch (IllegalStateException ignored) {}
 			}
 
-			if (loc == null) return noTarget(caster, args);
+			if (loc == null)
+				return noTarget(caster, args);
 
 			SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, loc, power, args);
 			EventUtil.call(event);
-			if (event.isCancelled()) loc = null;
+			if (event.isCancelled())
+				loc = null;
 			else {
 				loc = event.getTargetLocation();
 				power = event.getPower();
 			}
 
-			if (loc == null) return noTarget(caster, args);
+			if (loc == null)
+				return noTarget(caster, args);
 
 			boolean done = doAoe(caster, loc, power, args);
-			if (!done) return noTarget(caster, args);
+			if (!done)
+				return noTarget(caster, args);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
@@ -168,96 +175,120 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 		double vDistance;
 
 		if (validTargetList.canTargetOnlyCaster()) {
-			if (caster == null) return false;
+			if (caster == null)
+				return false;
 
 			LivingEntity target = caster;
 			power = basePower;
 
-			if (!target.getWorld().equals(location.getWorld())) return false;
+			if (!target.getWorld().equals(location.getWorld()))
+				return false;
 
-			hDistance = NumberConversions.square(target.getLocation().getX() - location.getX()) + NumberConversions.square(target.getLocation().getZ() - location.getZ());
-			if (hDistance > hRadiusSquared) return false;
+			hDistance = NumberConversions.square(target.getLocation().getX() - location.getX())
+					+ NumberConversions.square(target.getLocation().getZ() - location.getZ());
+			if (hDistance > hRadiusSquared)
+				return false;
 			vDistance = NumberConversions.square(target.getLocation().getY() - location.getY());
-			if (vDistance > vRadiusSquared) return false;
+			if (vDistance > vRadiusSquared)
+				return false;
 
 			event = new SpellTargetEvent(this, caster, target, power, args);
 			EventUtil.call(event);
-			if (event.isCancelled()) return false;
+			if (event.isCancelled())
+				return false;
 
 			target = event.getTarget();
 			power = event.getPower();
 
 			castSpells(caster, location, target, power, args);
 
-			data = new SpellData(caster, target, power, args);
+			data = new SpellData(caster, target, location, power, args);
 
 			playSpellEffects(EffectPosition.TARGET, target, data);
 			playSpellEffects(EffectPosition.SPECIAL, location, data);
-			if (spellSourceInCenter) playSpellEffects(caster, location, target, data);
-			else playSpellEffectsTrail(caster.getLocation(), target.getLocation(), data);
+			if (spellSourceInCenter)
+				playSpellEffects(caster, location, target, data);
+			else
+				playSpellEffectsTrail(caster.getLocation(), target.getLocation(), data);
 
 			return true;
 		}
 
-		List<LivingEntity> entities = new ArrayList<>(location.getWorld().getNearbyLivingEntities(location, hRadius, vRadius, hRadius));
+		List<LivingEntity> entities = new ArrayList<>(
+				location.getWorld().getNearbyLivingEntities(location, hRadius, vRadius, hRadius));
 
 		if (useProximity) {
 			// check world before distance
 			for (LivingEntity entity : new ArrayList<>(entities)) {
-				if (entity.getWorld().equals(location.getWorld())) continue;
+				if (entity.getWorld().equals(location.getWorld()))
+					continue;
 				entities.remove(entity);
 			}
 			Location finalLocation = location;
-			Comparator<LivingEntity> comparator = Comparator.comparingDouble(entity -> entity.getLocation().distanceSquared(finalLocation));
-			if (reverseProximity) comparator = comparator.reversed();
+			Comparator<LivingEntity> comparator = Comparator
+					.comparingDouble(entity -> entity.getLocation().distanceSquared(finalLocation));
+			if (reverseProximity)
+				comparator = comparator.reversed();
 			entities.sort(comparator);
 		}
 
 		for (LivingEntity target : entities) {
-			if (target.isDead()) continue;
-			if (!validTargetList.canTarget(caster, target)) continue;
+			if (target.isDead())
+				continue;
+			if (!validTargetList.canTarget(caster, target))
+				continue;
 
 			if (circleShape) {
-				hDistance = NumberConversions.square(target.getLocation().getX() - location.getX()) + NumberConversions.square(target.getLocation().getZ() - location.getZ());
-				if (hDistance > hRadiusSquared) continue;
+				hDistance = NumberConversions.square(target.getLocation().getX() - location.getX())
+						+ NumberConversions.square(target.getLocation().getZ() - location.getZ());
+				if (hDistance > hRadiusSquared)
+					continue;
 				vDistance = NumberConversions.square(target.getLocation().getY() - location.getY());
-				if (vDistance > vRadiusSquared) continue;
+				if (vDistance > vRadiusSquared)
+					continue;
 			}
 
-			if (horizontalCone > 0 && horizontalAngle(location, target.getLocation()) > horizontalCone) continue;
+			if (horizontalCone > 0 && horizontalAngle(location, target.getLocation()) > horizontalCone)
+				continue;
 
 			if (cone > 0) {
 				Vector dir = target.getLocation().toVector().subtract(location.toVector());
-				if (AccurateMath.toDegrees(AccurateMath.abs(dir.angle(location.getDirection()))) > cone) continue;
+				if (AccurateMath.toDegrees(AccurateMath.abs(dir.angle(location.getDirection()))) > cone)
+					continue;
 			}
 
 			power = basePower;
 
 			event = new SpellTargetEvent(this, caster, target, power, args);
 			EventUtil.call(event);
-			if (event.isCancelled()) continue;
+			if (event.isCancelled())
+				continue;
 
 			target = event.getTarget();
 			power = event.getPower();
 
 			castSpells(caster, location, target, power, args);
 
-			data = new SpellData(caster, target, power, args);
+			data = new SpellData(caster, target, location, power, args);
 			playSpellEffects(EffectPosition.TARGET, target, data);
 
-			if (spellSourceInCenter) playSpellEffects(caster, location, target, data);
-			else if (caster != null) playSpellEffectsTrail(caster.getLocation(), target.getLocation(), data);
+			if (spellSourceInCenter)
+				playSpellEffects(caster, location, target, data);
+			else if (caster != null)
+				playSpellEffectsTrail(caster.getLocation(), target.getLocation(), data);
 
 			count++;
 
-			if (maxTargets > 0 && count >= maxTargets) break;
+			if (maxTargets > 0 && count >= maxTargets)
+				break;
 		}
 
 		boolean success = count > 0 || !failIfNoTargets;
 		if (success) {
-			data = new SpellData(caster, basePower, args);
+			data = new SpellData(caster, location, basePower, args);
 			playSpellEffects(EffectPosition.SPECIAL, location, data);
-			if (caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
+			if (caster != null)
+				playSpellEffects(EffectPosition.CASTER, caster, data);
 		}
 
 		return success;
@@ -266,8 +297,10 @@ public class AreaEffectSpell extends TargetedSpell implements TargetedLocationSp
 	private void castSpells(LivingEntity caster, Location location, LivingEntity target, float power, String[] args) {
 		Location source = spellSourceInCenter ? location : (caster == null ? null : caster.getLocation());
 		for (Subspell spell : spells) {
-			if (source != null) spell.subcast(caster, source, target, power, args, passTargeting);
-			else spell.subcast(caster, target, power, args, passTargeting);
+			if (source != null)
+				spell.subcast(caster, source, target, power, args, passTargeting);
+			else
+				spell.subcast(caster, target, power, args, passTargeting);
 		}
 	}
 

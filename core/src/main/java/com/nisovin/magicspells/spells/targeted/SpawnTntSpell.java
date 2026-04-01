@@ -105,20 +105,25 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 
 	private void spawnTnt(LivingEntity caster, Location loc, float power, String[] args) {
 		TNTPrimed tnt = loc.getWorld().spawn(loc, TNTPrimed.class);
-		if (cancelGravity) tnt.setGravity(false);
+		if (cancelGravity)
+			tnt.setGravity(false);
 
-		SpellData data = new SpellData(caster, power, args);
+		SpellData data = new SpellData(caster, loc, power, args);
 
 		playSpellEffects(EffectPosition.PROJECTILE, tnt, data);
-		if (caster != null) playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, caster.getLocation(), tnt.getLocation(), caster, tnt, data);
+		if (caster != null)
+			playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, caster.getLocation(),
+					tnt.getLocation(), caster, tnt, data);
 
 		tnt.setFuseTicks(fuse.get(caster, null, power, args));
 
 		float velocity = this.velocity.get(caster, null, power, args);
 		float upVelocity = this.upVelocity.get(caster, null, power, args);
 
-		if (velocity > 0) tnt.setVelocity(loc.getDirection().normalize().setY(0).multiply(velocity).setY(upVelocity));
-		else if (upVelocity > 0) tnt.setVelocity(new Vector(0, upVelocity, 0));
+		if (velocity > 0)
+			tnt.setVelocity(loc.getDirection().normalize().setY(0).multiply(velocity).setY(upVelocity));
+		else if (upVelocity > 0)
+			tnt.setVelocity(new Vector(0, upVelocity, 0));
 
 		tnts.put(tnt.getEntityId(), data);
 	}
@@ -126,7 +131,8 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 	@EventHandler
 	public void onEntityExplode(EntityExplodeEvent event) {
 		SpellData data = tnts.remove(event.getEntity().getEntityId());
-		if (data == null) return;
+		if (data == null)
+			return;
 
 		if (cancelExplosion) {
 			event.setCancelled(true);
@@ -138,12 +144,15 @@ public class SpawnTntSpell extends TargetedSpell implements TargetedLocationSpel
 			event.setYield(0F);
 		}
 
-		for (Block b : event.blockList()) playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, b.getLocation(), data);
+		for (Block b : event.blockList())
+			playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, b.getLocation(), data);
 
-		if (spellToCast == null) return;
+		if (spellToCast == null)
+			return;
 
 		LivingEntity caster = data.caster();
-		if (caster == null || !caster.isValid()) return;
+		if (caster == null || !caster.isValid())
+			return;
 
 		spellToCast.subcast(caster, event.getEntity().getLocation(), data.power(), data.args());
 	}

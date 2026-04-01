@@ -42,9 +42,11 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			if (target.noTarget())
+				return noTarget(caster, args, target);
 
-			if (!grip(caster, target.target(), caster.getLocation(), power, args)) return noTarget(caster, strCantGrip, args);
+			if (!grip(caster, target.target(), caster.getLocation(), power, args))
+				return noTarget(caster, strCantGrip, args);
 			sendMessages(caster, target.target(), args);
 
 			return PostCastAction.NO_MESSAGES;
@@ -54,7 +56,8 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		return grip(caster, target, caster.getLocation(), power, args);
 	}
 
@@ -69,8 +72,10 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			String[] args) {
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		return grip(caster, target, from, power, args);
 	}
 
@@ -81,7 +86,8 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		return grip(null, target, from, power, args);
 	}
 
@@ -99,18 +105,21 @@ public class GripSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		Vector relativeOffset = this.relativeOffset.clone();
 
 		double yOffset = this.yOffset.get(caster, target, power, args);
-		if (yOffset != 0) relativeOffset.setY(yOffset);
+		if (yOffset != 0)
+			relativeOffset.setY(yOffset);
 
 		double locationOffset = this.locationOffset.get(caster, target, power, args);
-		if (locationOffset != 0) relativeOffset.setX(locationOffset);
+		if (locationOffset != 0)
+			relativeOffset.setX(locationOffset);
 
 		loc.add(horizOffset.multiply(relativeOffset.getZ())).getBlock().getLocation();
 		loc.add(loc.getDirection().clone().multiply(relativeOffset.getX()));
 		loc.setY(loc.getY() + relativeOffset.getY());
 
-		if (checkGround && !BlockUtils.isPathable(loc.getBlock())) return false;
+		if (checkGround && !BlockUtils.isPathable(loc.getBlock()))
+			return false;
 
-		SpellData data = new SpellData(caster, target, power, args);
+		SpellData data = new SpellData(caster, target, loc, power, args);
 		playSpellEffects(EffectPosition.TARGET, target, data);
 		playSpellEffectsTrail(from, loc, data);
 

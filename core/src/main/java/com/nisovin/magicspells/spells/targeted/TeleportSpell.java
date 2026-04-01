@@ -37,9 +37,11 @@ public class TeleportSpell extends TargetedSpell implements TargetedEntitySpell 
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			if (target.noTarget())
+				return noTarget(caster, args, target);
 
-			if (!teleport(caster, target.target(), target.power(), args)) return noTarget(caster, strCantTeleport, args);
+			if (!teleport(caster, target.target(), target.power(), args))
+				return noTarget(caster, strCantTeleport, args);
 
 			sendMessages(caster, target.target(), args);
 			return PostCastAction.NO_MESSAGES;
@@ -49,7 +51,8 @@ public class TeleportSpell extends TargetedSpell implements TargetedEntitySpell 
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		return teleport(caster, target, power, args);
 	}
 
@@ -76,9 +79,10 @@ public class TeleportSpell extends TargetedSpell implements TargetedEntitySpell 
 		targetLoc.setPitch(startLoc.getPitch() - pitch.get(caster, target, power, args));
 		targetLoc.setYaw(startLoc.getYaw() + yaw.get(caster, target, power, args));
 
-		if (!BlockUtils.isPathable(targetLoc.getBlock())) return false;
+		if (!BlockUtils.isPathable(targetLoc.getBlock()))
+			return false;
 
-		SpellData data = new SpellData(caster, target, power, args);
+		SpellData data = new SpellData(caster, target, targetLoc, power, args);
 		playSpellEffects(EffectPosition.CASTER, caster, data);
 		playSpellEffects(EffectPosition.TARGET, target, data);
 		playSpellEffectsTrail(startLoc, targetLoc, data);

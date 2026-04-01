@@ -93,7 +93,8 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 						BlockData data = Bukkit.createBlockData(block.trim().toLowerCase());
 						blockList.add(data);
 					} catch (IllegalArgumentException e) {
-						MagicSpells.error("ReplaceSpell " + internalName + " has an invalid replace-blocks item: " + block);
+						MagicSpells.error(
+								"ReplaceSpell " + internalName + " has an invalid replace-blocks item: " + block);
 					}
 				}
 				replace.add(blockList);
@@ -121,14 +122,16 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 						}
 
 						BlockData data = null;
-						
-						if (!blockName.equals("same")) data = Bukkit.createBlockData(blockName.trim().toLowerCase());
+
+						if (!blockName.equals("same"))
+							data = Bukkit.createBlockData(blockName.trim().toLowerCase());
 
 						for (int j = 0; j < n; j++) {
 							blockList.add(data);
 						}
 					} catch (IllegalArgumentException e) {
-						MagicSpells.error("ReplaceSpell " + internalName + " has an invalid replace-with item: " + block);
+						MagicSpells
+								.error("ReplaceSpell " + internalName + " has an invalid replace-with item: " + block);
 					}
 				}
 				replaceWith.add(blockList);
@@ -149,11 +152,14 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 		if (!replaceRandom && replace.size() != replaceWith.size()) {
 			replaceRandom = true;
-			MagicSpells.error("ReplaceSpell " + internalName + " replace-random false, but replace-blocks and replace-with have different sizes!");
+			MagicSpells.error("ReplaceSpell " + internalName
+					+ " replace-random false, but replace-blocks and replace-with have different sizes!");
 		}
 
-		if (replace.isEmpty()) MagicSpells.error("ReplaceSpell " + internalName + " has empty replace-blocks list!");
-		if (replaceWith.isEmpty()) MagicSpells.error("ReplaceSpell " + internalName + " has empty replace-with list!");
+		if (replace.isEmpty())
+			MagicSpells.error("ReplaceSpell " + internalName + " has empty replace-blocks list!");
+		if (replaceWith.isEmpty())
+			MagicSpells.error("ReplaceSpell " + internalName + " has empty replace-with list!");
 	}
 
 	@Override
@@ -167,7 +173,8 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			Block target = pointBlank ? caster.getLocation().getBlock() : getTargetedBlock(caster, power, args);
-			if (target == null) return noTarget(caster, args);
+			if (target == null)
+				return noTarget(caster, args);
 			replace(caster, target.getLocation(), power, args);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
@@ -206,9 +213,9 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 			h = Math.round(h * power);
 		}
 
-		SpellData spellData = new SpellData(caster, power, args);
-		int yOffset = this.yOffset.get(caster, null, power, args);
-		int replaceDuration = resolveDurationPerBlock ? 0 : this.replaceDuration.get(caster, null, power, args);
+		SpellData spellData = new SpellData(caster, target, power, args);
+		int yOffset = this.yOffset.get(spellData);
+		int replaceDuration = resolveDurationPerBlock ? 0 : this.replaceDuration.get(spellData);
 
 		List<BlockData> allReplaceWithBlocks = new ArrayList<BlockData>();
 
@@ -224,13 +231,17 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 			for (int x = target.getBlockX() - h; x <= target.getBlockX() + h; x++) {
 				for (int z = target.getBlockZ() - h; z <= target.getBlockZ() + h; z++) {
 					if (circleShape) {
-						double hDistanceSq = NumberConversions.square(x - target.getBlockX()) + NumberConversions.square(z - target.getBlockZ());
-						if (hDistanceSq > (h * h)) continue;
+						double hDistanceSq = NumberConversions.square(x - target.getBlockX())
+								+ NumberConversions.square(z - target.getBlockZ());
+						if (hDistanceSq > (h * h))
+							continue;
 						double vDistance = NumberConversions.square(y - (target.getBlockY() + yOffset));
 						if (y > target.getBlockY() + yOffset) {
-							if (vDistance > (u * u)) continue;
+							if (vDistance > (u * u))
+								continue;
 						} else {
-							if (vDistance > (d * d)) continue;
+							if (vDistance > (d * d))
+								continue;
 						}
 					}
 
@@ -247,7 +258,8 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 									cont = false;
 								}
 							}
-							if (cont) continue;
+							if (cont)
+								continue;
 						}
 
 						// If all blocks are being replaced, skip if the block is already replaced.
@@ -259,41 +271,52 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 									cont = true;
 								}
 							}
-							if (cont || (!affectsContainers && BlockUtils.isContainer(block))) continue;
+							if (cont || (!affectsContainers && BlockUtils.isContainer(block)))
+								continue;
 						}
 
-						if (replaceBlacklisted(data)) continue;
+						if (replaceBlacklisted(data))
+							continue;
 
 						Block finalBlock = block;
 						BlockState previousState = block.getState();
 
 						// Place block.
 						BlockData newBlockData = null;
-						if (replaceRandom) newBlockData = allReplaceWithBlocks.get(Util.getRandomInt(allReplaceWithBlocks.size()));
-						else newBlockData = replaceWith.get(i).get(Util.getRandomInt(replaceWith.get(i).size()));
+						if (replaceRandom)
+							newBlockData = allReplaceWithBlocks.get(Util.getRandomInt(allReplaceWithBlocks.size()));
+						else
+							newBlockData = replaceWith.get(i).get(Util.getRandomInt(replaceWith.get(i).size()));
 
-						if (newBlockData == null) continue;
+						if (newBlockData == null)
+							continue;
 
-						if (checkIsSupported && !newBlockData.isSupported(block.getLocation())) continue;
+						if (checkIsSupported && !newBlockData.isSupported(block.getLocation()))
+							continue;
 
 						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData, applyPhysics);
 
 						if (checkPlugins && caster instanceof Player player) {
 							Block against = target.clone().add(target.getDirection()).getBlock();
-							if (block.equals(against)) against = block.getRelative(BlockFace.DOWN);
-							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, previousState, against, player.getInventory().getItemInMainHand(), player, true, bypassDippGen);
+							if (block.equals(against))
+								against = block.getRelative(BlockFace.DOWN);
+							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, previousState,
+									against, player.getInventory().getItemInMainHand(), player, true, bypassDippGen);
 							EventUtil.call(event);
 							if (event.isCancelled()) {
 								previousState.update(true);
 								return false;
 							}
 						}
+						spellData.setLocation(finalBlock.getLocation());
 						playSpellEffects(EffectPosition.SPECIAL, finalBlock.getLocation(), spellData);
 
 						// Break block.
-						if (resolveDurationPerBlock) replaceDuration = this.replaceDuration.get(caster, null, power, args);
+						if (resolveDurationPerBlock)
+							replaceDuration = this.replaceDuration.get(spellData);
 						if (replaceDuration > 0) {
-							AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, block, data, previousState);
+							AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, block,
+									data, previousState);
 							MagicSpells.getAlteredBlockManager().add(change);
 
 							MagicSpells.scheduleDelayedTask(() -> {
@@ -309,8 +332,10 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 			}
 		}
 
-		if (caster != null) playSpellEffects(caster, target, spellData);
-		else playSpellEffects(EffectPosition.TARGET, target, spellData);
+		if (caster != null)
+			playSpellEffects(caster, target, spellData);
+		else
+			playSpellEffects(EffectPosition.TARGET, target, spellData);
 
 		return replaced;
 	}

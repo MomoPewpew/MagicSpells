@@ -89,74 +89,81 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			return;
 		}
 		for (String optionName : optionKeys) {
-            String path = "options." + optionName + ".";
+			String path = "options." + optionName + ".";
 
-            ConfigData<List<Integer>> slots;
-            if (getConfigStringList(path + "slots", new ArrayList<>()).isEmpty()) slots = ConfigDataUtil.getIntList(config.getMainConfig(), "spells." + internalName + '.' + path + "slot");
-			else slots = ConfigDataUtil.getIntList(config.getMainConfig(), "spells." + internalName + '.' + path + "slots");
+			ConfigData<List<Integer>> slots;
+			if (getConfigStringList(path + "slots", new ArrayList<>()).isEmpty())
+				slots = ConfigDataUtil.getIntList(config.getMainConfig(),
+						"spells." + internalName + '.' + path + "slot");
+			else
+				slots = ConfigDataUtil.getIntList(config.getMainConfig(),
+						"spells." + internalName + '.' + path + "slots");
 
-            ConfigData<ConfigurationSection> itemSection = null;
+			ConfigData<ConfigurationSection> itemSection = null;
 			ConfigData<String> itemString = null;
-            if (isConfigSection(path + "item")) {
-                itemSection = getConfigDataConfigurationSection(path + "item", null);
-            } else {
-                itemString = getConfigDataString(path + "item", null);
-            }
+			if (isConfigSection(path + "item")) {
+				itemSection = getConfigDataConfigurationSection(path + "item", null);
+			} else {
+				itemString = getConfigDataString(path + "item", null);
+			}
 
-            List<String> itemList = getConfigStringList(path + "items", null);
-            List<ItemStack> items = new ArrayList<>();
-            if (itemString == null && itemSection == null) {
-                // If no items are defined, exit.
-                if (itemList == null) {
-                    MagicSpells.error("MenuSpell '" + internalName + "' has no items defined for: " + optionName);
-                    continue;
-                }
-                // Otherwise process item list.
-                for (String itemName : itemList) {
-                    MagicItem magicItem = MagicItems.getMagicItemFromString(itemName);
-                    if (magicItem == null) {
-                        MagicSpells.error("MenuSpell '" + internalName + "' has an invalid item listed in '" + optionName + "': " + itemName);
-                        continue;
-                    }
-                    ItemStack itemStack = magicItem.getItemStack();
-                    if (itemStack == null) {
-                        MagicSpells.error("MenuSpell '" + internalName + "' has an invalid item listed in '" + optionName + "': " + itemName);
-                        continue;
-                    }
-                    items.add(itemStack);
-                }
-                // Skip if list was invalid.
-                if (items.isEmpty()) {
-                    MagicSpells.error("MenuSpell '" + internalName + "' has no items defined for: " + optionName);
-                    continue;
-                }
-            }
+			List<String> itemList = getConfigStringList(path + "items", null);
+			List<ItemStack> items = new ArrayList<>();
+			if (itemString == null && itemSection == null) {
+				// If no items are defined, exit.
+				if (itemList == null) {
+					MagicSpells.error("MenuSpell '" + internalName + "' has no items defined for: " + optionName);
+					continue;
+				}
+				// Otherwise process item list.
+				for (String itemName : itemList) {
+					MagicItem magicItem = MagicItems.getMagicItemFromString(itemName);
+					if (magicItem == null) {
+						MagicSpells.error("MenuSpell '" + internalName + "' has an invalid item listed in '"
+								+ optionName + "': " + itemName);
+						continue;
+					}
+					ItemStack itemStack = magicItem.getItemStack();
+					if (itemStack == null) {
+						MagicSpells.error("MenuSpell '" + internalName + "' has an invalid item listed in '"
+								+ optionName + "': " + itemName);
+						continue;
+					}
+					items.add(itemStack);
+				}
+				// Skip if list was invalid.
+				if (items.isEmpty()) {
+					MagicSpells.error("MenuSpell '" + internalName + "' has no items defined for: " + optionName);
+					continue;
+				}
+			}
 
-            MenuOption option = new MenuOption();
-            option.menuOptionName = optionName;
-            option.slots = slots;
-            option.itemSection = itemSection;
-            option.itemString = itemString;
-            option.items = items;
-            option.quantity = getConfigDataInt(path + "quantity", 1);
-            option.spellName = getConfigString(path + "spell", "");
-            option.spellRightName = getConfigString(path + "spell-right", "");
-            option.spellMiddleName = getConfigString(path + "spell-middle", "");
-            option.spellSneakLeftName = getConfigString(path + "spell-sneak-left", "");
-            option.spellSneakRightName = getConfigString(path + "spell-sneak-right", "");
-            option.spellSwapName = getConfigString(path + "spell-swap", "");
-            option.spellDropName = getConfigString(path + "spell-drop", "");
-            option.power = getConfigFloat(path + "power", 1);
-            option.modifierList = getConfigStringList(path + "modifiers", null);
-            option.stayOpen = getConfigBoolean(path + "stay-open", false);
+			MenuOption option = new MenuOption();
+			option.menuOptionName = optionName;
+			option.slots = slots;
+			option.itemSection = itemSection;
+			option.itemString = itemString;
+			option.items = items;
+			option.quantity = getConfigDataInt(path + "quantity", 1);
+			option.spellName = getConfigString(path + "spell", "");
+			option.spellRightName = getConfigString(path + "spell-right", "");
+			option.spellMiddleName = getConfigString(path + "spell-middle", "");
+			option.spellSneakLeftName = getConfigString(path + "spell-sneak-left", "");
+			option.spellSneakRightName = getConfigString(path + "spell-sneak-right", "");
+			option.spellSwapName = getConfigString(path + "spell-swap", "");
+			option.spellDropName = getConfigString(path + "spell-drop", "");
+			option.power = getConfigFloat(path + "power", 1);
+			option.modifierList = getConfigStringList(path + "modifiers", null);
+			option.stayOpen = getConfigBoolean(path + "stay-open", false);
 			option.varModsClick = getConfigStringList(path + "variable-mods-click", null);
 			option.varModsClicked = getConfigStringList(path + "variable-mods-clicked", null);
-            option.spellsOnDrop = getConfigDataConfigurationSection(path + "spells-on-drop", null);
+			option.spellsOnDrop = getConfigDataConfigurationSection(path + "spells-on-drop", null);
 
-            options.put(optionName, option);
-        }
+			options.put(optionName, option);
+		}
 		rows = autoArrange ? 54 : getConfigInt("min-rows", 1);
-		if (options.isEmpty()) MagicSpells.error("MenuSpell '" + spellName + "' has no menu options!");
+		if (options.isEmpty())
+			MagicSpells.error("MenuSpell '" + spellName + "' has no menu options!");
 	}
 
 	@Override
@@ -164,7 +171,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		super.initializeModifiers();
 
 		for (MenuOption option : options.values()) {
-			if (option.modifierList != null) option.menuOptionModifiers = new ModifierSet(option.modifierList, this);
+			if (option.modifierList != null)
+				option.menuOptionModifiers = new ModifierSet(option.modifierList, this);
 		}
 	}
 
@@ -182,11 +190,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 						VariableMod varMod = new VariableMod(data[1]);
 						option.variableModsClick.put(var, varMod);
 					} catch (Exception e) {
-						MagicSpells.error("Invalid variable-mods-click option for MenuSpell '" + internalName + "': " + s);
+						MagicSpells
+								.error("Invalid variable-mods-click option for MenuSpell '" + internalName + "': " + s);
 					}
 				}
 			}
-			
+
 			if (option.varModsClicked != null && !option.varModsClicked.isEmpty()) {
 				option.variableModsClicked = LinkedListMultimap.create();
 				for (String s : option.varModsClicked) {
@@ -196,7 +205,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 						VariableMod varMod = new VariableMod(data[1]);
 						option.variableModsClicked.put(var, varMod);
 					} catch (Exception e) {
-						MagicSpells.error("Invalid variable-mods-clicked option for MenuSpell '" + internalName + "': " + s);
+						MagicSpells.error(
+								"Invalid variable-mods-clicked option for MenuSpell '" + internalName + "': " + s);
 					}
 				}
 			}
@@ -208,13 +218,20 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		super.initialize();
 
 		for (MenuOption option : options.values()) {
-			option.spell = initSubspell(option.spellName, "MenuSpell '" + internalName + "' has an invalid 'spell' defined for: " + option.menuOptionName);
-			option.spellRight = initSubspell(option.spellRightName, "MenuSpell '" + internalName + "' has an invalid 'spell-right' defined for: " + option.menuOptionName);
-			option.spellMiddle = initSubspell(option.spellMiddleName, "MenuSpell '" + internalName + "' has an invalid 'spell-middle' defined for: " + option.menuOptionName);
-			option.spellSneakLeft = initSubspell(option.spellSneakLeftName, "MenuSpell '" + internalName + "' has an invalid 'spell-sneak-left' defined for: " + option.menuOptionName);
-			option.spellSneakRight = initSubspell(option.spellSneakRightName, "MenuSpell '" + internalName + "' has an invalid 'spell-sneak-right' defined for: " + option.menuOptionName);
-			option.spellSwap = initSubspell(option.spellSwapName, "MenuSpell '" + internalName + "' has an invalid 'spell-swap' defined for: " + option.menuOptionName);
-			option.spellDrop = initSubspell(option.spellDropName, "MenuSpell '" + internalName + "' has an invalid 'spell-drop' defined for: " + option.menuOptionName);
+			option.spell = initSubspell(option.spellName,
+					"MenuSpell '" + internalName + "' has an invalid 'spell' defined for: " + option.menuOptionName);
+			option.spellRight = initSubspell(option.spellRightName, "MenuSpell '" + internalName
+					+ "' has an invalid 'spell-right' defined for: " + option.menuOptionName);
+			option.spellMiddle = initSubspell(option.spellMiddleName, "MenuSpell '" + internalName
+					+ "' has an invalid 'spell-middle' defined for: " + option.menuOptionName);
+			option.spellSneakLeft = initSubspell(option.spellSneakLeftName, "MenuSpell '" + internalName
+					+ "' has an invalid 'spell-sneak-left' defined for: " + option.menuOptionName);
+			option.spellSneakRight = initSubspell(option.spellSneakRightName, "MenuSpell '" + internalName
+					+ "' has an invalid 'spell-sneak-right' defined for: " + option.menuOptionName);
+			option.spellSwap = initSubspell(option.spellSwapName, "MenuSpell '" + internalName
+					+ "' has an invalid 'spell-swap' defined for: " + option.menuOptionName);
+			option.spellDrop = initSubspell(option.spellDropName, "MenuSpell '" + internalName
+					+ "' has an invalid 'spell-drop' defined for: " + option.menuOptionName);
 		}
 	}
 
@@ -228,20 +245,23 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			if (requireEntityTarget) {
 				if (targetOpensMenuInstead) {
 					TargetInfo<Player> info = getTargetedPlayer(player, power, args);
-					if (info.noTarget()) return noTarget(caster, args, info);
+					if (info.noTarget())
+						return noTarget(caster, args, info);
 
 					opener = info.target();
 					power = info.power();
 				} else {
 					TargetInfo<LivingEntity> info = getTargetedEntity(player, power, args);
-					if (info.noTarget()) return noTarget(caster, args, info);
+					if (info.noTarget())
+						return noTarget(caster, args, info);
 
 					target = info.target();
 					power = info.power();
 				}
 			} else if (requireLocationTarget) {
 				Block block = getTargetedBlock(player, power, args);
-				if (block == null || BlockUtils.isAir(block.getType())) return noTarget(caster, args);
+				if (block == null || BlockUtils.isAir(block.getType()))
+					return noTarget(caster, args);
 
 				locTarget = block.getLocation();
 			}
@@ -259,10 +279,13 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
-		if (!(caster instanceof Player opener)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
+		if (!(caster instanceof Player opener))
+			return false;
 		if (targetOpensMenuInstead) {
-			if (!(target instanceof Player player)) return false;
+			if (!(target instanceof Player player))
+				return false;
 			opener = player;
 			target = null;
 		}
@@ -277,9 +300,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!targetOpensMenuInstead) return false;
-		if (!validTargetList.canTarget(target)) return false;
-		if (!(target instanceof Player player)) return false;
+		if (!targetOpensMenuInstead)
+			return false;
+		if (!validTargetList.canTarget(target))
+			return false;
+		if (!(target instanceof Player player))
+			return false;
 		open(null, player, null, null, power, args);
 		return true;
 	}
@@ -291,7 +317,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		if (!(caster instanceof Player player)) return false;
+		if (!(caster instanceof Player player))
+			return false;
 		open(player, player, null, target, power, args);
 		return true;
 	}
@@ -308,7 +335,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	@Override
 	public boolean castFromConsole(CommandSender sender, String[] args) {
-		if (args.length < 1) return false;
+		if (args.length < 1)
+			return false;
 		Player player = PlayerNameUtils.getPlayer(args[0]);
 		String[] spellArgs = args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : null;
 		if (player != null) {
@@ -320,14 +348,17 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	private ItemStack createItem(String path, String defaultName) {
 		ItemStack magicItem = createItem(path);
-		if (magicItem != null) return magicItem.clone();
+		if (magicItem != null)
+			return magicItem.clone();
 
-		if (defaultName == null) return  null;
+		if (defaultName == null)
+			return null;
 
 		ItemStack item = new ItemStack(Material.GREEN_WOOL);
 		ItemMeta meta = item.getItemMeta();
 
-		meta.displayName(Component.text(defaultName).color(NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
+		meta.displayName(
+				Component.text(defaultName).color(NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
 		item.setItemMeta(meta);
 
 		return item;
@@ -337,15 +368,18 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		ItemStack item = null;
 		if (isConfigSection(path)) {
 			MagicItem magicItem = MagicItems.getMagicItemFromSection(getConfigSection(path));
-			if (magicItem != null) item = magicItem.getItemStack();
+			if (magicItem != null)
+				item = magicItem.getItemStack();
 		} else {
 			MagicItem magicItem = MagicItems.getMagicItemFromString(getConfigString(path, ""));
-			if (magicItem != null) item = magicItem.getItemStack();
+			if (magicItem != null)
+				item = magicItem.getItemStack();
 		}
 		return item;
 	}
 
-	private void open(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power, String[] args) {
+	private void open(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power,
+			String[] args) {
 		if (delay < 0) {
 			openMenu(caster, opener, entityTarget, locTarget, power, args);
 			return;
@@ -353,27 +387,32 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		MagicSpells.scheduleDelayedTask(() -> openMenu(caster, opener, entityTarget, locTarget, power, args), delay);
 	}
 
-	private void openMenu(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power, String[] args) {
-		MenuData mData = new MenuData(requireEntityTarget ? entityTarget : null, requireLocationTarget ? locTarget : null, power, args, 0);
+	private void openMenu(Player caster, Player opener, LivingEntity entityTarget, Location locTarget, float power,
+			String[] args) {
+		MenuData mData = new MenuData(requireEntityTarget ? entityTarget : null,
+				requireLocationTarget ? locTarget : null, power, args, 0);
 		menuData.put(opener.getUniqueId(), mData);
 
 		Map<Integer, ItemStack> itemStacks = buildInventory(opener, args, mData);
-		int rows_ = (int) Math.ceil((itemStacks.keySet().stream().max(Integer::compareTo).orElse(0)+1) / 9.0);
-		Inventory inv = Bukkit.createInventory(opener, Math.min(6, Math.max(1, (rows_ > rows ? rows_ : rows))) * 9, Component.text(internalName));
+		int rows_ = (int) Math.ceil((itemStacks.keySet().stream().max(Integer::compareTo).orElse(0) + 1) / 9.0);
+		Inventory inv = Bukkit.createInventory(opener, Math.min(6, Math.max(1, (rows_ > rows ? rows_ : rows))) * 9,
+				Component.text(internalName));
 
 		applyOptionsToInventory(opener, inv, args, mData, itemStacks);
 
 		opener.openInventory(inv);
 		Util.setInventoryTitle(opener, title);
 
-		SpellData data = new SpellData(caster, entityTarget, power, args);
+		SpellData data = new SpellData(caster, entityTarget, locTarget, power, args);
 		if (entityTarget != null && caster != null) {
 			playSpellEffects(caster, entityTarget, data);
 			return;
 		}
 		playSpellEffects(EffectPosition.SPECIAL, opener, data);
-		if (caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
-		if (locTarget != null) playSpellEffects(EffectPosition.TARGET, locTarget, data);
+		if (caster != null)
+			playSpellEffects(EffectPosition.CASTER, caster, data);
+		if (locTarget != null)
+			playSpellEffects(EffectPosition.TARGET, locTarget, data);
 	}
 
 	private Map<Integer, ItemStack> buildInventory(Player opener, String[] args, MenuData mData) {
@@ -385,28 +424,32 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			if (option.menuOptionModifiers != null) {
 				MagicSpellsGenericPlayerEvent event = new MagicSpellsGenericPlayerEvent(opener);
 				option.menuOptionModifiers.apply(event);
-				if (event.isCancelled()) continue;
+				if (event.isCancelled())
+					continue;
 			}
 			// Select and finalise item to display.
 			SpellData spellData = new SpellData(opener, 0f, args);
 			ItemStack itemData = null;
 			if (option.itemSection != null) {
 				MagicItem magicItem = MagicItems.getMagicItemFromSection(option.itemSection.get(spellData));
-				if (magicItem != null) itemData = magicItem.getItemStack();
-			}
-			else if (option.itemString != null) {
+				if (magicItem != null)
+					itemData = magicItem.getItemStack();
+			} else if (option.itemString != null) {
 				MagicItem magicItem = MagicItems.getMagicItemFromString(option.itemString.get(spellData));
-				if (magicItem != null) itemData = magicItem.getItemStack();
+				if (magicItem != null)
+					itemData = magicItem.getItemStack();
 			}
 
 			option.item = itemData;
 
 			if (option.item == null && option.items.isEmpty()) {
-				MagicSpells.error("MenuSpell '" + internalName + "' has invalid items defined for: " + option.menuOptionName);
+				MagicSpells.error(
+						"MenuSpell '" + internalName + "' has invalid items defined for: " + option.menuOptionName);
 				continue;
 			}
 
-			ItemStack item = (option.item != null ? option.item : option.items.get(Util.getRandomInt(option.items.size()))).clone();
+			ItemStack item = (option.item != null ? option.item
+					: option.items.get(Util.getRandomInt(option.items.size()))).clone();
 			DataUtil.setString(item, "menuOption", option.menuOptionName);
 			item = translateItem(opener, args, item);
 
@@ -414,12 +457,14 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 			item.setAmount(quantity);
 
 			// Set item for all defined slots.
-			if (autoArrange) itemStacks.put(itemStacks.keySet().size(), item);
+			if (autoArrange)
+				itemStacks.put(itemStacks.keySet().size(), item);
 			else {
 				List<Integer> slots = option.slots.get(spellData);
 				if (slots != null) {
 					for (int slot : slots) {
-						if (slot < 0 || slot >= 54) continue;
+						if (slot < 0 || slot >= 54)
+							continue;
 						itemStacks.put(slot, item);
 					}
 				}
@@ -429,19 +474,26 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		return itemStacks;
 	}
 
-	public void applyOptionsToInventory(Player opener, Inventory inv, String[] args, MenuData mData, Map<Integer, ItemStack> itemStacks) {
+	public void applyOptionsToInventory(Player opener, Inventory inv, String[] args, MenuData mData,
+			Map<Integer, ItemStack> itemStacks) {
 		// Fill inventory.
 		ItemStack fillerItem = (filler == null) ? null : translateItem(opener, args, filler);
 		for (int i = 0; i < inv.getSize(); i++) {
-			if (inv.getItem(i) != null) continue;
+			if (inv.getItem(i) != null)
+				continue;
 
 			if (autoArrange && i >= 50) {
-				ItemStack item = (i == 51) ? spacerItem : (i == 52 && mData.page() > 0) ? previousPageItem : (i == 53 && itemStacks.size() > 50 * (mData.page() + 1)) ? nextPageItem : null;
-				if (item != null) inv.setItem(i, item);
+				ItemStack item = (i == 51) ? spacerItem
+						: (i == 52 && mData.page() > 0) ? previousPageItem
+								: (i == 53 && itemStacks.size() > 50 * (mData.page() + 1)) ? nextPageItem : null;
+				if (item != null)
+					inv.setItem(i, item);
 			} else {
 				ItemStack item = itemStacks.get(i + mData.page() * 50);
-				if (item != null) inv.setItem(i, item);
-				else if (fillerItem != null) inv.setItem(i, fillerItem);
+				if (item != null)
+					inv.setItem(i, item);
+				else if (fillerItem != null)
+					inv.setItem(i, fillerItem);
 			}
 		}
 	}
@@ -455,7 +507,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	private ItemStack translateItem(Player opener, String[] args, ItemStack item) {
 		ItemStack newItem = item.clone();
 		ItemMeta meta = newItem.getItemMeta();
-		if (meta == null) return newItem;
+		if (meta == null)
+			return newItem;
 		meta.displayName(translateRawComponent(meta.displayName(), opener, args));
 		List<Component> lore = meta.lore();
 		if (lore != null) {
@@ -471,29 +524,31 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 	@EventHandler
 	public void onInvClick(InventoryClickEvent event) {
 		Player player = (Player) event.getWhoClicked();
-		if (!Util.getStringFromComponent(event.getView().title()).equals(internalName)) return;
-		
+		if (!Util.getStringFromComponent(event.getView().title()).equals(internalName))
+			return;
+
 		// Handle shift-clicks from player inventory to menu
 		if (event.getClickedInventory() != event.getView().getTopInventory()) {
 			// Player clicked in their own inventory
-			if ((event.getClick() == ClickType.SHIFT_LEFT || event.getClick() == ClickType.SHIFT_RIGHT) && 
-				event.getCurrentItem() != null && !event.getCurrentItem().getType().isAir()) {
-				
+			if ((event.getClick() == ClickType.SHIFT_LEFT || event.getClick() == ClickType.SHIFT_RIGHT) &&
+					event.getCurrentItem() != null && !event.getCurrentItem().getType().isAir()) {
+
 				// Always cancel shift-clicks to prevent unintentional item transfers
 				event.setCancelled(true);
-				
+
 				// Check if this item has a spell configured for empty slot drops
 				if (spellsOnDropNonOption != null) {
 					ItemStack clickedItem = event.getCurrentItem();
 					MagicItemData magicItem = MagicItems.getMagicItemDataFromItemStack(clickedItem);
 					if (magicItem != null) {
-						String itemName = (String) magicItem.getAttribute(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
+						String itemName = (String) magicItem
+								.getAttribute(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
 						if (itemName != null) {
 							// Get menu data for spell evaluation context
 							UUID id = player.getUniqueId();
 							MenuData data = menuData.get(id);
 							String[] args = data != null ? data.args() : null;
-							
+
 							SpellData spellData = new SpellData(player, 0f, args);
 							ConfigurationSection dropSection = spellsOnDropNonOption.get(spellData);
 							if (dropSection != null && dropSection.getString(itemName) != null) {
@@ -506,8 +561,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 								} else if (result.equals("reopen")) {
 									// Reopen the menu
 									MenuData mData = menuData.get(id);
-									Map<Integer, ItemStack> itemStacks = buildInventory(player, MagicSpells.NULL_ARGS, mData);
-									Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(), Component.text(internalName));
+									Map<Integer, ItemStack> itemStacks = buildInventory(player, MagicSpells.NULL_ARGS,
+											mData);
+									Inventory newInv = Bukkit.createInventory(player,
+											event.getView().getTopInventory().getSize(), Component.text(internalName));
 									applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS, mData, itemStacks);
 									player.openInventory(newInv);
 									Util.setInventoryTitle(player, title);
@@ -517,13 +574,14 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 						}
 					}
 				}
-				// If no spell was triggered, the shift-click is still cancelled but nothing else happens
+				// If no spell was triggered, the shift-click is still cancelled but nothing
+				// else happens
 				return;
 			}
 			// Allow normal clicks in player inventory
 			return;
 		}
-		
+
 		// Cancel clicks in the top inventory (menu)
 		event.setCancelled(true);
 
@@ -533,14 +591,19 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		MenuData mData = menuData.get(id);
 
 		if (autoArrange && event.getSlot() == 52) {
-			if (event.getCurrentItem() != null && event.getCurrentItem().equals(previousPageItem)) mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(), mData.page() - 1);
+			if (event.getCurrentItem() != null && event.getCurrentItem().equals(previousPageItem))
+				mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(),
+						mData.page() - 1);
 		} else if (autoArrange && event.getSlot() == 53) {
-			if (event.getCurrentItem() != null && event.getCurrentItem().equals(nextPageItem)) mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(), mData.page() + 1);
+			if (event.getCurrentItem() != null && event.getCurrentItem().equals(nextPageItem))
+				mData = new MenuData(mData.targetEntity(), mData.targetLocation(), mData.power(), mData.args(),
+						mData.page() + 1);
 		} else {
 			closeState = castSpells(player, event.getCurrentItem(), event.getClick());
 		}
 
-		if (closeState.equals("ignore")) return;
+		if (closeState.equals("ignore"))
+			return;
 		if (closeState.equals("close")) {
 			menuData.remove(id);
 			MagicSpells.scheduleDelayedTask(player::closeInventory, 0);
@@ -549,7 +612,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		// Reopen.
 		menuData.put(id, mData);
 		Map<Integer, ItemStack> itemStacks = buildInventory(player, MagicSpells.NULL_ARGS, mData);
-		Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(), Component.text(internalName));
+		Inventory newInv = Bukkit.createInventory(player, event.getView().getTopInventory().getSize(),
+				Component.text(internalName));
 		applyOptionsToInventory(player, newInv, MagicSpells.NULL_ARGS, mData, itemStacks);
 		player.openInventory(newInv);
 		Util.setInventoryTitle(player, title);
@@ -557,14 +621,15 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 	private String castSpells(Player player, ItemStack item, ClickType click) {
 		// Check if this is any kind of drag/drop or shift-click attempt
-		boolean isDragAndDrop = click == ClickType.LEFT && player.getItemOnCursor() != null && !player.getItemOnCursor().getType().isAir();
+		boolean isDragAndDrop = click == ClickType.LEFT && player.getItemOnCursor() != null
+				&& !player.getItemOnCursor().getType().isAir();
 		boolean isShiftClick = (click == ClickType.SHIFT_LEFT || click == ClickType.SHIFT_RIGHT);
 		boolean isItemTransferAttempt = isDragAndDrop || isShiftClick;
-		
+
 		// Handle empty slots
 		String key = item != null ? DataUtil.getString(item, "menuOption") : null;
 		boolean isEmptySlot = (item == null) || (key == null || key.isEmpty() || !options.containsKey(key));
-		
+
 		if (isEmptySlot) {
 			// If this is an item transfer attempt on an empty slot
 			if (isItemTransferAttempt) {
@@ -572,23 +637,27 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				if (spellsOnDropNonOption != null) {
 					return handleShiftClickFromInventory(player, player.getItemOnCursor());
 				}
-				// If no empty slot spells configured, just ignore the drag/drop and keep menu open
+				// If no empty slot spells configured, just ignore the drag/drop and keep menu
+				// open
 				return "ignore";
 			}
 			// Empty-handed click on empty slot - respect stay-open-non-option setting
 			return stayOpenNonOption ? "ignore" : "close";
 		}
 		MenuOption option = options.get(key);
-		if (option == null) return "close";
+		if (option == null)
+			return "close";
 
 		// Handle drag and drop
-		if (click == ClickType.LEFT && player.getItemOnCursor() != null && !player.getItemOnCursor().getType().isAir()) {
+		if (click == ClickType.LEFT && player.getItemOnCursor() != null
+				&& !player.getItemOnCursor().getType().isAir()) {
 			if (option.spellsOnDrop != null) {
-				String result = handleDragAndDrop(player, option.spellsOnDrop, option.power, 
-					option.variableModsClick, option.variableModsClicked, option.stayOpen, 
-					"MenuSpell '" + internalName + "' has an invalid 'spell-on-drop' spell defined for item '");
-				
-				if (result != null) return result;
+				String result = handleDragAndDrop(player, option.spellsOnDrop, option.power,
+						option.variableModsClick, option.variableModsClicked, option.stayOpen,
+						"MenuSpell '" + internalName + "' has an invalid 'spell-on-drop' spell defined for item '");
+
+				if (result != null)
+					return result;
 			}
 		}
 
@@ -621,32 +690,39 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 
 		processVariables(option.variableModsClick, player, data);
 
-		if (spell == null) return option.stayOpen ? "ignore" : "close";
+		if (spell == null)
+			return option.stayOpen ? "ignore" : "close";
 
 		boolean success;
 
-		if (entityTarget != null) success = spell.subcast(player, entityTarget, power, args);
-		else if (locationTarget != null) success = spell.subcast(player, locationTarget, power, args);
-		else if (bypassNormalCast) success = spell.subcast(player, power, args);
+		if (entityTarget != null)
+			success = spell.subcast(player, entityTarget, power, args);
+		else if (locationTarget != null)
+			success = spell.subcast(player, locationTarget, power, args);
+		else if (bypassNormalCast)
+			success = spell.subcast(player, power, args);
 		else {
 			SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
-			success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
+			success = result.state.equals(SpellCastState.NORMAL)
+					&& !result.action.equals(PostCastAction.ALREADY_HANDLED);
 		}
 
-		if (success) processVariables(option.variableModsClicked, player, data);
+		if (success)
+			processVariables(option.variableModsClicked, player, data);
 
 		return option.stayOpen ? "reopen" : "close";
 	}
 
-	private String handleDragAndDrop(Player player, ConfigData<ConfigurationSection> spellsOnDropConfig, float basePower, 
-									  Multimap<String, VariableMod> variableModsClick, Multimap<String, VariableMod> variableModsClicked, 
-									  boolean stayOpen, String errorContext) {
+	private String handleDragAndDrop(Player player, ConfigData<ConfigurationSection> spellsOnDropConfig,
+			float basePower,
+			Multimap<String, VariableMod> variableModsClick, Multimap<String, VariableMod> variableModsClicked,
+			boolean stayOpen, String errorContext) {
 		// Get menu data for spell evaluation context
 		UUID id = player.getUniqueId();
 		MenuData data = menuData.get(id);
 		float power = basePower;
 		String[] args = null;
-		
+
 		if (data != null) {
 			power *= data.power();
 			args = data.args();
@@ -681,10 +757,12 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 								success = spell.subcast(player, power, args);
 							} else {
 								SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
-								success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
+								success = result.state.equals(SpellCastState.NORMAL)
+										&& !result.action.equals(PostCastAction.ALREADY_HANDLED);
 							}
 
-							if (success) processVariables(variableModsClicked, player, data);
+							if (success)
+								processVariables(variableModsClicked, player, data);
 
 							return stayOpen ? "reopen" : "close";
 						}
@@ -692,7 +770,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				}
 			}
 		}
-		
+
 		return null; // Indicates no spell was found/executed
 	}
 
@@ -702,7 +780,7 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 		MenuData data = menuData.get(id);
 		float power = clickedItem.getAmount();
 		String[] args = null;
-		
+
 		if (data != null) {
 			power *= data.power();
 			args = data.args();
@@ -720,7 +798,10 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 					// Get and initialize the spell for the clicked item
 					String spellName = dropSection.getString(itemName);
 					if (spellName != null) {
-						Subspell spell = initSubspell(spellName, "MenuSpell '" + internalName + "' has an invalid 'empty-slot-spells-on-drop' spell defined for item '" + itemName + "'");
+						Subspell spell = initSubspell(spellName,
+								"MenuSpell '" + internalName
+										+ "' has an invalid 'empty-slot-spells-on-drop' spell defined for item '"
+										+ itemName + "'");
 						if (spell != null) {
 							// Cast the spell
 							boolean success;
@@ -732,7 +813,8 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 								success = spell.subcast(player, power, args);
 							} else {
 								SpellCastResult result = spell.getSpell().cast(player, power, MagicSpells.NULL_ARGS);
-								success = result.state.equals(SpellCastState.NORMAL) && !result.action.equals(PostCastAction.ALREADY_HANDLED);
+								success = result.state.equals(SpellCastState.NORMAL)
+										&& !result.action.equals(PostCastAction.ALREADY_HANDLED);
 							}
 
 							return success ? "reopen" : "close";
@@ -741,22 +823,27 @@ public class MenuSpell extends TargetedSpell implements TargetedEntitySpell, Tar
 				}
 			}
 		}
-		
-		// For item transfer attempts, always keep menu open even if no spell was executed
+
+		// For item transfer attempts, always keep menu open even if no spell was
+		// executed
 		return "ignore";
 	}
 
 	private void processVariables(Multimap<String, VariableMod> varMods, Player player, MenuData data) {
-		if (varMods == null || varMods.isEmpty()) return;
+		if (varMods == null || varMods.isEmpty())
+			return;
 
 		for (Map.Entry<String, VariableMod> entry : varMods.entries()) {
 			VariableMod mod = entry.getValue();
-			if (mod == null) continue;
+			if (mod == null)
+				continue;
 
 			Variable variable = MagicSpells.getVariableManager().getVariable(entry.getKey());
 
-			String amount = MagicSpells.getVariableManager().processVariableMods(variable, mod, player, player, null, data.power(), data.args());
-			MagicSpells.debug(3, "Variable '" + entry.getKey() + "' for player '" + player.getName() + "' modified by " + amount + " as a result of spell cast '" + internalName + "'");
+			String amount = MagicSpells.getVariableManager().processVariableMods(variable, mod, player, player, null,
+					data.power(), data.args());
+			MagicSpells.debug(3, "Variable '" + entry.getKey() + "' for player '" + player.getName() + "' modified by "
+					+ amount + " as a result of spell cast '" + internalName + "'");
 		}
 	}
 

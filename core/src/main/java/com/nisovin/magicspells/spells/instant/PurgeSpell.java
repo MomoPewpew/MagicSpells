@@ -39,11 +39,14 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 			entities = new ArrayList<>();
 			for (String s : list) {
 				EntityType t = MobUtil.getEntityType(s);
-				if (t != null) entities.add(t);
-				else MagicSpells.error("PurgeSpell '" + internalName + "' has an invalid entity defined: " + s);
+				if (t != null)
+					entities.add(t);
+				else
+					MagicSpells.error("PurgeSpell '" + internalName + "' has an invalid entity defined: " + s);
 			}
 
-			if (entities.isEmpty()) entities = null;
+			if (entities.isEmpty())
+				entities = null;
 		}
 	}
 
@@ -51,7 +54,8 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			boolean killed = purge(caster, caster.getLocation(), power, args);
-			if (!killed) return PostCastAction.ALREADY_HANDLED;
+			if (!killed)
+				return PostCastAction.ALREADY_HANDLED;
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
@@ -59,7 +63,8 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
 		boolean killed = purge(caster, target, power, args);
-		if (killed && caster != null) playSpellEffects(EffectPosition.CASTER, caster, power, args);
+		if (killed && caster != null)
+			playSpellEffects(EffectPosition.CASTER, caster, power, args);
 		return killed;
 	}
 
@@ -80,17 +85,22 @@ public class PurgeSpell extends InstantSpell implements TargetedLocationSpell {
 
 	private boolean purge(LivingEntity caster, Location loc, float power, String[] args) {
 		double castingRange = radius.get(caster, null, power, args);
-		if (powerAffectsRadius) castingRange *= power;
+		if (powerAffectsRadius)
+			castingRange *= power;
 		castingRange = Math.min(castingRange, MagicSpells.getGlobalRadius());
 
-		Collection<Entity> entitiesNearby = loc.getWorld().getNearbyEntities(loc, castingRange, castingRange, castingRange);
+		Collection<Entity> entitiesNearby = loc.getWorld().getNearbyEntities(loc, castingRange, castingRange,
+				castingRange);
 		boolean killed = false;
 		for (Entity entity : entitiesNearby) {
-			if (!(entity instanceof LivingEntity livingEntity)) continue;
-			if (entity instanceof Player) continue;
-			if (entities != null && !entities.contains(entity.getType())) continue;
+			if (!(entity instanceof LivingEntity livingEntity))
+				continue;
+			if (entity instanceof Player)
+				continue;
+			if (entities != null && !entities.contains(entity.getType()))
+				continue;
 
-			SpellData data = new SpellData(caster, livingEntity, power, args);
+			SpellData data = new SpellData(caster, livingEntity, loc, power, args);
 			playSpellEffectsTrail(loc, entity.getLocation(), data);
 			playSpellEffects(EffectPosition.TARGET, entity, data);
 

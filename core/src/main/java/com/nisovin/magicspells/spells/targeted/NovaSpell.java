@@ -48,18 +48,18 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 	private boolean pointBlank;
 	private boolean circleShape;
 	private boolean removePreviousBlocks;
-	
+
 	public NovaSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
 		blockData = getConfigDataBlockData("type", Bukkit.createBlockData(Material.WATER));
-		
+
 		relativeOffset = getConfigVector("relative-offset", "0,0,0");
 
 		spellOnEndName = getConfigString("spell-on-end", "");
 		locationSpellName = getConfigString("spell", "");
 		spellOnWaveRemoveName = getConfigString("spell-on-wave-remove", "");
-		
+
 		radius = getConfigDataInt("radius", 3);
 		startRadius = getConfigDataInt("start-radius", 0);
 		heightPerTick = getConfigDataInt("height-per-tick", 0);
@@ -71,54 +71,61 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		pointBlank = getConfigBoolean("point-blank", true);
 		circleShape = getConfigBoolean("circle-shape", false);
 		removePreviousBlocks = getConfigBoolean("remove-previous-blocks", true);
-		
+
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
-		
+
 		locationSpell = new Subspell(locationSpellName);
 		if (!locationSpell.process()) {
-			if (!locationSpellName.isEmpty()) MagicSpells.error("NovaSpell " + internalName + " has an invalid spell defined!");
+			if (!locationSpellName.isEmpty())
+				MagicSpells.error("NovaSpell " + internalName + " has an invalid spell defined!");
 			locationSpell = null;
 		}
-		
+
 		spellOnWaveRemove = new Subspell(spellOnWaveRemoveName);
 		if (!spellOnWaveRemove.process()) {
-			if (!spellOnWaveRemoveName.isEmpty()) MagicSpells.error("NovaSpell " + internalName + " has an invalid spell-on-wave-remove defined!");
+			if (!spellOnWaveRemoveName.isEmpty())
+				MagicSpells.error("NovaSpell " + internalName + " has an invalid spell-on-wave-remove defined!");
 			spellOnWaveRemove = null;
 		}
-		
+
 		spellOnEnd = new Subspell(spellOnEndName);
 		if (!spellOnEnd.process()) {
-			if (!spellOnEndName.isEmpty()) MagicSpells.error("NovaSpell " + internalName + " has an invalid spell-on-end defined!");
+			if (!spellOnEndName.isEmpty())
+				MagicSpells.error("NovaSpell " + internalName + " has an invalid spell-on-end defined!");
 			spellOnEnd = null;
 		}
 	}
-	
+
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState spellCastState, float power, String[] strings) {
 		if (spellCastState == SpellCastState.NORMAL) {
 			Location loc;
-			if (pointBlank) loc = caster.getLocation();
-			else loc = getTargetedBlock(caster, power, strings).getLocation();
-			
+			if (pointBlank)
+				loc = caster.getLocation();
+			else
+				loc = getTargetedBlock(caster, power, strings).getLocation();
+
 			createNova(caster, null, loc, power, strings);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
-	
+
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		createNova(caster, target, target.getLocation(), power, args);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		createNova(caster, target, target.getLocation(), power, null);
 		return true;
 	}
@@ -127,7 +134,7 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 	public boolean castAtEntity(LivingEntity livingEntity, float v) {
 		return false;
 	}
-	
+
 	@Override
 	public boolean castAtLocation(LivingEntity livingEntity, Location location, float v, String[] args) {
 		createNova(livingEntity, null, location, v, args);
@@ -146,7 +153,8 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 	}
 
 	private void createNova(LivingEntity caster, LivingEntity target, Location loc, float power, String[] args) {
-		if (blockData == null) return;
+		if (blockData == null)
+			return;
 		// Relative offset
 		Location startLoc = loc.clone();
 		Vector direction = caster.getLocation().getDirection().normalize();
@@ -155,12 +163,13 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		startLoc.add(direction.setY(0).normalize().multiply(relativeOffset.getX()));
 		startLoc.add(0, relativeOffset.getY(), 0);
 
-		SpellData data = new SpellData(caster, target, power, args);
-		
+		SpellData data = new SpellData(caster, target, startLoc, power, args);
+
 		// Get nearby players
 		double visibleRange = Math.min(Math.max(this.visibleRange.get(data), 20), MagicSpells.getGlobalRadius());
 
-		Collection<Player> nearbyPlayers = startLoc.getWorld().getNearbyPlayers(startLoc, visibleRange, visibleRange, visibleRange);
+		Collection<Player> nearbyPlayers = startLoc.getWorld().getNearbyPlayers(startLoc, visibleRange, visibleRange,
+				visibleRange);
 
 		int radius = this.radius.get(data);
 		int startRadius = this.startRadius.get(data);
@@ -168,15 +177,20 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		int novaTickInterval = this.novaTickInterval.get(data);
 		int expandingRadiusChange = this.expandingRadiusChange.get(data);
 		BlockData blockData = this.blockData.get(data);
-		if (expandingRadiusChange < 1) expandingRadiusChange = 1;
+		if (expandingRadiusChange < 1)
+			expandingRadiusChange = 1;
 
 		// Start tracker
-		if (!circleShape) new NovaTrackerSquare(nearbyPlayers, startLoc.getBlock(), blockData, caster, radius, startRadius, heightPerTick, novaTickInterval, expandingRadiusChange, power, args);
-		else new NovaTrackerCircle(nearbyPlayers, startLoc.getBlock(), blockData, caster, radius, startRadius, heightPerTick, novaTickInterval, expandingRadiusChange, power, args);
+		if (!circleShape)
+			new NovaTrackerSquare(nearbyPlayers, startLoc.getBlock(), blockData, caster, radius, startRadius,
+					heightPerTick, novaTickInterval, expandingRadiusChange, power, args);
+		else
+			new NovaTrackerCircle(nearbyPlayers, startLoc.getBlock(), blockData, caster, radius, startRadius,
+					heightPerTick, novaTickInterval, expandingRadiusChange, power, args);
 	}
-	
+
 	private class NovaTrackerSquare implements Runnable {
-		
+
 		private BlockData blockData;
 		private Collection<Player> nearby;
 		private Set<Block> blocks;
@@ -192,7 +206,9 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		private int count;
 		private int temp;
 
-		private NovaTrackerSquare(Collection<Player> nearby, Block center, BlockData blockData, LivingEntity caster, int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange, float power, String[] args) {
+		private NovaTrackerSquare(Collection<Player> nearby, Block center, BlockData blockData, LivingEntity caster,
+				int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange, float power,
+				String[] args) {
 			this.nearby = nearby;
 			this.center = center;
 			this.blockData = blockData;
@@ -210,22 +226,24 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 
 			this.taskId = MagicSpells.scheduleRepeatingTask(this, 0, tickInterval);
 		}
-		
+
 		@Override
 		public void run() {
 			temp = count;
 			temp += startRadius;
 			temp *= radiusChange;
 			count++;
-			
+
 			if (removePreviousBlocks) {
 				for (Block b : blocks) {
-					for (Player p : nearby) p.sendBlockChange(b.getLocation(), b.getBlockData());
-					if (spellOnWaveRemove != null) spellOnWaveRemove.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+					for (Player p : nearby)
+						p.sendBlockChange(b.getLocation(), b.getBlockData());
+					if (spellOnWaveRemove != null)
+						spellOnWaveRemove.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
 				}
 				blocks.clear();
 			}
-			
+
 			if (temp > radiusNova + 1) {
 				stop();
 				return;
@@ -234,46 +252,55 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 			if (temp > radiusNova) {
 				return;
 			}
-			
+
 			int bx = center.getX();
 			int y = center.getY();
 			int bz = center.getZ();
 			y += count * heightPerTick;
-			
+
 			for (int x = bx - temp; x <= bx + temp; x++) {
 				for (int z = bz - temp; z <= bz + temp; z++) {
-					if (Math.abs(x - bx) != temp && Math.abs(z - bz) != temp) continue;
-					
+					if (Math.abs(x - bx) != temp && Math.abs(z - bz) != temp)
+						continue;
+
 					Block b = center.getWorld().getBlockAt(x, y, z);
 					if (BlockUtils.isAir(b.getType()) || b.getType() == Material.TALL_GRASS) {
 						Block under = b.getRelative(BlockFace.DOWN);
-						if (BlockUtils.isAir(under.getType()) || under.getType() == Material.TALL_GRASS) b = under;
-					} else if (BlockUtils.isAir(b.getRelative(BlockFace.UP).getType()) || b.getRelative(BlockFace.UP).getType() == Material.TALL_GRASS) {
+						if (BlockUtils.isAir(under.getType()) || under.getType() == Material.TALL_GRASS)
+							b = under;
+					} else if (BlockUtils.isAir(b.getRelative(BlockFace.UP).getType())
+							|| b.getRelative(BlockFace.UP).getType() == Material.TALL_GRASS) {
 						b = b.getRelative(BlockFace.UP);
 					}
-					
-					if (!BlockUtils.isAir(b.getType()) && b.getType() != Material.TALL_GRASS) continue;
-					
-					if (blocks.contains(b)) continue;
-					for (Player p : nearby) p.sendBlockChange(b.getLocation(), blockData);
+
+					if (!BlockUtils.isAir(b.getType()) && b.getType() != Material.TALL_GRASS)
+						continue;
+
+					if (blocks.contains(b))
+						continue;
+					for (Player p : nearby)
+						p.sendBlockChange(b.getLocation(), blockData);
 					blocks.add(b);
-					if (locationSpell != null) locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+					if (locationSpell != null)
+						locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
 				}
 			}
-			
+
 		}
 
 		private void stop() {
 			for (Block b : blocks) {
-				for (Player p : nearby) p.sendBlockChange(b.getLocation(), b.getBlockData());
-				if (spellOnEnd != null) spellOnEnd.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+				for (Player p : nearby)
+					p.sendBlockChange(b.getLocation(), b.getBlockData());
+				if (spellOnEnd != null)
+					spellOnEnd.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
 			}
 			blocks.clear();
 			MagicSpells.cancelTask(taskId);
 		}
-		
+
 	}
-	
+
 	private class NovaTrackerCircle implements Runnable {
 
 		private BlockData blockData;
@@ -291,7 +318,9 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 		private int count;
 		private int temp;
 
-		private NovaTrackerCircle(Collection<Player> nearby, Block center, BlockData blockData, LivingEntity caster, int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange, float power, String[] args) {
+		private NovaTrackerCircle(Collection<Player> nearby, Block center, BlockData blockData, LivingEntity caster,
+				int radius, int startRadius, int heightPerTick, int tickInterval, int activeRadiusChange, float power,
+				String[] args) {
 			this.nearby = nearby;
 			this.center = center;
 			this.blockData = blockData;
@@ -309,23 +338,25 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 
 			this.taskId = MagicSpells.scheduleRepeatingTask(this, 0, tickInterval);
 		}
-		
+
 		@Override
 		public void run() {
 			temp = count;
 			temp += startRadius;
 			temp *= radiusChange;
 			count++;
-			
+
 			// Remove old blocks
 			if (removePreviousBlocks) {
 				for (Block b : blocks) {
-					for (Player p : nearby) p.sendBlockChange(b.getLocation(), b.getBlockData());
-					if (spellOnWaveRemove != null) spellOnWaveRemove.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+					for (Player p : nearby)
+						p.sendBlockChange(b.getLocation(), b.getBlockData());
+					if (spellOnWaveRemove != null)
+						spellOnWaveRemove.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
 				}
 				blocks.clear();
 			}
-			
+
 			if (temp > radiusNova + 1) {
 				stop();
 				return;
@@ -334,30 +365,36 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 			if (temp > radiusNova) {
 				return;
 			}
-			
+
 			// Generate the bottom block
 			Location centerLocation = center.getLocation().clone();
 			centerLocation.add(0.5, count * heightPerTick, 0.5);
 			Block b;
-			
+
 			if (startRadius == 0 && temp == 0) {
 				b = centerLocation.getWorld().getBlockAt(centerLocation);
-				
+
 				if (BlockUtils.isAir(b.getType()) || b.getType() == Material.TALL_GRASS) {
 					Block under = b.getRelative(BlockFace.DOWN);
-					if (BlockUtils.isAir(under.getType()) || under.getType() == Material.TALL_GRASS) b = under;
-				} else if (BlockUtils.isAir(b.getRelative(BlockFace.UP).getType()) || b.getRelative(BlockFace.UP).getType() == Material.TALL_GRASS) {
+					if (BlockUtils.isAir(under.getType()) || under.getType() == Material.TALL_GRASS)
+						b = under;
+				} else if (BlockUtils.isAir(b.getRelative(BlockFace.UP).getType())
+						|| b.getRelative(BlockFace.UP).getType() == Material.TALL_GRASS) {
 					b = b.getRelative(BlockFace.UP);
 				}
-				
-				if (!BlockUtils.isAir(b.getType()) && b.getType() != Material.TALL_GRASS) return;
-				
-				if (blocks.contains(b)) return;
-				for (Player p : nearby) p.sendBlockChange(b.getLocation(), blockData);
+
+				if (!BlockUtils.isAir(b.getType()) && b.getType() != Material.TALL_GRASS)
+					return;
+
+				if (blocks.contains(b))
+					return;
+				for (Player p : nearby)
+					p.sendBlockChange(b.getLocation(), blockData);
 				blocks.add(b);
-				if (locationSpell != null) locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+				if (locationSpell != null)
+					locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
 			}
-			
+
 			// Generate the circle
 			Vector v;
 			double angle, x, z;
@@ -370,33 +407,41 @@ public class NovaSpell extends TargetedSpell implements TargetedLocationSpell, T
 				v = new Vector(x, 0, z);
 				b = center.getWorld().getBlockAt(centerLocation.add(v));
 				centerLocation.subtract(v);
-				
+
 				if (BlockUtils.isAir(b.getType()) || b.getType() == Material.TALL_GRASS) {
 					Block under = b.getRelative(BlockFace.DOWN);
-					if (BlockUtils.isAir(under.getType()) || under.getType() == Material.TALL_GRASS) b = under;
-				} else if (BlockUtils.isAir(b.getRelative(BlockFace.UP).getType()) || b.getRelative(BlockFace.UP).getType() == Material.TALL_GRASS) {
+					if (BlockUtils.isAir(under.getType()) || under.getType() == Material.TALL_GRASS)
+						b = under;
+				} else if (BlockUtils.isAir(b.getRelative(BlockFace.UP).getType())
+						|| b.getRelative(BlockFace.UP).getType() == Material.TALL_GRASS) {
 					b = b.getRelative(BlockFace.UP);
 				}
-				
-				if (!BlockUtils.isAir(b.getType()) && b.getType() != Material.TALL_GRASS) continue;
-				
-				if (blocks.contains(b)) continue;
-				for (Player p : nearby) p.sendBlockChange(b.getLocation(), blockData);
+
+				if (!BlockUtils.isAir(b.getType()) && b.getType() != Material.TALL_GRASS)
+					continue;
+
+				if (blocks.contains(b))
+					continue;
+				for (Player p : nearby)
+					p.sendBlockChange(b.getLocation(), blockData);
 				blocks.add(b);
-				if (locationSpell != null) locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+				if (locationSpell != null)
+					locationSpell.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
 			}
-			
+
 		}
 
 		private void stop() {
 			for (Block b : blocks) {
-				for (Player p : nearby) p.sendBlockChange(b.getLocation(), b.getBlockData());
-				if (spellOnEnd != null) spellOnEnd.subcast(caster, b.getLocation().add(0.5, 0, 0.5),  power, args);
+				for (Player p : nearby)
+					p.sendBlockChange(b.getLocation(), b.getBlockData());
+				if (spellOnEnd != null)
+					spellOnEnd.subcast(caster, b.getLocation().add(0.5, 0, 0.5), power, args);
 			}
 			blocks.clear();
 			MagicSpells.cancelTask(taskId);
 		}
-		
+
 	}
-	
+
 }

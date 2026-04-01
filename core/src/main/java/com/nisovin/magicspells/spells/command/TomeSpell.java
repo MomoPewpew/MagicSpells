@@ -31,7 +31,7 @@ public class TomeSpell extends CommandSpell {
 
 	private static final String key = "tome_data";
 	private static final Pattern INT_PATTERN = Pattern.compile("^[0-9]+$");
-	
+
 	private boolean consumeBook;
 	private boolean allowOverwrite;
 	private boolean requireTeachPerm;
@@ -60,7 +60,8 @@ public class TomeSpell extends CommandSpell {
 		maxUses = getConfigInt("max-uses", 5);
 		defaultUses = getConfigInt("default-uses", -1);
 
-		strUsage = getConfigString("str-usage", "Usage: While holding a written book, /cast " + name + " <spell> [uses]");
+		strUsage = getConfigString("str-usage",
+				"Usage: While holding a written book, /cast " + name + " <spell> [uses]");
 		strNoBook = getConfigString("str-no-book", "You must be holding a written book.");
 		strNoSpell = getConfigString("str-no-spell", "You do not know a spell with that name.");
 		strLearned = getConfigString("str-learned", "You have learned the %s spell.");
@@ -101,7 +102,8 @@ public class TomeSpell extends CommandSpell {
 			}
 
 			int uses = defaultUses;
-			if (args.length > 1 && RegexUtil.matches(INT_PATTERN, args[1])) uses = Integer.parseInt(args[1]);
+			if (args.length > 1 && RegexUtil.matches(INT_PATTERN, args[1]))
+				uses = Integer.parseInt(args[1]);
 			item = createTome(spell, uses, item);
 			player.getInventory().setItemInMainHand(item);
 		}
@@ -112,42 +114,51 @@ public class TomeSpell extends CommandSpell {
 	public boolean castFromConsole(CommandSender sender, String[] args) {
 		return false;
 	}
-	
+
 	@Override
 	public List<String> tabComplete(CommandSender sender, String partial) {
 		return null;
 	}
 
 	public ItemStack createTome(Spell spell, int uses, ItemStack item) {
-		if (maxUses > 0 && uses > maxUses) uses = maxUses;
-		else if (uses < 0) uses = defaultUses;
+		if (maxUses > 0 && uses > maxUses)
+			uses = maxUses;
+		else if (uses < 0)
+			uses = defaultUses;
 		if (item == null) {
 			item = new ItemStack(Material.WRITTEN_BOOK, 1);
-			BookMeta bookMeta = (BookMeta)item.getItemMeta();
+			BookMeta bookMeta = (BookMeta) item.getItemMeta();
 			bookMeta.setTitle(getName() + ": " + spell.getName());
 			item.setItemMeta(bookMeta);
 		}
 		DataUtil.setString(item, key, spell.getInternalName() + (uses > 0 ? "," + uses : ""));
 		return item;
 	}
-	
+
 	@EventHandler
 	public void onInteract(PlayerInteractEvent event) {
-		if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-		if (!event.hasItem()) return;
+		if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK)
+			return;
+		if (!event.hasItem())
+			return;
 		ItemStack item = event.getItem();
-		if (item == null) return;
-		if (item.getType() != Material.WRITTEN_BOOK) return;
-		
+		if (item == null)
+			return;
+		if (item.getType() != Material.WRITTEN_BOOK)
+			return;
+
 		String spellData = DataUtil.getString(item, key);
-		if (spellData == null || spellData.isEmpty()) return;
-		
+		if (spellData == null || spellData.isEmpty())
+			return;
+
 		String[] data = spellData.split(",");
 		Spell spell = MagicSpells.getSpellByInternalName(data[0]);
 		int uses = -1;
-		if (data.length > 1) uses = Integer.parseInt(data[1]);
+		if (data.length > 1)
+			uses = Integer.parseInt(data[1]);
 		Spellbook spellbook = MagicSpells.getSpellbook(event.getPlayer());
-		if (spell == null) return;
+		if (spell == null)
+			return;
 
 		if (spellbook.hasSpell(spell)) {
 			sendMessage(strAlreadyKnown, event.getPlayer(), MagicSpells.NULL_ARGS, "%s", spell.getName());
@@ -157,7 +168,8 @@ public class TomeSpell extends CommandSpell {
 			sendMessage(strCantLearn, event.getPlayer(), MagicSpells.NULL_ARGS, "%s", spell.getName());
 			return;
 		}
-		SpellLearnEvent learnEvent = new SpellLearnEvent(spell, event.getPlayer(), LearnSource.TOME, event.getPlayer().getInventory().getItemInMainHand());
+		SpellLearnEvent learnEvent = new SpellLearnEvent(spell, event.getPlayer(), LearnSource.TOME,
+				event.getPlayer().getInventory().getItemInMainHand());
 		EventUtil.call(learnEvent);
 		if (learnEvent.isCancelled()) {
 			sendMessage(strCantLearn, event.getPlayer(), MagicSpells.NULL_ARGS, "%s", spell.getName());
@@ -166,16 +178,21 @@ public class TomeSpell extends CommandSpell {
 		spellbook.addSpell(spell);
 		spellbook.save();
 		sendMessage(strLearned, event.getPlayer(), MagicSpells.NULL_ARGS, "%s", spell.getName());
-		if (cancelReadOnLearn) event.setCancelled(true);
+		if (cancelReadOnLearn)
+			event.setCancelled(true);
 
 		if (uses > 0) {
 			uses--;
-			if (uses > 0) DataUtil.setString(item, key, data[0] + "," + uses);
-			else DataUtil.remove(item, key);
+			if (uses > 0)
+				DataUtil.setString(item, key, data[0] + "," + uses);
+			else
+				DataUtil.remove(item, key);
 
 		}
-		if (uses <= 0 && consumeBook) event.getPlayer().getInventory().setItemInMainHand(null);
-		playSpellEffects(EffectPosition.DELAYED, event.getPlayer(), new SpellData(event.getPlayer()));
+		if (uses <= 0 && consumeBook)
+			event.getPlayer().getInventory().setItemInMainHand(null);
+		playSpellEffects(EffectPosition.DELAYED, event.getPlayer(),
+				new SpellData(event.getPlayer(), event.getClickedBlock().getLocation()));
 	}
 
 	public static Pattern getIntPattern() {

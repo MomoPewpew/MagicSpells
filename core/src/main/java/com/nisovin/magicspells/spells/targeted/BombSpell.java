@@ -33,7 +33,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	private Subspell targetSpell;
 	private String targetSpellName;
-	
+
 	public BombSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -51,14 +51,15 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		blocks = new HashSet<>();
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
 
 		targetSpell = new Subspell(targetSpellName);
 		if (!targetSpell.process()) {
-			if (!targetSpellName.isEmpty()) MagicSpells.error("BombSpell '" + internalName + "' has an invalid spell defined!");
+			if (!targetSpellName.isEmpty())
+				MagicSpells.error("BombSpell '" + internalName + "' has an invalid spell defined!");
 			targetSpell = null;
 		}
 	}
@@ -78,12 +79,15 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			List<Block> blocks = getLastTwoTargetedBlocks(caster, power, args);
-			if (blocks.size() != 2) return noTarget(caster, args);
-			if (!blocks.get(1).getType().isSolid()) return noTarget(caster, args);
+			if (blocks.size() != 2)
+				return noTarget(caster, args);
+			if (!blocks.get(1).getType().isSolid())
+				return noTarget(caster, args);
 
 			Block target = blocks.get(0);
 			boolean ok = bomb(caster, target.getLocation(), power, args);
-			if (!ok) return noTarget(caster, args);
+			if (!ok)
+				return noTarget(caster, args);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
 	}
@@ -109,16 +113,20 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 	}
 
 	private boolean bomb(LivingEntity livingEntity, Location loc, float power, String[] args) {
-		if (material == null) return false;
+		if (material == null)
+			return false;
 		Block block = loc.getBlock();
-		if (!BlockUtils.isAir(block.getType())) return false;
+		if (!BlockUtils.isAir(block.getType()))
+			return false;
 
 		blocks.add(block);
 		block.setType(material);
 
-		SpellData data = new SpellData(livingEntity, power, args);
-		if (livingEntity != null) playSpellEffects(livingEntity, loc.add(0.5, 0, 0.5), data);
-		else playSpellEffects(EffectPosition.TARGET, loc.add(0.5, 0, 0.5), data);
+		SpellData data = new SpellData(livingEntity, loc, power, args);
+		if (livingEntity != null)
+			playSpellEffects(livingEntity, loc.add(0.5, 0, 0.5), data);
+		else
+			playSpellEffects(EffectPosition.TARGET, loc.add(0.5, 0, 0.5), data);
 
 		final int interval = this.interval.get(livingEntity, null, power, args);
 		final int fuse = this.fuse.get(livingEntity, null, power, args);
@@ -136,12 +144,15 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 						blocks.remove(block);
 						block.setType(Material.AIR);
 						playSpellEffects(EffectPosition.DELAYED, l, data);
-						if (targetSpell != null) targetSpell.subcast(livingEntity, l, power, args);
+						if (targetSpell != null)
+							targetSpell.subcast(livingEntity, l, power, args);
 					}
-				} else if (!material.equals(block.getType())) stop(true);
-				else playSpellEffects(EffectPosition.SPECIAL, l, data);
+				} else if (!material.equals(block.getType()))
+					stop(true);
+				else
+					playSpellEffects(EffectPosition.SPECIAL, l, data);
 			}
-				
+
 		};
 
 		return true;

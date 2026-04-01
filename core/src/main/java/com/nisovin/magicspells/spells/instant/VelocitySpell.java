@@ -53,80 +53,99 @@ public class VelocitySpell extends InstantSpell implements TargetedEntitySpell, 
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			String[] args) {
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		return launch(caster, target, from, power, args);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		return launch(caster, target, from, power, null);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		return launch(null, target, from, power, args);
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		return launch(null, target, from, power, null);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		return launch(caster, target, null, power, args);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		return launch(caster, target, null, power, null);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		return launch(null, target, null, power, args);
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		return launch(null, target, null, power, null);
 	}
 
 	private boolean launch(LivingEntity caster, LivingEntity target, Location from, float power, String[] args) {
-		if (target == null) return false;
+		if (target == null)
+			return false;
 
-		if (from == null) from = target.getLocation();
+		if (from == null)
+			from = target.getLocation();
 
 		double speed = this.speed.get(caster, caster, power, args) / 10;
-		if (powerAffectsSpeed) speed *= power;
+		if (powerAffectsSpeed)
+			speed *= power;
 
 		Vector velocity = from.getDirection().normalize().multiply(speed);
 
-		if (addVelocityInstead) target.setVelocity(target.getVelocity().add(velocity));
-		else target.setVelocity(velocity);
+		if (addVelocityInstead)
+			target.setVelocity(target.getVelocity().add(velocity));
+		else
+			target.setVelocity(velocity);
 		jumping.add(target.getUniqueId());
 
-		if (caster != null) playSpellEffects(caster, target, power, args);
-		else playSpellEffects(EffectPosition.TARGET, target, power, args);
+		if (caster != null)
+			playSpellEffects(caster, target, power, args);
+		else
+			playSpellEffects(EffectPosition.TARGET, target, power, args);
 
 		return true;
 	}
 
 	@EventHandler
 	public void onEntityDamage(EntityDamageEvent event) {
-		if (event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
+		if (event.getCause() != EntityDamageEvent.DamageCause.FALL)
+			return;
 		LivingEntity livingEntity = (LivingEntity) event.getEntity();
-		if (!jumping.remove(livingEntity.getUniqueId())) return;
+		if (!jumping.remove(livingEntity.getUniqueId()))
+			return;
 		playSpellEffects(EffectPosition.TARGET, livingEntity.getLocation(), new SpellData(livingEntity));
-		if (cancelDamage) event.setCancelled(true);
+		if (cancelDamage)
+			event.setCancelled(true);
 	}
 
 	public Set<UUID> getJumping() {

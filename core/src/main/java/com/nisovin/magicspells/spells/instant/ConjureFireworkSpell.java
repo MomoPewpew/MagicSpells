@@ -54,9 +54,10 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 
 		firework = new ItemStack(Material.FIREWORK_ROCKET);
 		FireworkMeta meta = (FireworkMeta) firework.getItemMeta();
-		
-		if (!fireworkName.isEmpty()) meta.displayName(Util.getMiniMessage(fireworkName));
-		
+
+		if (!fireworkName.isEmpty())
+			meta.displayName(Util.getMiniMessage(fireworkName));
+
 		List<String> fireworkEffects = getConfigStringList("firework-effects", null);
 		if (fireworkEffects != null && !fireworkEffects.isEmpty()) {
 			for (String e : fireworkEffects) {
@@ -65,7 +66,7 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 				boolean twinkle = false;
 				int[] colors = null;
 				int[] fadeColors = null;
-				
+
 				String[] data = e.split(" ");
 				for (String s : data) {
 					if (s.equalsIgnoreCase("ball") || s.equalsIgnoreCase("smallball")) {
@@ -89,8 +90,10 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 							icolors[i] = Integer.parseInt(scolors[i], 16);
 						}
 
-						if (colors == null) colors = icolors;
-						else if (fadeColors == null) fadeColors = icolors;
+						if (colors == null)
+							colors = icolors;
+						else if (fadeColors == null)
+							fadeColors = icolors;
 					}
 				}
 
@@ -111,7 +114,7 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 				meta.addEffect(builder.build());
 			}
 		}
-		
+
 		firework.setItemMeta(meta);
 	}
 
@@ -123,9 +126,11 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 			item.setAmount(count.get(caster, null, power, args));
 
 			ItemMeta meta = item.getItemMeta();
-			if (meta instanceof FireworkMeta fMeta) fMeta.setPower(flight.get(caster, null, power, args));
+			if (meta instanceof FireworkMeta fMeta)
+				fMeta.setPower(flight.get(caster, null, power, args));
 
-			if (addToInventory) added = Util.addToInventory(player, player.getInventory(), item, true, false);
+			if (addToInventory)
+				added = Util.addToInventory(player, player.getInventory(), item, true, false);
 			SpellData data = new SpellData(caster, power, args);
 			if (!added) {
 				Item dropped = player.getWorld().dropItem(player.getLocation(), item);
@@ -144,14 +149,15 @@ public class ConjureFireworkSpell extends InstantSpell implements TargetedLocati
 
 	@Override
 	public boolean castAtLocation(LivingEntity caster, Location target, float power, String[] args) {
-		SpellData data = new SpellData(caster, power, args);
+		SpellData data = new SpellData(caster, target, power, args);
 		playSpellEffects(EffectPosition.CASTER, caster, data);
 
 		ItemStack item = firework.clone();
 		item.setAmount(count.get(caster, null, power, args));
 
 		ItemMeta meta = item.getItemMeta();
-		if (meta instanceof FireworkMeta fMeta) fMeta.setPower(flight.get(caster, null, power, args));
+		if (meta instanceof FireworkMeta fMeta)
+			fMeta.setPower(flight.get(caster, null, power, args));
 
 		Item dropped = target.getWorld().dropItem(target, item);
 		dropped.setItemStack(item);

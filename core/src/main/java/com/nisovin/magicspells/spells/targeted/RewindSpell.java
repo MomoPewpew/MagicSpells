@@ -75,7 +75,8 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+			if (info.noTarget())
+				return noTarget(caster, args, info);
 
 			LivingEntity target = info.target();
 			power = info.power();
@@ -116,17 +117,21 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onSpellCast(SpellCastEvent e) {
-		if (!allowForceRewind) return;
+		if (!allowForceRewind)
+			return;
 		LivingEntity caster = e.getCaster();
-		if (!entities.containsKey(caster)) return;
-		if (!e.getSpell().getInternalName().equals(internalName)) return;
+		if (!entities.containsKey(caster))
+			return;
+		if (!e.getSpell().getInternalName().equals(internalName))
+			return;
 		entities.get(caster).rewind();
 	}
 
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent e) {
 		Player pl = e.getPlayer();
-		if (!entities.containsKey(pl)) return;
+		if (!entities.containsKey(pl))
+			return;
 		entities.get(pl).stop();
 	}
 
@@ -162,7 +167,8 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 			this.startHealth = entity.getHealth();
 			if (MagicSpells.isManaSystemEnabled() && entity instanceof Player player) {
 				ManaHandler handler = MagicSpells.getManaHandler();
-				if (handler != null) this.startMana = handler.getMana(player);
+				if (handler != null)
+					this.startMana = handler.getMana(player);
 			}
 
 			int tickInterval = RewindSpell.this.tickInterval.get(caster, entity, power, args);
@@ -180,13 +186,15 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 			if (specialEffectInterval > 0 && counter % specialEffectInterval == 0)
 				locations.forEach(loc -> playSpellEffects(EffectPosition.SPECIAL, loc, data));
 			counter++;
-			if (counter >= startDuration) rewind();
+			if (counter >= startDuration)
+				rewind();
 		}
 
 		private void rewind() {
 			MagicSpells.cancelTask(taskId);
 			entities.remove(entity);
-			if (rewindSpell != null) rewindSpell.subcast(caster, power, args);
+			if (rewindSpell != null)
+				rewindSpell.subcast(caster, power, args);
 			new ForceRewinder(caster, entity, locations, startHealth, startMana, power, args);
 		}
 
@@ -212,7 +220,8 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 
 		private final int delayedEffectInterval;
 
-		private ForceRewinder(LivingEntity caster, LivingEntity entity, List<Location> locations, double startHealth, int startMana, float power, String[] args) {
+		private ForceRewinder(LivingEntity caster, LivingEntity entity, List<Location> locations, double startHealth,
+				int startMana, float power, String[] args) {
 			this.locations = locations;
 			this.entity = entity;
 			this.startMana = startMana;
@@ -221,9 +230,9 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 
 			data = new SpellData(caster, entity, power, args);
 
-			delayedEffectInterval = RewindSpell.this.delayedEffectInterval.get(caster, entity, power, args);
+			delayedEffectInterval = RewindSpell.this.delayedEffectInterval.get(data);
 
-			int rewindInterval = RewindSpell.this.rewindInterval.get(caster, entity, power, args);
+			int rewindInterval = RewindSpell.this.rewindInterval.get(data);
 			this.taskId = MagicSpells.scheduleRepeatingTask(this, 0, rewindInterval);
 		}
 
@@ -235,7 +244,8 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 				return;
 			}
 
-			if (locations != null && locations.size() > 0) tempLocation = locations.get(counter - 1);
+			if (locations != null && locations.size() > 0)
+				tempLocation = locations.get(counter - 1);
 			if (tempLocation != null) {
 				entity.teleportAsync(tempLocation);
 				locations.remove(tempLocation);
@@ -244,15 +254,18 @@ public class RewindSpell extends TargetedSpell implements TargetedEntitySpell {
 			}
 
 			counter--;
-			if (counter <= 0) stop();
+			if (counter <= 0)
+				stop();
 		}
 
 		private void stop() {
 			MagicSpells.cancelTask(taskId);
-			if (rewindHealth) entity.setHealth(startHealth);
+			if (rewindHealth)
+				entity.setHealth(startHealth);
 			if (rewindMana && MagicSpells.isManaSystemEnabled() && entity instanceof Player player) {
 				ManaHandler handler = MagicSpells.getManaHandler();
-				if (handler != null) handler.setMana(player, startMana, ManaChangeReason.OTHER);
+				if (handler != null)
+					handler.setMana(player, startMana, ManaChangeReason.OTHER);
 			}
 		}
 

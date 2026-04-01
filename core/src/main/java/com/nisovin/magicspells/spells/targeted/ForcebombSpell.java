@@ -52,16 +52,19 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 		if (state == SpellCastState.NORMAL) {
 			Block block = getTargetedBlock(caster, power, args);
 			if (block != null && !BlockUtils.isAir(block.getType())) {
-				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, block.getLocation(), power, args);
+				SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, block.getLocation(), power,
+						args);
 				EventUtil.call(event);
-				if (event.isCancelled()) block = null;
+				if (event.isCancelled())
+					block = null;
 				else {
 					block = event.getTargetLocation().getBlock();
 					power = event.getPower();
 				}
 			}
 
-			if (block == null || BlockUtils.isAir(block.getType())) return noTarget(caster, args);
+			if (block == null || BlockUtils.isAir(block.getType()))
+				return noTarget(caster, args);
 			knockback(caster, block.getLocation().add(0.5, 0, 0.5), power, args);
 		}
 		return PostCastAction.HANDLE_NORMALLY;
@@ -92,19 +95,24 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 	}
 
 	private void knockback(LivingEntity caster, Location location, float basePower, String[] args) {
-		if (location == null) return;
-		if (location.getWorld() == null) return;
+		if (location == null)
+			return;
+		if (location.getWorld() == null)
+			return;
 
 		location = location.clone().add(0D, yOffset.get(caster, null, basePower, args), 0D);
 
 		double radiusSquared = this.radius.get(caster, null, basePower, args);
 		radiusSquared *= radiusSquared;
 
-		SpellData data = new SpellData(caster, basePower, args);
+		SpellData data = new SpellData(caster, location, basePower, args);
 		if (validTargetList.canTargetOnlyCaster()) {
-			if (caster == null) return;
-			if (!caster.getWorld().equals(location.getWorld())) return;
-			if (caster.getLocation().distanceSquared(location) > radiusSquared) return;
+			if (caster == null)
+				return;
+			if (!caster.getWorld().equals(location.getWorld()))
+				return;
+			if (caster.getLocation().distanceSquared(location) > radiusSquared)
+				return;
 
 			bomb(caster, caster, location, basePower, args);
 
@@ -115,15 +123,19 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 
 		Collection<LivingEntity> entities = location.getWorld().getLivingEntities();
 		for (LivingEntity entity : entities) {
-			if (!validTargetList.canTarget(caster, entity)) continue;
-			if (!entity.getWorld().equals(location.getWorld())) continue;
-			if (entity.getLocation().distanceSquared(location) > radiusSquared) continue;
+			if (!validTargetList.canTarget(caster, entity))
+				continue;
+			if (!entity.getWorld().equals(location.getWorld()))
+				continue;
+			if (entity.getLocation().distanceSquared(location) > radiusSquared)
+				continue;
 
 			bomb(caster, entity, location, basePower, args);
 		}
 
 		playSpellEffects(EffectPosition.SPECIAL, location, data);
-		if (caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
+		if (caster != null)
+			playSpellEffects(EffectPosition.CASTER, caster, data);
 	}
 
 	private void bomb(LivingEntity caster, LivingEntity target, Location location, float basePower, String[] args) {
@@ -131,32 +143,41 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 		if (callTargetEvents && caster != null) {
 			SpellTargetEvent event = new SpellTargetEvent(this, caster, target, power, args);
 			EventUtil.call(event);
-			if (event.isCancelled()) return;
+			if (event.isCancelled())
+				return;
 
 			target = event.getTarget();
 			power = event.getPower();
 		}
 
 		double force = this.force.get(caster, target, power, args) / 10;
-		if (powerAffectsForce) force *= power;
+		if (powerAffectsForce)
+			force *= power;
 
 		Vector v = target.getLocation().toVector().subtract(location.toVector()).normalize().multiply(force);
 
 		double yForce = this.yForce.get(caster, target, power, args) / 10;
-		if (powerAffectsForce) yForce *= power;
+		if (powerAffectsForce)
+			yForce *= power;
 
 		double maxYForce = this.maxYForce.get(caster, target, power, args) / 10;
-		if (addYForceInstead) v.setY(Math.min(v.getY() + yForce, maxYForce));
-		else v.setY(Math.min(force == 0 ? yForce : v.getY() * yForce, maxYForce));
+		if (addYForceInstead)
+			v.setY(Math.min(v.getY() + yForce, maxYForce));
+		else
+			v.setY(Math.min(force == 0 ? yForce : v.getY() * yForce, maxYForce));
 
 		v = Util.makeFinite(v);
 
-		if (addVelocityInstead) target.setVelocity(target.getVelocity().add(v));
-		else target.setVelocity(v);
+		if (addVelocityInstead)
+			target.setVelocity(target.getVelocity().add(v));
+		else
+			target.setVelocity(v);
 
-		SpellData data = new SpellData(caster, target, power, args);
-		if (caster != null) playSpellEffects(caster, location, target, data);
-		else playSpellEffects(EffectPosition.TARGET, target, data);
+		SpellData data = new SpellData(caster, target, location, power, args);
+		if (caster != null)
+			playSpellEffects(caster, location, target, data);
+		else
+			playSpellEffects(EffectPosition.TARGET, target, data);
 	}
 
 }

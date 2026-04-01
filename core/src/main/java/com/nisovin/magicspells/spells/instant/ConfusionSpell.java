@@ -21,7 +21,7 @@ public class ConfusionSpell extends InstantSpell implements TargetedLocationSpel
 
 	private final ConfigData<Double> radius;
 	private final boolean powerAffectsRadius;
-	
+
 	public ConfusionSpell(MagicConfig config, String spellName) {
 		super(config, spellName);
 
@@ -56,25 +56,30 @@ public class ConfusionSpell extends InstantSpell implements TargetedLocationSpel
 
 	private void confuse(LivingEntity caster, Location location, float power, String[] args) {
 		double castingRange = radius.get(caster, null, power, args);
-		if (powerAffectsRadius) castingRange = castingRange * power;
+		if (powerAffectsRadius)
+			castingRange = castingRange * power;
 
 		castingRange = Math.min(castingRange, MagicSpells.getGlobalRadius());
 
-		Collection<Entity> entities = location.getWorld().getNearbyEntities(location, castingRange, castingRange, castingRange);
+		Collection<Entity> entities = location.getWorld().getNearbyEntities(location, castingRange, castingRange,
+				castingRange);
 		List<LivingEntity> monsters = new ArrayList<>();
 
 		for (Entity e : entities) {
-			if (!(e instanceof LivingEntity livingEntity)) continue;
-			if (!validTargetList.canTarget(caster, e)) continue;
+			if (!(e instanceof LivingEntity livingEntity))
+				continue;
+			if (!validTargetList.canTarget(caster, e))
+				continue;
 			monsters.add(livingEntity);
 		}
 
 		for (int i = 0; i < monsters.size(); i++) {
 			int next = i + 1;
-			if (next >= monsters.size()) next = 0;
+			if (next >= monsters.size())
+				next = 0;
 			MobUtil.setTarget(monsters.get(i), monsters.get(next));
 
-			SpellData data = new SpellData(caster, monsters.get(i), power, args);
+			SpellData data = new SpellData(caster, monsters.get(i), location, power, args);
 
 			playSpellEffects(EffectPosition.TARGET, monsters.get(i), data);
 			playSpellEffectsTrail(caster.getLocation(), monsters.get(i).getLocation(), data);

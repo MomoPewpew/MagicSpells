@@ -61,9 +61,11 @@ public class PassiveSpell extends Spell {
 
 		if (config.isList("spells." + internalName + '.' + "can-trigger")) {
 			List<String> defaultTargets = getConfigStringList("can-trigger", null);
-			if (defaultTargets.isEmpty()) defaultTargets.add("players");
+			if (defaultTargets.isEmpty())
+				defaultTargets.add("players");
 			triggerList = new ValidTargetList(this, defaultTargets);
-		} else triggerList = new ValidTargetList(this, getConfigString("can-trigger", "players"));
+		} else
+			triggerList = new ValidTargetList(this, getConfigString("can-trigger", "players"));
 
 		delay = getConfigDataInt("delay", -1);
 
@@ -97,7 +99,8 @@ public class PassiveSpell extends Spell {
 			}
 		}
 
-		if (spells.isEmpty()) MagicSpells.error("PassiveSpell '" + internalName + "' has no spells defined!");
+		if (spells.isEmpty())
+			MagicSpells.error("PassiveSpell '" + internalName + "' has no spells defined!");
 	}
 
 	@Override
@@ -130,10 +133,12 @@ public class PassiveSpell extends Spell {
 			type = type.toLowerCase();
 
 			EventPriority priority = MagicSpells.getPassiveManager().getEventPriorityFromName(type);
-			if (priority == null) priority = EventPriority.NORMAL;
+			if (priority == null)
+				priority = EventPriority.NORMAL;
 
 			String priorityName = MagicSpells.getPassiveManager().getEventPriorityName(priority);
-			if (priorityName != null) type = type.replace(priorityName, "");
+			if (priorityName != null)
+				type = type.replace(priorityName, "");
 
 			PassiveListener listener = MagicSpells.getPassiveManager().getListenerByName(type);
 			if (listener == null) {
@@ -149,7 +154,8 @@ public class PassiveSpell extends Spell {
 			trigCount++;
 		}
 
-		if (trigCount == 0) MagicSpells.error("PassiveSpell '" + internalName + "' has no triggers defined!");
+		if (trigCount == 0)
+			MagicSpells.error("PassiveSpell '" + internalName + "' has no triggers defined!");
 	}
 
 	public List<PassiveListener> getPassiveListeners() {
@@ -196,8 +202,10 @@ public class PassiveSpell extends Spell {
 	}
 
 	private boolean isActuallyNonTargeted(Spell spell) {
-		if (spell instanceof ExternalCommandSpell) return !((ExternalCommandSpell) spell).requiresPlayerTarget();
-		if (spell instanceof BuffSpell) return !((BuffSpell) spell).isTargeted();
+		if (spell instanceof ExternalCommandSpell)
+			return !((ExternalCommandSpell) spell).requiresPlayerTarget();
+		if (spell instanceof BuffSpell)
+			return !((BuffSpell) spell).isTargeted();
 		return false;
 	}
 
@@ -205,35 +213,38 @@ public class PassiveSpell extends Spell {
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		return PostCastAction.ALREADY_HANDLED;
 	}
-	
+
 	public boolean activate(LivingEntity caster) {
 		return activate(caster, null, null);
 	}
-	
+
 	public boolean activate(LivingEntity caster, float power) {
 		return activate(caster, null, null, power);
 	}
-	
+
 	public boolean activate(LivingEntity caster, LivingEntity target) {
 		return activate(caster, target, null, 1F);
 	}
-	
+
 	public boolean activate(LivingEntity caster, Location location) {
 		return activate(caster, null, location, 1F);
 	}
-	
+
 	public boolean activate(final LivingEntity caster, final LivingEntity target, final Location location) {
 		return activate(caster, target, location, 1F);
 	}
-	
-	public boolean activate(final LivingEntity caster, final LivingEntity target, final Location location, final float power) {
+
+	public boolean activate(final LivingEntity caster, final LivingEntity target, final Location location,
+			final float power) {
 		int delay = this.delay.get(caster, target, power, null);
-		if (delay < 0) return activateSpells(caster, target, location, power);
+		if (delay < 0)
+			return activateSpells(caster, target, location, power);
 		MagicSpells.scheduleDelayedTask(() -> activateSpells(caster, target, location, power), delay);
 		return false;
 	}
-	
-	// DEBUG INFO: level 3, activating passive spell spellName for player playerName state state
+
+	// DEBUG INFO: level 3, activating passive spell spellName for player playerName
+	// state state
 	// DEBUG INFO: level 3, casting spell effect spellName
 	// DEBUG INFO: level 3, casting without target
 	// DEBUG INFO: level 3, casting at entity
@@ -245,12 +256,15 @@ public class PassiveSpell extends Spell {
 	// DEBUG INFO: level 3, target cancelled (UL)
 	// DEBUG INFO: level 3, passive spell cancelled
 	private boolean activateSpells(LivingEntity caster, LivingEntity target, Location location, float power) {
-		if (!triggerList.canTarget(caster, true)) return false;
+		if (!triggerList.canTarget(caster, true))
+			return false;
 		SpellCastState state = getCastState(caster);
 		if (caster instanceof Player) {
-			MagicSpells.debug(3, "Activating passive spell '" + name + "' for player " + caster.getName() + " (state: " + state + ')');
+			MagicSpells.debug(3, "Activating passive spell '" + name + "' for player " + caster.getName() + " (state: "
+					+ state + ')');
 		} else {
-			MagicSpells.debug(3, "Activating passive spell '" + name + "' for livingEntity " + caster.getUniqueId() + " (state: " + state + ')');
+			MagicSpells.debug(3, "Activating passive spell '" + name + "' for livingEntity " + caster.getUniqueId()
+					+ " (state: " + state + ')');
 		}
 
 		if (state != SpellCastState.NORMAL && sendFailureMessages) {
@@ -268,13 +282,16 @@ public class PassiveSpell extends Spell {
 			return false;
 		}
 
-		if (disabled || state != SpellCastState.NORMAL) return false;
+		if (disabled || state != SpellCastState.NORMAL)
+			return false;
 
 		float chance = this.chance.get(caster, target, power, null) / 100;
-		if (chance < 1 && random.nextFloat() > chance) return false;
+		if (chance < 1 && random.nextFloat() > chance)
+			return false;
 
 		disabled = true;
-		SpellCastEvent castEvent = new SpellCastEvent(this, caster, SpellCastState.NORMAL, power, null, cooldown, reagents.clone(), 0);
+		SpellCastEvent castEvent = new SpellCastEvent(this, caster, SpellCastState.NORMAL, power, null, cooldown,
+				reagents.clone(), 0);
 		EventUtil.call(castEvent);
 
 		if (castEvent.isCancelled() || castEvent.getSpellCastState() != SpellCastState.NORMAL) {
@@ -316,7 +333,7 @@ public class PassiveSpell extends Spell {
 			location = targetEvent.getTargetLocation();
 		}
 
-		SpellData data = new SpellData(caster, target, power, null);
+		SpellData data = new SpellData(caster, target, location, power, null);
 		setCooldown(caster, castEvent.getCooldown());
 		boolean spellEffectsDone = false;
 
@@ -369,7 +386,8 @@ public class PassiveSpell extends Spell {
 
 		removeReagents(caster, castEvent.getReagents());
 		sendMessage(strCastSelf, caster, MagicSpells.NULL_ARGS);
-		SpellCastedEvent castedEvent = new SpellCastedEvent(this, caster, SpellCastState.NORMAL, power, null, castEvent.getCooldown(), castEvent.getReagents(), PostCastAction.HANDLE_NORMALLY);
+		SpellCastedEvent castedEvent = new SpellCastedEvent(this, caster, SpellCastState.NORMAL, power, null,
+				castEvent.getCooldown(), castEvent.getReagents(), PostCastAction.HANDLE_NORMALLY);
 		EventUtil.call(castedEvent);
 		disabled = false;
 		return true;
@@ -380,14 +398,17 @@ public class PassiveSpell extends Spell {
 		float serverCooldown = serverCooldownPerSubject.get(caster, target, 1F, null);
 		int charges = chargesPerSubject.get(caster, target, 1F, null);
 
-		if (cooldown > 0 && caster != null) setSubjectCooldown(caster, subject, cooldown, charges);
-		if (serverCooldown > 0) setSubjectCooldown(null, subject, serverCooldown, charges);
+		if (cooldown > 0 && caster != null)
+			setSubjectCooldown(caster, subject, cooldown, charges);
+		if (serverCooldown > 0)
+			setSubjectCooldown(null, subject, serverCooldown, charges);
 	}
 
 	private void setSubjectCooldown(LivingEntity key, String subject, float cooldown, int charges) {
 		Map<String, Long> cooldowns = cooldownsPerSubject.computeIfAbsent(key, k -> new HashMap<>());
 		Long existing = cooldowns.get(subject);
-		if (existing != null && System.currentTimeMillis() < existing) return;
+		if (existing != null && System.currentTimeMillis() < existing)
+			return;
 
 		cooldowns.put(subject, System.currentTimeMillis() + (long) (cooldown * 1000));
 		if (charges > 1) {
@@ -415,9 +436,11 @@ public class PassiveSpell extends Spell {
 
 	private boolean consumeCharge(LivingEntity key, String subject) {
 		Map<String, Integer> charges = chargesPerSubjectRemaining.get(key);
-		if (charges == null) return false;
+		if (charges == null)
+			return false;
 		Integer remaining = charges.get(subject);
-		if (remaining == null || remaining <= 0) return false;
+		if (remaining == null || remaining <= 0)
+			return false;
 		charges.put(subject, remaining - 1);
 		return true;
 	}

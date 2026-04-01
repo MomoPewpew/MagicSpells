@@ -101,11 +101,13 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 				try {
 					blocks.add(Bukkit.createBlockData(blockDataString));
 				} catch (IllegalArgumentException e) {
-					MagicSpells.error("Invalid block '" + blockDataString + "' in AreaScanSpell '" + internalName + "'.");
+					MagicSpells
+							.error("Invalid block '" + blockDataString + "' in AreaScanSpell '" + internalName + "'.");
 				}
 			}
 
-			if (blocks.isEmpty()) blocks = null;
+			if (blocks.isEmpty())
+				blocks = null;
 		}
 
 		List<String> deniedBlockStrings = getConfigStringList("denied-blocks", null);
@@ -116,12 +118,14 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 				try {
 					deniedBlocks.add(Bukkit.createBlockData(blockDataString));
 				} catch (IllegalArgumentException e) {
-					MagicSpells.error("Invalid denied block '" + blockDataString + "' in AreaScanSpell '" + internalName + "'.");
+					MagicSpells.error(
+							"Invalid denied block '" + blockDataString + "' in AreaScanSpell '" + internalName + "'.");
 				}
 
 			}
 
-			if (deniedBlocks.isEmpty()) deniedBlocks = null;
+			if (deniedBlocks.isEmpty())
+				deniedBlocks = null;
 		}
 	}
 
@@ -133,7 +137,8 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 			spell = new Subspell(spellToCast);
 
 			if (!spell.process()) {
-				MagicSpells.error("AreaScanSpell '" + internalName + "' has an invalid 'spell' '" + spellToCast + "' defined!");
+				MagicSpells.error(
+						"AreaScanSpell '" + internalName + "' has an invalid 'spell' '" + spellToCast + "' defined!");
 				spell = null;
 			}
 
@@ -145,15 +150,18 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			Location origin;
-			if (pointBlank) origin = caster.getLocation();
+			if (pointBlank)
+				origin = caster.getLocation();
 			else {
 				Block target = getTargetedBlock(caster, power, args);
-				if (target == null) return noTarget(caster, args);
+				if (target == null)
+					return noTarget(caster, args);
 
 				origin = target.getLocation();
 			}
 
-			if (!scan(caster, origin, power, args)) return noTarget(caster, args);
+			if (!scan(caster, origin, power, args))
+				return noTarget(caster, args);
 		}
 
 		return PostCastAction.HANDLE_NORMALLY;
@@ -180,7 +188,8 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 	}
 
 	private boolean scan(LivingEntity caster, Location origin, float power, String[] args) {
-		if (blockCoords) origin.set(origin.getBlockX(), origin.getBlockY(), origin.getBlockZ());
+		if (blockCoords)
+			origin.set(origin.getBlockX(), origin.getBlockY(), origin.getBlockZ());
 
 		if (relativeOffset.getX() != 0 || relativeOffset.getY() != 0 || relativeOffset.getZ() != 0)
 			origin.add(VectorUtils.rotateVector(relativeOffset, origin));
@@ -190,7 +199,8 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		int xRadius = this.xRadius.get(caster, null, power, args);
 		int yRadius = this.yRadius.get(caster, null, power, args);
 		int zRadius = this.zRadius.get(caster, null, power, args);
-		if (xRadius < 0 || yRadius < 0 || zRadius < 0) return false;
+		if (xRadius < 0 || yRadius < 0 || zRadius < 0)
+			return false;
 
 		int xInnerRadius = this.xInnerRadius.get(caster, null, power, args);
 		int yInnerRadius = this.yInnerRadius.get(caster, null, power, args);
@@ -215,9 +225,10 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		zInnerRadius = Math.min(zInnerRadius, MagicSpells.getGlobalRadius());
 
 		int count = this.maxBlocks.get(caster, null, power, args);
-		if (powerAffectsMaxBlocks) count = Math.round(count * power);
+		if (powerAffectsMaxBlocks)
+			count = Math.round(count * power);
 
-		SpellData data = new SpellData(caster, power, args);
+		SpellData data = new SpellData(caster, origin, power, args);
 
 		Shape shape = this.shape.get(caster, null, power, args);
 		float xRadiusInv = shape == Shape.X_CYLINDER || xRadius == 0 ? 0 : 1f / (xRadius * xRadius);
@@ -240,77 +251,96 @@ public class AreaScanSpell extends TargetedSpell implements TargetedLocationSpel
 		int maxRadius = Math.max(xRadius, Math.max(yRadius, zRadius));
 
 		boolean found = false;
-		loop:
-		for (int d = minRadius; d <= maxRadius; d++) {
+		loop: for (int d = minRadius; d <= maxRadius; d++) {
 			int xBound = Math.min(xRadius, d);
-			if (boxCull && xBound <= xInnerRadius) continue;
+			if (boxCull && xBound <= xInnerRadius)
+				continue;
 
 			for (int xOffset = -xBound; xOffset <= xBound; xOffset++) {
 				int yBound = Math.min(yRadius, d);
-				if (boxCull && yBound <= yInnerRadius) continue;
+				if (boxCull && yBound <= yInnerRadius)
+					continue;
 
 				for (int yOffset = -yBound; yOffset <= yBound; yOffset++) {
 					int zBound = Math.min(zRadius, d);
-					if (boxCull && zBound <= zInnerRadius) continue;
+					if (boxCull && zBound <= zInnerRadius)
+						continue;
 
 					for (int zOffset = -zBound; zOffset <= zBound; zOffset++) {
-						if (xOffset != d && xOffset != -d && yOffset != d && yOffset != -d && zOffset != d && zOffset != -d) continue;
+						if (xOffset != d && xOffset != -d && yOffset != d && yOffset != -d && zOffset != d
+								&& zOffset != -d)
+							continue;
 
 						if (shape != Shape.BOX) {
 							int xOffsetSq = xOffset * xOffset;
 							int yOffsetSq = yOffset * yOffset;
 							int zOffsetSq = zOffset * zOffset;
 
-							if (xRadiusInv * xOffsetSq + yRadiusInv * yOffsetSq + zRadiusInv * zOffsetSq > tolerance) continue;
-							if (cull && xInnerRadiusInv * xOffsetSq + yInnerRadiusInv * yOffsetSq + zInnerRadiusInv * zOffsetSq <= innerTolerance) {
+							if (xRadiusInv * xOffsetSq + yRadiusInv * yOffsetSq + zRadiusInv * zOffsetSq > tolerance)
+								continue;
+							if (cull && xInnerRadiusInv * xOffsetSq + yInnerRadiusInv * yOffsetSq
+									+ zInnerRadiusInv * zOffsetSq <= innerTolerance) {
 								switch (shape) {
 									case ELLIPSOID -> {
 										continue;
 									}
 									case X_CYLINDER -> {
-										if (xOffset >= -xInnerRadius && xOffset <= xInnerRadius) continue;
+										if (xOffset >= -xInnerRadius && xOffset <= xInnerRadius)
+											continue;
 									}
 									case Y_CYLINDER -> {
-										if (yOffset >= -yInnerRadius && yOffset <= yInnerRadius) continue;
+										if (yOffset >= -yInnerRadius && yOffset <= yInnerRadius)
+											continue;
 									}
 									case Z_CYLINDER -> {
-										if (zOffset >= -zInnerRadius && zOffset <= zInnerRadius) continue;
+										if (zOffset >= -zInnerRadius && zOffset <= zInnerRadius)
+											continue;
 									}
 								}
 							}
 						}
 
 						Location target = origin.clone().add(xOffset, yOffset, zOffset);
-						if (!check(target.getBlock().getBlockData())) continue;
+						if (!check(target.getBlock().getBlockData()))
+							continue;
 
 						if (playerCaster != null) {
-							if (xVariable != null) manager.set(xVariable, playerCaster, target.getX());
-							if (yVariable != null) manager.set(yVariable, playerCaster, target.getY());
-							if (zVariable != null) manager.set(zVariable, playerCaster, target.getZ());
+							if (xVariable != null)
+								manager.set(xVariable, playerCaster, target.getX());
+							if (yVariable != null)
+								manager.set(yVariable, playerCaster, target.getY());
+							if (zVariable != null)
+								manager.set(zVariable, playerCaster, target.getZ());
 						}
 
-						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target, power, args);
-						if (!event.callEvent()) continue;
+						SpellTargetLocationEvent event = new SpellTargetLocationEvent(this, caster, target, power,
+								args);
+						if (!event.callEvent())
+							continue;
 
 						float subPower = event.getPower();
 						target = event.getTargetLocation();
 						found = true;
 
-						if (spell != null) spell.subcast(caster, target, subPower, args);
+						if (spell != null)
+							spell.subcast(caster, target, subPower, args);
 
-						SpellData effectData = power == subPower ? data : new SpellData(caster, subPower, args);
+						SpellData effectData = power == subPower ? data : new SpellData(caster, origin, subPower, args);
 						playSpellEffects(EffectPosition.TARGET, target, effectData);
 						playSpellEffectsTrail(origin, target, effectData);
 
-						if (count == 1) break loop;
-						else if (count > 0) count--;
+						if (count == 1)
+							break loop;
+						else if (count > 0)
+							count--;
 					}
 				}
 			}
 		}
 
 		boolean success = found || !failIfNoTargets;
-		if (success && caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
+		if (success && caster != null)
+			playSpellEffects(EffectPosition.CASTER, caster, data);
 
 		return success;
 	}

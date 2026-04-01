@@ -40,7 +40,7 @@ import com.nisovin.magicspells.events.SpellLearnEvent.LearnSource;
 // Op is currently required for using the reload
 
 public class SpellbookSpell extends CommandSpell {
-	
+
 	private static final Pattern PATTERN_CAST_ARG_USAGE = Pattern.compile("^[0-9]+$");
 
 	private List<String> bookSpells;
@@ -63,9 +63,9 @@ public class SpellbookSpell extends CommandSpell {
 	private String strCantDestroy;
 	private String strHasSpellbook;
 	private String strAlreadyKnown;
-	
+
 	public SpellbookSpell(MagicConfig config, String spellName) {
-		super(config,spellName);
+		super(config, spellName);
 
 		bookSpells = new ArrayList<>();
 		bookUses = new ArrayList<>();
@@ -95,11 +95,12 @@ public class SpellbookSpell extends CommandSpell {
 
 		loadSpellbooks();
 	}
-	
+
 	@Override
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL && caster instanceof Player player) {
-			if (args == null || args.length < 1 || args.length > 2 || (args.length == 2 && !RegexUtil.matches(PATTERN_CAST_ARG_USAGE, args[1]))) {
+			if (args == null || args.length < 1 || args.length > 2
+					|| (args.length == 2 && !RegexUtil.matches(PATTERN_CAST_ARG_USAGE, args[1]))) {
 				sendMessage(strUsage, player, args);
 				return PostCastAction.HANDLE_NORMALLY;
 			}
@@ -134,8 +135,10 @@ public class SpellbookSpell extends CommandSpell {
 			}
 			bookLocations.add(new MagicLocation(target.getLocation()));
 			bookSpells.add(spell.getInternalName());
-			if (args.length == 1) bookUses.add(defaultUses);
-			else bookUses.add(Integer.parseInt(args[1]));
+			if (args.length == 1)
+				bookUses.add(defaultUses);
+			else
+				bookUses.add(Integer.parseInt(args[1]));
 
 			saveSpellbooks();
 			sendMessage(strCastSelf, player, args, "%s", spell.getName());
@@ -157,25 +160,33 @@ public class SpellbookSpell extends CommandSpell {
 		}
 		return false;
 	}
-	
+
 	private void removeSpellbook(int index) {
 		bookLocations.remove(index);
 		bookSpells.remove(index);
 		bookUses.remove(index);
 		saveSpellbooks();
 	}
-	
+
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onPlayerInteract(PlayerInteractEvent event) {
-		if (spellbookBlock == null) return;
+		if (spellbookBlock == null)
+			return;
 		Block clickedBlock = event.getClickedBlock();
-		if (clickedBlock == null) return;
+		if (clickedBlock == null)
+			return;
 		EquipmentSlot slot = event.getHand();
-		if (slot == null) return;
-		if (!event.hasBlock() || !spellbookBlock.equals(clickedBlock.getType()) || event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-		if (slot == EquipmentSlot.OFF_HAND) return;
-		MagicLocation loc = new MagicLocation(event.getClickedBlock().getLocation());
-		if (!bookLocations.contains(loc)) return;
+		if (slot == null)
+			return;
+		if (!event.hasBlock() || !spellbookBlock.equals(clickedBlock.getType())
+				|| event.getAction() != Action.RIGHT_CLICK_BLOCK)
+			return;
+		if (slot == EquipmentSlot.OFF_HAND)
+			return;
+		Location location = event.getClickedBlock().getLocation();
+		MagicLocation loc = new MagicLocation(location);
+		if (!bookLocations.contains(loc))
+			return;
 
 		event.setCancelled(true);
 		Player player = event.getPlayer();
@@ -203,23 +214,28 @@ public class SpellbookSpell extends CommandSpell {
 		spellbook.addSpell(spell);
 		spellbook.save();
 		sendMessage(strLearned, player, MagicSpells.NULL_ARGS, "%s", spell.getName());
-		playSpellEffects(EffectPosition.DELAYED, player, new SpellData(player));
+		playSpellEffects(EffectPosition.DELAYED, player, new SpellData(player, location));
 
 		int uses = bookUses.get(i);
-		if (uses <= 0) return;
+		if (uses <= 0)
+			return;
 
 		uses--;
 		if (uses == 0) {
-			if (destroySpellbook) bookLocations.get(i).getLocation().getBlock().setType(Material.AIR);
+			if (destroySpellbook)
+				bookLocations.get(i).getLocation().getBlock().setType(Material.AIR);
 			removeSpellbook(i);
-		} else bookUses.set(i, uses);
+		} else
+			bookUses.set(i, uses);
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onBlockBreak(BlockBreakEvent event) {
-		if (spellbookBlock == null || !spellbookBlock.equals(event.getBlock().getType())) return;
+		if (spellbookBlock == null || !spellbookBlock.equals(event.getBlock().getType()))
+			return;
 		MagicLocation loc = new MagicLocation(event.getBlock().getLocation());
-		if (!bookLocations.contains(loc)) return;
+		if (!bookLocations.contains(loc))
+			return;
 		Player pl = event.getPlayer();
 		if (pl.isOp() || Perm.ADVANCED_SPELLBOOK.has(pl)) {
 			int i = bookLocations.indexOf(loc);
@@ -230,22 +246,25 @@ public class SpellbookSpell extends CommandSpell {
 		event.setCancelled(true);
 		sendMessage(strCantDestroy, pl, MagicSpells.NULL_ARGS);
 	}
-	
+
 	@Override
 	public List<String> tabComplete(CommandSender sender, String partial) {
-		if (sender instanceof Player && !partial.contains(" ")) return tabCompleteSpellName(sender, partial);
+		if (sender instanceof Player && !partial.contains(" "))
+			return tabCompleteSpellName(sender, partial);
 		return null;
 	}
-	
+
 	private void loadSpellbooks() {
 		try {
 			Scanner scanner = new Scanner(new File(MagicSpells.plugin.getDataFolder(), "books.txt"));
 			while (scanner.hasNext()) {
 				String line = scanner.nextLine();
-				if (line.isEmpty()) continue;
+				if (line.isEmpty())
+					continue;
 				try {
 					String[] data = line.split(":");
-					MagicLocation loc = new MagicLocation(data[0], Integer.parseInt(data[1]), Integer.parseInt(data[2]), Integer.parseInt(data[3]));
+					MagicLocation loc = new MagicLocation(data[0], Integer.parseInt(data[1]), Integer.parseInt(data[2]),
+							Integer.parseInt(data[3]));
 					int uses = Integer.parseInt(data[5]);
 					bookLocations.add(loc);
 					bookSpells.add(data[4]);
@@ -255,17 +274,19 @@ public class SpellbookSpell extends CommandSpell {
 				}
 			}
 		} catch (FileNotFoundException e) {
-			//DebugHandler.debugFileNotFoundException(e);
-		} 
+			// DebugHandler.debugFileNotFoundException(e);
+		}
 	}
-	
+
 	private void saveSpellbooks() {
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(new File(MagicSpells.plugin.getDataFolder(), "books.txt"), false));
+			BufferedWriter writer = new BufferedWriter(
+					new FileWriter(new File(MagicSpells.plugin.getDataFolder(), "books.txt"), false));
 			MagicLocation loc;
 			for (int i = 0; i < bookLocations.size(); i++) {
 				loc = bookLocations.get(i);
-				writer.write(loc.getWorld() + ':' + (int) loc.getX() + ':' + (int) loc.getY() + ':' + (int) loc.getZ() + ':');
+				writer.write(loc.getWorld() + ':' + (int) loc.getX() + ':' + (int) loc.getY() + ':' + (int) loc.getZ()
+						+ ':');
 				writer.write(bookSpells.get(i) + ':' + bookUses.get(i));
 				writer.newLine();
 			}

@@ -46,8 +46,10 @@ public class SoundPersonalEffect extends SoundEffect {
 
 		Player target = getTarget(entity, data);
 		if (target != null) {
-			if (useListenerAsTarget && data != null) data = new SpellData(data.caster(), target, data.power(), data.args());
-			target.playSound(applyOffsets(entity.getLocation(), data), sound.get(data), category.get(data), volume.get(data), pitch.get(data));
+			if (useListenerAsTarget && data != null)
+				data = new SpellData(data.caster(), target, data.power(), data.args());
+			target.playSound(applyOffsets(entity.getLocation(), data), sound.get(data), category.get(data),
+					volume.get(data), pitch.get(data));
 		}
 
 		return null;
@@ -62,7 +64,8 @@ public class SoundPersonalEffect extends SoundEffect {
 
 		Player target = getTarget(null, data);
 		if (target != null) {
-			if (useListenerAsTarget && data != null) data = new SpellData(data.caster(), target, data.power(), data.args());
+			if (useListenerAsTarget && data != null)
+				data = new SpellData(data.caster(), target, location, data.power(), data.args());
 			target.playSound(location, sound.get(data), category.get(data), volume.get(data), pitch.get(data));
 		}
 
@@ -72,13 +75,15 @@ public class SoundPersonalEffect extends SoundEffect {
 	private Player getTarget(Entity entity, SpellData data) {
 		return switch (target.get(data)) {
 			case CASTER -> {
-				if (data == null) yield null;
+				if (data == null)
+					yield null;
 
 				LivingEntity caster = data.caster();
 				yield caster instanceof Player player ? player : null;
 			}
 			case TARGET -> {
-				if (data == null) yield null;
+				if (data == null)
+					yield null;
 
 				LivingEntity target = data.target();
 				yield target instanceof Player player ? player : null;
@@ -95,14 +100,19 @@ public class SoundPersonalEffect extends SoundEffect {
 
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			if (useListenerAsTarget && data != null)
-				data = new SpellData(data.caster(), player, data.power(), data.args());
+				data = new SpellData(data.caster(), player, data.location(), data.power(), data.args());
 
-			if (resolveSoundPerPlayer) sound = this.sound.get(data);
-			if (resolvePitchPerPlayer) pitch = this.pitch.get(data);
-			if (resolveVolumePerPlayer) volume = this.volume.get(data);
-			if (resolveCategoryPerPlayer) category = this.category.get(data);
+			if (resolveSoundPerPlayer)
+				sound = this.sound.get(data);
+			if (resolvePitchPerPlayer)
+				pitch = this.pitch.get(data);
+			if (resolveVolumePerPlayer)
+				volume = this.volume.get(data);
+			if (resolveCategoryPerPlayer)
+				category = this.category.get(data);
 
-			if (sound == null || category == null) continue;
+			if (sound == null || category == null)
+				continue;
 			player.playSound(player.getLocation(), sound, category, pitch, volume);
 		}
 	}

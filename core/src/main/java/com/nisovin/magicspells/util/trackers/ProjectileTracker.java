@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-
 import org.bukkit.entity.*;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
@@ -105,7 +104,7 @@ public class ProjectileTracker implements Runnable, Tracker {
 		this.args = args;
 		this.startLocation = startLocation;
 
-		spellData = new SpellData(caster, power, args);
+		spellData = new SpellData(caster, startLocation, power, args);
 	}
 
 	public void start() {
@@ -129,7 +128,8 @@ public class ProjectileTracker implements Runnable, Tracker {
 		projectile = startLocation.getWorld().spawn(startLocation, projectileManager.getProjectileClass());
 		currentVelocity = startLocation.getDirection();
 		currentVelocity.multiply(velocity * power);
-		if (rotation != 0) Util.rotateVector(currentVelocity, rotation);
+		if (rotation != 0)
+			Util.rotateVector(currentVelocity, rotation);
 		if (horizSpread > 0 || vertSpread > 0) {
 			float rx = -1 + rand.nextFloat() * 2;
 			float ry = -1 + rand.nextFloat() * 2;
@@ -145,14 +145,17 @@ public class ProjectileTracker implements Runnable, Tracker {
 			projectile.customName(projectileName);
 			projectile.setCustomNameVisible(true);
 		}
-		if (projectile instanceof WitherSkull witherSkull) witherSkull.setCharged(charged);
-		if (projectile instanceof Explosive explosive) explosive.setIsIncendiary(incendiary);
+		if (projectile instanceof WitherSkull witherSkull)
+			witherSkull.setCharged(charged);
+		if (projectile instanceof Explosive explosive)
+			explosive.setIsIncendiary(incendiary);
 
 		if (spell != null) {
 			spell.playEffects(EffectPosition.CASTER, startLocation, spellData);
 			effectSet = spell.playEffectsProjectile(EffectPosition.PROJECTILE, currentLocation, spellData);
 			entityMap = spell.playEntityEffectsProjectile(EffectPosition.PROJECTILE, currentLocation, spellData);
-			spell.playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, startLocation, projectile.getLocation(), caster, projectile, spellData);
+			spell.playTrackingLinePatterns(EffectPosition.DYNAMIC_CASTER_PROJECTILE_LINE, startLocation,
+					projectile.getLocation(), caster, projectile, spellData);
 		}
 		ProjectileSpell.getProjectileTrackers().add(this);
 	}
@@ -181,14 +184,17 @@ public class ProjectileTracker implements Runnable, Tracker {
 			args = spellData.args();
 
 			if (!result.check()) {
-				if (modifierSpell != null) modifierSpell.subcast(caster, currentLocation, power, args);
-				if (stopOnModifierFail) stop();
+				if (modifierSpell != null)
+					modifierSpell.subcast(caster, currentLocation, power, args);
+				if (stopOnModifierFail)
+					stop();
 				return;
 			}
 		}
 
 		if (maxDuration > 0 && startTime + maxDuration < System.currentTimeMillis()) {
-			if (durationSpell != null) durationSpell.subcast(caster, currentLocation, power, args);
+			if (durationSpell != null)
+				durationSpell.subcast(caster, currentLocation, power, args);
 			stop();
 			return;
 		}
@@ -200,30 +206,37 @@ public class ProjectileTracker implements Runnable, Tracker {
 		if (callEvents) {
 			TrackerMoveEvent trackerMoveEvent = new TrackerMoveEvent(this, previousLocation, currentLocation);
 			EventUtil.call(trackerMoveEvent);
-			if (stopped) return;
+			if (stopped)
+				return;
 		}
 
-		if (counter % tickSpellInterval == 0 && tickSpell != null) tickSpell.subcast(caster, currentLocation, power, args);
+		if (counter % tickSpellInterval == 0 && tickSpell != null)
+			tickSpell.subcast(caster, currentLocation, power, args);
 
 		if (spell != null) {
-			if (specialEffectInterval > 0 && counter % specialEffectInterval == 0) spell.playEffects(EffectPosition.SPECIAL, currentLocation, spellData);
-			if (intermediateEffects > 0) playIntermediateEffects(previousLocation, currentVelocity);
+			if (specialEffectInterval > 0 && counter % specialEffectInterval == 0)
+				spell.playEffects(EffectPosition.SPECIAL, currentLocation, spellData);
+			if (intermediateEffects > 0)
+				playIntermediateEffects(previousLocation, currentVelocity);
 		}
 
 		if (effectSet != null) {
 			Effect effect;
 			Location effectLoc;
 			for (EffectlibSpellEffect spellEffect : effectSet) {
-				if (spellEffect == null) continue;
+				if (spellEffect == null)
+					continue;
 				effect = spellEffect.getEffect();
-				if (effect == null) continue;
+				if (effect == null)
+					continue;
 
 				effectLoc = spellEffect.getSpellEffect().applyOffsets(currentLocation.clone(), spellData);
 				effect.setLocation(effectLoc);
 
 				if (effect instanceof ModifiedEffect mod) {
 					Effect modifiedEffect = mod.getInnerEffect();
-					if (modifiedEffect != null) modifiedEffect.setLocation(effectLoc);
+					if (modifiedEffect != null)
+						modifiedEffect.setLocation(effectLoc);
 				}
 			}
 		}
@@ -246,12 +259,14 @@ public class ProjectileTracker implements Runnable, Tracker {
 
 		counter++;
 
-		if (intermediateHitboxes > 0) checkIntermediateHitboxes(previousLocation, currentVelocity);
+		if (intermediateHitboxes > 0)
+			checkIntermediateHitboxes(previousLocation, currentVelocity);
 		checkHitbox(currentLocation);
 	}
 
 	public void playIntermediateEffects(Location old, Vector movement) {
-		if (old == null) return;
+		if (old == null)
+			return;
 		int divideFactor = intermediateEffects + 1;
 		Vector v = movement.clone();
 
@@ -261,12 +276,14 @@ public class ProjectileTracker implements Runnable, Tracker {
 
 		for (int i = 0; i < intermediateEffects; i++) {
 			old = old.add(v).setDirection(v);
-			if (specialEffectInterval > 0 && counter % specialEffectInterval == 0) spell.playEffects(EffectPosition.SPECIAL, old, spellData);
+			if (specialEffectInterval > 0 && counter % specialEffectInterval == 0)
+				spell.playEffects(EffectPosition.SPECIAL, old, spellData);
 		}
 	}
 
 	public void checkIntermediateHitboxes(Location old, Vector movement) {
-		if (old == null) return;
+		if (old == null)
+			return;
 		int divideFactor = intermediateHitboxes + 1;
 		Vector v = movement.clone();
 
@@ -281,16 +298,23 @@ public class ProjectileTracker implements Runnable, Tracker {
 	}
 
 	public void checkHitbox(Location location) {
-		if (location == null) return;
-		if (caster == null) return;
-		for (LivingEntity entity : projectile.getLocation().getNearbyLivingEntities(hitRadius, verticalHitRadius, hitRadius)) {
-			if (!targetList.canTarget(caster, entity)) continue;
+		if (location == null)
+			return;
+		if (caster == null)
+			return;
+		for (LivingEntity entity : projectile.getLocation().getNearbyLivingEntities(hitRadius, verticalHitRadius,
+				hitRadius)) {
+			if (!targetList.canTarget(caster, entity))
+				continue;
 
 			SpellTargetEvent event = new SpellTargetEvent(spell, caster, entity, power, args);
-			if (!event.callEvent()) continue;
+			if (!event.callEvent())
+				continue;
 
-			if (hitSpell != null) hitSpell.subcast(caster, entity, event.getPower(), args);
-			if (entityLocationSpell != null) entityLocationSpell.subcast(caster, currentLocation, event.getPower(), args);
+			if (hitSpell != null)
+				hitSpell.subcast(caster, entity, event.getPower(), args);
+			if (entityLocationSpell != null)
+				entityLocationSpell.subcast(caster, currentLocation, event.getPower(), args);
 
 			stop();
 			return;
@@ -305,13 +329,16 @@ public class ProjectileTracker implements Runnable, Tracker {
 	public void stop(boolean removeTracker) {
 		if (spell != null) {
 			spell.playEffects(EffectPosition.DELAYED, currentLocation, spellData);
-			if (removeTracker) ProjectileSpell.getProjectileTrackers().remove(this);
+			if (removeTracker)
+				ProjectileSpell.getProjectileTrackers().remove(this);
 		}
 		MagicSpells.cancelTask(taskId);
 		if (effectSet != null) {
 			for (EffectlibSpellEffect spellEffect : effectSet) {
-				if (spellEffect == null) continue;
-				if (spellEffect.getEffect() == null) continue;
+				if (spellEffect == null)
+					continue;
+				if (spellEffect.getEffect() == null)
+					continue;
 				spellEffect.getEffect().cancel();
 			}
 			effectSet.clear();
@@ -324,7 +351,8 @@ public class ProjectileTracker implements Runnable, Tracker {
 		}
 		caster = null;
 		currentLocation = null;
-		if (projectile != null) projectile.remove();
+		if (projectile != null)
+			projectile.remove();
 		projectile = null;
 		stopped = true;
 	}

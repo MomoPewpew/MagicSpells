@@ -59,7 +59,8 @@ public class LeapSpell extends InstantSpell {
 
 		landSpell = new Subspell(landSpellName);
 		if (!landSpell.process()) {
-			if (!landSpellName.isEmpty()) MagicSpells.error("LeapSpell '" + internalName + "' has an invalid land-spell defined!");
+			if (!landSpellName.isEmpty())
+				MagicSpells.error("LeapSpell '" + internalName + "' has an invalid land-spell defined!");
 			landSpell = null;
 		}
 	}
@@ -74,21 +75,27 @@ public class LeapSpell extends InstantSpell {
 			Vector v = caster.getLocation().getDirection();
 
 			float forwardVelocity = this.forwardVelocity.get(caster, null, power, args) / 10;
-			if (powerAffectsVelocity) forwardVelocity *= power;
+			if (powerAffectsVelocity)
+				forwardVelocity *= power;
 
 			float upwardVelocity = this.upwardVelocity.get(caster, null, power, args) / 10;
-			if (powerAffectsVelocity) upwardVelocity *= power;
+			if (powerAffectsVelocity)
+				upwardVelocity *= power;
 
 			float rotation = this.rotation.get(caster, null, power, args);
 
 			v.setY(0).normalize().multiply(forwardVelocity).setY(upwardVelocity);
-			if (rotation != 0) Util.rotateVector(v, rotation);
+			if (rotation != 0)
+				Util.rotateVector(v, rotation);
 			v = Util.makeFinite(v);
 
-			if (clientOnly && caster instanceof Player) MagicSpells.getVolatileCodeHandler().setClientVelocity((Player) caster, v);
+			if (clientOnly && caster instanceof Player)
+				MagicSpells.getVolatileCodeHandler().setClientVelocity((Player) caster, v);
 			else {
-				if (addVelocityInstead) caster.setVelocity(caster.getVelocity().add(v));
-				else caster.setVelocity(v);
+				if (addVelocityInstead)
+					caster.setVelocity(caster.getVelocity().add(v));
+				else
+					caster.setVelocity(v);
 			}
 
 			jumping.add(caster.getUniqueId());
@@ -99,12 +106,17 @@ public class LeapSpell extends InstantSpell {
 
 	@EventHandler
 	public void onEntityDamage(EntityDamageEvent event) {
-		if (event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
+		if (event.getCause() != EntityDamageEvent.DamageCause.FALL)
+			return;
 		LivingEntity livingEntity = (LivingEntity) event.getEntity();
-		if (!jumping.remove(livingEntity.getUniqueId())) return;
-		if (landSpell != null) landSpell.subcast(livingEntity, 1f, null);
-		playSpellEffects(EffectPosition.TARGET, livingEntity.getLocation(), new SpellData(livingEntity));
-		if (cancelDamage) event.setCancelled(true);
+		if (!jumping.remove(livingEntity.getUniqueId()))
+			return;
+		if (landSpell != null)
+			landSpell.subcast(livingEntity, 1f, null);
+		playSpellEffects(EffectPosition.TARGET, livingEntity.getLocation(),
+				new SpellData(livingEntity, livingEntity.getLocation()));
+		if (cancelDamage)
+			event.setCancelled(true);
 	}
 
 	public Set<UUID> getJumping() {

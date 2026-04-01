@@ -42,10 +42,12 @@ public class ShadowstepSpell extends TargetedSpell implements TargetedEntitySpel
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<LivingEntity> target = getTargetedEntity(caster, power, args);
-			if (target.noTarget()) return noTarget(caster, args, target);
+			if (target.noTarget())
+				return noTarget(caster, args, target);
 
 			boolean done = shadowstep(caster, target.target(), target.power(), args);
-			if (!done) return noTarget(caster, strNoLandingSpot, args);
+			if (!done)
+				return noTarget(caster, strNoLandingSpot, args);
 
 			sendMessages(caster, target.target(), args);
 			return PostCastAction.NO_MESSAGES;
@@ -56,7 +58,8 @@ public class ShadowstepSpell extends TargetedSpell implements TargetedEntitySpel
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		return shadowstep(caster, target, power, args);
 	}
 
@@ -88,9 +91,10 @@ public class ShadowstepSpell extends TargetedSpell implements TargetedEntitySpel
 		targetLoc.setYaw(targetLoc.getYaw() + yaw.get(caster, target, power, args));
 
 		Block b = targetLoc.getBlock();
-		if (!BlockUtils.isPathable(b.getType()) || !BlockUtils.isPathable(b.getRelative(BlockFace.UP))) return false;
+		if (!BlockUtils.isPathable(b.getType()) || !BlockUtils.isPathable(b.getRelative(BlockFace.UP)))
+			return false;
 
-		playSpellEffects(caster.getLocation(), targetLoc, new SpellData(caster, target, power, args));
+		playSpellEffects(caster.getLocation(), targetLoc, new SpellData(caster, target, targetLoc, power, args));
 		caster.teleportAsync(targetLoc);
 
 		return true;

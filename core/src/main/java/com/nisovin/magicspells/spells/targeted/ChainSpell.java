@@ -55,7 +55,8 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			TargetInfo<LivingEntity> info = getTargetedEntity(caster, power, args);
-			if (info.noTarget()) return noTarget(caster, args, info);
+			if (info.noTarget())
+				return noTarget(caster, args, info);
 			LivingEntity target = info.target();
 
 			chain(caster, caster.getLocation(), target, info.power(), args);
@@ -69,56 +70,65 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		chain(caster, caster.getLocation(), target, power, args);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		chain(caster, caster.getLocation(), target, power, null);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		chain(null, null, target, power, args);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntity(LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		chain(null, null, target, power, null);
 		return true;
 	}
 
 	@Override
-	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
+			String[] args) {
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		chain(caster, from, target, power, args);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(caster, target)) return false;
+		if (!validTargetList.canTarget(caster, target))
+			return false;
 		chain(caster, from, target, power, null);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power, String[] args) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		chain(null, from, target, power, args);
 		return true;
 	}
 
 	@Override
 	public boolean castAtEntityFromLocation(Location from, LivingEntity target, float power) {
-		if (!validTargetList.canTarget(target)) return false;
+		if (!validTargetList.canTarget(target))
+			return false;
 		chain(null, from, target, power, null);
 		return true;
 	}
@@ -139,15 +149,19 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		while (targets.size() < bounces && attempts++ < bounces << 1) {
 			List<Entity> entities = current.getNearbyEntities(bounceRange, bounceRange, bounceRange);
 			for (Entity entity : entities) {
-				if (!(entity instanceof LivingEntity livingEntity)) continue;
-				if (targets.contains(livingEntity)) continue;
+				if (!(entity instanceof LivingEntity livingEntity))
+					continue;
+				if (targets.contains(livingEntity))
+					continue;
 
-				if (!validTargetList.canTarget(caster, livingEntity)) continue;
+				if (!validTargetList.canTarget(caster, livingEntity))
+					continue;
 
 				float subPower = power;
 				if (caster != null) {
 					SpellTargetEvent event = new SpellTargetEvent(this, caster, livingEntity, subPower, args);
-					if (!event.callEvent()) continue;
+					if (!event.callEvent())
+						continue;
 
 					livingEntity = event.getTarget();
 					subPower = event.getPower();
@@ -164,28 +178,37 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		SpellData data = new SpellData(caster, target, power, args);
 
 		// Cast spell at targets
-		if (caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
-		else if (start != null) playSpellEffects(EffectPosition.CASTER, start, data);
+		if (caster != null)
+			playSpellEffects(EffectPosition.CASTER, caster, data);
+		else if (start != null)
+			playSpellEffects(EffectPosition.CASTER, start, data);
 
 		if (interval <= 0) {
 			for (int i = 0; i < targets.size(); i++) {
 				Location from;
-				if (i == 0) from = start;
-				else from = targets.get(i - 1).getLocation();
+				if (i == 0)
+					from = start;
+				else
+					from = targets.get(i - 1).getLocation();
 
 				castSpellAt(caster, from, targets.get(i), targetPowers.get(i), args);
 
-				data = new SpellData(caster, targets.get(i), targetPowers.get(i), args);
-				if (i > 0) playSpellEffectsTrail(targets.get(i - 1).getLocation(), targets.get(i).getLocation(), data);
-				else if (caster != null) playSpellEffectsTrail(caster.getLocation(), targets.get(i).getLocation(), data);
+				data = new SpellData(caster, targets.get(i), from, targetPowers.get(i), args);
+				if (i > 0)
+					playSpellEffectsTrail(targets.get(i - 1).getLocation(), targets.get(i).getLocation(), data);
+				else if (caster != null)
+					playSpellEffectsTrail(caster.getLocation(), targets.get(i).getLocation(), data);
 				playSpellEffects(EffectPosition.TARGET, targets.get(i), data);
 			}
-		} else new ChainBouncer(caster, start, targets, targetPowers, interval, args);
+		} else
+			new ChainBouncer(caster, start, targets, targetPowers, interval, args);
 	}
 
 	private void castSpellAt(LivingEntity caster, Location from, LivingEntity target, float power, String[] args) {
-		if (from != null) spellToCast.subcast(caster, from, target, power, args);
-		else spellToCast.subcast(caster, target, power, args);
+		if (from != null)
+			spellToCast.subcast(caster, from, target, power, args);
+		else
+			spellToCast.subcast(caster, target, power, args);
 	}
 
 	private class ChainBouncer implements Runnable {
@@ -200,7 +223,8 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 		private int current = 0;
 
-		private ChainBouncer(LivingEntity caster, Location start, List<LivingEntity> targets, List<Float> targetPowers, int interval, String[] args) {
+		private ChainBouncer(LivingEntity caster, Location start, List<LivingEntity> targets, List<Float> targetPowers,
+				int interval, String[] args) {
 			this.caster = caster;
 			this.start = start;
 			this.args = args;
@@ -214,21 +238,26 @@ public class ChainSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 		@Override
 		public void run() {
 			Location from;
-			if (current == 0) from = start;
-			else from = targets.get(current - 1).getLocation();
+			if (current == 0)
+				from = start;
+			else
+				from = targets.get(current - 1).getLocation();
 
-			SpellData data = new SpellData(caster, targets.get(current), targetPowers.get(current), args);
+			SpellData data = new SpellData(caster, targets.get(current), from, targetPowers.get(current), args);
 
 			castSpellAt(caster, from, targets.get(current), targetPowers.get(current), args);
 			if (current > 0) {
-				playSpellEffectsTrail(targets.get(current - 1).getLocation().add(0, 0.5, 0), targets.get(current).getLocation().add(0, 0.5, 0), data);
+				playSpellEffectsTrail(targets.get(current - 1).getLocation().add(0, 0.5, 0),
+						targets.get(current).getLocation().add(0, 0.5, 0), data);
 			} else if (current == 0 && caster != null) {
-				playSpellEffectsTrail(caster.getLocation().add(0, 0.5, 0), targets.get(current).getLocation().add(0, 0.5, 0), data);
+				playSpellEffectsTrail(caster.getLocation().add(0, 0.5, 0),
+						targets.get(current).getLocation().add(0, 0.5, 0), data);
 			}
 
 			playSpellEffects(EffectPosition.TARGET, targets.get(current), data);
 			current++;
-			if (current >= targets.size()) MagicSpells.cancelTask(taskId);
+			if (current >= targets.size())
+				MagicSpells.cancelTask(taskId);
 		}
 
 	}

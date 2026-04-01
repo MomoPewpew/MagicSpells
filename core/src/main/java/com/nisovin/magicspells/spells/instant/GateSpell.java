@@ -39,9 +39,12 @@ public class GateSpell extends InstantSpell {
 
 		if (state == SpellCastState.NORMAL) {
 			World effectiveWorld;
-			if (world.equals("CURRENT")) effectiveWorld = caster.getWorld();
-			else if (world.equals("DEFAULT")) effectiveWorld = Bukkit.getServer().getWorlds().get(0);
-			else effectiveWorld = Bukkit.getServer().getWorld(world);
+			if (world.equals("CURRENT"))
+				effectiveWorld = caster.getWorld();
+			else if (world.equals("DEFAULT"))
+				effectiveWorld = Bukkit.getServer().getWorlds().get(0);
+			else
+				effectiveWorld = Bukkit.getServer().getWorld(world);
 
 			if (effectiveWorld == null) {
 				MagicSpells.error("GateSpell '" + internalName + "' has a non existent world defined!");
@@ -54,12 +57,14 @@ public class GateSpell extends InstantSpell {
 			switch (coordinates.toUpperCase()) {
 				case "SPAWN" -> {
 					location = effectiveWorld.getSpawnLocation();
-					location = new Location(effectiveWorld, location.getX(), effectiveWorld.getHighestBlockYAt(location) + 1, location.getZ());
+					location = new Location(effectiveWorld, location.getX(),
+							effectiveWorld.getHighestBlockYAt(location) + 1, location.getZ());
 				}
 				case "EXACTSPAWN" -> location = effectiveWorld.getSpawnLocation();
 				case "CURRENT" -> {
 					Location l = caster.getLocation();
-					location = new Location(effectiveWorld, l.getBlockX(), l.getBlockY(), l.getBlockZ(), l.getYaw(), l.getPitch());
+					location = new Location(effectiveWorld, l.getBlockX(), l.getBlockY(), l.getBlockZ(), l.getYaw(),
+							l.getPitch());
 				}
 				default -> {
 					String[] c = coordinates.split(",");
@@ -76,7 +81,8 @@ public class GateSpell extends InstantSpell {
 							}
 
 							location = new Location(effectiveWorld, x, y, z, yaw, pitch);
-						} catch (NumberFormatException ignored) {}
+						} catch (NumberFormatException ignored) {
+						}
 					}
 
 					if (location == null) {
@@ -105,7 +111,7 @@ public class GateSpell extends InstantSpell {
 			}
 			caster.teleportAsync(location);
 
-			data = new SpellData(caster, power, args);
+			data = new SpellData(caster, to, power, args);
 			playSpellEffects(EffectPosition.CASTER, from, data);
 			playSpellEffects(EffectPosition.TARGET, to, data);
 		}

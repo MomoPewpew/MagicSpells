@@ -1697,7 +1697,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	protected void playSpellEffects(Location startLoc, Location endLoc, float power, String[] args) {
-		playSpellEffects(startLoc, endLoc, new SpellData(null, power, args));
+		playSpellEffects(startLoc, endLoc, new SpellData(null, endLoc, power, args));
 	}
 
 	protected void playSpellEffects(Location startLoc, Location endLoc, SpellData data) {

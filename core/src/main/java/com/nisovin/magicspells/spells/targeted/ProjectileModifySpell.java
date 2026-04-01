@@ -149,7 +149,8 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		groundVerticalHitRadius = getConfigDataInt("ground-vertical-hit-radius", groundHitRadius);
 
 		hugSurface = getConfigBoolean("hug-surface", false);
-		if (hugSurface) heightFromSurface = getConfigDataFloat("height-from-surface", 0.6F);
+		if (hugSurface)
+			heightFromSurface = getConfigDataFloat("height-from-surface", 0.6F);
 
 		controllable = getConfigBoolean("controllable", false);
 		hitGround = getConfigBoolean("hit-ground", true);
@@ -187,55 +188,71 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 
 		projectileSpell = new Subspell(projectileSpellName);
 		if (!projectileSpell.process()) {
-			if (!projectileSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell defined!");
+			if (!projectileSpellName.isEmpty())
+				MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell defined!");
 			projectileSpell = null;
 		}
 
 		airSpell = new Subspell(airSpellName);
 		if (!airSpell.process()) {
-			if (!airSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-air defined!");
+			if (!airSpellName.isEmpty())
+				MagicSpells
+						.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-air defined!");
 			airSpell = null;
 		}
 
 		selfSpell = new Subspell(selfSpellName);
 		if (!selfSpell.process()) {
-			if (!selfSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-self defined!");
+			if (!selfSpellName.isEmpty())
+				MagicSpells.error(
+						"ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-self defined!");
 			selfSpell = null;
 		}
 
 		tickSpell = new Subspell(tickSpellName);
 		if (!tickSpell.process()) {
-			if (!tickSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-tick defined!");
+			if (!tickSpellName.isEmpty())
+				MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-tick defined!");
 			tickSpell = null;
 		}
 
 		groundSpell = new Subspell(groundSpellName);
 		if (!groundSpell.process()) {
-			if (!groundSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
+			if (!groundSpellName.isEmpty())
+				MagicSpells.error(
+						"ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-ground defined!");
 			groundSpell = null;
 		}
 
 		entitySpell = new Subspell(entitySpellName);
 		if (!entitySpell.process()) {
-			if (!entitySpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-entity defined!");
+			if (!entitySpellName.isEmpty())
+				MagicSpells.error(
+						"ProjectileModifySpell '" + internalName + "' has an invalid spell-on-hit-entity defined!");
 			entitySpell = null;
 		}
 
 		durationSpell = new Subspell(durationSpellName);
 		if (!durationSpell.process()) {
-			if (!durationSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-duration-end defined!");
+			if (!durationSpellName.isEmpty())
+				MagicSpells.error(
+						"ProjectileModifySpell '" + internalName + "' has an invalid spell-on-duration-end defined!");
 			durationSpell = null;
 		}
 
 		modifierSpell = new Subspell(modifierSpellName);
 		if (!modifierSpell.process()) {
-			if (!modifierSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-modifier-fail defined!");
+			if (!modifierSpellName.isEmpty())
+				MagicSpells.error(
+						"ProjectileModifySpell '" + internalName + "' has an invalid spell-on-modifier-fail defined!");
 			modifierSpell = null;
 		}
 
 		entityLocationSpell = new Subspell(entityLocationSpellName);
 		if (!entityLocationSpell.process()) {
-			if (!entityLocationSpellName.isEmpty()) MagicSpells.error("ProjectileModifySpell '" + internalName + "' has an invalid spell-on-entity-location defined!");
+			if (!entityLocationSpellName.isEmpty())
+				MagicSpells.error("ProjectileModifySpell '" + internalName
+						+ "' has an invalid spell-on-entity-location defined!");
 			entityLocationSpell = null;
 		}
 	}
@@ -244,14 +261,18 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 	public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
 		if (state == SpellCastState.NORMAL) {
 			Location loc = null;
-			if (pointBlank) loc = caster.getLocation();
+			if (pointBlank)
+				loc = caster.getLocation();
 			else {
 				try {
 					Block block = getTargetedBlock(caster, power, args);
-					if (block != null && !BlockUtils.isAir(block.getType())) loc = block.getLocation();
-				} catch (IllegalStateException ignored) {}
+					if (block != null && !BlockUtils.isAir(block.getType()))
+						loc = block.getLocation();
+				} catch (IllegalStateException ignored) {
+				}
 			}
-			if (loc == null) return noTarget(caster, args);
+			if (loc == null)
+				return noTarget(caster, args);
 
 			modify(caster, loc, power, args);
 		}
@@ -281,7 +302,7 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 	private boolean modify(LivingEntity caster, Location location, float power, String[] args) {
 		int count = 0;
 
-		SpellData data = new SpellData(caster, power, args);
+		SpellData data = new SpellData(caster, location, power, args);
 
 		Vector facing = caster != null ? caster.getLocation().getDirection() : location.getDirection();
 		Vector vLoc = caster != null ? caster.getLocation().toVector() : location.toVector();
@@ -290,7 +311,8 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		double hRadiusSquared = box.getHorizontalRadius() * box.getHorizontalRadius();
 		double vRadiusSquared = box.getVerticalRadius() * box.getVerticalRadius();
 
-		Iterator<ParticleProjectileTracker> iterator = new HashSet<>(ParticleProjectileSpell.getProjectileTrackers()).iterator();
+		Iterator<ParticleProjectileTracker> iterator = new HashSet<>(ParticleProjectileSpell.getProjectileTrackers())
+				.iterator();
 
 		int maxTargets = this.maxTargets.get(data);
 		int cone = this.cone.get(data);
@@ -301,44 +323,60 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 		Location currentLoc;
 		while (iterator.hasNext()) {
 			ParticleProjectileTracker tracker = iterator.next();
-			if (tracker == null || tracker.isStopped()) continue;
+			if (tracker == null || tracker.isStopped())
+				continue;
 			currentLoc = tracker.getCurrentLocation();
-			if (currentLoc == null) continue;
-			if (!currentLoc.getWorld().equals(location.getWorld())) continue;
-			if (!box.contains(currentLoc)) continue;
-			if (tracker.getSpell() != null && !filter.check(tracker.getSpell())) continue;
+			if (currentLoc == null)
+				continue;
+			if (!currentLoc.getWorld().equals(location.getWorld()))
+				continue;
+			if (!box.contains(currentLoc))
+				continue;
+			if (tracker.getSpell() != null && !filter.check(tracker.getSpell()))
+				continue;
 
-			if (!affectOwnedProjectiles.get(data) && tracker.getCaster() != null && tracker.getCaster().equals(caster)) continue;
-			if (!affectEnemyProjectiles.get(data) && (tracker.getCaster() == null || !tracker.getCaster().equals(caster))) continue;
+			if (!affectOwnedProjectiles.get(data) && tracker.getCaster() != null && tracker.getCaster().equals(caster))
+				continue;
+			if (!affectEnemyProjectiles.get(data)
+					&& (tracker.getCaster() == null || !tracker.getCaster().equals(caster)))
+				continue;
 
 			if (circleShape.get(data)) {
-				double hDistance = NumberConversions.square(currentLoc.getX() - location.getX()) + NumberConversions.square(currentLoc.getZ() - location.getZ());
-				if (hDistance > hRadiusSquared) continue;
+				double hDistance = NumberConversions.square(currentLoc.getX() - location.getX())
+						+ NumberConversions.square(currentLoc.getZ() - location.getZ());
+				if (hDistance > hRadiusSquared)
+					continue;
 				double vDistance = NumberConversions.square(currentLoc.getY() - location.getY());
-				if (vDistance > vRadiusSquared) continue;
+				if (vDistance > vRadiusSquared)
+					continue;
 			}
 
 			if (pointBlank && cone > 0) {
 				Vector dir = currentLoc.toVector().subtract(vLoc);
-				if (AccurateMath.abs(dir.angle(facing)) > cone) continue;
+				if (AccurateMath.abs(dir.angle(facing)) > cone)
+					continue;
 			}
 
-			if (projectileSpell != null) projectileSpell.subcast(caster, currentLoc, power, args);
+			if (projectileSpell != null)
+				projectileSpell.subcast(caster, currentLoc, power, args);
 
 			if (stop.get(data)) {
 				playSpellEffects(EffectPosition.TARGET, currentLoc, data);
 				playSpellEffectsTrail(location, currentLoc, data);
-				if (caster != null) playSpellEffectsTrail(caster.getLocation(), currentLoc, data);
+				if (caster != null)
+					playSpellEffectsTrail(caster.getLocation(), currentLoc, data);
 
 				count++;
 
 				tracker.stop(false);
 				iterator.remove();
-				if (maxTargets > 0 && count >= maxTargets) break;
+				if (maxTargets > 0 && count >= maxTargets)
+					break;
 				continue;
 			}
 
-			if (claimProjectiles) tracker.setCaster(caster);
+			if (claimProjectiles)
+				tracker.setCaster(caster);
 
 			tracker.setAcceleration(acceleration.get(data));
 			tracker.setAccelerationDelay(accelerationDelay.get(data));
@@ -369,27 +407,38 @@ public class ProjectileModifySpell extends TargetedSpell implements TargetedLoca
 			tracker.setStopOnModifierFail(stopOnModifierFail);
 			tracker.setProjectileModifiers(projModifiers);
 			tracker.setTickSpellLimit(tickSpellLimit.get(data));
-			if (airSpell != null) tracker.setAirSpell(airSpell);
-			if (tickSpell != null) tracker.setTickSpell(tickSpell);
-			if (selfSpell != null) tracker.setCasterSpell(selfSpell);
-			if (groundSpell != null) tracker.setGroundSpell(groundSpell);
-			if (entitySpell != null) tracker.setEntitySpell(entitySpell);
-			if (durationSpell != null) tracker.setDurationSpell(durationSpell);
-			if (modifierSpell != null) tracker.setModifierSpell(modifierSpell);
-			if (entityLocationSpell != null) tracker.setEntityLocationSpell(entityLocationSpell);
+			if (airSpell != null)
+				tracker.setAirSpell(airSpell);
+			if (tickSpell != null)
+				tracker.setTickSpell(tickSpell);
+			if (selfSpell != null)
+				tracker.setCasterSpell(selfSpell);
+			if (groundSpell != null)
+				tracker.setGroundSpell(groundSpell);
+			if (entitySpell != null)
+				tracker.setEntitySpell(entitySpell);
+			if (durationSpell != null)
+				tracker.setDurationSpell(durationSpell);
+			if (modifierSpell != null)
+				tracker.setModifierSpell(modifierSpell);
+			if (entityLocationSpell != null)
+				tracker.setEntityLocationSpell(entityLocationSpell);
 
 			tracker.getCurrentVelocity().multiply(velocity.get(data));
 
 			playSpellEffects(EffectPosition.TARGET, currentLoc, data);
 			playSpellEffectsTrail(location, currentLoc, data);
-			if (caster != null) playSpellEffectsTrail(caster.getLocation(), currentLoc, data);
+			if (caster != null)
+				playSpellEffectsTrail(caster.getLocation(), currentLoc, data);
 
 			count++;
 
-			if (maxTargets > 0 && count >= maxTargets) break;
+			if (maxTargets > 0 && count >= maxTargets)
+				break;
 		}
 
-		if (caster != null) playSpellEffects(EffectPosition.CASTER, caster, data);
+		if (caster != null)
+			playSpellEffects(EffectPosition.CASTER, caster, data);
 		playSpellEffects(EffectPosition.SPECIAL, location, data);
 
 		return count > 0;

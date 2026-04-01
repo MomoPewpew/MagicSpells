@@ -260,16 +260,17 @@ public class FunctionData<T extends Number> implements ConfigData<T> {
 	@Override
 	public T get(LivingEntity caster, LivingEntity target, Location location, float power, String[] args) {
 		for (Map.Entry<String, ConfigData<Double>> entry : variables.entrySet())
-			expression.setVariable(entry.getKey(), entry.getValue().get(caster, target, null, power, args));
+			expression.setVariable(entry.getKey(), entry.getValue().get(caster, target, location, power, args));
 
 		expression.setVariable("power", power);
 
 		try {
 			return converter.apply(expression.evaluate());
 		} catch (Exception e) {
-			return dataDef != null ? dataDef.get(caster, target, null, power, args) : def;
+			return dataDef != null ? dataDef.get(caster, target, location, power, args) : def;
 		}
 	}
+
 
 	@Override
 	public boolean isConstant() {

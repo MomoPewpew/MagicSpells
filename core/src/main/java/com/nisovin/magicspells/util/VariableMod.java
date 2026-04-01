@@ -7,6 +7,7 @@ import java.util.function.BinaryOperator;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.entity.Player;
+import org.bukkit.Location;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -100,45 +101,51 @@ public class VariableMod {
 	}
 
 	public double getValue(Player caster, Player target) {
-		return getValue(caster, target, 1f, null);
+		return getValue(caster, target, null, 1f, null);
 	}
 
 	public double getValue(Player caster, Player target, float power, String[] args) {
+		return getValue(caster, target, null, power, args);
+	}
+
+	public double getValue(Player caster, Player target, Location location, float power, String[] args) {
 		int negationFactor = negate ? -1 : 1;
 		if (modifyingVariableName != null) {
 			Player variableHolder = variableOwner == VariableOwner.CASTER ? caster : target;
 			return MagicSpells.getVariableManager().getValue(modifyingVariableName, variableHolder) * negationFactor;
 		}
 
-		if (functionModifier != null) return functionModifier.get(caster, target, power, args);
+		if (functionModifier != null) return functionModifier.get(caster, target, location, power, args);
 
 		return constantModifier * negationFactor;
 	}
 
 	public double getValue(Player caster, Player target, double baseValue) {
-		return getValue(caster, target, baseValue, 1f, null);
+		return getValue(caster, target, null, baseValue, 1f, null);
 	}
 
 	public double getValue(Player caster, Player target, double baseValue, float power, String[] args) {
-		double secondValue = getValue(caster, target, power, args);
+		return getValue(caster, target, null, baseValue, power, args);
+	}
+
+	public double getValue(Player caster, Player target, Location location, double baseValue, float power, String[] args) {
+		double secondValue = getValue(caster, target, location, power, args);
 		return getOperation().applyTo(baseValue, secondValue);
 	}
 
 	public String getStringValue(Player caster, Player target) {
-		if (stringModifier != null) {
-            return stringModifier.get(caster, target, 1f, null);
-        }
-
-		return MagicSpells.doReplacements(value, caster, target);
+		return getStringValue(caster, target, null, null);
 	}
 
-	public String getStringValue(Player caster, Player target, String[] args) {
+	public String getStringValue(Player caster, Player target, Location location, String[] args) {
 		if (stringModifier != null) {
-            return stringModifier.get(caster, target, 1f, args);
+            return stringModifier.get(caster, target, location, 1f, args);
         }
 
-		return MagicSpells.doReplacements(value, caster, target, args);
+		return MagicSpells.doReplacements(value, caster, target, location, args);
 	}
+
+
 
 	public String getValue() {
 		return value;

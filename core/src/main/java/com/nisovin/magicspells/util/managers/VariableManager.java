@@ -894,7 +894,7 @@ public class VariableManager {
 				|| variable instanceof GlobalStringVariable) {
 			switch (op) {
 				case SET -> {
-					String value = mod.getStringValue(caster, target, args);
+					String value = mod.getStringValue(caster, target, null, args);
 					if (value.equals(variable.getDefaultStringValue()))
 						reset(variable, playerToMod);
 					else
@@ -903,7 +903,7 @@ public class VariableManager {
 				}
 				case ADD -> {
 					String value = variable.getStringValue(playerToMod != null ? playerToMod.getName() : "")
-							+ mod.getStringValue(caster, target, args);
+							+ mod.getStringValue(caster, target, null, args);
 					if (value.equals(variable.getDefaultStringValue()))
 						reset(variable, playerToMod);
 					else
@@ -941,7 +941,7 @@ public class VariableManager {
 		if (variable instanceof LocationStringVariable lsv) {
 			switch (op) {
 				case SET -> {
-					String value = mod.getStringValue(caster, target, args);
+					String value = mod.getStringValue(caster, target, locationToMod, args);
 					if (value.equals(variable.getDefaultStringValue()))
 						lsv.reset(locationToMod);
 					else
@@ -950,7 +950,7 @@ public class VariableManager {
 					return value;
 				}
 				case ADD -> {
-					String value = lsv.getStringValue(locationToMod) + mod.getStringValue(caster, target, args);
+					String value = lsv.getStringValue(locationToMod) + mod.getStringValue(caster, target, locationToMod, args);
 					if (value.equals(variable.getDefaultStringValue()))
 						lsv.reset(locationToMod);
 					else
@@ -959,7 +959,7 @@ public class VariableManager {
 					return value;
 				}
 				case MULTIPLY -> {
-					int count = (int) mod.getValue(caster, target, power, args);
+					int count = (int) mod.getValue(caster, target, locationToMod, power, args);
 					String value = lsv.getStringValue(locationToMod).repeat(count);
 					if (value.equals(variable.getDefaultStringValue()))
 						lsv.reset(locationToMod);
@@ -970,7 +970,7 @@ public class VariableManager {
 				}
 			}
 		} else if (variable instanceof LocationVariable lv) {
-			double value = op.applyTo(lv.getValue(locationToMod), mod.getValue(caster, target, power, args));
+			double value = op.applyTo(lv.getValue(locationToMod), mod.getValue(caster, target, locationToMod, power, args));
 			if (value == variable.getDefaultValue())
 				lv.reset(locationToMod);
 			else

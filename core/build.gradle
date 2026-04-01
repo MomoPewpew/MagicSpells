@@ -95,3 +95,8 @@ publishing {
         }
     }
 }
+/*
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:none"
+}
+*/

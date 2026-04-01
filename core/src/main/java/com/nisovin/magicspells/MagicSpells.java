@@ -1584,7 +1584,7 @@ public class MagicSpells extends JavaPlugin {
 		if (!(recipient instanceof Player) || message == null || message.isEmpty())
 			return;
 
-		message = doReplacements(message, caster, target, args, replacements);
+		message = doReplacements(message, caster, target, location, args, replacements);
 
 		recipient.sendMessage(Util.getMiniMessage(getTextColor() + message));
 	}

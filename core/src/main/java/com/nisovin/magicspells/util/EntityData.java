@@ -261,10 +261,10 @@ public class EntityData {
 					transformation = (caster, target, location, power, args) -> transform;
 				} else {
 					transformation = (caster, target, location, power, args) -> {
-						Quaternionf lr = leftRotation.get(caster, target, power, args);
-						Quaternionf rr = rightRotation.get(caster, target, power, args);
-						Vector3f t = translation.get(caster, target, power, args);
-						Vector3f s = scale.get(caster, target, power, args);
+						Quaternionf lr = leftRotation.get(caster, target, location, power, args);
+						Quaternionf rr = rightRotation.get(caster, target, location, power, args);
+						Vector3f t = translation.get(caster, target, location, power, args);
+						Vector3f s = scale.get(caster, target, location, power, args);
 
 						return new Transformation(t, lr, s, rr);
 					};
@@ -296,11 +296,11 @@ public class EntityData {
 					}
 				} else {
 					brightness = (caster, target, location, power, args) -> {
-						Integer bl = blockLight.get(caster, target, power, args);
+						Integer bl = blockLight.get(caster, target, location, power, args);
 						if (bl == null || bl < 0 || bl > 15)
 							return null;
 
-						Integer sl = skyLight.get(caster, target, power, args);
+						Integer sl = skyLight.get(caster, target, location, power, args);
 						if (sl == null || sl < 0 || sl > 15)
 							return null;
 

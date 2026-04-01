@@ -155,7 +155,7 @@ public class StringData implements ConfigData<String> {
 		StringBuilder builder = new StringBuilder();
 		for (int i = 0; i < fragments.size() - 1; i++) {
 			builder.append(fragments.get(i));
-			builder.append(values.get(i).get(caster, target, null, power, args));
+			builder.append(values.get(i).get(caster, target, location, power, args));
 		}
 		builder.append(fragments.get(fragments.size() - 1));
 

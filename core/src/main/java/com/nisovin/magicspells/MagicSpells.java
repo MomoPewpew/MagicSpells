@@ -28,6 +28,7 @@ import co.aikar.commands.PaperCommandManager;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Location;
 import org.bukkit.ChatColor;
 import org.bukkit.event.Event;
 import org.bukkit.entity.Player;
@@ -1557,11 +1558,29 @@ public class MagicSpells extends JavaPlugin {
 	 * @param recipient    the player to send the message to
 	 * @param caster       the caster of associated spell cast
 	 * @param target       the target of associated spell cast
+	 * @param location     the location of associated spell cast
 	 * @param args         the arguments of associated spell cast
 	 * @param replacements the replacements to be made, in pairs
 	 */
 	public static void sendMessageAndFormat(String message, LivingEntity recipient, LivingEntity caster,
 			LivingEntity target, String[] args, String... replacements) {
+		sendMessageAndFormat(message, recipient, caster, target, null, args, replacements);
+	}
+
+	/**
+	 * Sends a message to a player, first making the specified replacements.This
+	 * method also does color replacement and has multi-line functionality.
+	 *
+	 * @param message      the message to send
+	 * @param recipient    the player to send the message to
+	 * @param caster       the caster of associated spell cast
+	 * @param target       the target of associated spell cast
+	 * @param location     the location of associated spell cast
+	 * @param args         the arguments of associated spell cast
+	 * @param replacements the replacements to be made, in pairs
+	 */
+	public static void sendMessageAndFormat(String message, LivingEntity recipient, LivingEntity caster,
+			LivingEntity target, Location location, String[] args, String... replacements) {
 		if (!(recipient instanceof Player) || message == null || message.isEmpty())
 			return;
 
@@ -1691,29 +1710,34 @@ public class MagicSpells extends JavaPlugin {
 
 	public static String doReplacements(String message, SpellData data) {
 		if (data == null)
-			return doReplacements(message, null, null, null, (String[]) null);
-		return doReplacements(message, data.caster(), data.target(), data.args(), (String[]) null);
+			return doReplacements(message, null, null, null, null, (String[]) null);
+		return doReplacements(message, data.caster(), data.target(), data.location(), data.args(), (String[]) null);
 	}
 
 	public static String doReplacements(String message, LivingEntity caster) {
-		return doReplacements(message, caster, null, null, (String[]) null);
+		return doReplacements(message, caster, null, null, null, (String[]) null);
 	}
 
 	public static String doReplacements(String message, LivingEntity caster, LivingEntity target) {
-		return doReplacements(message, caster, target, null, (String[]) null);
+		return doReplacements(message, caster, target, null, null, (String[]) null);
 	}
 
 	public static String doReplacements(String message, LivingEntity caster, String[] args, String... replacements) {
-		return doReplacements(message, caster, null, args, replacements);
+		return doReplacements(message, caster, null, null, args, replacements);
 	}
 
 	public static String doReplacements(String message, LivingEntity caster, LivingEntity target, String[] args,
 			String... replacements) {
+		return doReplacements(message, caster, target, null, args, replacements);
+	}
+
+	public static String doReplacements(String message, LivingEntity caster, LivingEntity target, Location location,
+			String[] args, String... replacements) {
 		if (message == null || message.isEmpty())
 			return message;
 
 		message = doArgumentSubstitution(message, args);
-		message = doVariableReplacements(message, caster, target);
+		message = doVariableReplacements(message, caster, target, location);
 		message = doPlaceholderReplacements(message, caster, target);
 		message = formatMessage(message, replacements);
 
@@ -1744,10 +1768,16 @@ public class MagicSpells extends JavaPlugin {
 	}
 
 	private static final Pattern VARIABLE_PATTERN = Pattern.compile(
-			"%(var|castervar|targetvar|varasbar|playervar:(" + RegexUtil.USERNAME_REGEXP + ")):(\\w+)(?::(\\w+))?%",
+			"%(var|castervar|targetvar|varasbar|locationvar|casterlocationvar|targetlocationvar|playervar:("
+					+ RegexUtil.USERNAME_REGEXP + ")):(\\w+)(?::(\\w+))?%",
 			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
 	public static String doVariableReplacements(String message, LivingEntity caster, LivingEntity target) {
+		return doVariableReplacements(message, caster, target, null);
+	}
+
+	public static String doVariableReplacements(String message, LivingEntity caster, LivingEntity target,
+			Location location) {
 		if (message == null || message.isEmpty())
 			return message;
 
@@ -1822,6 +1852,44 @@ public class MagicSpells extends JavaPlugin {
 						max = 100;
 
 					yield TxtUtil.getProgressBar(variable.getValue(playerCaster), max);
+				}
+				case "locationvar" -> {
+					Location loc = location == null
+							? (target != null ? target.getLocation() : (caster != null ? caster.getLocation() : null))
+							: location;
+					if (loc == null)
+						yield null;
+
+					if (place != -1) {
+						yield TxtUtil.getStringNumber(getVariableManager().getValueAtLocation(matcher.group(3), loc),
+								place);
+					}
+
+					yield getVariableManager().getStringValueAtLocation(matcher.group(3), loc);
+				}
+				case "casterlocationvar" -> {
+					if (caster == null)
+						yield null;
+					Location loc = caster.getLocation();
+
+					if (place != -1) {
+						yield TxtUtil.getStringNumber(getVariableManager().getValueAtLocation(matcher.group(3), loc),
+								place);
+					}
+
+					yield getVariableManager().getStringValueAtLocation(matcher.group(3), loc);
+				}
+				case "targetlocationvar" -> {
+					Location loc = location == null ? (target != null ? target.getLocation() : null) : location;
+					if (loc == null)
+						yield null;
+
+					if (place != -1) {
+						yield TxtUtil.getStringNumber(getVariableManager().getValueAtLocation(matcher.group(3), loc),
+								place);
+					}
+
+					yield getVariableManager().getStringValueAtLocation(matcher.group(3), loc);
 				}
 				default -> {
 					String player = matcher.group(2);

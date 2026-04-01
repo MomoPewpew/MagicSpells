@@ -2122,6 +2122,23 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	}
 
 	/**
+	 * Sends a message to a player, first making the specified replacements.This
+	 * method also does color replacement and has multi-line functionality.
+	 *
+	 * @param message      the message to send
+	 * @param recipient    the player to send the message to
+	 * @param caster       the caster of the associated spell cast
+	 * @param target       the target of the associated spell cast
+	 * @param location     the location of the associated spell cast
+	 * @param args         the arguments of associated spell cast
+	 * @param replacements the replacements to be made, in pairs
+	 */
+	protected void sendMessage(String message, LivingEntity recipient, LivingEntity caster, LivingEntity target,
+			Location location, String[] args, String... replacements) {
+		MagicSpells.sendMessageAndFormat(message, recipient, caster, target, location, args, replacements);
+	}
+
+	/**
 	 * Sends a message to all players near the specified player, within the
 	 * configured broadcast range.
 	 *
@@ -2177,12 +2194,33 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	 * @param args         cast arguments
 	 * @param replacements replacements to be done on message
 	 */
-	protected void sendMessageNear(LivingEntity caster, LivingEntity target, String message, int range, String[] args,
+	protected void sendMessageNear(LivingEntity caster, LivingEntity target, String message, int range,
+			String[] args, String... replacements) {
+		sendMessageNear(caster, target, null, message, range, args, replacements);
+	}
+
+	/**
+	 * Sends a message to all players near the specified player, within the
+	 * specified broadcast range.
+	 *
+	 * @param caster       the caster that caused the message to be sent, and the
+	 *                     "center" of the broadcast range
+	 * @param target       the target, if applicable, which the message will not be
+	 *                     sent to
+	 * @param location     the location, if applicable, which the message will not
+	 *                     be
+	 * @param message      the message to send
+	 * @param range        the broadcast range
+	 * @param args         cast arguments
+	 * @param replacements replacements to be done on message
+	 */
+	protected void sendMessageNear(LivingEntity caster, LivingEntity target, Location location, String message,
+			int range, String[] args,
 			String... replacements) {
 		if (message == null || message.isEmpty() || Perm.SILENT.has(caster))
 			return;
 
-		message = MagicSpells.doReplacements(message, caster, target, args, replacements);
+		message = MagicSpells.doReplacements(message, caster, target, location, args, replacements);
 		Component msg = Util.getMiniMessage(MagicSpells.getTextColor() + message);
 
 		Collection<Player> players = caster.getLocation().getNearbyPlayers(range);

@@ -64,7 +64,7 @@ public class DummySpell extends TargetedSpell
 					return noTarget(caster, args);
 
 				playSpellEffects(EffectPosition.TARGET, loc, power, args);
-				sendMessages(caster, args);
+				sendMessages(caster, loc, args);
 
 				return PostCastAction.NO_MESSAGES;
 			}

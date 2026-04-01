@@ -78,6 +78,8 @@ public abstract class TargetedSpell extends InstantSpell {
 	}
 
 	protected String getTargetName(LivingEntity target) {
+		if (target == null)
+			return "none";
 		if (target instanceof Player)
 			return target.getName();
 		String name = MagicSpells.getEntityNames().get(target.getType());

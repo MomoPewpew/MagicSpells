@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.events;
 
+import org.bukkit.Location;
 import org.bukkit.event.Cancellable;
 import org.bukkit.entity.LivingEntity;
 
@@ -22,9 +23,14 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 	private float power;
 	private int castTime;
 	private String[] args;
+	private Location location;
 	private boolean cancelled = false;
 	
 	public SpellCastEvent(Spell spell, LivingEntity caster, SpellCastState state, float power, String[] args, float cooldown, SpellReagents reagents, int castTime) {
+		this(spell, caster, state, power, args, cooldown, reagents, castTime, null);
+	}
+
+	public SpellCastEvent(Spell spell, LivingEntity caster, SpellCastState state, float power, String[] args, float cooldown, SpellReagents reagents, int castTime, Location location) {
 		super(spell, caster);
 		this.state = state;
 		this.cooldown = cooldown;
@@ -32,10 +38,19 @@ public class SpellCastEvent extends SpellEvent implements Cancellable {
 		this.power = power;
 		this.castTime = castTime;
 		this.args = args;
+		this.location = location;
 		stateChanged = false;
 		reagentsChanged = false;
 	}
 	
+	public Location getLocation() {
+		return location;
+	}
+
+	public void setLocation(Location location) {
+		this.location = location;
+	}
+
 	/**
 	 * Gets the current spell cast state.
 	 * @return the spell cast state

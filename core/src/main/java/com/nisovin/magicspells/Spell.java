@@ -194,6 +194,28 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected float minCooldown = -1F;
 	protected float maxCooldown = -1F;
 
+	private static final ThreadLocal<Location> currentCastLocation = new ThreadLocal<>();
+
+	/**
+	 * Gets the location associated with the current spell cast on this thread.
+	 * This is primarily used to provide location context to spells that don't
+	 * receive it through their method signatures (e.g. castSpell).
+	 *
+	 * @return the current cast location, or null if none is set
+	 */
+	public static Location getCurrentCastLocation() {
+		return currentCastLocation.get();
+	}
+
+	/**
+	 * Sets the location associated with the current spell cast on this thread.
+	 *
+	 * @param location the location to set
+	 */
+	protected static void setCurrentCastLocation(Location location) {
+		currentCastLocation.set(location);
+	}
+
 	public Spell(MagicConfig config, String spellName) {
 		this.config = config;
 		this.internalName = spellName;
@@ -881,26 +903,35 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	// TODO can this safely be made varargs?
 	public final SpellCastResult cast(LivingEntity livingEntity, float power, String[] args) {
-		SpellCastEvent spellCast = preCast(livingEntity, power, args);
-		if (spellCast == null)
-			return new SpellCastResult(SpellCastState.CANT_CAST, PostCastAction.HANDLE_NORMALLY);
-		PostCastAction action;
-		int castTime = spellCast.getCastTime();
-		if (castTime <= 0 || spellCast.getSpellCastState() != SpellCastState.NORMAL)
-			action = handleCast(spellCast);
-		else if (!preCastTimeCheck(livingEntity, args))
-			action = PostCastAction.ALREADY_HANDLED;
-		else {
-			action = PostCastAction.DELAYED;
-			sendMessage(strCastStart, livingEntity, args);
-			playSpellEffects(EffectPosition.START_CAST, livingEntity, new SpellData(livingEntity, power, args));
-			if (MagicSpells.useExpBarAsCastTimeBar())
-				MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(),
-						new DelayedSpellCastWithBar(spellCast));
-			else
-				MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(), new DelayedSpellCast(spellCast));
+		return cast(livingEntity, null, power, args);
+	}
+
+	public final SpellCastResult cast(LivingEntity livingEntity, Location location, float power, String[] args) {
+		setCurrentCastLocation(location);
+		try {
+			SpellCastEvent spellCast = preCast(livingEntity, location, power, args);
+			if (spellCast == null)
+				return new SpellCastResult(SpellCastState.CANT_CAST, PostCastAction.HANDLE_NORMALLY);
+			PostCastAction action;
+			int castTime = spellCast.getCastTime();
+			if (castTime <= 0 || spellCast.getSpellCastState() != SpellCastState.NORMAL)
+				action = handleCast(spellCast);
+			else if (!preCastTimeCheck(livingEntity, args))
+				action = PostCastAction.ALREADY_HANDLED;
+			else {
+				action = PostCastAction.DELAYED;
+				sendMessage(strCastStart, livingEntity, livingEntity, null, location, args);
+				playSpellEffects(EffectPosition.START_CAST, livingEntity, new SpellData(livingEntity, null, location, power, args));
+				if (MagicSpells.useExpBarAsCastTimeBar())
+					MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(),
+							new DelayedSpellCastWithBar(spellCast));
+				else
+					MagicSpells.plugin.delayedSpellCasts.put(livingEntity.getUniqueId(), new DelayedSpellCast(spellCast));
+			}
+			return new SpellCastResult(spellCast.getSpellCastState(), action);
+		} finally {
+			setCurrentCastLocation(null);
 		}
-		return new SpellCastResult(spellCast.getSpellCastState(), action);
 	}
 
 	protected SpellCastState getCastState(LivingEntity livingEntity) {
@@ -930,6 +961,10 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	// DEBUG INFO: level 2, spell canceled
 	// DEBUG INFO: level 2, spell cast state changed
 	protected SpellCastEvent preCast(LivingEntity livingEntity, float power, String[] args) {
+		return preCast(livingEntity, null, power, args);
+	}
+
+	protected SpellCastEvent preCast(LivingEntity livingEntity, Location location, float power, String[] args) {
 		reagentsList = this.reagentsData.get(livingEntity, power, args);
 		if (reagentsList == null)
 			reagentsList = new ArrayList<>();
@@ -941,7 +976,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 		// Call events
 		SpellCastEvent event = new SpellCastEvent(this, livingEntity, state, power, args, cooldown, reagents.clone(),
-				castTime);
+				castTime, location);
 		EventUtil.call(event);
 		if (event.isCancelled()) {
 			debug(2, "    Spell cancelled");
@@ -1002,6 +1037,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		debug(3, "    Post-cast action: " + action);
 		LivingEntity caster = spellCast.getCaster();
 		SpellCastState state = spellCast.getSpellCastState();
+		Location location = spellCast.getLocation();
 		if (action != null && action != PostCastAction.ALREADY_HANDLED) {
 			if (state == SpellCastState.NORMAL) {
 				if (action.setCooldown())
@@ -1009,32 +1045,32 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 				if (action.chargeReagents())
 					removeReagents(caster, spellCast.getReagents());
 				if (action.sendMessages())
-					sendMessages(caster, spellCast.getSpellArgs());
+					sendMessages(caster, location, spellCast.getSpellArgs());
 				if (action.sendMessages())
 					sendLog(caster, spellCast.getSpellArgs());
 				if (experience > 0 && caster instanceof Player player)
 					player.giveExp(experience);
 			} else if (state == SpellCastState.ON_COOLDOWN) {
-				MagicSpells.sendMessageAndFormat(strOnCooldown, caster, spellCast.getSpellArgs(),
+				sendMessage(strOnCooldown, caster, caster, null, location, spellCast.getSpellArgs(),
 						"%c", Math.round(getCooldown(caster)) + "", "%s", spellCast.getSpell().getName());
 				playSpellEffects(EffectPosition.COOLDOWN, caster,
-						new SpellData(caster, spellCast.getPower(), spellCast.getSpellArgs()));
+						new SpellData(caster, null, location, spellCast.getPower(), spellCast.getSpellArgs()));
 				if (soundOnCooldown != null && caster instanceof Player player)
 					player.playSound(caster.getLocation(), soundOnCooldown, 1F, 1F);
 			} else if (state == SpellCastState.MISSING_REAGENTS) {
-				MagicSpells.sendMessage(strMissingReagents, caster, spellCast.getSpellArgs());
+				sendMessage(strMissingReagents, caster, caster, null, location, spellCast.getSpellArgs());
 				playSpellEffects(EffectPosition.MISSING_REAGENTS, caster,
-						new SpellData(caster, spellCast.getPower(), spellCast.getSpellArgs()));
+						new SpellData(caster, null, location, spellCast.getPower(), spellCast.getSpellArgs()));
 				if (MagicSpells.showStrCostOnMissingReagents() && strCost != null && !strCost.isEmpty())
-					MagicSpells.sendMessage("    (" + strCost + ')', caster, spellCast.getSpellArgs());
+					sendMessage("    (" + strCost + ')', caster, caster, null, location, spellCast.getSpellArgs());
 				if (soundMissingReagents != null && caster instanceof Player player)
 					player.playSound(caster.getLocation(), soundMissingReagents, 1F, 1F);
 			} else if (state == SpellCastState.CANT_CAST) {
-				MagicSpells.sendMessage(strCantCast, caster, spellCast.getSpellArgs());
+				sendMessage(strCantCast, caster, caster, null, location, spellCast.getSpellArgs());
 			} else if (state == SpellCastState.NO_MAGIC_ZONE) {
 				MagicSpells.getNoMagicZoneManager().sendNoMagicMessage(caster, this);
 			} else if (state == SpellCastState.WRONG_WORLD) {
-				MagicSpells.sendMessage(strWrongWorld, caster, spellCast.getSpellArgs());
+				sendMessage(strWrongWorld, caster, caster, null, location, spellCast.getSpellArgs());
 			}
 		}
 		SpellCastedEvent event = new SpellCastedEvent(this, caster, state, spellCast.getPower(),
@@ -1044,8 +1080,19 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 
 	// TODO can this safely be made varargs?
 	public void sendMessages(LivingEntity caster, String[] args) {
-		sendMessage(strCastSelf, caster, args, "%a", caster.getName());
-		sendMessageNear(caster, strCastOthers, args, "%a", caster.getName());
+		sendMessages(caster, null, args);
+	}
+
+	/**
+	 * Sends messages associated with a successful spell cast.
+	 *
+	 * @param caster   the caster of the spell cast
+	 * @param location the location of the spell cast
+	 * @param args     the arguments of the spell cast
+	 */
+	public void sendMessages(LivingEntity caster, Location location, String[] args) {
+		sendMessage(strCastSelf, caster, caster, null, location, args, "%a", caster.getName());
+		sendMessageNear(caster, null, location, strCastOthers, broadcastRange, args, "%a", caster.getName());
 	}
 
 	public void sendLog(LivingEntity caster, String[] args) {

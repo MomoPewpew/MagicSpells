@@ -276,7 +276,7 @@ public class Subspell {
 			case ENTITY -> spell instanceof TargetedEntitySpell && castAtEntity(caster, target, power, passTargeting);
 			case LOCATION ->
 				spell instanceof TargetedLocationSpell
-						&& castAtLocation(caster, useTargetForLocation ? target.getLocation() : location, power);
+						&& castAtLocation(caster, useTargetForLocation ? target.getLocation() : location, args, power);
 			case NONE -> {
 				if (caster == null)
 					yield false;
@@ -317,7 +317,7 @@ public class Subspell {
 		return switch (targeting) {
 			case ENTITY -> spell instanceof TargetedEntitySpell && castAtEntity(caster, target, power, passTargeting);
 			case LOCATION ->
-				spell instanceof TargetedLocationSpell && castAtLocation(caster, target.getLocation(), power);
+				spell instanceof TargetedLocationSpell && castAtLocation(caster, target.getLocation(), args, power);
 			case NONE -> {
 				if (caster == null)
 					yield false;
@@ -343,7 +343,7 @@ public class Subspell {
 		}
 
 		return switch (targeting) {
-			case LOCATION -> spell instanceof TargetedLocationSpell && castAtLocation(caster, target, power);
+			case LOCATION -> spell instanceof TargetedLocationSpell && castAtLocation(caster, target, args, power);
 			case NONE -> {
 				if (caster == null)
 					yield false;
@@ -450,7 +450,7 @@ public class Subspell {
 				if (caster == null)
 					yield false;
 
-				SpellCastResult result = spell.cast(caster, power, args);
+				SpellCastResult result = spell.cast(caster, target.getLocation(), power, args);
 				yield result.state == SpellCastState.NORMAL && (result.action == PostCastAction.HANDLE_NORMALLY
 						|| result.action == PostCastAction.NO_MESSAGES);
 			}
@@ -465,7 +465,7 @@ public class Subspell {
 			}
 			case PARTIAL -> {
 				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0,
-						null, 0);
+						null, 0, target.getLocation());
 				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL)
 					yield false;
 
@@ -495,7 +495,7 @@ public class Subspell {
 				if (caster == null)
 					yield false;
 
-				SpellCastEvent castEvent = spell.preCast(caster, power, args);
+				SpellCastEvent castEvent = spell.preCast(caster, target.getLocation(), power, args);
 				if (castEvent == null)
 					yield false;
 
@@ -580,7 +580,7 @@ public class Subspell {
 				if (caster == null)
 					yield false;
 
-				SpellCastResult result = spell.cast(caster, power, args);
+				SpellCastResult result = spell.cast(caster, target, power, args);
 				yield result.state == SpellCastState.NORMAL && (result.action == PostCastAction.HANDLE_NORMALLY ||
 						result.action == PostCastAction.NO_MESSAGES);
 			}
@@ -591,7 +591,7 @@ public class Subspell {
 			}
 			case PARTIAL -> {
 				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0,
-						null, 0);
+						null, 0, target);
 				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL)
 					yield false;
 
@@ -617,7 +617,7 @@ public class Subspell {
 				if (caster == null)
 					yield false;
 
-				SpellCastEvent castEvent = spell.preCast(caster, power, args);
+				SpellCastEvent castEvent = spell.preCast(caster, target, power, args);
 				if (castEvent == null)
 					yield false;
 
@@ -686,7 +686,7 @@ public class Subspell {
 				if (caster == null)
 					yield false;
 
-				SpellCastResult result = spell.cast(caster, power, args);
+				SpellCastResult result = spell.cast(caster, from, power, args);
 				yield result.state == SpellCastState.NORMAL && (result.action == PostCastAction.HANDLE_NORMALLY ||
 						result.action == PostCastAction.NO_MESSAGES);
 			}
@@ -701,7 +701,7 @@ public class Subspell {
 			}
 			case PARTIAL -> {
 				SpellCastEvent castEvent = new SpellCastEvent(spell, caster, SpellCastState.NORMAL, power, args, 0,
-						null, 0);
+						null, 0, from);
 				if (!castEvent.callEvent() || castEvent.getSpellCastState() != SpellCastState.NORMAL)
 					yield false;
 
@@ -738,7 +738,7 @@ public class Subspell {
 				if (caster == null)
 					yield false;
 
-				SpellCastEvent castEvent = spell.preCast(caster, power, args);
+				SpellCastEvent castEvent = spell.preCast(caster, from, power, args);
 				if (castEvent == null)
 					yield false;
 

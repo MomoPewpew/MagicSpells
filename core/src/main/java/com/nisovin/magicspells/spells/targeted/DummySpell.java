@@ -40,12 +40,14 @@ public class DummySpell extends TargetedSpell
 
 				return PostCastAction.NO_MESSAGES;
 			} else {
-				Location loc = null;
-				try {
-					Block block = getTargetedBlock(caster, power, args);
-					if (block != null && !BlockUtils.isAir(block.getType()))
-						loc = block.getLocation().add(0.5, 0, 0.5);
-				} catch (IllegalStateException ignored) {
+				Location loc = getCurrentCastLocation();
+				if (loc == null && caster != null) {
+					try {
+						Block block = getTargetedBlock(caster, power, args);
+						if (block != null && !BlockUtils.isAir(block.getType()))
+							loc = block.getLocation().add(0.5, 0, 0.5);
+					} catch (IllegalStateException ignored) {
+					}
 				}
 
 				if (loc == null)

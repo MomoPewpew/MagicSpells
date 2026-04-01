@@ -1533,7 +1533,11 @@ public class MagicSpells extends JavaPlugin {
 	 * @param args      spell arguments
 	 */
 	public static void sendMessage(String message, LivingEntity recipient, String[] args) {
-		sendMessageAndFormat(message, recipient, recipient, null, args);
+		sendMessageAndFormat(message, recipient, recipient, null, null, args);
+	}
+
+	public static void sendMessage(String message, LivingEntity recipient, LivingEntity caster, LivingEntity target, Location location, String[] args) {
+		sendMessageAndFormat(message, recipient, caster, target, location, args);
 	}
 
 	/**

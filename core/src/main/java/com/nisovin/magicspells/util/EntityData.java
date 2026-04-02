@@ -430,14 +430,14 @@ public class EntityData {
 			entity.setVisibleByDefault(displayHack[1]);
 
 			transformations.forEach(transformation -> {
-				Transformation t = transformation.transformation().get(data);
+				ConfigData<Transformation> transformationData = transformation.transformation();
 				int interpolationDelay = transformation.interpolationDelay().get(data);
 				int interpolationDuration = transformation.interpolationDuration().get(data);
 				int loopInterval = transformation.loopInterval().get(data);
 
 				if (interpolationDelay > 0 || loopInterval > 0) {
-					TransformationRunnable transformationRunnable = new TransformationRunnable((Display) entity, t,
-							interpolationDuration);
+					TransformationRunnable transformationRunnable = new TransformationRunnable((Display) entity,
+							transformationData, interpolationDuration, data);
 
 					if (loopInterval > 0) {
 						transformationRunnable.task = transformationRunnable.runTaskTimer(MagicSpells.getInstance(),
@@ -448,7 +448,7 @@ public class EntityData {
 				} else {
 					((Display) entity).setInterpolationDuration(interpolationDuration);
 					((Display) entity).setInterpolationDelay(interpolationDelay);
-					((Display) entity).setTransformation(t);
+					((Display) entity).setTransformation(transformationData.get(data));
 				}
 			});
 		}
@@ -691,14 +691,17 @@ record DisplayTransformation(
 class TransformationRunnable extends BukkitRunnable {
 
 	private final Display entity;
-	private final Transformation transformation;
+	private final ConfigData<Transformation> transformation;
 	private final int interpolationDuration;
+	private final SpellData data;
 	BukkitTask task = null;
 
-	public TransformationRunnable(Display entity, Transformation transformation, int interpolationDuration) {
+	public TransformationRunnable(Display entity, ConfigData<Transformation> transformation,
+			int interpolationDuration, SpellData data) {
 		this.entity = entity;
 		this.transformation = transformation;
 		this.interpolationDuration = interpolationDuration;
+		this.data = data;
 	}
 
 	@Override
@@ -707,9 +710,12 @@ class TransformationRunnable extends BukkitRunnable {
 			if (task != null)
 				task.cancel();
 		} else {
-			entity.setInterpolationDuration(interpolationDuration);
-			entity.setInterpolationDelay(0);
-			entity.setTransformation(transformation);
+			Transformation t = transformation.get(data);
+			if (t != null) {
+				entity.setInterpolationDuration(interpolationDuration);
+				entity.setInterpolationDelay(0);
+				entity.setTransformation(t);
+			}
 		}
 	}
 

@@ -43,8 +43,11 @@ public class ItemTagSpell extends InstantSpell implements Listener {
                 if (magicItem == null)
                     continue;
 
-                // Ignore amount by default for tagging
+                // Ignore amount by default for tagging.
+                // MAGIC_ITEM_NAME is always set from the mapping section by PersistentDataHandler; items
+                // being tagged usually have no (or wrong) magicitem PDC yet, so matching would fail.
                 magicItem.getMagicItemData().getIgnoredAttributes().add(MagicItemData.MagicItemAttribute.AMOUNT);
+                magicItem.getMagicItemData().getIgnoredAttributes().add(MagicItemData.MagicItemAttribute.MAGIC_ITEM_NAME);
 
                 String internalName = itemSection.getString("internal-name", key);
                 mapping.put(magicItem.getMagicItemData(), new TagMapping(internalName, magicItem));
@@ -85,22 +88,18 @@ public class ItemTagSpell extends InstantSpell implements Listener {
             MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(item);
             if (itemData == null)
                 continue;
-
             for (Map.Entry<MagicItemData, TagMapping> entry : mapping.entrySet()) {
                 MagicItemData targetData = entry.getKey();
                 TagMapping tagMapping = entry.getValue();
                 String internalName = tagMapping.internalName();
                 MagicItem targetMagicItem = tagMapping.magicItem();
-
                 if (targetData.matches(itemData)) {
                     ItemMeta meta = item.getItemMeta();
                     if (meta == null)
                         continue;
-
                     String currentName = meta.getPersistentDataContainer().get(nameKey, PersistentDataType.STRING);
                     if (internalName.equals(currentName))
                         continue;
-
                     // It's a match and needs a tag update.
 
                     // Priority 1: Try to update using a real item from the global items.yml

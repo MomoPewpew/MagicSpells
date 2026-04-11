@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 import org.bukkit.Chunk;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -146,6 +147,12 @@ public class MagicItemUpdater {
     }
 
     public static ItemStack updateItem(ItemStack itemStack, MagicItem magicItem) {
+        Material material = itemStack.getType();
+
+        if (material.equals(Material.WRITTEN_BOOK)) {
+            return itemStack;
+        }
+
         Integer durability = null;
         Long expiresAt = null;
         String creatorName = null;

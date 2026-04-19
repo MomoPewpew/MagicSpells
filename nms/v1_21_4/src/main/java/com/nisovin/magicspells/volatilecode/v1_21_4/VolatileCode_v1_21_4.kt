@@ -38,6 +38,7 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.item.PrimedTnt
+import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.advancements.critereon.ImpossibleTrigger
@@ -360,6 +361,40 @@ class VolatileCode_v1_21_4(helper: VolatileCodeHelper) : VolatileCodeHandle(help
             Collections.singleton(toastKey),
             Collections.emptyMap()
         ))
+    }
+
+    override fun spawnFakeItemSpray(location: Location, item: ItemStack, velocity: Vector, lifetimeTicks: Int, viewDistance: Double) {
+        val world = (location.world as CraftWorld).handle
+        val nmsItem = CraftItemStack.asNMSCopy(item)
+
+        val entity = ItemEntity(world, location.x, location.y, location.z, nmsItem)
+        entity.setDeltaMovement(Vec3(velocity.x, velocity.y, velocity.z))
+
+        // This packet constructor takes a BlockPos and may effectively snap to block coordinates.
+        // We follow it up with a teleport packet to restore full precision for the client.
+        val pos = BlockPos(location.blockX, location.blockY, location.blockZ)
+        val addPacket = ClientboundAddEntityPacket(entity, 0, pos)
+        val teleportPacket = ClientboundTeleportEntityPacket(entity.id, PositionMoveRotation.of(entity), mutableSetOf(), false)
+        val dataPacket = ClientboundSetEntityDataPacket(entity.id, entity.entityData.nonDefaultValues)
+        val motionPacket = ClientboundSetEntityMotionPacket(entity.id, Vec3(velocity.x, velocity.y, velocity.z))
+        val removePacket = ClientboundRemoveEntitiesPacket(entity.id)
+
+        val viewers = ArrayList<Player>()
+        for (player in location.getNearbyPlayers(viewDistance)) {
+            viewers.add(player)
+            (player as CraftPlayer).handle.connection.send(addPacket)
+            player.handle.connection.send(teleportPacket)
+            player.handle.connection.send(dataPacket)
+            player.handle.connection.send(motionPacket)
+        }
+
+        if (lifetimeTicks <= 0) return
+        helper.scheduleDelayedTask({
+            for (player in viewers) {
+                if (!player.isValid) continue
+                (player as CraftPlayer).handle.connection.send(removePacket)
+            }
+        }, lifetimeTicks.toLong())
     }
 
 }

@@ -44,4 +44,15 @@ public abstract class VolatileCodeHandle {
 	public abstract void playHurtAnimation(LivingEntity entity, float yaw);
 
 	public abstract void sendToastEffect(Player receiver, ItemStack icon, Frame frameType, Component text);
+
+	/**
+	 * Spawn a client-side-only dropped item (packet-only) for nearby players.
+	 * <p>
+	 * Implementations should not add an entity to the world; the item must be unpickable.
+	 *
+	 * @throws UnsupportedOperationException if not supported by this volatile handler
+	 */
+	public void spawnFakeItemSpray(Location location, ItemStack item, Vector velocity, int lifetimeTicks, double viewDistance) {
+		throw new UnsupportedOperationException("Fake item spray not supported by this volatile handler.");
+	}
 }

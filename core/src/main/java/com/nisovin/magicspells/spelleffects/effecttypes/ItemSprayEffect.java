@@ -32,6 +32,8 @@ public class ItemSprayEffect extends SpellEffect {
 	private ConfigData<Integer> customModelData;
 
 	private boolean resolveForcePerItem;
+	private boolean fake;
+	private double viewDistance;
 
 	public static final Set<Entity> entities = new HashSet<>();
 
@@ -46,6 +48,8 @@ public class ItemSprayEffect extends SpellEffect {
 		customModelData = ConfigDataUtil.getInteger(config, "custom-model-data", null);
 
 		resolveForcePerItem = config.getBoolean("resolve-force-per-item", false);
+		fake = config.getBoolean("fake", true);
+		viewDistance = config.getDouble("view-distance", 64D);
 
 	}
 
@@ -73,6 +77,21 @@ public class ItemSprayEffect extends SpellEffect {
 		int duration = this.duration.get(data);
 
 		int amount = this.amount.get(data);
+		if (fake) {
+			for (int i = 0; i < amount; i++) {
+				if (resolveForcePerItem) force = this.force.get(data);
+				Vector velocity = new Vector((rand.nextDouble() - 0.5d) * force, (rand.nextDouble() - 0.5d) * force, (rand.nextDouble() - 0.5d) * force);
+				try {
+					MagicSpells.getVolatileCodeHandler().spawnFakeItemSpray(loc, item, velocity, duration, viewDistance);
+				} catch (UnsupportedOperationException e) {
+					// Volatile handler doesn't support fake item spray; fall back to real items.
+					fake = false;
+					break;
+				}
+			}
+			if (fake) return null;
+		}
+
 		Item[] items = new Item[amount];
 		for (int i = 0; i < amount; i++) {
 			items[i] = loc.getWorld().dropItem(loc, item);

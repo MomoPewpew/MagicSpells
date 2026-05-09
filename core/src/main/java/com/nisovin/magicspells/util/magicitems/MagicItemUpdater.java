@@ -58,6 +58,7 @@ public class MagicItemUpdater {
     private static final Map<String, MagicItem> magicItems = getMagicItems();
     private static final Map<String, MagicItemData> magicItemsCache = new HashMap<>();
     private static final NamespacedKey NAME_KEY = new NamespacedKey(MagicSpells.getInstance(), "magicitem");
+    private static final NamespacedKey SOULBOUND_OWNER_KEY = new NamespacedKey(MagicSpells.getInstance(), "soulbound_owner");
 
     // Active updating of items on login/inventory open
     public static class PersistentDataUpdater implements Listener {
@@ -120,7 +121,19 @@ public class MagicItemUpdater {
                 }
 
                 if (magicitemName != null && magicItems.containsKey(magicitemName)) {
-                    MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(itemStack);
+                    // Ignore transient tags (like ConjureSpell soulbound ownership) when determining whether
+                    // a magic item needs updating.
+                    ItemStack compareStack = itemStack;
+                    if (container.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
+                        compareStack = itemStack.clone();
+                        ItemMeta compareMeta = compareStack.getItemMeta();
+                        if (compareMeta != null) {
+                            compareMeta.getPersistentDataContainer().remove(SOULBOUND_OWNER_KEY);
+                            compareStack.setItemMeta(compareMeta);
+                        }
+                    }
+
+                    MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(compareStack);
                     MagicItemData magicItemData = MagicItems.getMagicItemDataByInternalName(magicitemName);
 
                     if (magicItemData == null || stackData == null)
@@ -156,6 +169,7 @@ public class MagicItemUpdater {
         Integer durability = null;
         Long expiresAt = null;
         String creatorName = null;
+        String soulboundOwner = null;
         int amount = itemStack.getAmount();
         BookMeta bookMeta = null;
         Inventory blockInventory = null;
@@ -178,6 +192,11 @@ public class MagicItemUpdater {
                 PersistentDataType.STRING)) {
             creatorName = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "creator_name"),
                     PersistentDataType.STRING);
+        }
+
+        // ConjureSpell soulbound ownership should not be lost during magic item updates.
+        if (sourceContainer.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
+            soulboundOwner = sourceContainer.get(SOULBOUND_OWNER_KEY, PersistentDataType.STRING);
         }
 
         if (sourceMeta instanceof Damageable damageable) {
@@ -208,6 +227,10 @@ public class MagicItemUpdater {
         if (creatorName != null) {
             meta.getPersistentDataContainer().set(new NamespacedKey(MagicSpells.getInstance(), "creator_name"),
                     PersistentDataType.STRING, creatorName);
+        }
+
+        if (soulboundOwner != null) {
+            meta.getPersistentDataContainer().set(SOULBOUND_OWNER_KEY, PersistentDataType.STRING, soulboundOwner);
         }
 
         if (meta instanceof BookMeta updatedBookMeta && bookMeta != null) {

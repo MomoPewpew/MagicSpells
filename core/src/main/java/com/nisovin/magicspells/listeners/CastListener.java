@@ -93,15 +93,14 @@ public class CastListener implements Listener {
 
 		if (noInteract) {
 			// Special block -- don't do normal interactions
-			noCastUntil.put(event.getPlayer().getName(), System.currentTimeMillis() + 150);
+			setNoCast(event.getPlayer());
 			return;
 		}
 
 		if (isEventCastAction(event)) {
 			// Cast
 			MagicSpells.scheduleDelayedTask(() -> {
-				Long noCastTime = noCastUntil.get(player.getName());
-				if (noCastTime == null || System.currentTimeMillis() >= noCastTime) {
+				if (!isNoCast(player)) {
 					if (!MagicSpells.isCastingOnAnimate()) castSpell(player);
 				}
 			}, 1);
@@ -152,8 +151,7 @@ public class CastListener implements Listener {
 			Spell spell = spellbook.getActiveSpell(player.getInventory().getItemInMainHand());
 
 			if (spell != null) {
-				Long noCastTime = noCastUntil.get(player.getName());
-				if (noCastTime == null || System.currentTimeMillis() >= noCastTime) {
+				if (!isNoCast(player)) {
 					event.setCancelled(castSpell(player));
 				}
 			}
@@ -190,8 +188,7 @@ public class CastListener implements Listener {
 		}
 
 		MagicSpells.scheduleDelayedTask(() -> {
-			Long noCastTime = noCastUntil.get(player.getName());
-			if (noCastTime == null || System.currentTimeMillis() >= noCastTime) {
+			if (!isNoCast(player)) {
 				castSpell(player);
 			}
 		}, 1);
@@ -200,7 +197,7 @@ public class CastListener implements Listener {
 	@EventHandler(priority=EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerDrop(PlayerDropItemEvent event) {
 		//if (!MagicSpells.isCastingOnAnimate()) return;
-		noCastUntil.put(event.getPlayer().getName(), System.currentTimeMillis() + 150);
+		setNoCast(event.getPlayer());
 	}
 
 	@EventHandler
@@ -248,7 +245,7 @@ public class CastListener implements Listener {
 
 	private boolean checkGlobalCooldown(Player player, Spell spell) {
 		if (MagicSpells.getGlobalCooldown() > 0 && !spell.isIgnoringGlobalCooldown()) {
-			if (noCastUntil.containsKey(player.getName()) && noCastUntil.get(player.getName()) > System.currentTimeMillis()) return false;
+			if (isNoCast(player)) return false;
 			noCastUntil.put(player.getName(), System.currentTimeMillis() + MagicSpells.getGlobalCooldown());
 		}
 
@@ -279,6 +276,18 @@ public class CastListener implements Listener {
 		}
 		
 		return event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK;
+	}
+
+	private boolean isNoCast(Player player) {
+		Long noCastTime = noCastUntil.get(player.getName());
+		if (noCastTime == null || System.currentTimeMillis() >= noCastTime) {
+			return false;
+		}
+		return true;
+	}
+
+	public void setNoCast(Player player) {
+		noCastUntil.put(player.getName(), System.currentTimeMillis() + 150);
 	}
 
 }

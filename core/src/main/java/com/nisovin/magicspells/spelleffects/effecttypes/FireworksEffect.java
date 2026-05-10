@@ -2,15 +2,11 @@ package com.nisovin.magicspells.spelleffects.effecttypes;
 
 import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-import org.bukkit.event.Listener;
 import org.bukkit.FireworkEffect;
 import org.bukkit.entity.Firework;
-import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
@@ -18,7 +14,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
 
-public class FireworksEffect extends SpellEffect implements Listener {
+public class FireworksEffect extends SpellEffect {
 
 	private ConfigData<Integer> type;
 	private ConfigData<Integer> flightDuration;
@@ -60,8 +56,6 @@ public class FireworksEffect extends SpellEffect implements Listener {
 				}
 			}
 		}
-
-		MagicSpells.registerEvents(this);
 	}
 
 	@Override
@@ -97,7 +91,7 @@ public class FireworksEffect extends SpellEffect implements Listener {
 
 		firework.setFireworkMeta(meta);
 		firework.setSilent(true);
-		firework.setMetadata("MSFirework", new FixedMetadataValue(MagicSpells.getInstance(), "MSFirework"));
+		firework.setMetadata(MagicSpells.FIREWORK_METADATA_KEY, new FixedMetadataValue(MagicSpells.getInstance(), true));
 
 		MagicSpells.scheduleDelayedTask(() -> {
 			if (!firework.isValid()) return;
@@ -106,13 +100,6 @@ public class FireworksEffect extends SpellEffect implements Listener {
 		}, flightDuration.get(data));
 
 		return null;
-	}
-
-	@EventHandler
-	public void onFireworkDamage(EntityDamageByEntityEvent e) {
-		Entity damager = e.getDamager();
-		if (!damager.hasMetadata("MSFirework")) return;
-		e.setCancelled(true);
 	}
 
 }

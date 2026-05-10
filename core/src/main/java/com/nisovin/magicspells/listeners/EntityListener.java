@@ -3,11 +3,19 @@ package com.nisovin.magicspells.listeners;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 
 import com.nisovin.magicspells.MagicSpells;
 
 public class EntityListener implements Listener {
+
+    @EventHandler
+    public void onFireworkDamage(EntityDamageByEntityEvent event) {
+        if (!event.getDamager().hasMetadata(MagicSpells.FIREWORK_METADATA_KEY)) return;
+        event.setCancelled(true);
+    }
+
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
         for (Entity entity : event.getChunk().getEntities()) {

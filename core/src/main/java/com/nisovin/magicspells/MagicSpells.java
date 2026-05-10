@@ -98,6 +98,7 @@ public class MagicSpells extends JavaPlugin {
 
 	public static final String ENTITY_TAG = "MS_ENTITY";
 	public static final String EXPIRATION_TIME_MILLIS_TAG = "MS_EXPIRATION_TIME_MILLIS";
+	public static final String FIREWORK_METADATA_KEY = "MSFirework";
 
 	private Set<Material> losTransparentBlocks;
 	private List<Material> ignoreCastItemDurability;

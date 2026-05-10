@@ -662,8 +662,10 @@ public class MagicSpells extends JavaPlugin {
 		if (config.getBoolean(path + "enable-dance-casting", true))
 			new DanceCastListener(this, config);
 
-		if (enableUpdateItemData)
+		if (enableUpdateItemData) {
 			registerEvents(new PersistentDataUpdater());
+			registerEvents(new MagicItemUpdater.ChunkMagicItemListener());
+		}
 		if (enableUpdateItemData && CompatBasics.pluginEnabled("SneakyCharacterManager")) {
 			registerEvents(new MagicItemUpdater.CharacterPersistentDataUpdater());
 		}

@@ -12,12 +12,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -108,40 +112,31 @@ public class MagicItemUpdater {
                 if (itemStack == null)
                     continue;
 
-                ItemMeta meta = itemStack.getItemMeta();
-                if (meta == null)
-                    continue;
+                ItemStack updated = updateMagicItemItemStackIfNeeded(itemStack);
+                if (updated != itemStack)
+                    items[i] = updated;
+            }
+        }
+    }
 
-                PersistentDataContainer container = meta.getPersistentDataContainer();
+    public static class ChunkMagicItemListener implements Listener {
 
-                String magicitemName = null;
+        @EventHandler(ignoreCancelled = true)
+        public void onChunkLoad(ChunkLoadEvent event) {
+            if (!MagicSpells.enableUpdateItemData())
+                return;
 
-                if (container.has(NAME_KEY, PersistentDataType.STRING)) {
-                    magicitemName = container.get(NAME_KEY, PersistentDataType.STRING);
-                }
-
-                if (magicitemName != null && magicItems.containsKey(magicitemName)) {
-                    // Ignore transient tags (like ConjureSpell soulbound ownership) when determining whether
-                    // a magic item needs updating.
-                    ItemStack compareStack = itemStack;
-                    if (container.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
-                        compareStack = itemStack.clone();
-                        ItemMeta compareMeta = compareStack.getItemMeta();
-                        if (compareMeta != null) {
-                            compareMeta.getPersistentDataContainer().remove(SOULBOUND_OWNER_KEY);
-                            compareStack.setItemMeta(compareMeta);
-                        }
-                    }
-
-                    MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(compareStack);
-                    MagicItemData magicItemData = MagicItems.getMagicItemDataByInternalName(magicitemName);
-
-                    if (magicItemData == null || stackData == null)
-                        continue;
-                    if (magicItemData.equals(stackData))
-                        continue;
-
-                    items[i] = updateItem(itemStack, magicItems.get(magicitemName));
+            for (Entity entity : event.getChunk().getEntities()) {
+                if (entity instanceof Item item) {
+                    ItemStack stack = item.getItemStack();
+                    ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
+                    if (updated != stack)
+                        item.setItemStack(updated);
+                } else if (entity instanceof ItemDisplay itemDisplay) {
+                    ItemStack stack = itemDisplay.getItemStack();
+                    ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
+                    if (updated != stack)
+                        itemDisplay.setItemStack(updated);
                 }
             }
         }
@@ -157,6 +152,52 @@ public class MagicItemUpdater {
                 }, 1);
             }
         }
+    }
+
+    /**
+     * If the stack is a magic item whose stored data differs from the current definition, returns an updated
+     * stack from {@link #updateItem}; otherwise returns the same reference.
+     */
+    private static ItemStack updateMagicItemItemStackIfNeeded(ItemStack itemStack) {
+        if (itemStack == null)
+            return null;
+
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta == null)
+            return itemStack;
+
+        PersistentDataContainer container = meta.getPersistentDataContainer();
+
+        String magicitemName = null;
+
+        if (container.has(NAME_KEY, PersistentDataType.STRING)) {
+            magicitemName = container.get(NAME_KEY, PersistentDataType.STRING);
+        }
+
+        if (magicitemName == null || !magicItems.containsKey(magicitemName))
+            return itemStack;
+
+        // Ignore transient tags (like ConjureSpell soulbound ownership) when determining whether
+        // a magic item needs updating.
+        ItemStack compareStack = itemStack;
+        if (container.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
+            compareStack = itemStack.clone();
+            ItemMeta compareMeta = compareStack.getItemMeta();
+            if (compareMeta != null) {
+                compareMeta.getPersistentDataContainer().remove(SOULBOUND_OWNER_KEY);
+                compareStack.setItemMeta(compareMeta);
+            }
+        }
+
+        MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(compareStack);
+        MagicItemData magicItemData = MagicItems.getMagicItemDataByInternalName(magicitemName);
+
+        if (magicItemData == null || stackData == null)
+            return itemStack;
+        if (magicItemData.equals(stackData))
+            return itemStack;
+
+        return updateItem(itemStack, magicItems.get(magicitemName));
     }
 
     public static ItemStack updateItem(ItemStack itemStack, MagicItem magicItem) {

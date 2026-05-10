@@ -30,6 +30,7 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -120,6 +121,50 @@ public class MagicItemUpdater {
     }
 
     public static class ChunkMagicItemListener implements Listener {
+
+        @EventHandler(ignoreCancelled = true)
+        public void onMagicSpellsLoaded(MagicSpellsLoadedEvent event) {
+            if (!MagicSpells.enableUpdateItemData())
+                return;
+
+            final ArrayDeque<Chunk> chunks = new ArrayDeque<>();
+            for (World world : Bukkit.getWorlds()) {
+                Collections.addAll(chunks, world.getLoadedChunks());
+            }
+
+            if (chunks.isEmpty())
+                return;
+
+            final int chunksPerTick = 5;
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    int processed = 0;
+                    while (processed++ < chunksPerTick && !chunks.isEmpty()) {
+                        Chunk chunk = chunks.poll();
+                        if (chunk == null || !chunk.isLoaded())
+                            continue;
+
+                        for (Entity entity : chunk.getEntities()) {
+                            if (entity instanceof Item item) {
+                                ItemStack stack = item.getItemStack();
+                                ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
+                                if (updated != stack)
+                                    item.setItemStack(updated);
+                            } else if (entity instanceof ItemDisplay itemDisplay) {
+                                ItemStack stack = itemDisplay.getItemStack();
+                                ItemStack updated = updateMagicItemItemStackIfNeeded(stack);
+                                if (updated != stack)
+                                    itemDisplay.setItemStack(updated);
+                            }
+                        }
+                    }
+
+                    if (chunks.isEmpty())
+                        cancel();
+                }
+            }.runTaskTimer(MagicSpells.getInstance(), 1L, 1L);
+        }
 
         @EventHandler(ignoreCancelled = true)
         public void onChunkLoad(ChunkLoadEvent event) {

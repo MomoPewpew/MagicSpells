@@ -119,6 +119,9 @@ public class MagicSpells extends JavaPlugin {
 	// Ongoing cast times
 	public Map<UUID, DelayedSpellCast> delayedSpellCasts;
 
+	// Listeners
+	public CastListener castListener;
+
 	// Container vars
 	private ManaHandler manaHandler;
 	private MoneyHandler moneyHandler;
@@ -644,7 +647,8 @@ public class MagicSpells extends JavaPlugin {
 		log("Loading cast listeners...");
 		registerEvents(new MagicPlayerListener(this));
 		registerEvents(new MagicSpellListener(this));
-		registerEvents(new CastListener(this));
+		castListener = new CastListener(this);
+		registerEvents(castListener);
 		if (!incantations.isEmpty())
 			registerEvents(new MagicChatListener());
 

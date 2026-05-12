@@ -287,7 +287,11 @@ public class CastListener implements Listener {
 	}
 
 	public void setNoCast(Player player) {
-		noCastUntil.put(player.getName(), System.currentTimeMillis() + 150);
+		setNoCast(player, 150L);
+	}
+
+	public void setNoCast(Player player, Long delay) {
+		noCastUntil.put(player.getName(), System.currentTimeMillis() + delay);
 	}
 
 }

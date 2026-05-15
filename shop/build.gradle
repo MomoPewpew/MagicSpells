@@ -6,11 +6,3 @@ dependencies {
 jar {
     archiveFileName = "MagicSpellsShop.jar"
 }
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from components.java
-        }
-    }
-}

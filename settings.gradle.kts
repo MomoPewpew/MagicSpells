@@ -1,5 +1,22 @@
 rootProject.name = "MagicSpellsParent"
 
+val localGradleProperties = java.util.Properties().also { properties ->
+    val localGradlePropertiesFile = file(".gradle/gradle.properties")
+    if (localGradlePropertiesFile.isFile) {
+        localGradlePropertiesFile.inputStream().use { properties.load(it) }
+    }
+}
+
+// Expose on each Project for findProperty() (signing.*, preflight in build.gradle).
+gradle.beforeProject {
+    localGradleProperties.forEach { key, value ->
+        val name = key.toString()
+        if (findProperty(name) == null) {
+            extensions.extraProperties.set(name, value.toString())
+        }
+    }
+}
+
 include("core")
 include("factions")
 include("memory")

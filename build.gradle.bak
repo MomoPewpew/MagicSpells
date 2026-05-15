@@ -1,8 +1,8 @@
 plugins {
   id("org.jetbrains.kotlin.jvm") version "1.9.23"
   id("dev.magicspells.msjava")
-  // 0.34+ uses Central Portal only (OSSRH removed); 0.36+ requires Kotlin 2.2
-  id("com.vanniktech.maven.publish") version "0.34.0" apply false
+  // 0.36+ requires Kotlin 2.2; this project uses Kotlin 1.9.x
+  id("com.vanniktech.maven.publish") version "0.30.0" apply false
 }
 
 wrapper {
@@ -55,8 +55,7 @@ subprojects {
   apply plugin: "org.jetbrains.kotlin.jvm"
 
   dependencies {
-    // compileOnly: provided by the server at runtime; must not appear as a SNAPSHOT in the Maven Central POM
-    compileOnly(group: "io.papermc.paper", name: "paper-api", version: "1.21.4-R0.1-SNAPSHOT")
+    implementation(group: "io.papermc.paper", name: "paper-api", version: "1.21.4-R0.1-SNAPSHOT")
   }
 
   processResources {
@@ -103,7 +102,7 @@ subprojects {
     }
 
     mavenPublishing {
-      publishToMavenCentral(true)
+      publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
       if (findProperty("signing.keyId") != null || findProperty("signing.inMemoryKey") != null) {
         signAllPublications()
       }
@@ -142,29 +141,6 @@ subprojects {
             ?: "scm:git:git@github.com:Team-Sneakymouse/MagicSpells.git")
           developerConnection.set(findProperty("POM_SCM_DEVELOPER_CONNECTION")
             ?: "scm:git:git@github.com:Team-Sneakymouse/MagicSpells.git")
-        }
-
-        // Maven Central rejects SNAPSHOT deps; published API JARs must not pull in plugin-only libraries.
-        withXml {
-          def dependenciesNode = asNode().get("dependencies")
-          if (dependenciesNode == null || dependenciesNode.isEmpty()) {
-            return
-          }
-          def depsContainer = dependenciesNode[0]
-          def allowedGroupPrefixes = ["io.github.team-sneakymouse", "org.jetbrains"]
-          def toRemove = []
-          depsContainer.dependency?.each { dep ->
-            def version = dep.version?.text() ?: ""
-            def groupId = dep.groupId?.text() ?: ""
-            def allowed = allowedGroupPrefixes.any { groupId.startsWith(it) }
-            if (!allowed || version.endsWith("-SNAPSHOT")) {
-              toRemove.add(dep)
-            }
-          }
-          toRemove.each { depsContainer.remove(it) }
-          if (depsContainer.dependency == null || depsContainer.dependency.isEmpty()) {
-            asNode().remove(depsContainer)
-          }
         }
       }
     }

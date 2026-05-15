@@ -68,8 +68,16 @@ shadowJar {
     relocate("kotlin", "com.nisovin.magicspells.shaded.kotlin")
     relocate("co.aikar.commands", "com.nisovin.magicspells.shaded.acf")
     relocate("co.aikar.locales", "com.nisovin.magicspells.shaded.locales")
-    archiveClassifier.set("")
+    // Non-empty classifier: empty classifier registers shadowJar as a second main (null) artifact for Maven publish.
+    archiveClassifier.set("shaded")
     archiveFileName.set("MagicSpells.jar")
+}
+
+// Maven Central publishes the plain library JAR only; shadowJar is for the Paper plugins folder.
+components.named("java") {
+    withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
+        skip()
+    }
 }
 
 compileKotlin {
@@ -85,8 +93,8 @@ compileTestKotlin {
     }
 }
 
-artifacts {
-    archives shadowJar
+tasks.named("build") {
+    dependsOn(tasks.shadowJar)
 }
 
 /*

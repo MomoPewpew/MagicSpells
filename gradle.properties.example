@@ -11,8 +11,10 @@ mavenCentralPassword=YOUR_SONATYPE_TOKEN_PASSWORD
 
 # --- GPG signing (recommended: use the gpg binary + your existing keyring) ---
 # gpg --list-secret-keys --keyid-format=long
-# Example: 832323DC1DB717418F44864FEBF4CD1B48122A0D -> signing.keyId=48122A0D
-signing.keyId=LAST_8_CHARS_OF_KEY_ID
+# Team Sneakymouse / Maven Central key (example): ...EBF4CD1B38122A0D -> signing.keyId=38122A0D
+# With useGpgCmd=true, Gradle uses signing.gnupg.keyName for gpg — NOT signing.keyId alone.
+signing.keyId=38122A0D
+signing.gnupg.keyName=38122A0D
 signing.password=YOUR_GPG_KEY_PASSPHRASE
 signing.gnupg.useGpgCmd=true
 

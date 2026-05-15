@@ -40,6 +40,12 @@ gradle.taskGraph.whenReady { graph ->
   if (!useGpgCmd && !hasInMemoryKey && !findProperty("signing.secretKeyRingFile")) {
     missing.add("signing.secretKeyRingFile (or set signing.gnupg.useGpgCmd=true)")
   }
+  if (useGpgCmd && !hasInMemoryKey) {
+    def gpgKeyName = findProperty("signing.gnupg.keyName") ?: findProperty("signing.keyId")
+    if (!gpgKeyName) {
+      missing.add("signing.gnupg.keyName (or signing.keyId; required with signing.gnupg.useGpgCmd=true)")
+    }
+  }
 
   if (!missing.isEmpty()) {
     throw new GradleException(
@@ -87,19 +93,29 @@ subprojects {
     }
 
     plugins.withId("signing") {
+      def signingKeyId = findProperty("signing.keyId")?.toString()
+      def gpgKeyName = findProperty("signing.gnupg.keyName")?.toString() ?: signingKeyId
+      if (gpgKeyName != null) {
+        extensions.extraProperties.set("signing.gnupg.keyName", gpgKeyName)
+      }
       signing {
         def inMemoryKey = findProperty("signing.inMemoryKey")
         if (inMemoryKey != null) {
           // Properties files cannot hold multiline keys; allow escaped newlines.
           def normalizedKey = inMemoryKey.toString().replace("\\n", "\n")
           useInMemoryPgpKeys(normalizedKey, findProperty("signing.password")?.toString())
-        } else if (findProperty("signing.keyId") != null) {
+        } else if (signingKeyId != null || gpgKeyName != null) {
           def gpgCmdEnabled = findProperty("signing.gnupg.useGpgCmd")?.toString() != "false"
           if (gpgCmdEnabled) {
             useGpgCmd()
           }
         }
       }
+    }
+
+    // flatDir/plugin JARs produce runtime deps with null group in Gradle metadata; POM is already filtered.
+    tasks.withType(org.gradle.api.publish.tasks.GenerateModuleMetadata).configureEach {
+      enabled = false
     }
 
     mavenPublishing {

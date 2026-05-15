@@ -82,11 +82,14 @@ Complete these steps once per organization / machine:
 
    ```properties
    signing.keyId=38122A0D
+   signing.gnupg.keyName=38122A0D
    signing.password=your-gpg-passphrase
    signing.gnupg.useGpgCmd=true
    ```
 
-   Use the last 8 characters of your key id for `signing.keyId`. Publish the public key to a keyserver if you have not already.
+   Use the last 8 characters of your key id for both `signing.keyId` and **`signing.gnupg.keyName`**. With `useGpgCmd=true`, Gradle passes only `signing.gnupg.keyName` to `gpg`; if it is missing, GnuPG uses your **default** key (often not the Maven Central key). The publish script and `settings.gradle.kts` copy `signing.keyId` into `signing.gnupg.keyName` when omitted, but setting both explicitly avoids surprises.
+
+   Publish the public key to a keyserver if you have not already.
 
 5. **Sonatype tokens** — Put `mavenCentralUsername` and `mavenCentralPassword` in the same `.gradle/gradle.properties` file. For uploads, also expose them to Gradle (either duplicate them in **`~/.gradle/gradle.properties`**, or use the helper script below).
 
@@ -192,6 +195,21 @@ dependencies {
     compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-13")
 }
 ```
+
+**Gradle and `4.0-Beta-13` only** — That release ships broken [Gradle module metadata](https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html) (flatDir plugin JARs with no Maven `group`). Gradle then fails with `Expected a string but was NULL ... dependencies[0].group`. The POM is fine; force Gradle to use it:
+
+```kotlin
+repositories {
+    mavenCentral {
+        metadataSources {
+            mavenPom()
+            ignoreGradleMetadataRedirection()
+        }
+    }
+}
+```
+
+Releases from **`4.0-Beta-14` onward** omit Gradle metadata so `mavenCentral()` alone is enough (see root `build.gradle`).
 
 Use `magicspells-shop`, `magicspells-factions`, and the other artifact ids from the table above for extension modules. Extension modules should depend on `magicspells-core` as well as Paper:
 

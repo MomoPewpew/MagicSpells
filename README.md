@@ -93,7 +93,7 @@ Complete these steps once per organization / machine:
 
 5. **Sonatype tokens** — Put `mavenCentralUsername` and `mavenCentralPassword` in the same `.gradle/gradle.properties` file. For uploads, also expose them to Gradle (either duplicate them in **`~/.gradle/gradle.properties`**, or use the helper script below).
 
-6. **Version** — Set the version in [`gradle.properties`](gradle.properties) (currently `4.0-Beta-13`). It must **not** end with `-SNAPSHOT` for a release on Maven Central. Pre-release labels like `4.0-Beta-13` are allowed; see [Version format](#version-format) below.
+6. **Version** — Set the version in [`gradle.properties`](gradle.properties) (e.g. `4.0-Beta-14`). It must **not** end with `-SNAPSHOT` for a release on Maven Central. Pre-release labels like `4.0-Beta-14` are allowed; see [Version format](#version-format) and [Incrementing the version](#incrementing-the-version) below.
 
 Published modules and artifact ids:
 
@@ -111,6 +111,8 @@ Published modules and artifact ids:
 
 **What is published:** plain library JARs, sources, Javadoc, and POMs — not the shaded plugin JAR from `./gradlew :core:shadowJar`. Published POMs only declare dependencies on `io.github.team-sneakymouse` artifacts and Kotlin. `paper-api`, plugin JARs, and other SNAPSHOT or local-only libraries are omitted because Maven Central rejects them; consumers add Paper and other deps themselves (section 3).
 
+**Plugin JARs vs Maven artifacts:** `./gradlew build` writes fixed-name plugin files under each module’s `build/libs/` (e.g. `core/build/libs/MagicSpells.jar`, `shop/build/libs/MagicSpellsShop.jar`) with **no version in the filename**. Maven Central uploads use versioned coordinates instead (`magicspells-core-4.0-Beta-14.jar`, etc.).
+
 ### 2. Commands to publish
 
 Dry-run locally (no Sonatype or GPG credentials required):
@@ -120,6 +122,8 @@ Dry-run locally (no Sonatype or GPG credentials required):
 ```
 
 Signing is skipped for `publishToMavenLocal` unless signing properties are configured (see [`gradle.properties.example`](gradle.properties.example)).
+
+Before each upload, **bump `version` in [`gradle.properties`](gradle.properties)** if that version was already published (see [Incrementing the version](#incrementing-the-version)).
 
 Publish all seven modules to Maven Central (upload + automatic release):
 
@@ -151,15 +155,27 @@ Publish a single module only:
 
 | Version | Maven Central release? | Notes |
 |---------|------------------------|--------|
-| `4.0-Beta-13` | Yes | Current project version; pre-release, not a SNAPSHOT. |
-| `4.0-Beta-13-SNAPSHOT` | No | Snapshot suffix is rejected in release POMs and deployments. |
+| `4.0-Beta-14` | Yes | Example release version; pre-release, not a SNAPSHOT. |
+| `4.0-Beta-14-SNAPSHOT` | No | Snapshot suffix is rejected in release POMs and deployments. |
 | `1.21.4-R0.1-SNAPSHOT` (Paper API) | N/A | Used only on your machine / Paper’s repo; not listed in published POMs. |
 
-`4.0-Beta-13` is fine for Central: Sonatype validated all seven components. It is a **permanent** release coordinate once published (you cannot replace that version; publish `4.0-Beta-14` or similar for fixes). For stricter [semantic versioning](https://semver.org/), future releases could use something like `4.0.0-beta.13`, but there is no need to change the version that is already validated.
+For stricter [semantic versioning](https://semver.org/), you could use something like `4.0.0-beta.14` instead of `4.0-Beta-14`; either style is acceptable on Central as long as it is not a SNAPSHOT.
+
+### Incrementing the version
+
+Every successful Maven Central release **locks that version forever**. You cannot re-upload, replace, or fix artifacts under the same coordinate. If publish fails partway through, or you need to ship signing/metadata fixes, **increment `version` in [`gradle.properties`](gradle.properties)** and publish again (e.g. `4.0-Beta-13` → `4.0-Beta-14`).
+
+Typical workflow:
+
+1. Edit `version = …` in [`gradle.properties`](gradle.properties).
+2. Run `./scripts/publish-maven-central.sh`.
+3. Update downstream projects to the new version.
+
+If Sonatype rejects the upload with **`Component … already exists`** (for example `pkg:maven/io.github.team-sneakymouse/magicspells-memory@4.0-Beta-13`), that version is already on Central — bump the version and retry. Local `./gradlew publishToMavenLocal` does not require a new version; only Central uploads do.
 
 ### 3. Using published artifacts in other projects
 
-Artifacts appear on Maven Central after sync (usually within 10–30 minutes). Use the `version` from [`gradle.properties`](gradle.properties) (e.g. `4.0-Beta-13`).
+Artifacts appear on Maven Central after sync (usually within 10–30 minutes). Use the `version` from [`gradle.properties`](gradle.properties) (e.g. `4.0-Beta-14`).
 
 **Maven** (`pom.xml`):
 
@@ -167,7 +183,7 @@ Artifacts appear on Maven Central after sync (usually within 10–30 minutes). U
 <dependency>
   <groupId>io.github.team-sneakymouse</groupId>
   <artifactId>magicspells-core</artifactId>
-  <version>4.0-Beta-13</version>
+  <version>4.0-Beta-14</version>
   <scope>provided</scope>
 </dependency>
 ```
@@ -180,7 +196,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-13")
+    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-14")
 }
 ```
 
@@ -192,7 +208,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-13")
+    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-14")
 }
 ```
 
@@ -221,8 +237,8 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
-    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-13")
-    compileOnly("io.github.team-sneakymouse:magicspells-factions:4.0-Beta-13") // example extension
+    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-14")
+    compileOnly("io.github.team-sneakymouse:magicspells-factions:4.0-Beta-14") // example extension
 }
 ```
 

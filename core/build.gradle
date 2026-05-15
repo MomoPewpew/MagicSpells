@@ -69,6 +69,7 @@ shadowJar {
     relocate("co.aikar.commands", "com.nisovin.magicspells.shaded.acf")
     relocate("co.aikar.locales", "com.nisovin.magicspells.shaded.locales")
     archiveClassifier.set("")
+    archiveFileName.set("MagicSpells.jar")
 }
 
 compileKotlin {

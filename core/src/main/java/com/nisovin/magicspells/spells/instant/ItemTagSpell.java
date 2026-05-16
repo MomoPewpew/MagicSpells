@@ -68,7 +68,17 @@ public class ItemTagSpell extends InstantSpell implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryOpen(InventoryOpenEvent event) {
+        if (isBagOfHoldingGui(event.getInventory())) return;
         tagInventory(event.getInventory());
+    }
+
+    /** SneakyBagOfHolding builds look-alike icons without magicitem PDC; do not re-tag them. */
+    private static boolean isBagOfHoldingGui(Inventory inventory) {
+        if (inventory == null) return false;
+        var holder = inventory.getHolder();
+        if (holder == null) return false;
+        String name = holder.getClass().getName();
+        return name.startsWith("com.sneakybagofholding.gui.BagInventoryHolder");
     }
 
     /**
@@ -77,6 +87,8 @@ public class ItemTagSpell extends InstantSpell implements Listener {
      * the item.
      */
     private void tagInventory(Inventory inventory) {
+        if (isBagOfHoldingGui(inventory))
+            return;
         ItemStack[] contents = inventory.getContents();
         boolean changed = false;
 
@@ -84,6 +96,13 @@ public class ItemTagSpell extends InstantSpell implements Listener {
             ItemStack item = contents[i];
             if (item == null || item.getType().isAir())
                 continue;
+
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null && meta.getPersistentDataContainer().has(
+                    new NamespacedKey("sneakybagofholding", "gui_display"),
+                    PersistentDataType.BYTE)) {
+                continue;
+            }
 
             MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(item);
             if (itemData == null)
@@ -94,7 +113,6 @@ public class ItemTagSpell extends InstantSpell implements Listener {
                 String internalName = tagMapping.internalName();
                 MagicItem targetMagicItem = tagMapping.magicItem();
                 if (targetData.matches(itemData)) {
-                    ItemMeta meta = item.getItemMeta();
                     if (meta == null)
                         continue;
                     String currentName = meta.getPersistentDataContainer().get(nameKey, PersistentDataType.STRING);

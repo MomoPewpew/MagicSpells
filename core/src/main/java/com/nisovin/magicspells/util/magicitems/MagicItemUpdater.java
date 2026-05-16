@@ -96,10 +96,23 @@ public class MagicItemUpdater {
         public void onInvOpen(InventoryOpenEvent event) {
             if (!MagicSpells.enableUpdateItemData())
                 return;
+            if (isBagOfHoldingGui(event.getInventory()))
+                return;
             updateInventory(event.getInventory());
         }
 
+        private static boolean isBagOfHoldingGui(Inventory inventory) {
+            if (inventory == null)
+                return false;
+            var holder = inventory.getHolder();
+            if (holder == null)
+                return false;
+            return holder.getClass().getName().startsWith("com.sneakybagofholding.gui.BagInventoryHolder");
+        }
+
         private void updateInventory(Inventory inv) {
+            if (isBagOfHoldingGui(inv))
+                return;
             ItemStack[] contents = inv.getContents();
             updateInventory(contents);
             inv.setContents(contents);
@@ -212,6 +225,10 @@ public class MagicItemUpdater {
             return itemStack;
 
         PersistentDataContainer container = meta.getPersistentDataContainer();
+
+        if (container.has(new NamespacedKey("sneakybagofholding", "gui_display"), PersistentDataType.BYTE)) {
+            return itemStack;
+        }
 
         String magicitemName = null;
 

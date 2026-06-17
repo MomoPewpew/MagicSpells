@@ -20,6 +20,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.ModifierResult;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -293,6 +294,11 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 						if (checkIsSupported && !newBlockData.isSupported(block.getLocation()))
 							continue;
+
+						ModifierResult modifierResult = locationModifiers.apply(caster, target, spellData);
+						if (!modifierResult.check()) {
+							continue;
+						}
 
 						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData, applyPhysics);
 

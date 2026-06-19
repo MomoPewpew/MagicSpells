@@ -295,9 +295,11 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 						if (checkIsSupported && !newBlockData.isSupported(block.getLocation()))
 							continue;
 
-						ModifierResult modifierResult = locationModifiers.apply(caster, target, spellData);
-						if (!modifierResult.check()) {
-							continue;
+						if (locationModifiers != null) {
+							ModifierResult modifierResult = locationModifiers.apply(caster, target, spellData);
+							if (!modifierResult.check()) {
+								continue;
+							}
 						}
 
 						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData, applyPhysics);

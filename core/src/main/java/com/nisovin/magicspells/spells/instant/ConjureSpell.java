@@ -10,6 +10,7 @@ import java.util.Set;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.ChatColor;
@@ -38,6 +39,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 
+import com.nisovin.magicspells.Perm;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.events.ConjureItemEvent;
 import com.nisovin.magicspells.util.Util;
@@ -1033,6 +1035,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 		private boolean isInvalidSoulbound(ItemStack item, Player player) {
 			if (item == null || !item.hasItemMeta())
+				return false;
+			if (Perm.NO_SOULBOUND.has(player) && player.getGameMode() == GameMode.CREATIVE)
 				return false;
 			String ownerUuid = item.getItemMeta().getPersistentDataContainer()
 					.get(new NamespacedKey(MagicSpells.getInstance(), "soulbound_owner"), PersistentDataType.STRING);

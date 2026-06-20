@@ -492,6 +492,8 @@ public class MagicSpells extends JavaPlugin {
 				"Allows casting without being affected by cooldowns");
 		addPermission(pm, "nocasttime", opsIgnoreCastTimes ? PermissionDefault.OP : PermissionDefault.FALSE,
 				"Allows casting without being affected by cast times");
+		addPermission(pm, "nosoulbound", PermissionDefault.FALSE,
+				"Allows ignoring soulbound item restrictions while in creative mode");
 		addPermission(pm, "notarget", PermissionDefault.FALSE, "Prevents being targeted by any targeted spells");
 		addPermission(pm, "silent", PermissionDefault.FALSE, "Prevents cast messages from being broadcast to players");
 

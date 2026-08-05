@@ -1,7 +1,9 @@
 package com.nisovin.magicspells.spells.instant;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,17 +18,21 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.ChatColor;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
@@ -39,10 +45,14 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 import com.nisovin.magicspells.Perm;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.events.ConjureItemEvent;
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.AttributeUtil;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.MagicSpells;
@@ -52,6 +62,8 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.managers.AttributeManager;
+import com.nisovin.magicspells.handlers.EnchantmentHandler;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spells.command.TomeSpell;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
@@ -91,6 +103,10 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	private boolean forceUpdateInventory;
 	private boolean calculateDropsIndividually;
 	private boolean saveConjurerName;
+	private boolean safeEnchants;
+
+	private final Map<Enchantment, Integer> enchantments = new HashMap<>();
+	private final Multimap<Attribute, AttributeModifier> attributes = HashMultimap.create();
 
 	private ConfigData<List<String>> itemListData;
 	private ConfigData<Boolean> omitSelectedSlot;
@@ -121,9 +137,67 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		forceUpdateInventory = getConfigBoolean("force-update-inventory", true);
 		calculateDropsIndividually = getConfigBoolean("calculate-drops-individually", true);
 		saveConjurerName = getConfigBoolean("save-conjurer-name", false);
+		safeEnchants = getConfigBoolean("safe-enchants", true);
 
 		itemListData = getConfigDataStringList("items", null);
 		omitSelectedSlot = getConfigDataBoolean("omit-selected-slot", false);
+
+		List<String> enchantmentList = getConfigStringList("enchantments", null);
+		if (enchantmentList != null && !enchantmentList.isEmpty()) {
+			for (String string : enchantmentList) {
+				Enchantment enchant = null;
+				int level = 1;
+				String[] str = string.split(" ");
+				if (str[0] != null) enchant = EnchantmentHandler.getEnchantment(str[0]);
+				if (str.length > 1 && str[1] != null) level = Integer.parseInt(str[1]);
+				if (enchant != null) enchantments.put(enchant, level);
+				else MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid enchantment defined: " + string);
+			}
+		}
+
+		// <attribute name> <value> (operation) (slot)
+		List<String> attributeList = getConfigStringList("attributes", null);
+		if (attributeList != null && !attributeList.isEmpty()) {
+			for (String str : attributeList) {
+				String[] args = str.split(" ");
+				if (args.length < 2) {
+					MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute defined: " + str);
+					continue;
+				}
+
+				Attribute attribute = AttributeUtil.getAttribute(args[0]);
+				if (attribute == null) {
+					MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute defined: " + str);
+					continue;
+				}
+
+				double value;
+				try {
+					value = Double.parseDouble(args[1]);
+				} catch (NumberFormatException e) {
+					MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute value defined: " + str);
+					continue;
+				}
+
+				AttributeModifier.Operation operation = AttributeModifier.Operation.ADD_NUMBER;
+				if (args.length >= 3) {
+					AttributeModifier.Operation parsed = AttributeUtil.getOperation(args[2]);
+					if (parsed != null) operation = parsed;
+					else MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute operation defined: " + args[2]);
+				}
+
+				EquipmentSlot slot = null;
+				if (args.length >= 4) {
+					try {
+						slot = EquipmentSlot.valueOf(args[3].toUpperCase());
+					} catch (IllegalArgumentException ignored) {
+						MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute slot defined: " + args[3]);
+					}
+				}
+
+				attributes.put(attribute, new AttributeModifier(UUID.randomUUID(), args[0], value, operation, slot));
+			}
+		}
 
 		pickupDelay = Math.max(pickupDelay, 0);
 	}
@@ -458,9 +532,40 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		if (quant > 0) {
 			ItemStack item = itemTypes[i].clone();
 			item.setAmount(quant);
+			applyEnchantments(item);
+			applyAttributes(item);
 			if (expiration > 0)
 				expirationHandler.addExpiresLine(item, expiration);
 			items.add(item);
+		}
+	}
+
+	private void applyEnchantments(ItemStack item) {
+		if (enchantments.isEmpty()) return;
+		for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+			Enchantment enchant = entry.getKey();
+			int level = entry.getValue();
+			if (!enchant.canEnchantItem(item)) continue;
+			if (safeEnchants && level > enchant.getMaxLevel()) level = enchant.getMaxLevel();
+			if (level <= 0) item.removeEnchantment(enchant);
+			else if (safeEnchants) item.addEnchantment(enchant, level);
+			else item.addUnsafeEnchantment(enchant, level);
+		}
+	}
+
+	private void applyAttributes(ItemStack item) {
+		if (attributes.isEmpty()) return;
+		AttributeManager attributeManager = MagicSpells.getAttributeManager();
+		for (Map.Entry<Attribute, AttributeModifier> entry : attributes.entries()) {
+			AttributeModifier stored = entry.getValue();
+			AttributeModifier modifier = new AttributeModifier(
+					UUID.randomUUID(),
+					stored.getName(),
+					stored.getAmount(),
+					stored.getOperation(),
+					stored.getSlot()
+			);
+			attributeManager.addItemAttribute(item, entry.getKey(), modifier);
 		}
 	}
 

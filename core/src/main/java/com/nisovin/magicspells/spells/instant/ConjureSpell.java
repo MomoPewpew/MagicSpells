@@ -53,6 +53,7 @@ import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.events.ConjureItemEvent;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.AttributeUtil;
+import com.nisovin.magicspells.util.compat.BagOfHoldingCompat;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.MagicSpells;
@@ -95,6 +96,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	private boolean stackExisting;
 	private boolean itemHasGravity;
 	private boolean addToInventory;
+	private boolean addToBagOfHolding;
 	private boolean addToEnderChest;
 	private boolean ignoreMaxStackSize;
 	private boolean powerAffectsChance;
@@ -129,6 +131,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		stackExisting = getConfigBoolean("stack-existing", true);
 		itemHasGravity = getConfigBoolean("gravity", true);
 		addToInventory = getConfigBoolean("add-to-inventory", false);
+		addToBagOfHolding = getConfigBoolean("add-to-bag-of-holding", true);
 		addToEnderChest = getConfigBoolean("add-to-ender-chest", false);
 		ignoreMaxStackSize = getConfigBoolean("ignore-max-stack-size", false);
 		powerAffectsChance = getConfigBoolean("power-affects-chance", true);
@@ -379,6 +382,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 		Location loc = player.getEyeLocation().add(player.getLocation().getDirection());
 		boolean updateInv = false;
+		boolean depositedToBag = false;
 		for (ItemStack itemOrg : items) {
 			if (itemOrg == null)
 				continue;
@@ -417,9 +421,30 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 				}
 			}
 
-			if (!added) {
+			// Prefer bag of holding (soft dep) before ender chest / inventory / drop.
+			// Commit bag only after the remainder is fully placed so we never leave a partial bag deposit.
+			int bagTake = 0;
+			String bagItemId = null;
+			ItemStack placeItem = item;
+			if (!added && addToBagOfHolding) {
+				bagItemId = BagOfHoldingCompat.resolveItemId(item);
+				if (bagItemId != null && BagOfHoldingCompat.isAutopickupEnabled(player, bagItemId)) {
+					bagTake = Math.min(item.getAmount(), BagOfHoldingCompat.getRemainingCapacity(player, bagItemId));
+					if (bagTake > 0) {
+						int remainder = item.getAmount() - bagTake;
+						if (remainder <= 0) {
+							placeItem = null;
+						} else {
+							placeItem = item.clone();
+							placeItem.setAmount(remainder);
+						}
+					}
+				}
+			}
+
+			if (!added && placeItem != null) {
 				if (addToEnderChest)
-					added = Util.addToInventory(player, player.getEnderChest(), item, stackExisting,
+					added = Util.addToInventory(player, player.getEnderChest(), placeItem, stackExisting,
 							ignoreMaxStackSize);
 				if (!added && addToInventory) {
 
@@ -429,22 +454,22 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 					}
 
 					if (offhand)
-						player.getEquipment().setItemInOffHand(item);
+						player.getEquipment().setItemInOffHand(placeItem);
 					else if (requiredSlot >= 0) {
 						ItemStack old = inv.getItem(requiredSlot);
-						if (old != null && Util.isSimilarNoFlags(item, old))
-							item.setAmount(item.getAmount() + old.getAmount());
-						inv.setItem(requiredSlot, item);
+						if (old != null && Util.isSimilarNoFlags(placeItem, old))
+							placeItem.setAmount(placeItem.getAmount() + old.getAmount());
+						inv.setItem(requiredSlot, placeItem);
 						added = true;
 						updateInv = true;
 					} else if (preferredSlot >= 0 && InventoryUtil.isNothing(preferredItem)) {
-						inv.setItem(preferredSlot, item);
+						inv.setItem(preferredSlot, placeItem);
 						added = true;
 						updateInv = true;
-					} else if (preferredSlot >= 0 && Util.isSimilarNoFlags(item, preferredItem)
-							&& preferredItem.getAmount() + item.getAmount() < item.getType().getMaxStackSize()) {
-						item.setAmount(item.getAmount() + preferredItem.getAmount());
-						inv.setItem(preferredSlot, item);
+					} else if (preferredSlot >= 0 && Util.isSimilarNoFlags(placeItem, preferredItem)
+							&& preferredItem.getAmount() + placeItem.getAmount() < placeItem.getType().getMaxStackSize()) {
+						placeItem.setAmount(placeItem.getAmount() + preferredItem.getAmount());
+						inv.setItem(preferredSlot, placeItem);
 						added = true;
 						updateInv = true;
 					} else {
@@ -452,15 +477,15 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 						if (Boolean.TRUE.equals(omitSelectedSlot.get(spellData))) {
 							omittedSlots = Collections.singleton(player.getInventory().getHeldItemSlot());
 						}
-						added = Util.addToInventory(player, inv, item, stackExisting, ignoreMaxStackSize, omittedSlots);
+						added = Util.addToInventory(player, inv, placeItem, stackExisting, ignoreMaxStackSize, omittedSlots);
 						if (added)
 							updateInv = true;
 					}
 				}
 				if (!added && (dropIfInventoryFull || !addToInventory)) {
-					int amt = item.getAmount();
+					int amt = placeItem.getAmount();
 					while (amt > 0) {
-						ItemStack drop = item.clone();
+						ItemStack drop = placeItem.clone();
 						drop.setAmount(Math.min(drop.getMaxStackSize(), amt));
 
 						Item i = player.getWorld().dropItem(loc, drop);
@@ -481,8 +506,17 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 					}
 					added = true;
 				}
-			} else
+			}
+
+			if (bagTake > 0 && bagItemId != null) {
+				if (placeItem == null || added) {
+					int deposited = BagOfHoldingCompat.deposit(player, bagItemId, bagTake);
+					added = deposited >= bagTake;
+					if (deposited > 0) depositedToBag = true;
+				}
+			} else if (added) {
 				updateInv = true;
+			}
 
 			if (!added)
 				succes = false;
@@ -493,6 +527,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		if (succes) {
 			if (updateInv && forceUpdateInventory)
 				player.updateInventory();
+			if (depositedToBag) BagOfHoldingCompat.playPickupFeedback(player);
 			playSpellEffects(EffectPosition.CASTER, player);
 		}
 		return succes;
@@ -764,6 +799,14 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 	public void setAddToInventory(boolean addToInventory) {
 		this.addToInventory = addToInventory;
+	}
+
+	public boolean shouldAddToBagOfHolding() {
+		return addToBagOfHolding;
+	}
+
+	public void setAddToBagOfHolding(boolean addToBagOfHolding) {
+		this.addToBagOfHolding = addToBagOfHolding;
 	}
 
 	public boolean shouldAddToEnderChest() {

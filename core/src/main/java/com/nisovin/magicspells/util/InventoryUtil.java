@@ -142,9 +142,17 @@ public class InventoryUtil {
 //	}
 
 	public static boolean inventoryContains(Inventory inventory, Map.Entry<MagicItemData, Integer> item) {
-		if (inventory == null) return false;
+		if (inventory == null || item == null) return false;
 		MagicItemData itemData = item.getKey();
 		if (itemData == null) return false;
+		return inventoryCount(inventory, itemData) >= item.getValue();
+	}
+
+	/**
+	 * Counts how many items in {@code inventory} match {@code itemData}.
+	 */
+	public static int inventoryCount(Inventory inventory, MagicItemData itemData) {
+		if (inventory == null || itemData == null) return 0;
 		int count = 0;
 		ItemStack[] items = inventory.getContents();
 		for (ItemStack itemStack : items) {
@@ -154,9 +162,8 @@ public class InventoryUtil {
 			if (magicItemData == null) continue;
 
 			if (itemData.matches(magicItemData)) count += itemStack.getAmount();
-			if (count >= item.getValue()) return true;
 		}
-		return false;
+		return count;
 	}
 
 	public static boolean inventoryContains(EntityEquipment entityEquipment, Map.Entry<MagicItemData, Integer> item) {

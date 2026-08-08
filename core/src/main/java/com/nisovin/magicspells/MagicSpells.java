@@ -62,6 +62,7 @@ import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.storage.StorageHandler;
 import com.nisovin.magicspells.util.prompt.PromptType;
 import com.nisovin.magicspells.util.compat.CompatBasics;
+import com.nisovin.magicspells.castmodifiers.conditions.util.DependsOn;
 import com.nisovin.magicspells.zones.NoMagicZoneManager;
 import com.nisovin.magicspells.spelleffects.SpellEffect;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
@@ -845,22 +846,45 @@ public class MagicSpells extends JavaPlugin {
 
 			// Load spell class
 			if (constructor == null) {
+				boolean missingDependency = false;
 				for (ClassLoader cl : classLoaders) {
 					Class<? extends Spell> spellClass;
 					try {
 						spellClass = cl.loadClass(className).asSubclass(Spell.class);
 					} catch (ClassNotFoundException e) {
 						continue;
+					} catch (NoClassDefFoundError e) {
+						error("Unable to load spell " + spellName + " (missing dependency for class " + className
+								+ ": " + e.getMessage() + ')');
+						missingDependency = true;
+						break;
+					}
+
+					DependsOn dependsOn = spellClass.getAnnotation(DependsOn.class);
+					if (dependsOn != null && !CompatBasics.pluginEnabled(dependsOn.plugin())) {
+						error("Unable to load spell " + spellName + " because plugin '" + dependsOn.plugin()
+								+ "' is not enabled (required by " + className + ')');
+						missingDependency = true;
+						break;
 					}
 
 					try {
 						constructor = spellClass.getConstructor(MagicConfig.class, String.class);
 					} catch (NoSuchMethodException e) {
 						continue;
+					} catch (NoClassDefFoundError e) {
+						error("Unable to load spell " + spellName + " (missing dependency for class " + className
+								+ ": " + e.getMessage() + ')');
+						missingDependency = true;
+						break;
 					}
 
 					constructor.setAccessible(true);
 					constructors.put(className, constructor);
+				}
+
+				if (constructor == null && missingDependency) {
+					continue;
 				}
 			}
 

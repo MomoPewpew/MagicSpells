@@ -167,6 +167,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected SpellReagents reagents;
 	protected List<String> reagentsList;
 	protected ConfigData<List<String>> reagentsData;
+	protected boolean consumeFromBagOfHolding;
 
 	protected ItemStack spellIcon;
 
@@ -503,6 +504,8 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		if (strXpAutoLearned != null)
 			strXpAutoLearned = strXpAutoLearned.replace("%s", name);
 
+		consumeFromBagOfHolding = config.getBoolean(path + "consume-from-bag-of-holding", false);
+
 		tags = new HashSet<>(config.getStringList(path + "tags", new ArrayList<>()));
 		tags.add("spell-class:" + getClass().getCanonicalName());
 		tags.add("spell-package:" + getClass().getPackage().getName());
@@ -523,7 +526,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 	protected SpellReagents getConfigReagents(String option, LivingEntity livingEntity) {
 		List<String> costList = config.getStringList("spells." + internalName + '.' + option, null);
 
-		return SpellReagents.fromList(costList, internalName, livingEntity);
+		return SpellReagents.fromList(costList, internalName, livingEntity, consumeFromBagOfHolding);
 	}
 
 	protected void initializeVariables() {
@@ -949,7 +952,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			reagentsList = this.reagentsData.get(spellData);
 			if (reagentsList == null)
 				reagentsList = new ArrayList<>();
-			reagents = SpellReagents.fromList(reagentsList, internalName, livingEntity);
+			reagents = SpellReagents.fromList(reagentsList, internalName, livingEntity, consumeFromBagOfHolding);
 		}
 		if (!hasReagents(livingEntity))
 			return SpellCastState.MISSING_REAGENTS;
@@ -968,7 +971,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		reagentsList = this.reagentsData.get(livingEntity, power, args);
 		if (reagentsList == null)
 			reagentsList = new ArrayList<>();
-		reagents = SpellReagents.fromList(reagentsList, internalName, livingEntity);
+		reagents = SpellReagents.fromList(reagentsList, internalName, livingEntity, consumeFromBagOfHolding);
 
 		// Get spell state
 		SpellCastState state = getCastState(livingEntity);
@@ -2352,7 +2355,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		reagentsList = this.reagentsData.get(livingEntity, power, args);
 		if (reagentsList == null)
 			reagentsList = new ArrayList<>();
-		reagents = SpellReagents.fromList(reagentsList, internalName, livingEntity);
+		reagents = SpellReagents.fromList(reagentsList, internalName, livingEntity, consumeFromBagOfHolding);
 		return reagents;
 	}
 

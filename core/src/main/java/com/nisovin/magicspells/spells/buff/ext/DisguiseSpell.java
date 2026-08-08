@@ -19,6 +19,7 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
+import com.nisovin.magicspells.castmodifiers.conditions.util.DependsOn;
 
 import me.libraryaddict.disguise.DisguiseAPI;
 import me.libraryaddict.disguise.disguisetypes.*;
@@ -26,6 +27,7 @@ import me.libraryaddict.disguise.disguisetypes.watchers.*;
 import me.libraryaddict.disguise.utilities.parser.DisguiseParser;
 
 // NOTE: LIBSDISGUISES IS REQUIRED FOR THIS
+@DependsOn(plugin = "LibsDisguises")
 public class DisguiseSpell extends BuffSpell {
 
 	private final Set<UUID> entities;

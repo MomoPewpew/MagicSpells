@@ -41,6 +41,11 @@ public class SpellReagents {
     }
 
     public static SpellReagents fromList(List<String> costList, String internalName, LivingEntity livingEntity) {
+        return fromList(costList, internalName, livingEntity, false);
+    }
+
+    public static SpellReagents fromList(List<String> costList, String internalName, LivingEntity livingEntity,
+            boolean consumeFromBagOfHolding) {
         SpellReagents spellReagents = new SpellReagents();
         if (costList == null || costList.isEmpty()) return spellReagents;
 
@@ -135,7 +140,9 @@ public class SpellReagents {
                                 yield null;
                             }
                             ItemReagent itemReagent = new ItemReagent();
-                            itemReagent.add(itemData, quantity);
+                            itemReagent.setConsumeFromBagOfHolding(consumeFromBagOfHolding);
+                            String bagItemId = MagicItems.getMagicItemByInternalName(data[0]) != null ? data[0] : null;
+                            itemReagent.add(itemData, quantity, bagItemId);
                             yield itemReagent;
                         }
                     };

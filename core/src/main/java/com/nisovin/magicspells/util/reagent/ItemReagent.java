@@ -2,19 +2,25 @@ package com.nisovin.magicspells.util.reagent;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.AbstractMap;
 
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.Inventory;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.InventoryUtil;
+import com.nisovin.magicspells.util.compat.BagOfHoldingCompat;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 
 public class ItemReagent extends Reagent {
     private Map<MagicItemData, Integer> itemMap;
+    private Map<MagicItemData, String> itemIds;
+    private boolean consumeFromBagOfHolding;
 
     public ItemReagent() {
         this.itemMap = new HashMap<>();
+        this.itemIds = new HashMap<>();
+        this.consumeFromBagOfHolding = false;
     }
 
     public int get(MagicItemData magicItem) {
@@ -22,16 +28,31 @@ public class ItemReagent extends Reagent {
     }
 
     public void add(MagicItemData magicItem, int quantity) {
+        add(magicItem, quantity, null);
+    }
+
+    public void add(MagicItemData magicItem, int quantity, String itemId) {
         if (itemMap.containsKey(magicItem)) {
             int currentQuantity = itemMap.get(magicItem);
             itemMap.put(magicItem, currentQuantity + quantity);
         } else {
             itemMap.put(magicItem, quantity);
         }
+        if (itemId != null && !itemId.isEmpty()) {
+            itemIds.put(magicItem, itemId);
+        }
     }
 
     public void set(MagicItemData magicItem, int quantity) {
         itemMap.put(magicItem, quantity);
+    }
+
+    public void setConsumeFromBagOfHolding(boolean consumeFromBagOfHolding) {
+        this.consumeFromBagOfHolding = consumeFromBagOfHolding;
+    }
+
+    public boolean isConsumeFromBagOfHolding() {
+        return consumeFromBagOfHolding;
     }
 
     public boolean isEmpty() {
@@ -45,7 +66,18 @@ public class ItemReagent extends Reagent {
                 Inventory inventory = player.getInventory();
                 for (Map.Entry<MagicItemData, Integer> item : itemMap.entrySet()) {
                     if (item == null) continue;
-                    if (InventoryUtil.inventoryContains(inventory, item)) continue;
+                    MagicItemData itemData = item.getKey();
+                    if (itemData == null) continue;
+                    int needed = item.getValue();
+                    int invCount = InventoryUtil.inventoryCount(inventory, itemData);
+                    if (invCount >= needed) continue;
+                    if (consumeFromBagOfHolding) {
+                        String itemId = itemIds.get(itemData);
+                        if (itemId != null) {
+                            int bagCount = BagOfHoldingCompat.getStoredAmount(player, itemId);
+                            if (invCount + bagCount >= needed) continue;
+                        }
+                    }
                     return false;
                 }
             }
@@ -58,8 +90,28 @@ public class ItemReagent extends Reagent {
         if (!itemMap.isEmpty()) {
             for (Map.Entry<MagicItemData, Integer> item : itemMap.entrySet()) {
                 if (item == null) continue;
-                if (livingEntity instanceof Player player) Util.removeFromInventory(player, player.getInventory(), item);
-                else if (livingEntity.getEquipment() != null) Util.removeFromInventory(livingEntity.getEquipment(), item);
+                MagicItemData itemData = item.getKey();
+                if (itemData == null) continue;
+                int needed = item.getValue();
+                if (livingEntity instanceof Player player) {
+                    int remaining = needed;
+                    if (consumeFromBagOfHolding) {
+                        String itemId = itemIds.get(itemData);
+                        if (itemId != null) {
+                            int stored = BagOfHoldingCompat.getStoredAmount(player, itemId);
+                            int fromBag = Math.min(remaining, stored);
+                            if (fromBag > 0) {
+                                remaining -= BagOfHoldingCompat.consume(player, itemId, fromBag);
+                            }
+                        }
+                    }
+                    if (remaining > 0) {
+                        Util.removeFromInventory(player, player.getInventory(),
+                                new AbstractMap.SimpleEntry<>(itemData, remaining));
+                    }
+                } else if (livingEntity.getEquipment() != null) {
+                    Util.removeFromInventory(livingEntity.getEquipment(), item);
+                }
             }
         }
     }
@@ -75,8 +127,9 @@ public class ItemReagent extends Reagent {
     @Override
     public ItemReagent clone() {
         ItemReagent cloned = new ItemReagent();
+        cloned.consumeFromBagOfHolding = consumeFromBagOfHolding;
         for (MagicItemData key : itemMap.keySet()) {
-            cloned.add(key, itemMap.get(key));
+            cloned.add(key, itemMap.get(key), itemIds.get(key));
         }
         return cloned;
     }

@@ -504,7 +504,7 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 		if (strXpAutoLearned != null)
 			strXpAutoLearned = strXpAutoLearned.replace("%s", name);
 
-		consumeFromBagOfHolding = config.getBoolean(path + "consume-from-bag-of-holding", false);
+		consumeFromBagOfHolding = config.getBoolean(path + "consume-from-bag-of-holding", true);
 
 		tags = new HashSet<>(config.getStringList(path + "tags", new ArrayList<>()));
 		tags.add("spell-class:" + getClass().getCanonicalName());

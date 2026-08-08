@@ -2,6 +2,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("io.github.goooler.shadow") version "8.1.7"
+    // 3.x requires Gradle 8.14+; wrapper is currently 8.12
+    id("xyz.jpenilla.run-paper") version "2.3.1"
 }
 
 repositories {
@@ -96,6 +98,12 @@ compileTestKotlin {
 
 tasks.named("build") {
     dependsOn(tasks.shadowJar)
+}
+
+tasks.named("runServer").configure {
+    minecraftVersion("1.21.4")
+    // Goooler shadow keeps the shadowJar task name; pin explicitly for the test server.
+    pluginJars.from(tasks.named("shadowJar").flatMap { it.archiveFile })
 }
 
 /*

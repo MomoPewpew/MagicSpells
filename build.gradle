@@ -10,6 +10,14 @@ wrapper {
   setDistributionType(Wrapper.DistributionType.ALL)
 }
 
+// Convenience aliases so ./gradlew runServer works from the MagicSpells root
+// (run-paper is applied on :core).
+tasks.register("runServer") {
+  group = "run"
+  description = "Runs a Paper 1.21.4 test server with the MagicSpells plugin."
+  dependsOn(":core:runServer")
+}
+
 gradle.taskGraph.whenReady { graph ->
   def publishingToCentral = graph.allTasks.any { task ->
     task.name.endsWith("publishToMavenCentral") ||

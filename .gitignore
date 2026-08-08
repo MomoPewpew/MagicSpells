@@ -22,3 +22,4 @@ Build/
 .gradle/
 .vscode/*
 .settings/*
+**/run/

@@ -1,5 +1,6 @@
 package com.nisovin.magicspells.listeners;
 
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,7 +18,8 @@ public class AlteredBlockListener implements Listener {
 
 		for (Entity entity : event.getChunk().getEntities()) {
 			if (!entity.getScoreboardTags().contains(MagicSpells.ALTERED_BLOCK_TAG)) continue;
-			if (manager.isTracked(entity.getLocation().getBlock())) continue;
+			Block block = manager.getMarkedBlock(entity);
+			if (block != null && manager.isTracked(block)) continue;
 			manager.restoreFromMarker(entity);
 		}
 	}

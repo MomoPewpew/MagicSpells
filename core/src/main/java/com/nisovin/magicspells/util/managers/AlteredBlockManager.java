@@ -19,14 +19,24 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.UUID;
 
 public class AlteredBlockManager {
 
     private final Map<Block, AlteredBlock> alteredBlocks = new HashMap<>();
     private final NamespacedKey blockDataKey;
+    private final NamespacedKey worldKey;
+    private final NamespacedKey xKey;
+    private final NamespacedKey yKey;
+    private final NamespacedKey zKey;
 
     public AlteredBlockManager() {
-        blockDataKey = new NamespacedKey(MagicSpells.getInstance(), "altered_block_data");
+        MagicSpells plugin = MagicSpells.getInstance();
+        blockDataKey = new NamespacedKey(plugin, "altered_block_data");
+        worldKey = new NamespacedKey(plugin, "altered_block_world");
+        xKey = new NamespacedKey(plugin, "altered_block_x");
+        yKey = new NamespacedKey(plugin, "altered_block_y");
+        zKey = new NamespacedKey(plugin, "altered_block_z");
     }
 
     public void add(Change change) {
@@ -113,15 +123,39 @@ public class AlteredBlockManager {
     }
 
     /**
+     * Resolves the block this marker was created for (from PDC), falling back to the entity's current block.
+     */
+    public Block getMarkedBlock(Entity entity) {
+        if (entity == null) return null;
+        var pdc = entity.getPersistentDataContainer();
+        String worldId = pdc.get(worldKey, PersistentDataType.STRING);
+        Integer x = pdc.get(xKey, PersistentDataType.INTEGER);
+        Integer y = pdc.get(yKey, PersistentDataType.INTEGER);
+        Integer z = pdc.get(zKey, PersistentDataType.INTEGER);
+        if (worldId != null && x != null && y != null && z != null) {
+            try {
+                org.bukkit.World world = Bukkit.getWorld(UUID.fromString(worldId));
+                if (world != null) return world.getBlockAt(x, y, z);
+                MagicSpells.error("Altered-block marker references missing world " + worldId);
+                return null;
+            } catch (IllegalArgumentException e) {
+                MagicSpells.error("Altered-block marker has invalid world UUID: " + worldId);
+                return null;
+            }
+        }
+        return entity.getLocation().getBlock();
+    }
+
+    /**
      * Restores a block from an orphan marker (prior session) and removes the entity.
      */
     public void restoreFromMarker(Entity entity) {
         if (entity == null || !entity.isValid()) return;
         if (!entity.getScoreboardTags().contains(MagicSpells.ALTERED_BLOCK_TAG)) return;
 
+        Block block = getMarkedBlock(entity);
         String dataString = entity.getPersistentDataContainer().get(blockDataKey, PersistentDataType.STRING);
-        Block block = entity.getLocation().getBlock();
-        if (dataString != null) {
+        if (block != null && dataString != null) {
             try {
                 block.setBlockData(Bukkit.createBlockData(dataString), false);
             } catch (IllegalArgumentException e) {
@@ -139,7 +173,12 @@ public class AlteredBlockManager {
         marker.setSilent(true);
         marker.setInvulnerable(true);
         marker.addScoreboardTag(MagicSpells.ALTERED_BLOCK_TAG);
-        marker.getPersistentDataContainer().set(blockDataKey, PersistentDataType.STRING, originalData.getAsString());
+        var pdc = marker.getPersistentDataContainer();
+        pdc.set(blockDataKey, PersistentDataType.STRING, originalData.getAsString());
+        pdc.set(worldKey, PersistentDataType.STRING, block.getWorld().getUID().toString());
+        pdc.set(xKey, PersistentDataType.INTEGER, block.getX());
+        pdc.set(yKey, PersistentDataType.INTEGER, block.getY());
+        pdc.set(zKey, PersistentDataType.INTEGER, block.getZ());
         return marker;
     }
 

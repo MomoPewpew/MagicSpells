@@ -99,6 +99,7 @@ public class MagicSpells extends JavaPlugin {
 
 	public static final String ENTITY_TAG = "MS_ENTITY";
 	public static final String EXPIRATION_TIME_MILLIS_TAG = "MS_EXPIRATION_TIME_MILLIS";
+	public static final String ALTERED_BLOCK_TAG = "MS_ALTERED_BLOCK";
 	public static final String FIREWORK_METADATA_KEY = "MSFirework";
 
 	private Set<Material> losTransparentBlocks;
@@ -678,6 +679,7 @@ public class MagicSpells extends JavaPlugin {
 		}
 
 		registerEvents(new EntityListener());
+		registerEvents(new AlteredBlockListener());
 
 		log("...done");
 

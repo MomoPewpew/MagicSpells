@@ -1,11 +1,18 @@
 package com.nisovin.magicspells.util.managers;
 
 import com.nisovin.magicspells.MagicSpells;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.sign.Side;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Marker;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,10 +23,19 @@ import java.util.HashMap;
 public class AlteredBlockManager {
 
     private final Map<Block, AlteredBlock> alteredBlocks = new HashMap<>();
+    private final NamespacedKey blockDataKey;
+
+    public AlteredBlockManager() {
+        blockDataKey = new NamespacedKey(MagicSpells.getInstance(), "altered_block_data");
+    }
 
     public void add(Change change) {
+        boolean isNew = !alteredBlocks.containsKey(change.block());
         AlteredBlock alteredBlock = alteredBlocks.computeIfAbsent(change.block(), b -> new AlteredBlock(change));
         alteredBlock.changes.add(change);
+        if (isNew) {
+            alteredBlock.marker = spawnMarker(change.block(), change.fromData());
+        }
     }
 
     /**
@@ -49,6 +65,10 @@ public class AlteredBlockManager {
         Change change = new Change(internalName, block, fromData, fromState);
         add(change);
         return change;
+    }
+
+    public boolean isTracked(Block block) {
+        return alteredBlocks.containsKey(block);
     }
 
     public List<Change> getByInternalName(String internalName) {
@@ -92,10 +112,49 @@ public class AlteredBlockManager {
         }
     }
 
+    /**
+     * Restores a block from an orphan marker (prior session) and removes the entity.
+     */
+    public void restoreFromMarker(Entity entity) {
+        if (entity == null || !entity.isValid()) return;
+        if (!entity.getScoreboardTags().contains(MagicSpells.ALTERED_BLOCK_TAG)) return;
+
+        String dataString = entity.getPersistentDataContainer().get(blockDataKey, PersistentDataType.STRING);
+        Block block = entity.getLocation().getBlock();
+        if (dataString != null) {
+            try {
+                block.setBlockData(Bukkit.createBlockData(dataString), false);
+            } catch (IllegalArgumentException e) {
+                MagicSpells.error("Invalid altered-block marker BlockData at " + block.getLocation() + ": " + dataString);
+            }
+        }
+        entity.remove();
+    }
+
+    private Marker spawnMarker(Block block, BlockData originalData) {
+        Location loc = block.getLocation().add(0.5, 0.5, 0.5);
+        Marker marker = (Marker) block.getWorld().spawnEntity(loc, EntityType.MARKER);
+        marker.setPersistent(true);
+        marker.setGravity(false);
+        marker.setSilent(true);
+        marker.setInvulnerable(true);
+        marker.addScoreboardTag(MagicSpells.ALTERED_BLOCK_TAG);
+        marker.getPersistentDataContainer().set(blockDataKey, PersistentDataType.STRING, originalData.getAsString());
+        return marker;
+    }
+
+    private void removeMarker(AlteredBlock alteredBlock) {
+        if (alteredBlock.marker != null && alteredBlock.marker.isValid()) {
+            alteredBlock.marker.remove();
+        }
+        alteredBlock.marker = null;
+    }
+
     public class AlteredBlock {
         final BlockData originalBlockData;
         final BlockState originalBlockState;
         final List<Change> changes = new ArrayList<>();
+        Entity marker;
 
         public AlteredBlock(Change change) {
             this.originalBlockData = change.fromData();
@@ -111,6 +170,7 @@ public class AlteredBlockManager {
                 if (alteredBlock.changes.size() == 1) {
                     // Restore to original state
                     restoreBlockState(alteredBlock.originalBlockData, alteredBlock.originalBlockState, applyPhysics);
+                    manager.removeMarker(alteredBlock);
                     manager.alteredBlocks.remove(block);
                 } else {
                     // Restore to previous change state

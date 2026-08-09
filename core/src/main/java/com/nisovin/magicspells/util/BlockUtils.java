@@ -203,8 +203,7 @@ public class BlockUtils {
 		}
 	}
 
-	public static void setBlockData(Block block, BlockData oldBlockData, BlockData newBlockData, boolean mergeBlockData,
-			boolean applyPhysics) {
+	public static BlockData mergeBlockData(BlockData oldBlockData, BlockData newBlockData, boolean mergeBlockData) {
 		BlockData clone = newBlockData.clone();
 
 		if (mergeBlockData) {
@@ -245,7 +244,12 @@ public class BlockUtils {
 			}
 		}
 
-		block.setBlockData(clone, applyPhysics);
+		return clone;
+	}
+
+	public static void setBlockData(Block block, BlockData oldBlockData, BlockData newBlockData, boolean mergeBlockData,
+			boolean applyPhysics) {
+		block.setBlockData(mergeBlockData(oldBlockData, newBlockData, mergeBlockData), applyPhysics);
 	}
 
 	public static boolean isContainer(Block block) {

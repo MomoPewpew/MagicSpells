@@ -1,19 +1,20 @@
 package com.nisovin.magicspells.util;
 
 import java.util.List;
-import java.util.Random;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 import org.bukkit.block.BlockState;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 public class TemporaryBlockSet implements Runnable {
 
@@ -22,58 +23,84 @@ public class TemporaryBlockSet implements Runnable {
 	private LivingEntity livingEntity;
 	private Material original;
 	private boolean callPlaceEvent;
+	private final String internalName;
+	private final boolean applyPhysics;
 
-	private List<Block> blocks;
+	private List<AlteredBlockManager.Change> changes;
 	private List<Material> replaceMaterials;
 
 	private BlockSetRemovalCallback callback;
 
 	private boolean bypassDippGen;
 	
-	public TemporaryBlockSet(Material original, Material replaceWith, boolean callPlaceEvent, LivingEntity livingEntity, boolean bypassDippGen) {
+	public TemporaryBlockSet(String internalName, Material original, Material replaceWith, boolean callPlaceEvent,
+			LivingEntity livingEntity, boolean bypassDippGen) {
+		this(internalName, original, replaceWith, callPlaceEvent, livingEntity, bypassDippGen, false);
+	}
+
+	public TemporaryBlockSet(String internalName, Material original, Material replaceWith, boolean callPlaceEvent,
+			LivingEntity livingEntity, boolean bypassDippGen, boolean applyPhysics) {
+		this.internalName = internalName;
 		this.original = original;
 		this.callPlaceEvent = callPlaceEvent;
 		this.livingEntity = livingEntity;
 		this.bypassDippGen = bypassDippGen;
+		this.applyPhysics = applyPhysics;
 
 		random = ThreadLocalRandom.current();
-		blocks = new ArrayList<>();
+		changes = new ArrayList<>();
 		replaceMaterials = new ArrayList<>();
 
 		replaceMaterials.add(replaceWith);
 	}
 
-	public TemporaryBlockSet(Material original, List<Material> replaceMaterials, boolean callPlaceEvent, LivingEntity livingEntity, boolean bypassDippGen) {
+	public TemporaryBlockSet(String internalName, Material original, List<Material> replaceMaterials,
+			boolean callPlaceEvent, LivingEntity livingEntity, boolean bypassDippGen) {
+		this(internalName, original, replaceMaterials, callPlaceEvent, livingEntity, bypassDippGen, false);
+	}
+
+	public TemporaryBlockSet(String internalName, Material original, List<Material> replaceMaterials,
+			boolean callPlaceEvent, LivingEntity livingEntity, boolean bypassDippGen, boolean applyPhysics) {
+		this.internalName = internalName;
 		this.original = original;
 		this.replaceMaterials = replaceMaterials;
 		this.callPlaceEvent = callPlaceEvent;
 		this.livingEntity = livingEntity;
 		this.bypassDippGen = bypassDippGen;
+		this.applyPhysics = applyPhysics;
 
 		random = new Random();
-		blocks = new ArrayList<>();
+		changes = new ArrayList<>();
 	}
 	
 	public void add(Block block) {
 		if (block.getType() != original) return;
 		int r = random.nextInt(replaceMaterials.size());
+		Material replaceWith = replaceMaterials.get(r);
+
 		if (!callPlaceEvent) {
-			block.setType(replaceMaterials.get(r));
-			blocks.add(block);
+			changes.add(MagicSpells.getAlteredBlockManager().apply(internalName, block, replaceWith, applyPhysics));
 			return;
 		}
 
 		BlockState state = block.getState();
-		block.setType(replaceMaterials.get(r), false);
+		AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, block, replaceWith,
+				false);
 		MagicSpellsBlockPlaceEvent event = null;
-		if (livingEntity instanceof Player) event = new MagicSpellsBlockPlaceEvent(block, state, block, livingEntity.getEquipment().getItemInMainHand(), (Player) livingEntity, true, bypassDippGen);
+		if (livingEntity instanceof Player) {
+			event = new MagicSpellsBlockPlaceEvent(block, state, block, livingEntity.getEquipment().getItemInMainHand(),
+					(Player) livingEntity, true, bypassDippGen);
+		}
 		if (event != null) EventUtil.call(event);
-		if (event != null && event.isCancelled()) BlockUtils.setTypeAndData(block, original, original.createBlockData(), false);
-		else blocks.add(block);
+		if (event != null && event.isCancelled()) change.undo(false);
+		else changes.add(change);
 	}
 	
 	public boolean contains(Block block) {
-		return blocks.contains(block);
+		for (AlteredBlockManager.Change change : changes) {
+			if (change.block().equals(block)) return true;
+		}
+		return false;
 	}
 	
 	public void removeAfter(int ticks) {
@@ -81,7 +108,7 @@ public class TemporaryBlockSet implements Runnable {
 	}
 	
 	public void removeAfter(int ticks, BlockSetRemovalCallback callback) {
-		if (blocks.isEmpty()) return;
+		if (changes.isEmpty()) return;
 		this.callback = callback;
 		MagicSpells.scheduleDelayedTask(this, ticks);
 	}
@@ -93,9 +120,10 @@ public class TemporaryBlockSet implements Runnable {
 	}
 	
 	public void remove() {
-		for (Block block : blocks) {
-			if (replaceMaterials.contains(block.getType())) block.setType(original);
+		for (int i = changes.size() - 1; i >= 0; i--) {
+			changes.get(i).undo(applyPhysics);
 		}
+		changes.clear();
 		livingEntity = null;
 	}
 	

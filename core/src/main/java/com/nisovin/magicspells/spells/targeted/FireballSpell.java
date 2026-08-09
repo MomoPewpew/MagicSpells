@@ -38,6 +38,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedEntityFromLocationSpell;
 import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 public class FireballSpell extends TargetedSpell implements TargetedEntityFromLocationSpell {
 
@@ -270,22 +271,24 @@ public class FireballSpell extends TargetedSpell implements TargetedEntityFromLo
 			}
 
 			if (!noFire) {
-				Set<Block> fires = new HashSet<>();
+				Set<AlteredBlockManager.Change> fires = new HashSet<>();
 				for (int x = loc.getBlockX() - 1; x <= loc.getBlockX() + 1; x++) {
 					for (int y = loc.getBlockY() - 1; y <= loc.getBlockY() + 1; y++) {
 						for (int z = loc.getBlockZ() - 1; z <= loc.getBlockZ() + 1; z++) {
 							if (!BlockUtils.isAir(loc.getWorld().getBlockAt(x, y, z).getType()))
 								continue;
 							Block b = loc.getWorld().getBlockAt(x, y, z);
-							BlockUtils.setTypeAndData(b, Material.FIRE, Material.FIRE.createBlockData(), false);
-							fires.add(b);
+							fires.add(MagicSpells.getAlteredBlockManager().apply(internalName, b, Material.FIRE, false));
 						}
 					}
 				}
 				fireball.remove();
 				if (!fires.isEmpty()) {
-					MagicSpells.scheduleDelayedTask(() -> fires.stream().filter(b -> b.getType() == Material.FIRE)
-							.forEachOrdered(b -> b.setType(Material.AIR)), TimeUtil.TICKS_PER_SECOND);
+					MagicSpells.scheduleDelayedTask(() -> {
+						for (AlteredBlockManager.Change change : fires) {
+							if (change.block().getType() == Material.FIRE) change.undo(false);
+						}
+					}, TimeUtil.TICKS_PER_SECOND);
 				}
 			}
 		} else {

@@ -36,6 +36,7 @@ import com.nisovin.magicspells.util.config.FunctionData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.MagicSpellsEntityDamageByEntityEvent;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpell {
 
@@ -284,7 +285,8 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 					if (!preventBlocks) {
 						Block b = block.getLocation().getBlock();
 						if (b.getType() == Material.AIR) {
-							BlockUtils.setBlockFromFallingBlock(b, block, true);
+							info.change = MagicSpells.getAlteredBlockManager().apply(internalName, b,
+									block.getBlockData(), true);
 							info.targetBlock = b;
 						}
 					}
@@ -379,9 +381,13 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 					Block landBlock = BlockUtils
 							.findNearestAirRecursive(event.getBlock().getLocation().add(0.5, 0.5, 0.5), 3);
 					if (landBlock != null) {
-						landBlock.setBlockData(event.getBlockData(), false);
-						if (info != null)
+						if (info != null) {
+							info.change = MagicSpells.getAlteredBlockManager().apply(internalName, landBlock,
+									event.getBlockData(), false);
 							info.targetBlock = landBlock;
+						} else {
+							landBlock.setBlockData(event.getBlockData(), false);
+						}
 					}
 				}
 
@@ -433,6 +439,7 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 
 		public final BlockData blockData;
 		public Block targetBlock;
+		public AlteredBlockManager.Change change;
 
 		public ThrownBlock(BlockData blockData, LivingEntity caster, float power, String[] args) {
 			this.blockData = blockData;
@@ -446,9 +453,10 @@ public class ThrowBlockSpell extends InstantSpell implements TargetedLocationSpe
 		}
 
 		public boolean undo() {
-			if (targetBlock != null && targetBlock.getBlockData() != null
-					&& targetBlock.getBlockData().equals(blockData)) {
-				targetBlock.setType(Material.AIR, false);
+			if (change != null) {
+				change.undo(false);
+				change = null;
+				targetBlock = null;
 				return true;
 			}
 			return false;

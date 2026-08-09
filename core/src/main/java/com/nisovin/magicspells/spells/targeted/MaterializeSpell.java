@@ -1,7 +1,9 @@
 package com.nisovin.magicspells.spells.targeted;
 
 import java.util.Set;
+import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ArrayList;
 
@@ -28,6 +30,7 @@ import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.events.SpellTargetLocationEvent;
 import com.nisovin.magicspells.events.MagicSpellsBlockPlaceEvent;
 import com.nisovin.magicspells.events.MagicSpellsBlockBreakEvent;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 public class MaterializeSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -37,7 +40,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 	 * Thank You! Shadoward12!
 	 */
 
-	private List<Block> blocks;
+	private Map<Block, AlteredBlockManager.Change> blocks;
 	private boolean removeBlocks;
 
 	// Normal Features
@@ -96,7 +99,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 		fallHeight = getConfigDataDouble("fall-height", 0.5);
 
 		removeBlocks = getConfigBoolean("remove-blocks", true);
-		blocks = new ArrayList<>();
+		blocks = new HashMap<>();
 	}
 
 	@Override
@@ -148,8 +151,8 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 
 	@Override
 	public void turnOff() {
-		for (Block b : blocks) {
-			b.setType(Material.AIR);
+		for (AlteredBlockManager.Change change : blocks.values()) {
+			change.undo(applyPhysics);
 		}
 
 		blocks.clear();
@@ -363,6 +366,8 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 	private boolean materialize(Player player, Block block, Block against, float power, String[] args) {
 		BlockState blockState = block.getState();
 
+		boolean temporary = (removeBlocks || resetDelay > 0) && !falling;
+
 		if (checkPlugins && player != null) {
 			block.setType(material, false);
 			MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(block, blockState, against,
@@ -372,9 +377,14 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 			if (event.isCancelled())
 				return false;
 		}
-		if (!falling)
-			block.setType(material, applyPhysics);
-		else
+		AlteredBlockManager.Change change = null;
+		if (!falling) {
+			if (temporary) {
+				change = MagicSpells.getAlteredBlockManager().apply(internalName, block, material, applyPhysics);
+			} else {
+				block.setType(material, applyPhysics);
+			}
+		} else
 			block.getLocation().getWorld().spawnFallingBlock(
 					block.getLocation().add(0.5, fallHeight.get(player, null, power, args), 0.5),
 					material.createBlockData());
@@ -389,10 +399,11 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 
 		if (playBreakEffect)
 			block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType());
-		if (removeBlocks)
-			blocks.add(block);
+		if (change != null)
+			blocks.put(block, change);
 
-		if (resetDelay > 0 && !falling) {
+		if (resetDelay > 0 && change != null) {
+			AlteredBlockManager.Change finalChange = change;
 			MagicSpells.scheduleDelayedTask(() -> {
 				if (materials.contains(block.getType())) {
 					blocks.remove(block);
@@ -403,7 +414,7 @@ public class MaterializeSpell extends TargetedSpell implements TargetedLocationS
 						if (event.isCancelled())
 							return;
 					}
-					block.setType(Material.AIR);
+					finalChange.undo(applyPhysics);
 					playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, block.getLocation(), data);
 					if (playBreakEffect)
 						block.getWorld().playEffect(block.getLocation(), Effect.STEP_SOUND, block.getType());

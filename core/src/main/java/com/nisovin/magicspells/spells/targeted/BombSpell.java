@@ -1,8 +1,8 @@
 package com.nisovin.magicspells.spells.targeted;
 
-import java.util.Set;
+import java.util.Map;
 import java.util.List;
-import java.util.HashSet;
+import java.util.HashMap;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -20,10 +20,11 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 
-	private Set<Block> blocks;
+	private Map<Block, AlteredBlockManager.Change> blocks;
 
 	private Material material;
 	private String materialName;
@@ -49,7 +50,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		targetSpellName = getConfigString("spell", "");
 
-		blocks = new HashSet<>();
+		blocks = new HashMap<>();
 	}
 
 	@Override
@@ -68,8 +69,8 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 	public void turnOff() {
 		super.turnOff();
 
-		for (Block b : blocks) {
-			b.setType(Material.AIR);
+		for (AlteredBlockManager.Change change : blocks.values()) {
+			change.undo(false);
 		}
 
 		blocks.clear();
@@ -119,8 +120,9 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 		if (!BlockUtils.isAir(block.getType()))
 			return false;
 
-		blocks.add(block);
-		block.setType(material);
+		AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, block, material,
+				false);
+		blocks.put(block, change);
 
 		SpellData data = new SpellData(livingEntity, loc, power, args);
 		if (livingEntity != null)
@@ -142,7 +144,7 @@ public class BombSpell extends TargetedSpell implements TargetedLocationSpell {
 					stop(true);
 					if (material.equals(block.getType())) {
 						blocks.remove(block);
-						block.setType(Material.AIR);
+						change.undo(false);
 						playSpellEffects(EffectPosition.DELAYED, l, data);
 						if (targetSpell != null)
 							targetSpell.subcast(livingEntity, l, power, args);

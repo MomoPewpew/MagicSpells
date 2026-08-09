@@ -23,6 +23,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 import com.nisovin.magicspells.util.config.ConfigData;
 public class WalkwaySpell extends BuffSpell {
@@ -136,12 +137,12 @@ public class WalkwaySpell extends BuffSpell {
 
 	}
 
-	private static class Platform {
+	private class Platform {
 		
 		private LivingEntity entity;
 		private Material materialPlatform;
 		private int sizePlatform;
-		private List<Block> platform;
+		private Map<Block, AlteredBlockManager.Change> platform;
 
 		private int prevX;
 		private int prevZ;
@@ -153,7 +154,7 @@ public class WalkwaySpell extends BuffSpell {
 			this.entity = entity;
 			this.materialPlatform = material;
 			this.sizePlatform = size;
-			this.platform = new ArrayList<>();
+			this.platform = new HashMap<>();
 
 			move();
 		}
@@ -214,11 +215,14 @@ public class WalkwaySpell extends BuffSpell {
 		}
 
 		private boolean blockInPlatform(Block block) {
-			return platform.contains(block);
+			return platform.containsKey(block);
 		}
 
 		public void remove() {
-			platform.stream().forEachOrdered(b -> b.setType(Material.AIR));
+			for (AlteredBlockManager.Change change : platform.values()) {
+				change.undo(false);
+			}
+			platform.clear();
 		}
 
 		private void drawCarpet(Block origin, int dirX, int dirY, int dirZ) {
@@ -239,21 +243,21 @@ public class WalkwaySpell extends BuffSpell {
 			}
 
 			// Remove old blocks
-			Iterator<Block> iter = platform.iterator();
+			Iterator<Map.Entry<Block, AlteredBlockManager.Change>> iter = platform.entrySet().iterator();
 			while (iter.hasNext()) {
-				Block b = iter.next();
+				Map.Entry<Block, AlteredBlockManager.Change> entry = iter.next();
+				Block b = entry.getKey();
 				if (!blocks.contains(b)) {
-					b.setType(Material.AIR);
+					entry.getValue().undo(false);
 					iter.remove();
 				}
 			}
 
 			// Set new blocks
 			for (Block b : blocks) {
-				if (platform.contains(b) || BlockUtils.isAir(b.getType())) {
-					BlockUtils.setTypeAndData(b, mat, mat.createBlockData(), false);
-					platform.add(b);
-				}
+				if (platform.containsKey(b)) continue;
+				if (!BlockUtils.isAir(b.getType())) continue;
+				platform.put(b, MagicSpells.getAlteredBlockManager().apply(internalName, b, mat, false));
 			}
 		}
 

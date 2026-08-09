@@ -2,24 +2,31 @@ package com.nisovin.magicspells.util;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.bukkit.World;
 import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
+
+import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 public class BlockPlatform {
 
+	private final String internalName;
 	private Material platformType;
 	private Material replaceType;
 	private Block center;
 	private int size;
 	private boolean moving;
 	private String type;
-	private List<Block> blocks;
+	private Map<Block, AlteredBlockManager.Change> changes;
 		
-	public BlockPlatform(Material platformType, Material replaceType, Block center, int size, boolean moving, String type) {
+	public BlockPlatform(String internalName, Material platformType, Material replaceType, Block center, int size,
+			boolean moving, String type) {
+		this.internalName = internalName;
 		this.platformType = platformType;
 		this.replaceType = replaceType;
 		this.center = center;
@@ -27,7 +34,7 @@ public class BlockPlatform {
 		this.moving = moving;
 		this.type = type;
 		
-		if (moving) blocks = new ArrayList<>();
+		if (moving) changes = new HashMap<>();
 		
 		createPlatform();
 	}
@@ -48,7 +55,7 @@ public class BlockPlatform {
 				for (int z = cz - size; z <= cz + size; z++) {
 					block = world.getBlockAt(x, cy, z);
 					above = block.getRelative(0, 1, 0);
-					if ((block.getType() == replaceType && (cy >= max - 1 || (blocks != null && blocks.contains(above)) || above.getType() == Material.AIR)) || (blocks != null && blocks.contains(block))) {
+					if ((block.getType() == replaceType && (cy >= max - 1 || (changes != null && changes.containsKey(above)) || above.getType() == Material.AIR)) || (changes != null && changes.containsKey(block))) {
 						// Only add if it's a replaceable block and has air above, or if it is already part of the platform
 						platform.add(block);
 					}
@@ -60,7 +67,7 @@ public class BlockPlatform {
 				for (int y = center.getY() - size; y <= center.getY() + size; y++) {
 					for (int z = center.getZ()-size; z <= center.getZ() + size; z++) {
 						block = center.getWorld().getBlockAt(x, y, z);
-						if (block.getType() == replaceType || (blocks != null && blocks.contains(block))) {
+						if (block.getType() == replaceType || (changes != null && changes.containsKey(block))) {
 							// Only add if it's a replaceable block or if it is already part of the block set
 							platform.add(block);
 						}
@@ -70,27 +77,26 @@ public class BlockPlatform {
 		}
 		
 		// Remove old platform blocks
-		if (moving && blocks != null) {
-			for (Block block : blocks) {
+		if (moving && changes != null) {
+			for (Map.Entry<Block, AlteredBlockManager.Change> entry : new HashMap<>(changes).entrySet()) {
+				Block block = entry.getKey();
 				if (!platform.contains(block) && block.getType() == platformType) {
-					BlockState state = block.getState();
-					state.setType(replaceType);
-					state.update(true, false);
+					entry.getValue().undo(false);
+					changes.remove(block);
 				}
 			}
 		}
 		
 		// Add new platform blocks
 		for (Block block : platform) {
-			if (blocks == null || !blocks.contains(block)) {
-				BlockState state = block.getState();
-				state.setType(platformType);
-				state.update(true, false);
+			if (changes == null || !changes.containsKey(block)) {
+				if (moving) {
+					changes.put(block, MagicSpells.getAlteredBlockManager().apply(internalName, block, platformType, false));
+				} else {
+					block.setType(platformType, false);
+				}
 			}
 		}
-		
-		// Update platform block set
-		if (moving) blocks = platform;
 	}
 	
 	public boolean movePlatform(Block center) {
@@ -122,20 +128,18 @@ public class BlockPlatform {
 	}
 	
 	public boolean blockInPlatform(Block block) {
-		return blocks.contains(block);
+		return changes != null && changes.containsKey(block);
 	}
 	
 	public void destroyPlatform() {		
 		// Remove platform blocks
-		if (moving) {
-			for (Block block : blocks) {
-				if (block.getType() != platformType) continue;
-				BlockState state = block.getState();
-				state.setType(replaceType);
-				state.update(true, false);
+		if (moving && changes != null) {
+			for (AlteredBlockManager.Change change : changes.values()) {
+				change.undo(false);
 			}
+			changes.clear();
 		}
-		blocks = null;
+		changes = null;
 	}
 	
 	public Block getCenter () {

@@ -28,6 +28,7 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 
 import com.nisovin.magicspells.Subspell;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -247,8 +248,9 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 	private void createPulser(LivingEntity caster, Block block, Location from, float power, String[] args) {
 		if (blockData == null)
 			return;
-		block.setBlockData(blockData, false);
-		pulsers.put(block, new Pulser(caster, block, from, power, args));
+		AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, block, blockData,
+				false);
+		pulsers.put(block, new Pulser(caster, block, from, power, args, change));
 		ticker.start();
 		if (caster != null)
 			playSpellEffects(caster, block.getLocation().add(0.5, 0.5, 0.5), power, args);
@@ -295,7 +297,6 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		if (unbreakable)
 			return;
 		pulser.stop();
-		event.getBlock().setType(Material.AIR);
 		pulsers.remove(event.getBlock());
 	}
 
@@ -372,6 +373,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 		private final float power;
 		private int pulseCount;
 		private boolean cancelOnDeath;
+		private final AlteredBlockManager.Change change;
 
 		private final double maxDistanceSq;
 		private final int totalPulses;
@@ -383,7 +385,8 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			TICK, CLICK;
 		}
 
-		private Pulser(LivingEntity caster, Block block, Location from, float power, String[] args) {
+		private Pulser(LivingEntity caster, Block block, Location from, float power, String[] args,
+				AlteredBlockManager.Change change) {
 			this.caster = caster;
 			this.block = block;
 			this.location = block.getLocation().add(0.5, 0.5, 0.5);
@@ -391,6 +394,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 			this.args = args;
 			this.pulseCount = 0;
 			this.cancelOnDeath = PulserSpell.this.cancelOnDeath;
+			this.change = change;
 
 			data = new SpellData(caster, this.location, power, args);
 
@@ -496,7 +500,7 @@ public class PulserSpell extends TargetedSpell implements TargetedLocationSpell 
 
 			if (!block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4))
 				block.getChunk().load();
-			block.setType(Material.AIR);
+			change.undo(false);
 			playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, block.getLocation(), data);
 			if (spellOnBreak != null)
 				spellOnBreak.subcast(caster, location, power, args);

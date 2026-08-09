@@ -23,6 +23,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.events.SpellTargetEvent;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell {
 
@@ -86,8 +87,9 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 	public void turnOff() {
 		super.turnOff();
 
-		for (Block block : blocks.keySet()) {
-			block.setType(Material.AIR);
+		for (Map.Entry<Block, CarpetData> entry : blocks.entrySet()) {
+			if (entry.getValue().change != null) entry.getValue().change.undo(false);
+			else entry.getKey().setType(Material.AIR);
 		}
 		blocks.clear();
 		if (checker != null)
@@ -166,7 +168,10 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 
 		SpellData data = new SpellData(player, loc, power, args);
 
-		final List<Block> blockList = new ArrayList<>();
+		final List<AlteredBlockManager.Change> changeList = new ArrayList<>();
+		int duration = this.duration.get(player, null, power, args);
+		boolean temporary = duration > 0 || removeOnTouch || spellOnTouch != null;
+
 		for (int x = loc.getBlockX() - rad; x <= loc.getBlockX() + rad; x++) {
 			for (int z = loc.getBlockZ() - rad; z <= loc.getBlockZ() + rad; z++) {
 				b = loc.getWorld().getBlockAt(x, y, z);
@@ -181,22 +186,27 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 				if (!BlockUtils.isAir(b.getType()) && !b.getRelative(0, -1, 0).getType().isSolid())
 					continue;
 
-				b.setType(material, false);
-				blockList.add(b);
-				blocks.put(b, new CarpetData(player, power, args));
+				AlteredBlockManager.Change change = null;
+				if (temporary) {
+					change = MagicSpells.getAlteredBlockManager().apply(internalName, b, material, false);
+					changeList.add(change);
+				} else {
+					b.setType(material, false);
+				}
+				blocks.put(b, new CarpetData(player, power, args, change));
 				playSpellEffects(EffectPosition.TARGET, b.getLocation().add(0.5, 0, 0.5), data);
 			}
 		}
 
-		int duration = this.duration.get(player, null, power, args);
-		if (duration > 0 && !blockList.isEmpty()) {
+		if (duration > 0 && !changeList.isEmpty()) {
 			MagicSpells.scheduleDelayedTask(() -> {
-				for (Block b1 : blockList) {
-					if (!material.equals(b1.getType()))
+				for (AlteredBlockManager.Change change : changeList) {
+					Block block = change.block();
+					if (!material.equals(block.getType()))
 						continue;
-					b1.setType(Material.AIR);
+					change.undo(false);
 					if (blocks != null)
-						blocks.remove(b1);
+						blocks.remove(block);
 				}
 			}, duration);
 		}
@@ -204,7 +214,7 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 			playSpellEffects(EffectPosition.CASTER, player, data);
 	}
 
-	private record CarpetData(LivingEntity caster, float power, String[] args) {
+	private record CarpetData(LivingEntity caster, float power, String[] args, AlteredBlockManager.Change change) {
 	}
 
 	private class TouchChecker implements Runnable {
@@ -232,7 +242,8 @@ public class CarpetSpell extends TargetedSpell implements TargetedLocationSpell 
 					continue;
 
 				if (removeOnTouch) {
-					b.setType(Material.AIR);
+					if (data.change != null) data.change.undo(false);
+					else b.setType(Material.AIR);
 					blocks.remove(b);
 				}
 

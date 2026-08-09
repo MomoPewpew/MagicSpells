@@ -1,6 +1,7 @@
 package com.nisovin.magicspells.util.managers;
 
 import com.nisovin.magicspells.MagicSpells;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
@@ -21,17 +22,51 @@ public class AlteredBlockManager {
         alteredBlock.changes.add(change);
     }
 
+    /**
+     * Captures the current block, applies {@code newData}, and registers a reversible {@link Change}.
+     */
+    public Change apply(String internalName, Block block, BlockData newData, boolean applyPhysics) {
+        BlockData fromData = block.getBlockData();
+        BlockState fromState = block.getState();
+        block.setBlockData(newData, applyPhysics);
+        Change change = new Change(internalName, block, fromData, fromState);
+        add(change);
+        return change;
+    }
+
+    /**
+     * Captures the current block, applies {@code material}'s default BlockData, and registers a reversible {@link Change}.
+     */
+    public Change apply(String internalName, Block block, Material material, boolean applyPhysics) {
+        return apply(internalName, block, material.createBlockData(), applyPhysics);
+    }
+
+    /**
+     * Registers a reversible {@link Change} for a block that has already been modified
+     * (e.g. by WorldEdit). Does not write to the world.
+     */
+    public Change register(String internalName, Block block, BlockData fromData, BlockState fromState) {
+        Change change = new Change(internalName, block, fromData, fromState);
+        add(change);
+        return change;
+    }
+
     public List<Change> getByInternalName(String internalName) {
         List<Change> result = new ArrayList<>();
         for (AlteredBlock alteredBlock : alteredBlocks.values()) {
             for (Change change : alteredBlock.changes) {
                 if (change.internalName().equals(internalName)) {
                     result.add(change);
-                    break;
                 }
             }
         }
         return result;
+    }
+
+    public List<Change> getByBlock(Block block) {
+        AlteredBlock alteredBlock = alteredBlocks.get(block);
+        if (alteredBlock == null) return Collections.emptyList();
+        return new ArrayList<>(alteredBlock.changes);
     }
 
     public List<Change> getByBlockAndInternalName(Block block, String internalName) {
@@ -45,6 +80,16 @@ public class AlteredBlockManager {
             }
         }
         return result;
+    }
+
+    /**
+     * Undoes every change registered under {@code internalName} (LIFO per block).
+     */
+    public void undoAll(String internalName, boolean applyPhysics) {
+        List<Change> changes = getByInternalName(internalName);
+        for (int i = changes.size() - 1; i >= 0; i--) {
+            changes.get(i).undo(applyPhysics);
+        }
     }
 
     public class AlteredBlock {

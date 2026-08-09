@@ -142,9 +142,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		}
 		fallingBlocks.clear();
 
-		for (AlteredBlockManager.Change change : MagicSpells.getAlteredBlockManager().getByInternalName(internalName)) {
-			change.undo(false);
-		}
+		MagicSpells.getAlteredBlockManager().undoAll(internalName, false);
 	}
 
 	@Override
@@ -269,14 +267,12 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			}
 
 			if (duration > 0) {
-				AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, b, b.getBlockData(),
-						b.getState());
-				MagicSpells.getAlteredBlockManager().add(change);
-
+				AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, b,
+						Material.AIR, false);
 				MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
+			} else {
+				b.setType(Material.AIR, false);
 			}
-
-			b.setType(Material.AIR, false);
 		}
 
 		double velocity = resolveVelocityPerBlock ? 0 : this.velocity.get(caster, target, power, args);
@@ -294,11 +290,11 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 			BlockData blockData = b.getBlockData();
 
 			if (duration > 0) {
-				AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, b, b.getBlockData(),
-						b.getState());
-				MagicSpells.getAlteredBlockManager().add(change);
-
+				AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager().apply(internalName, b,
+						Material.AIR, false);
 				MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
+			} else {
+				b.setType(Material.AIR, false);
 			}
 
 			Location l = b.getLocation().clone().add(0.5, 0.5, 0.5);
@@ -347,7 +343,6 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 				MagicSpells.getVolatileCodeHandler().setFallingBlockHurtEntities(fb, fallingBlockDamage,
 						fallingBlockHeight);
 			}
-			b.setType(Material.AIR, false);
 		}
 
 	}
@@ -371,14 +366,15 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 								long duration = (endTime - System.currentTimeMillis()) / 50;
 
 								if (duration >= 1) {
-									AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName,
-											landBlock, landBlock.getBlockData(), landBlock.getState());
-									MagicSpells.getAlteredBlockManager().add(change);
-
+									AlteredBlockManager.Change change = MagicSpells.getAlteredBlockManager()
+											.apply(internalName, landBlock, event.getBlockData(), false);
 									MagicSpells.scheduleDelayedTask(() -> change.undo(false), duration);
+								} else {
+									landBlock.setBlockData(event.getBlockData(), false);
 								}
+							} else {
+								landBlock.setBlockData(event.getBlockData(), false);
 							}
-							landBlock.setBlockData(event.getBlockData(), false);
 						}
 					}
 				}

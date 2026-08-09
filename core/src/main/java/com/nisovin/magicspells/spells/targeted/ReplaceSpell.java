@@ -165,9 +165,7 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 
 	@Override
 	public void turnOff() {
-		for (AlteredBlockManager.Change change : MagicSpells.getAlteredBlockManager().getByInternalName(internalName)) {
-			change.undo(applyPhysics);
-		}
+		MagicSpells.getAlteredBlockManager().undoAll(internalName, applyPhysics);
 	}
 
 	@Override
@@ -302,7 +300,17 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 							}
 						}
 
-						BlockUtils.setBlockData(block, data, newBlockData, mergeBlockData, applyPhysics);
+						BlockData merged = BlockUtils.mergeBlockData(data, newBlockData, mergeBlockData);
+
+						if (resolveDurationPerBlock)
+							replaceDuration = this.replaceDuration.get(spellData);
+
+						AlteredBlockManager.Change change = null;
+						if (replaceDuration > 0) {
+							change = MagicSpells.getAlteredBlockManager().apply(internalName, block, merged, applyPhysics);
+						} else {
+							block.setBlockData(merged, applyPhysics);
+						}
 
 						if (checkPlugins && caster instanceof Player player) {
 							Block against = target.clone().add(target.getDirection()).getBlock();
@@ -312,23 +320,18 @@ public class ReplaceSpell extends TargetedSpell implements TargetedLocationSpell
 									against, player.getInventory().getItemInMainHand(), player, true, bypassDippGen);
 							EventUtil.call(event);
 							if (event.isCancelled()) {
-								previousState.update(true);
+								if (change != null) change.undo(applyPhysics);
+								else previousState.update(true);
 								return false;
 							}
 						}
 						spellData.setLocation(finalBlock.getLocation());
 						playSpellEffects(EffectPosition.SPECIAL, finalBlock.getLocation(), spellData);
 
-						// Break block.
-						if (resolveDurationPerBlock)
-							replaceDuration = this.replaceDuration.get(spellData);
-						if (replaceDuration > 0) {
-							AlteredBlockManager.Change change = new AlteredBlockManager.Change(internalName, block,
-									data, previousState);
-							MagicSpells.getAlteredBlockManager().add(change);
-
+						if (change != null) {
+							AlteredBlockManager.Change finalChange = change;
 							MagicSpells.scheduleDelayedTask(() -> {
-								change.undo(applyPhysics);
+								finalChange.undo(applyPhysics);
 								playSpellEffects(EffectPosition.BLOCK_DESTRUCTION, finalBlock.getLocation(), spellData);
 							}, replaceDuration);
 						}

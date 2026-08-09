@@ -186,7 +186,7 @@ public class WallSpell extends InstantSpell implements TargetedLocationSpell {
 			}
 		}
 
-		TemporaryBlockSet blockSet = new TemporaryBlockSet(Material.AIR, materials, checkPluginsPerBlock, caster, bypassDippGen);
+		TemporaryBlockSet blockSet = new TemporaryBlockSet(internalName, Material.AIR, materials, checkPluginsPerBlock, caster, bypassDippGen);
 		Location loc = target.getLocation();
 		Vector dir = direction.clone();
 

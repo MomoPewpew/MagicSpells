@@ -1,10 +1,8 @@
 package com.nisovin.magicspells.spells.buff;
 
-import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Objects;
-import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -19,9 +17,11 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.spells.BuffSpell;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 import io.papermc.paper.event.entity.EntityMoveEvent;
 
@@ -97,20 +97,21 @@ public class LilywalkSpell extends BuffSpell {
 		return entities;
 	}
 
-	private static class Lilies {
+	private class Lilies {
 
-		private final Set<Block> blocks = new HashSet<>();
+		private final Map<Block, AlteredBlockManager.Change> blocks = new HashMap<>();
 
 		private Block center = null;
 
 		private void move(Block center) {
 			this.center = center;
 			
-			Iterator<Block> iterator = blocks.iterator();
+			Iterator<Map.Entry<Block, AlteredBlockManager.Change>> iterator = blocks.entrySet().iterator();
 			while (iterator.hasNext()) {
-				Block b = iterator.next();
+				Map.Entry<Block, AlteredBlockManager.Change> entry = iterator.next();
+				Block b = entry.getKey();
 				if (b.equals(center)) continue;
-				b.setType(Material.AIR);
+				entry.getValue().undo(false);
 				iterator.remove();
 			}
 			
@@ -126,12 +127,12 @@ public class LilywalkSpell extends BuffSpell {
 		}
 		
 		private void setToLily(Block block) {
+			if (blocks.containsKey(block)) return;
 			if (!BlockUtils.isAir(block.getType())) return;
 			
 			BlockState state = block.getRelative(BlockFace.DOWN).getState();
 			if ((state.getType() == Material.WATER) && BlockUtils.getWaterLevel(state) == 0) {
-				block.setType(Material.LILY_PAD);
-				blocks.add(block);
+				blocks.put(block, MagicSpells.getAlteredBlockManager().apply(internalName, block, Material.LILY_PAD, false));
 			}
 		}
 		
@@ -140,11 +141,13 @@ public class LilywalkSpell extends BuffSpell {
 		}
 		
 		private boolean contains(Block block) {
-			return blocks.contains(block);
+			return blocks.containsKey(block);
 		}
 		
 		private void remove() {
-			Util.forEachOrdered(blocks, block -> block.setType(Material.AIR));
+			for (AlteredBlockManager.Change change : blocks.values()) {
+				change.undo(false);
+			}
 			blocks.clear();
 		}
 		

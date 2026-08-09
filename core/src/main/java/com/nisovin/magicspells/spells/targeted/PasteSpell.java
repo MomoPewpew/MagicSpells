@@ -35,6 +35,7 @@ import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
 import com.nisovin.magicspells.util.TimeUtil;
+import com.nisovin.magicspells.util.managers.AlteredBlockManager;
 
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.EditSession;
@@ -53,7 +54,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	public class PasteSpellRecord {
 		Map<String, List<Builder>> playerPastes;
-		Map<String, List<EditSession>> playerSessions;
+		Map<String, List<InstantPaste>> playerSessions;
 
 		public PasteSpellRecord(){
 			this.playerPastes = new HashMap<>();
@@ -69,8 +70,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			this.playerPastes.put(uuid, playerPastes);
 		}
 
-		public void addPlayerSession(String uuid, EditSession session){
-			List<EditSession> playerPastes = this.playerSessions.get(uuid);
+		public void addPlayerSession(String uuid, InstantPaste session){
+			List<InstantPaste> playerPastes = this.playerSessions.get(uuid);
 			if(playerPastes == null)
 				playerPastes = new ArrayList<>();
 			playerPastes.add(session);
@@ -85,8 +86,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			this.playerPastes.put(uuid, playerPastes);
 		}
 
-		public void removePlayerSession(String uuid, EditSession session){
-			List<EditSession> playerPastes = this.playerSessions.get(uuid);
+		public void removePlayerSession(String uuid, InstantPaste session){
+			List<InstantPaste> playerPastes = this.playerSessions.get(uuid);
 			if(playerPastes == null) return;
 			playerPastes.remove(session);
 			this.playerSessions.put(uuid, playerPastes);
@@ -96,13 +97,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			playerPastes.forEach((uuid, builderList) -> {
 				for(Builder builder : builderList){
 					if(PasteSpell.this.removePaste && !builder.undone){
-						builder.clipboard = builder.ogClipboard;
-						builder.parseClipboard();
-						if (builder.instantUndo || !builder.built) {
-							builder.undoInstant();
-						} else {
-							builder.startBuilder();
-						}
+						builder.undoChanges();
 					}
 				}
 			});
@@ -114,13 +109,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			if(playerBuilders != null){
 				for(Builder builder : playerBuilders){
 					if(PasteSpell.this.removePaste && !builder.undone){
-						builder.clipboard = builder.ogClipboard;
-						builder.parseClipboard();
-						if (builder.instantUndo || !builder.built) {
-							builder.undoInstant();
-						} else {
-							builder.startBuilder();
-						}
+						builder.undoChanges();
 					}
 				}
 			}
@@ -129,28 +118,39 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 		public void cleanAllSessions(){
 			playerSessions.forEach((uuid, sessionList) -> {
-				for(EditSession session : sessionList){
-					session.undo(session);
+				for(InstantPaste session : sessionList){
+					session.undo();
 				}
 			});
 			playerSessions.clear();
 		}
 
 		public void cleanPlayerSessions(String uuid){
-			List<EditSession> sessionList = playerSessions.get(uuid);
+			List<InstantPaste> sessionList = playerSessions.get(uuid);
 			if(sessionList != null){
-				for(EditSession session : sessionList){
-					session.undo(session);
+				for(InstantPaste session : sessionList){
+					session.undo();
 				}
 			}
-			playerPastes.remove(uuid);
+			playerSessions.remove(uuid);
+		}
+	}
+
+	public class InstantPaste {
+		final List<AlteredBlockManager.Change> changes = new ArrayList<>();
+
+		void undo() {
+			for (int i = changes.size() - 1; i >= 0; i--) {
+				changes.get(i).undo(false);
+			}
+			changes.clear();
 		}
 	}
 
 	public static Map<String, PasteSpellRecord> spellRecords = new HashMap<>();
 
 	private String spellName;
-    private List<EditSession> sessions;
+    private List<InstantPaste> sessions;
 	private List<Builder> builders;
 	private List<String> buildStartOffsetStrings;
 	private List<String> dismantleStartOffsetStrings;
@@ -211,8 +211,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		buildStartOffsetStrings = getConfigStringList("build-start-offsets", null);
 		dismantleStartOffsetStrings = getConfigStringList("dismantle-start-offsets", null);
 
-		sessions = new ArrayList<EditSession>();
-		builders = new ArrayList<Builder>();
+		sessions = new ArrayList<>();
+		builders = new ArrayList<>();
 	}
 
 	@Override
@@ -261,14 +261,12 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 	@Override
 	public void turnOff() {
-		for (EditSession session : sessions) {
-			session.undo(session);
+		for (InstantPaste session : sessions) {
+			session.undo();
 		}
 		for (Builder builder : builders) {
 			if (removePaste && !builder.undone) {
-                builder.clipboard = builder.ogClipboard;
-                builder.parseClipboard();
-				builder.undoInstant();
+				builder.undoChanges();
 			}
 		}
 		sessions.clear();
@@ -323,6 +321,14 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		int yOffset = this.yOffset.get(caster, null, power, args);
 		target.add(0, yOffset, 0);
 
+		int undoDelay = this.undoDelay.get(caster, null, power, args);
+		boolean temporary = removePaste || undoDelay > 0;
+
+		Map<Block, BlockData> originals = null;
+		if (temporary) {
+			originals = captureRegion(target);
+		}
+
 		try (EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(BukkitAdapter.adapt(target.getWorld()), -1)) {
 			Operation operation = new ClipboardHolder(clipboard)
 					.createPaste(editSession)
@@ -331,17 +337,30 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					.build();
 			Operations.complete(operation);
 
-			int undoDelay = this.undoDelay.get(caster, null, power, args);
+			if (temporary && originals != null) {
+				InstantPaste paste = new InstantPaste();
+				AlteredBlockManager manager = MagicSpells.getAlteredBlockManager();
+				for (Map.Entry<Block, BlockData> entry : originals.entrySet()) {
+					Block block = entry.getKey();
+					BlockData fromData = entry.getValue();
+					if (block.getBlockData().matches(fromData)) continue;
+					paste.changes.add(manager.register(internalName, block, fromData, null));
+				}
 
-			if (removePaste) sessions.add(editSession);
-			if (removePaste || undoDelay > 0) spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), editSession);
+				if (removePaste) sessions.add(paste);
+				if (caster != null) {
+					spellRecords.get(this.spellName).addPlayerSession(caster.getUniqueId().toString(), paste);
+				}
 
-			if (undoDelay > 0) {
-				MagicSpells.scheduleDelayedTask(() -> {
-					editSession.undo(editSession);
-					sessions.remove(editSession);
-					spellRecords.get(this.spellName).removePlayerSession(caster.getUniqueId().toString(), editSession);
-				}, undoDelay);
+				if (undoDelay > 0) {
+					MagicSpells.scheduleDelayedTask(() -> {
+						paste.undo();
+						sessions.remove(paste);
+						if (caster != null) {
+							spellRecords.get(this.spellName).removePlayerSession(caster.getUniqueId().toString(), paste);
+						}
+					}, undoDelay);
+				}
 			}
 		} catch (WorldEditException e) {
 			e.printStackTrace();
@@ -349,6 +368,36 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 		}
 
 		return true;
+	}
+
+	private Map<Block, BlockData> captureRegion(Location target) {
+		Map<Block, BlockData> originals = new HashMap<>();
+		Region region = clipboard.getRegion();
+		BlockVector3 origin = clipboard.getOrigin();
+		BlockVector3 minPos = region.getMinimumPoint();
+		BlockVector3 maxPos = region.getMaximumPoint();
+
+		Block minBlock = target.getBlock().getRelative(minPos.getX() - origin.getX(), minPos.getY() - origin.getY(),
+				minPos.getZ() - origin.getZ());
+		Block maxBlock = target.getBlock().getRelative(maxPos.getX() - origin.getX(), maxPos.getY() - origin.getY(),
+				maxPos.getZ() - origin.getZ());
+
+		int minX = Math.min(minBlock.getX(), maxBlock.getX());
+		int maxX = Math.max(minBlock.getX(), maxBlock.getX());
+		int minY = Math.min(minBlock.getY(), maxBlock.getY());
+		int maxY = Math.max(minBlock.getY(), maxBlock.getY());
+		int minZ = Math.min(minBlock.getZ(), maxBlock.getZ());
+		int maxZ = Math.max(minBlock.getZ(), maxBlock.getZ());
+
+		for (int x = minX; x <= maxX; x++) {
+			for (int y = minY; y <= maxY; y++) {
+				for (int z = minZ; z <= maxZ; z++) {
+					Block block = target.getWorld().getBlockAt(x, y, z);
+					originals.put(block, block.getBlockData().clone());
+				}
+			}
+		}
+		return originals;
 	}
 
 	private boolean pasteOverTime(LivingEntity caster, Location target, float power, String[] args) {
@@ -394,6 +443,8 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
         private boolean instantUndo;
         boolean built = false;
         boolean undone = false;
+		private final boolean temporary;
+		private final List<AlteredBlockManager.Change> changes = new ArrayList<>();
 
         private List<BlockVector3> blockVectors;
 	    private List<BlockVector3> airVectors;
@@ -414,12 +465,34 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
             this.undoDelay = PasteSpell.this.undoDelay.get(caster, null, power, args);
             this.blocksPerCast = PasteSpell.this.blocksPerCast.get(caster, null, power, args);
             this.instantUndo = PasteSpell.this.instantUndo;
+			this.temporary = PasteSpell.this.removePaste || this.undoDelay > 0;
 
-			if (PasteSpell.this.removePaste || this.undoDelay > 0) this.storeStartRegion();
+			if (this.temporary) this.storeStartRegion();
 
 			this.parseClipboard();
 
 			startBuilder();
+		}
+
+		void undoChanges() {
+			if (undone) return;
+			undone = true;
+			stop = true;
+			for (BlockDisplay ent : this.blockDisplays) {
+				if (ent != null && ent.isValid()) ent.remove();
+			}
+			for (int i = changes.size() - 1; i >= 0; i--) {
+				changes.get(i).undo(false);
+			}
+			changes.clear();
+		}
+
+		private void setBlockTemporary(Block block, BlockData data) {
+			if (temporary) {
+				changes.add(MagicSpells.getAlteredBlockManager().apply(internalName, block, data, false));
+			} else {
+				block.setBlockData(data, false);
+			}
 		}
 
 		private void startBuilder(){
@@ -564,7 +637,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 				this.changedBlocks++;
 
 				if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(startingBlock, data, 0, 0, 0, 0);
-				startingBlock.setBlockData(data, false);
+				setBlockTemporary(startingBlock, data);
 
 	            if (this.caster instanceof Player player) {
 					BlockState previousState = startingBlock.getState();
@@ -631,16 +704,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 			this.blockDisplays = new ArrayList<BlockDisplay>();
 
 			if (!this.undone && this.undoDelay > 0 && this.undoDelayTask == -1) {
-				this.undoDelayTask = MagicSpells.scheduleDelayedTask(() ->{
-					this.blocksPerCast = 0;
-					this.clipboard = this.ogClipboard;
-					this.parseClipboard();
-					if (this.instantUndo) {
-						this.undoInstant();
-					} else {
-						this.startBuilder();
-					}
-				}, this.undoDelay);
+				this.undoDelayTask = MagicSpells.scheduleDelayedTask(this::undoChanges, this.undoDelay);
 			}
 		}
 
@@ -671,7 +735,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				MagicSpells.scheduleDelayedTask(() -> {
 					if(this.stop) return;
-					to.setBlockData(data, false);
+					if (!PasteSpell.this.displayAnimation) setBlockTemporary(to, data);
 					this.placeBlock(to, pos.getX(), pos.getY(), pos.getZ());
 					this.workingBlocks--;
 
@@ -740,7 +804,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 
 				if (withdrawBlock == null) {
 					if (PasteSpell.this.playBlockBreakEffect) this.moveBlockEffects(block, data, 0, 0, 0, 0);
-					block.setType(Material.AIR);
+					setBlockTemporary(block, Material.AIR.createBlockData());
 					this.workingAir--;
 				}
 			}
@@ -761,10 +825,10 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 					MagicSpellsBlockBreakEvent event = new MagicSpellsBlockBreakEvent(block, player, bypassDippGen);
 					EventUtil.call(event);
 					if (!event.isCancelled()) {
-			        	block.setType(Material.AIR);
+			        	setBlockTemporary(block, Material.AIR.createBlockData());
 					};
 				} else {
-		        	block.setType(Material.AIR);
+		        	setBlockTemporary(block, Material.AIR.createBlockData());
 				}
 	        }
 
@@ -797,11 +861,11 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 							MagicSpellsBlockPlaceEvent event = new MagicSpellsBlockPlaceEvent(b, previousState, block, player.getInventory().getItemInMainHand(), player, true, bypassDippGen);
 							EventUtil.call(event);
 							if (!event.isCancelled()) {
-								b.setBlockData(data, false);
+								setBlockTemporary(b, data);
 								b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
 							}
 						} else {
-							b.setBlockData(data, false);
+							setBlockTemporary(b, data);
 							b.getWorld().playSound(b.getLocation().add(0.5, 0.5, 0.5), data.getSoundGroup().getPlaceSound(), 0.2f, data.getSoundGroup().getPitch());
 						}
 					}
@@ -828,21 +892,7 @@ public class PasteSpell extends TargetedSpell implements TargetedLocationSpell {
 	    }
 
         private boolean undoInstant() {
-        	this.stop = true;
-        	for (BlockDisplay ent : this.blockDisplays) {
-        		if (ent != null && ent.isValid()) ent.remove();
-        	}
-            try (EditSession editSession = WorldEdit.getInstance().getEditSessionFactory().getEditSession(BukkitAdapter.adapt(target.getWorld()), -1)) {
-                Operation operation = new ClipboardHolder(this.clipboard)
-                        .createPaste(editSession)
-                        .to(BlockVector3.at(target.getX(), target.getY(), target.getZ()))
-                        .build();
-                Operations.complete(operation);
-            } catch (WorldEditException e) {
-                e.printStackTrace();
-                return false;
-            }
-
+        	undoChanges();
             return true;
         }
 	}

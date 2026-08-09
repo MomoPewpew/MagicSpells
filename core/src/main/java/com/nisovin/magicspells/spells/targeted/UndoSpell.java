@@ -46,7 +46,7 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 		if (spellNames != null) {
 			for (String spellName : spellNames) {
 				Spell spell = MagicSpells.getSpellByInternalName(spellName);
-				if (spell instanceof ReplaceSpell || spell instanceof DestroySpell) {
+				if (spell != null) {
 					spells.add(spell);
 				} else {
 					MagicSpells.error(
@@ -100,26 +100,28 @@ public class UndoSpell extends TargetedSpell implements TargetedLocationSpell {
 			return false;
 		}
 
-		List<Spell> spellsTemp = spells.isEmpty()
-				? MagicSpells.spells().stream()
-						.filter(spell -> spell instanceof ReplaceSpell || spell instanceof DestroySpell)
-						.toList()
-				: new ArrayList<>(spells);
-
+		boolean filterBySpell = !spells.isEmpty();
 		boolean success = false;
+		AlteredBlockManager manager = MagicSpells.getAlteredBlockManager();
 
-		for (Spell spell : spellsTemp) {
-			for (int y = loc.getBlockY() - rad; y <= loc.getBlockY() + rad; y++) {
-				for (int x = loc.getBlockX() - rad; x <= loc.getBlockX() + rad; x++) {
-					for (int z = loc.getBlockZ() - rad; z <= loc.getBlockZ() + rad; z++) {
-						Block block = loc.getWorld().getBlockAt(x, y, z);
-						List<AlteredBlockManager.Change> changes = MagicSpells.getAlteredBlockManager().getByBlockAndInternalName(block, spell.getInternalName());
-						if (!changes.isEmpty()) {
-							success = true;
-							changes.forEach(it -> {
-								it.undo(applyPhysics);
-								playSpellEffects(EffectPosition.TARGET, block.getLocation(), power, args);
-							});
+		for (int y = loc.getBlockY() - rad; y <= loc.getBlockY() + rad; y++) {
+			for (int x = loc.getBlockX() - rad; x <= loc.getBlockX() + rad; x++) {
+				for (int z = loc.getBlockZ() - rad; z <= loc.getBlockZ() + rad; z++) {
+					Block block = locWorld.getBlockAt(x, y, z);
+					List<AlteredBlockManager.Change> changes;
+					if (filterBySpell) {
+						changes = new ArrayList<>();
+						for (Spell spell : spells) {
+							changes.addAll(manager.getByBlockAndInternalName(block, spell.getInternalName()));
+						}
+					} else {
+						changes = manager.getByBlock(block);
+					}
+					if (!changes.isEmpty()) {
+						success = true;
+						for (int i = changes.size() - 1; i >= 0; i--) {
+							changes.get(i).undo(applyPhysics);
+							playSpellEffects(EffectPosition.TARGET, block.getLocation(), power, args);
 						}
 					}
 				}

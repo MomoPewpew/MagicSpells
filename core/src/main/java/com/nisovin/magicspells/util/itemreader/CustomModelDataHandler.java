@@ -3,6 +3,7 @@ package com.nisovin.magicspells.util.itemreader;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.configuration.ConfigurationSection;
 
+import com.nisovin.magicspells.util.ItemUtil;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.CUSTOM_MODEL_DATA;
 
@@ -30,7 +31,9 @@ public class CustomModelDataHandler {
 	}
 
 	public static void processMagicItemData(ItemMeta meta, MagicItemData data) {
-		if (meta.hasCustomModelData()) data.setAttribute(CUSTOM_MODEL_DATA, meta.getCustomModelData());
+		// Ignore string/flag/color-only CMD; ItemMeta#getCustomModelData() throws for those.
+		Integer customModelData = ItemUtil.getCustomModelDataOrNull(meta);
+		if (customModelData != null) data.setAttribute(CUSTOM_MODEL_DATA, customModelData);
 	}
 
 }

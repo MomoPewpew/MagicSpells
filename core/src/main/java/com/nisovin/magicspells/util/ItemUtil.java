@@ -1,5 +1,7 @@
 package com.nisovin.magicspells.util;
 
+import java.util.List;
+
 import org.bukkit.Material;
 import org.bukkit.inventory.*;
 import org.bukkit.NamespacedKey;
@@ -47,10 +49,18 @@ public class ItemUtil {
 		return ((Damageable) meta).getDamage();
 	}
 
+	/** Legacy integer CMD, or 0. Ignores string/flag/color-only CMD (1.21.4+). */
 	public static int getCustomModelData(ItemMeta meta) {
-		if (meta == null) return 0;
-		if (meta.hasCustomModelData()) return meta.getCustomModelData();
-		return 0;
+		Integer value = getCustomModelDataOrNull(meta);
+		return value == null ? 0 : value;
+	}
+
+	/** Legacy integer CMD, or null when absent / non-numeric only. */
+	public static Integer getCustomModelDataOrNull(ItemMeta meta) {
+		if (meta == null) return null;
+		List<Float> floats = meta.getCustomModelDataComponent().getFloats();
+		if (floats.isEmpty()) return null;
+		return floats.get(0).intValue();
 	}
 
 	public static Recipe createCookingRecipe(String type, NamespacedKey namespaceKey, String group, ItemStack result, Material ingredient, float experience, int cookingTime) {

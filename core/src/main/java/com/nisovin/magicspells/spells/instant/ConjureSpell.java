@@ -3,7 +3,6 @@ package com.nisovin.magicspells.spells.instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,15 +17,12 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.ChatColor;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -45,14 +41,10 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-
 import com.nisovin.magicspells.Perm;
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.events.ConjureItemEvent;
 import com.nisovin.magicspells.util.Util;
-import com.nisovin.magicspells.util.AttributeUtil;
 import com.nisovin.magicspells.util.compat.BagOfHoldingCompat;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.util.compat.EventUtil;
@@ -63,8 +55,8 @@ import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.InventoryUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
+import com.nisovin.magicspells.util.config.ConfigDataUtil;
 import com.nisovin.magicspells.util.managers.AttributeManager;
-import com.nisovin.magicspells.handlers.EnchantmentHandler;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spells.command.TomeSpell;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
@@ -107,8 +99,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 	private boolean saveConjurerName;
 	private boolean safeEnchants;
 
-	private final Map<Enchantment, Integer> enchantments = new HashMap<>();
-	private final Multimap<Attribute, AttributeModifier> attributes = HashMultimap.create();
+	private ConfigData<Map<Enchantment, Integer>> enchantments;
+	private ConfigData<Set<AttributeManager.AttributeInfo>> attributes;
 
 	private ConfigData<List<String>> itemListData;
 	private ConfigData<Boolean> omitSelectedSlot;
@@ -147,59 +139,13 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 		List<String> enchantmentList = getConfigStringList("enchantments", null);
 		if (enchantmentList != null && !enchantmentList.isEmpty()) {
-			for (String string : enchantmentList) {
-				Enchantment enchant = null;
-				int level = 1;
-				String[] str = string.split(" ");
-				if (str[0] != null) enchant = EnchantmentHandler.getEnchantment(str[0]);
-				if (str.length > 1 && str[1] != null) level = Integer.parseInt(str[1]);
-				if (enchant != null) enchantments.put(enchant, level);
-				else MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid enchantment defined: " + string);
-			}
+			enchantments = ConfigDataUtil.getEnchantmentsConfigData(enchantmentList);
 		}
 
-		// <attribute name> <value> (operation) (slot)
 		List<String> attributeList = getConfigStringList("attributes", null);
 		if (attributeList != null && !attributeList.isEmpty()) {
-			for (String str : attributeList) {
-				String[] args = str.split(" ");
-				if (args.length < 2) {
-					MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute defined: " + str);
-					continue;
-				}
-
-				Attribute attribute = AttributeUtil.getAttribute(args[0]);
-				if (attribute == null) {
-					MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute defined: " + str);
-					continue;
-				}
-
-				double value;
-				try {
-					value = Double.parseDouble(args[1]);
-				} catch (NumberFormatException e) {
-					MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute value defined: " + str);
-					continue;
-				}
-
-				AttributeModifier.Operation operation = AttributeModifier.Operation.ADD_NUMBER;
-				if (args.length >= 3) {
-					AttributeModifier.Operation parsed = AttributeUtil.getOperation(args[2]);
-					if (parsed != null) operation = parsed;
-					else MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute operation defined: " + args[2]);
-				}
-
-				EquipmentSlot slot = null;
-				if (args.length >= 4) {
-					try {
-						slot = EquipmentSlot.valueOf(args[3].toUpperCase());
-					} catch (IllegalArgumentException ignored) {
-						MagicSpells.error("ConjureSpell '" + internalName + "' has an invalid attribute slot defined: " + args[3]);
-					}
-				}
-
-				attributes.put(attribute, new AttributeModifier(UUID.randomUUID(), args[0], value, operation, slot));
-			}
+			attributes = MagicSpells.getAttributeManager().getAttributesConfigData(attributeList,
+					internalName + ".attributes");
 		}
 
 		pickupDelay = Math.max(pickupDelay, 0);
@@ -376,9 +322,9 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 		List<ItemStack> items = new ArrayList<>();
 		if (calculateDropsIndividually)
-			individual(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
+			individual(items, spellData, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
 		else
-			together(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
+			together(items, spellData, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
 
 		Location loc = player.getEyeLocation().add(player.getLocation().getDirection());
 		boolean updateInv = false;
@@ -533,32 +479,34 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		return succes;
 	}
 
-	private void individual(List<ItemStack> items, float power, ItemStack[] itemTypes, double[] itemChances,
+	private void individual(List<ItemStack> items, SpellData spellData, ItemStack[] itemTypes, double[] itemChances,
 			int[] itemMinQuantities, int[] itemMaxQuantities) {
+		float power = spellData.power();
 		for (int i = 0; i < itemTypes.length; i++) {
 			double r = random.nextDouble() * 100;
 			if (powerAffectsChance)
 				r = r / power;
 			if (itemTypes[i] != null && r < itemChances[i])
-				addItem(i, items, power, itemTypes, itemMinQuantities, itemMaxQuantities);
+				addItem(i, items, spellData, itemTypes, itemMinQuantities, itemMaxQuantities);
 		}
 	}
 
-	private void together(List<ItemStack> items, float power, ItemStack[] itemTypes, double[] itemChances,
+	private void together(List<ItemStack> items, SpellData spellData, ItemStack[] itemTypes, double[] itemChances,
 			int[] itemMinQuantities, int[] itemMaxQuantities) {
 		double r = random.nextDouble() * Arrays.stream(itemChances).sum();
 		double m = 0;
 		for (int i = 0; i < itemTypes.length; i++) {
 			if (itemTypes[i] != null && r < itemChances[i] + m) {
-				addItem(i, items, power, itemTypes, itemMinQuantities, itemMaxQuantities);
+				addItem(i, items, spellData, itemTypes, itemMinQuantities, itemMaxQuantities);
 				return;
 			} else
 				m += itemChances[i];
 		}
 	}
 
-	private void addItem(int i, List<ItemStack> items, float power, ItemStack[] itemTypes, int[] itemMinQuantities,
-			int[] itemMaxQuantities) {
+	private void addItem(int i, List<ItemStack> items, SpellData spellData, ItemStack[] itemTypes,
+			int[] itemMinQuantities, int[] itemMaxQuantities) {
+		float power = spellData.power();
 		int quant = itemMinQuantities[i];
 		if (itemMaxQuantities[i] > itemMinQuantities[i])
 			quant = random.nextInt(itemMaxQuantities[i] - itemMinQuantities[i]) + itemMinQuantities[i];
@@ -567,41 +515,43 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 		if (quant > 0) {
 			ItemStack item = itemTypes[i].clone();
 			item.setAmount(quant);
-			applyEnchantments(item);
-			applyAttributes(item);
+			applyEnchantments(item, spellData);
+			applyAttributes(item, spellData);
 			if (expiration > 0)
 				expirationHandler.addExpiresLine(item, expiration);
 			items.add(item);
 		}
 	}
 
-	private void applyEnchantments(ItemStack item) {
-		if (enchantments.isEmpty()) return;
-		for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+	private void applyEnchantments(ItemStack item, SpellData spellData) {
+		if (enchantments == null)
+			return;
+		Map<Enchantment, Integer> resolved = enchantments.get(spellData);
+		if (resolved == null || resolved.isEmpty())
+			return;
+		for (Map.Entry<Enchantment, Integer> entry : resolved.entrySet()) {
 			Enchantment enchant = entry.getKey();
 			int level = entry.getValue();
-			if (!enchant.canEnchantItem(item)) continue;
-			if (safeEnchants && level > enchant.getMaxLevel()) level = enchant.getMaxLevel();
-			if (level <= 0) item.removeEnchantment(enchant);
-			else if (safeEnchants) item.addEnchantment(enchant, level);
-			else item.addUnsafeEnchantment(enchant, level);
+			if (!enchant.canEnchantItem(item))
+				continue;
+			if (safeEnchants && level > enchant.getMaxLevel())
+				level = enchant.getMaxLevel();
+			if (level <= 0)
+				item.removeEnchantment(enchant);
+			else if (safeEnchants)
+				item.addEnchantment(enchant, level);
+			else
+				item.addUnsafeEnchantment(enchant, level);
 		}
 	}
 
-	private void applyAttributes(ItemStack item) {
-		if (attributes.isEmpty()) return;
-		AttributeManager attributeManager = MagicSpells.getAttributeManager();
-		for (Map.Entry<Attribute, AttributeModifier> entry : attributes.entries()) {
-			AttributeModifier stored = entry.getValue();
-			AttributeModifier modifier = new AttributeModifier(
-					UUID.randomUUID(),
-					stored.getName(),
-					stored.getAmount(),
-					stored.getOperation(),
-					stored.getSlot()
-			);
-			attributeManager.addItemAttribute(item, entry.getKey(), modifier);
-		}
+	private void applyAttributes(ItemStack item, SpellData spellData) {
+		if (attributes == null)
+			return;
+		Set<AttributeManager.AttributeInfo> resolved = attributes.get(spellData);
+		if (resolved == null || resolved.isEmpty())
+			return;
+		MagicSpells.getAttributeManager().addItemAttributes(item, resolved);
 	}
 
 	@Override
@@ -628,9 +578,9 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 
 		List<ItemStack> items = new ArrayList<>();
 		if (calculateDropsIndividually)
-			individual(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
+			individual(items, spellData, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
 		else
-			together(items, power, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
+			together(items, spellData, itemTypes, itemChances, itemMinQuantities, itemMaxQuantities);
 
 		Location loc = location.clone();
 		if (!BlockUtils.isAir(loc.getBlock().getType()))

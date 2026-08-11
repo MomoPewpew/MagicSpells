@@ -3,17 +3,22 @@ package com.nisovin.magicspells.util.config;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.handlers.EnchantmentHandler;
 import com.nisovin.magicspells.util.AttributeUtil;
 import com.nisovin.magicspells.util.managers.AttributeManager;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.EquipmentSlot;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -37,6 +42,16 @@ import com.nisovin.magicspells.util.ParticleUtil;
 
 public class ConfigDataUtil {
 
+	/**
+	 * Parse an attribute modifier string into cast-time {@link ConfigData}.
+	 * <p>
+	 * Format: {@code <attribute> <value> [operation] [slot]}
+	 * <ul>
+	 * <li>{@code operation} defaults to {@code add_number}</li>
+	 * <li>{@code slot} is optional ({@link org.bukkit.inventory.EquipmentSlot}); omit to apply in all slots</li>
+	 * </ul>
+	 * All tokens support string/numeric expressions via ConfigData.
+	 */
 	@NotNull
 	public static ConfigData<AttributeManager.AttributeInfo> getAttributeInfo(@Nullable String value,
 			@Nullable String sourceKey, int index) {
@@ -44,17 +59,20 @@ public class ConfigDataUtil {
 			return (caster, target, location, power, args) -> null;
 
 		String[] parts = value.trim().split("\\s+");
-		if (parts.length < 3)
+		if (parts.length < 2)
 			return (caster, target, location, power, args) -> null;
 
 		ConfigData<String> attributeName = getString(parts[0]);
 		ConfigData<Double> amount = getDouble(parts[1]);
-		ConfigData<String> operation = getString(parts[2]);
+		ConfigData<String> operation = parts.length >= 3 ? getString(parts[2])
+				: (caster, target, location, power, args) -> "add_number";
+		ConfigData<String> slot = parts.length >= 4 ? getString(parts[3])
+				: (caster, target, location, power, args) -> null;
 		UUID uuid = stableUuid(sourceKey, index);
 
-		if (attributeName.isConstant() && amount.isConstant() && operation.isConstant()) {
+		if (attributeName.isConstant() && amount.isConstant() && operation.isConstant() && slot.isConstant()) {
 			AttributeManager.AttributeInfo info = buildAttributeInfo(value, uuid, attributeName.get(null),
-					amount.get(null), operation.get(null));
+					amount.get(null), operation.get(null), slot.get(null));
 			return (caster, target, location, power, args) -> info;
 		}
 
@@ -75,7 +93,8 @@ public class ConfigDataUtil {
 				if (op == null)
 					return null;
 
-				return buildAttributeInfo(value, uuid, name, amt, op);
+				return buildAttributeInfo(value, uuid, name, amt, op,
+						slot.get(caster, target, location, power, args));
 			}
 
 			@Override
@@ -90,9 +109,119 @@ public class ConfigDataUtil {
 		return getAttributeInfo(value, null, 0);
 	}
 
+	/**
+	 * Parse an enchantment string into cast-time {@link ConfigData}.
+	 * <p>
+	 * Format: {@code <enchantment> [level]} — level defaults to {@code 1}. Both tokens support expressions.
+	 */
+	@NotNull
+	public static ConfigData<Map.Entry<Enchantment, Integer>> getEnchantmentInfo(@Nullable String value) {
+		if (value == null || value.isBlank())
+			return (caster, target, location, power, args) -> null;
+
+		String[] parts = value.trim().split("\\s+");
+		if (parts.length < 1 || parts[0] == null || parts[0].isBlank())
+			return (caster, target, location, power, args) -> null;
+
+		ConfigData<String> enchantName = getString(parts[0]);
+		ConfigData<Integer> level = parts.length > 1 ? getInteger(parts[1])
+				: (caster, target, location, power, args) -> 1;
+
+		if (enchantName.isConstant() && level.isConstant()) {
+			Map.Entry<Enchantment, Integer> entry = buildEnchantmentEntry(value, enchantName.get(null), level.get(null));
+			return (caster, target, location, power, args) -> entry;
+		}
+
+		return new ConfigData<>() {
+			@Override
+			public Map.Entry<Enchantment, Integer> get(LivingEntity caster, LivingEntity target, Location location,
+					float power, String[] args) {
+				return buildEnchantmentEntry(value, enchantName.get(caster, target, location, power, args),
+						level.get(caster, target, location, power, args));
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+		};
+	}
+
+	/**
+	 * Build a cast-time evaluated enchantment map from a string list
+	 * ({@code <enchantment> [level]} per entry).
+	 */
+	@NotNull
+	public static ConfigData<Map<Enchantment, Integer>> getEnchantmentsConfigData(@Nullable List<String> enchantments) {
+		if (enchantments == null || enchantments.isEmpty())
+			return (caster, target, location, power, args) -> null;
+
+		final List<ConfigData<Map.Entry<Enchantment, Integer>>> suppliers = new ArrayList<>();
+		boolean isConstant = true;
+
+		for (String raw : enchantments) {
+			if (raw == null || raw.isBlank())
+				continue;
+
+			ConfigData<Map.Entry<Enchantment, Integer>> supplier = getEnchantmentInfo(raw);
+			suppliers.add(supplier);
+			if (isConstant && !supplier.isConstant())
+				isConstant = false;
+		}
+
+		if (suppliers.isEmpty())
+			return (caster, target, location, power, args) -> null;
+
+		if (isConstant) {
+			Map<Enchantment, Integer> resolved = new HashMap<>();
+			for (ConfigData<Map.Entry<Enchantment, Integer>> supplier : suppliers) {
+				Map.Entry<Enchantment, Integer> entry = supplier.get(null, null, 1f, null);
+				if (entry != null)
+					resolved.put(entry.getKey(), entry.getValue());
+			}
+			if (resolved.isEmpty())
+				return (caster, target, location, power, args) -> null;
+			return (caster, target, location, power, args) -> resolved;
+		}
+
+		return new ConfigData<>() {
+			@Override
+			public Map<Enchantment, Integer> get(LivingEntity caster, LivingEntity target, Location location, float power,
+					String[] args) {
+				Map<Enchantment, Integer> resolved = new HashMap<>();
+				for (ConfigData<Map.Entry<Enchantment, Integer>> supplier : suppliers) {
+					Map.Entry<Enchantment, Integer> entry = supplier.get(caster, target, location, power, args);
+					if (entry != null)
+						resolved.put(entry.getKey(), entry.getValue());
+				}
+				return resolved.isEmpty() ? null : resolved;
+			}
+
+			@Override
+			public boolean isConstant() {
+				return false;
+			}
+		};
+	}
+
+	@Nullable
+	private static Map.Entry<Enchantment, Integer> buildEnchantmentEntry(String debugValue, String enchantName,
+			Integer level) {
+		if (enchantName == null || level == null)
+			return null;
+
+		Enchantment enchant = EnchantmentHandler.getEnchantment(enchantName);
+		if (enchant == null) {
+			MagicSpells.error("Invalid enchantment defined: " + enchantName + " (" + debugValue + ")");
+			return null;
+		}
+
+		return Map.entry(enchant, level);
+	}
+
 	@Nullable
 	private static AttributeManager.AttributeInfo buildAttributeInfo(String debugValue, UUID uuid, String attributeName,
-			Double number, String attributeOperation) {
+			Double number, String attributeOperation, String slotName) {
 		if (attributeName == null || number == null || attributeOperation == null)
 			return null;
 
@@ -110,8 +239,18 @@ public class ConfigDataUtil {
 			return null;
 		}
 
+		EquipmentSlot slot = null;
+		if (slotName != null && !slotName.isBlank()) {
+			try {
+				slot = EquipmentSlot.valueOf(slotName.toUpperCase());
+			} catch (IllegalArgumentException e) {
+				MagicSpells.error("AttributeManager has an invalid attribute slot defined: " + slotName + " ("
+						+ debugValue + ")");
+			}
+		}
+
 		String name = "MagicSpells " + (attributeName.isEmpty() ? "attribute" : attributeName);
-		return new AttributeManager.AttributeInfo(attribute, new AttributeModifier(uuid, name, number, op));
+		return new AttributeManager.AttributeInfo(attribute, new AttributeModifier(uuid, name, number, op, slot));
 	}
 
 	@NotNull

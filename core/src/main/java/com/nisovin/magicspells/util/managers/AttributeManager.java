@@ -134,18 +134,18 @@ public class AttributeManager {
 	/**
 	 * Build a cast-time evaluated attribute set.
 	 * <p>
-	 * Each entry is still defined as:
-	 * 
+	 * Each entry is defined as:
+	 *
 	 * <pre>
-	 * - [AttributeName] [Number] [Operation]
+	 * - [AttributeName] [Number] [Operation] [Slot]
 	 * </pre>
-	 * 
-	 * But all 3 tokens support variables (and the number token supports math via
+	 *
+	 * Operation defaults to {@code add_number}; slot is optional. All tokens
+	 * support variables (and the number token supports math via
 	 * {@link ConfigDataUtil#getDouble(String)}).
 	 * <p>
 	 * Attribute modifier UUIDs are made stable per {@code sourceKey + index} so
-	 * that toggle/remove behavior works even
-	 * when values are resolved at cast-time.
+	 * that toggle/remove behavior works even when values are resolved at cast-time.
 	 */
 	public ConfigData<Set<AttributeInfo>> getAttributesConfigData(List<String> attributes, String sourceKey) {
 		if (attributes == null || attributes.isEmpty()) {

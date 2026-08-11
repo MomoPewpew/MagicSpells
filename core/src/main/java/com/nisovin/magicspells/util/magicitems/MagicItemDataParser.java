@@ -44,6 +44,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.AttributeUtil;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.handlers.EnchantmentHandler;
+import com.nisovin.magicspells.util.itemreader.CustomModelDataHandler;
 import com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute;
 import static com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute.*;
 
@@ -136,7 +137,8 @@ public class MagicItemDataParser {
 						case "custommodeldata":
 						case "custom-model-data":
 						case "custom_model_data":
-							data.setAttribute(CUSTOM_MODEL_DATA, value.getAsInt());
+							CustomModelDataValues customModelData = CustomModelDataHandler.parseFromJson(value);
+							if (customModelData != null) data.setAttribute(CUSTOM_MODEL_DATA, customModelData);
 							break;
 						case "maxstacksize":
 						case "max-stack-size":

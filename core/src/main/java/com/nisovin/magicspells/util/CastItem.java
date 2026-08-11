@@ -21,6 +21,7 @@ import net.kyori.adventure.text.Component;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.nisovin.magicspells.util.magicitems.CustomModelDataValues;
 import com.nisovin.magicspells.util.itemreader.PotionHandler;
 import com.nisovin.magicspells.util.itemreader.DurabilityHandler;
 import com.nisovin.magicspells.util.itemreader.WrittenBookHandler;
@@ -34,7 +35,7 @@ public class CastItem {
 
 	private int amount = 0;
 	private int durability = -1;
-	private int customModelData = 0;
+	private CustomModelDataValues customModelData = null;
 	private boolean unbreakable = false;
 
 	private Color color = null;
@@ -71,7 +72,7 @@ public class CastItem {
 			}
 			if (!MagicSpells.ignoreCastItemAmount()) amount = item.getAmount();
 			if (!MagicSpells.ignoreCastItemDurability(type) && ItemUtil.hasDurability(type)) durability = DurabilityHandler.getDurability(meta);
-			if (!MagicSpells.ignoreCastItemCustomModelData()) customModelData = ItemUtil.getCustomModelData(meta);
+			if (!MagicSpells.ignoreCastItemCustomModelData()) customModelData = ItemUtil.getCustomModelDataValues(meta);
 			if (!MagicSpells.ignoreCastItemBreakability()) unbreakable = meta.isUnbreakable();
 			if (!MagicSpells.ignoreCastItemColor()) color = LeatherArmorHandler.getColor(meta);
 			if (!MagicSpells.ignoreCastItemPotionType()) potionData = PotionHandler.getPotionData(meta);
@@ -129,7 +130,7 @@ public class CastItem {
 					durability = (int) data.getAttribute(DURABILITY);
 
 				if (!MagicSpells.ignoreCastItemCustomModelData() && data.hasAttribute(CUSTOM_MODEL_DATA))
-					customModelData = (int) data.getAttribute(CUSTOM_MODEL_DATA);
+					customModelData = (CustomModelDataValues) data.getAttribute(CUSTOM_MODEL_DATA);
 
 				if (!MagicSpells.ignoreCastItemBreakability() && data.hasAttribute(UNBREAKABLE))
 					unbreakable = (boolean) data.getAttribute(UNBREAKABLE);
@@ -194,7 +195,7 @@ public class CastItem {
 			&& (MagicSpells.ignoreCastItemDurability(type) || durability == i.durability)
 			&& (MagicSpells.ignoreCastItemAmount() || amount == i.amount)
 			&& (MagicSpells.ignoreCastItemNames() || Objects.equals(name, i.name))
-			&& (MagicSpells.ignoreCastItemCustomModelData() || customModelData == i.customModelData)
+			&& (MagicSpells.ignoreCastItemCustomModelData() || Objects.equals(customModelData, i.customModelData))
 			&& (MagicSpells.ignoreCastItemBreakability() || unbreakable == i.unbreakable)
 			&& (MagicSpells.ignoreCastItemColor() || Objects.equals(color, i.color))
 			&& (MagicSpells.ignoreCastItemPotionType() || Objects.equals(potionData, i.potionData))
@@ -253,13 +254,13 @@ public class CastItem {
 			previous = true;
 		}
 
-		if (!MagicSpells.ignoreCastItemCustomModelData()) {
+		if (!MagicSpells.ignoreCastItemCustomModelData() && customModelData != null && !customModelData.isEmpty()) {
 			if (previous) output.append(',');
 			else output.append("{");
 
 			output
 				.append("\"custommodeldata\":")
-				.append(customModelData);
+				.append(customModelData.toJsonValue());
 
 			previous = true;
 		}

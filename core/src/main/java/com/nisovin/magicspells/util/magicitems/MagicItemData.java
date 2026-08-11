@@ -280,7 +280,7 @@ public class MagicItemData {
 		AMOUNT(Integer.class),
 		DURABILITY(Integer.class),
 		REPAIR_COST(Integer.class),
-		CUSTOM_MODEL_DATA(Integer.class),
+		CUSTOM_MODEL_DATA(CustomModelDataValues.class),
 		MAX_STACK_SIZE(Integer.class),
 		POWER(Integer.class),
 		UNBREAKABLE(Boolean.class),
@@ -385,7 +385,7 @@ public class MagicItemData {
 
 			output
 				.append("\"custom-model-data\":")
-				.append((int) getAttribute(MagicItemAttribute.CUSTOM_MODEL_DATA));
+				.append(((CustomModelDataValues) getAttribute(MagicItemAttribute.CUSTOM_MODEL_DATA)).toJsonValue());
 
 			previous = true;
 		}

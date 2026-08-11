@@ -107,6 +107,9 @@ public class MagicItems {
 		// maxStackSize
 		MaxStackSizeHandler.processMagicItemData(meta, data);
 
+		// Modern data components
+		DataComponentsHandler.processMagicItemData(meta, data);
+
 		// power, fireworkEffects
 		FireworkHandler.processMagicItemData(meta, data);
 
@@ -223,6 +226,9 @@ public class MagicItems {
 		// Max Stack Size
 		MaxStackSizeHandler.processItemMeta(meta, data);
 
+		// Modern data components
+		DataComponentsHandler.processItemMeta(meta, data);
+
 		// Enchantments
 		if (data.hasAttribute(ENCHANTS)) {
 			Map<Enchantment, Integer> enchantments = (Map<Enchantment, Integer>) data.getAttribute(ENCHANTS);
@@ -295,6 +301,9 @@ public class MagicItems {
 
 		// Set meta
 		item.setItemMeta(meta);
+
+		// Raw components string (Minecraft give-argument syntax)
+		DataComponentsHandler.applyComponentsString(item, data);
 
 		// Attributes
 		AttributeManager attributeManager = MagicSpells.getAttributeManager();
@@ -406,6 +415,9 @@ public class MagicItems {
 			// MaxStackSize
 			MaxStackSizeHandler.process(section, meta, itemData);
 
+			// Modern data components
+			DataComponentsHandler.process(section, meta, itemData);
+
 			// Enchants
 			// <enchantmentName> <level>
 			if (section.isList("enchants")) {
@@ -515,6 +527,9 @@ public class MagicItems {
 
 			// Set meta
 			item.setItemMeta(meta);
+
+			// Raw components string (Minecraft give-argument syntax)
+			DataComponentsHandler.applyComponentsString(item, itemData);
 
 			// Attributes
 			//<attribute name> <value> (operation) (slot)

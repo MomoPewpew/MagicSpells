@@ -35,6 +35,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemRarity;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.attribute.AttributeModifier;
@@ -144,6 +145,111 @@ public class MagicItemDataParser {
 						case "max-stack-size":
 						case "max_stack_size":
 							data.setAttribute(MAX_STACK_SIZE, value.getAsInt());
+							break;
+						case "itemmodel":
+						case "item-model":
+						case "item_model": {
+							NamespacedKey itemModelKey = NamespacedKey.fromString(value.getAsString());
+							if (itemModelKey != null) data.setAttribute(ITEM_MODEL, itemModelKey);
+							break;
+						}
+						case "tooltipstyle":
+						case "tooltip-style":
+						case "tooltip_style": {
+							NamespacedKey tooltipStyleKey = NamespacedKey.fromString(value.getAsString());
+							if (tooltipStyleKey != null) data.setAttribute(TOOLTIP_STYLE, tooltipStyleKey);
+							break;
+						}
+						case "rarity":
+							try {
+								data.setAttribute(RARITY, ItemRarity.valueOf(value.getAsString().trim().toUpperCase()));
+							} catch (IllegalArgumentException e) {
+								DebugHandler.debugBadEnumValue(ItemRarity.class, value.getAsString());
+							}
+							break;
+						case "enchantable":
+							data.setAttribute(ENCHANTABLE, value.getAsInt());
+							break;
+						case "glider":
+							data.setAttribute(GLIDER, value.getAsBoolean());
+							break;
+						case "maxdamage":
+						case "max-damage":
+						case "max_damage":
+							data.setAttribute(MAX_DAMAGE, value.getAsInt());
+							break;
+						case "food":
+							if (value.isJsonObject()) {
+								JsonObject food = value.getAsJsonObject();
+								int nutrition = food.has("nutrition") ? food.get("nutrition").getAsInt() : 0;
+								float saturation = food.has("saturation") ? food.get("saturation").getAsFloat() : 0;
+								boolean canAlwaysEat = food.has("can-always-eat") && food.get("can-always-eat").getAsBoolean()
+									|| food.has("can_always_eat") && food.get("can_always_eat").getAsBoolean();
+								data.setAttribute(FOOD, new ItemComponentValues.Food(nutrition, saturation, canAlwaysEat));
+							}
+							break;
+						case "usecooldown":
+						case "use-cooldown":
+						case "use_cooldown":
+							if (value.isJsonObject()) {
+								JsonObject cooldown = value.getAsJsonObject();
+								float seconds = cooldown.has("seconds") ? cooldown.get("seconds").getAsFloat() : 0;
+								NamespacedKey group = null;
+								if (cooldown.has("cooldown-group")) group = NamespacedKey.fromString(cooldown.get("cooldown-group").getAsString());
+								else if (cooldown.has("cooldown_group")) group = NamespacedKey.fromString(cooldown.get("cooldown_group").getAsString());
+								data.setAttribute(USE_COOLDOWN, new ItemComponentValues.UseCooldown(seconds, group));
+							}
+							break;
+						case "equippable":
+							if (value.isJsonObject()) {
+								JsonObject equippable = value.getAsJsonObject();
+								if (!equippable.has("slot")) break;
+								try {
+									EquipmentSlot slot = EquipmentSlot.valueOf(equippable.get("slot").getAsString().trim().toUpperCase());
+									Sound equipSound = null;
+									if (equippable.has("equip-sound")) {
+										try {
+											equipSound = Sound.valueOf(equippable.get("equip-sound").getAsString().trim().toUpperCase());
+										} catch (IllegalArgumentException ignored) {}
+									} else if (equippable.has("equip_sound")) {
+										try {
+											equipSound = Sound.valueOf(equippable.get("equip_sound").getAsString().trim().toUpperCase());
+										} catch (IllegalArgumentException ignored) {}
+									}
+									NamespacedKey model = null;
+									if (equippable.has("model")) model = NamespacedKey.fromString(equippable.get("model").getAsString());
+									NamespacedKey cameraOverlay = null;
+									if (equippable.has("camera-overlay")) cameraOverlay = NamespacedKey.fromString(equippable.get("camera-overlay").getAsString());
+									else if (equippable.has("camera_overlay")) cameraOverlay = NamespacedKey.fromString(equippable.get("camera_overlay").getAsString());
+									boolean dispensable = !equippable.has("dispensable") || equippable.get("dispensable").getAsBoolean();
+									boolean swappable = !equippable.has("swappable") || equippable.get("swappable").getAsBoolean();
+									boolean damageOnHurt = !equippable.has("damage-on-hurt") || equippable.get("damage-on-hurt").getAsBoolean();
+									if (equippable.has("damage_on_hurt")) damageOnHurt = equippable.get("damage_on_hurt").getAsBoolean();
+									data.setAttribute(EQUIPPABLE, new ItemComponentValues.Equippable(
+										slot, equipSound, model, cameraOverlay, dispensable, swappable, damageOnHurt
+									));
+								} catch (IllegalArgumentException e) {
+									DebugHandler.debugBadEnumValue(EquipmentSlot.class, equippable.get("slot").getAsString());
+								}
+							}
+							break;
+						case "jukeboxplayable":
+						case "jukebox-playable":
+						case "jukebox_playable":
+							if (value.isJsonPrimitive()) {
+								NamespacedKey songKey = NamespacedKey.fromString(value.getAsString());
+								if (songKey != null) data.setAttribute(JUKEBOX_PLAYABLE, new ItemComponentValues.JukeboxPlayable(songKey, true));
+							} else if (value.isJsonObject()) {
+								JsonObject playable = value.getAsJsonObject();
+								if (!playable.has("song")) break;
+								NamespacedKey songKey = NamespacedKey.fromString(playable.get("song").getAsString());
+								boolean showInTooltip = !playable.has("show-in-tooltip") || playable.get("show-in-tooltip").getAsBoolean();
+								if (playable.has("show_in_tooltip")) showInTooltip = playable.get("show_in_tooltip").getAsBoolean();
+								if (songKey != null) data.setAttribute(JUKEBOX_PLAYABLE, new ItemComponentValues.JukeboxPlayable(songKey, showInTooltip));
+							}
+							break;
+						case "components":
+							data.setAttribute(COMPONENTS, value.getAsString());
 							break;
 						case "power":
 							data.setAttribute(POWER, value.getAsInt());

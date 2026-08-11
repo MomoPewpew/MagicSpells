@@ -20,6 +20,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemRarity;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.attribute.AttributeModifier;
 
@@ -282,6 +283,17 @@ public class MagicItemData {
 		REPAIR_COST(Integer.class),
 		CUSTOM_MODEL_DATA(CustomModelDataValues.class),
 		MAX_STACK_SIZE(Integer.class),
+		ITEM_MODEL(NamespacedKey.class),
+		TOOLTIP_STYLE(NamespacedKey.class),
+		RARITY(ItemRarity.class),
+		ENCHANTABLE(Integer.class),
+		GLIDER(Boolean.class),
+		MAX_DAMAGE(Integer.class),
+		FOOD(ItemComponentValues.Food.class),
+		USE_COOLDOWN(ItemComponentValues.UseCooldown.class),
+		EQUIPPABLE(ItemComponentValues.Equippable.class),
+		JUKEBOX_PLAYABLE(ItemComponentValues.JukeboxPlayable.class),
+		COMPONENTS(String.class),
 		POWER(Integer.class),
 		UNBREAKABLE(Boolean.class),
 		HIDE_TOOLTIP(Boolean.class),
@@ -397,6 +409,155 @@ public class MagicItemData {
 			output
 					.append("\"max-stack-size\":")
 					.append((int) getAttribute(MagicItemAttribute.MAX_STACK_SIZE));
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.ITEM_MODEL)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"item-model\":\"")
+				.append(((NamespacedKey) getAttribute(MagicItemAttribute.ITEM_MODEL)).asString())
+				.append('"');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.TOOLTIP_STYLE)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"tooltip-style\":\"")
+				.append(((NamespacedKey) getAttribute(MagicItemAttribute.TOOLTIP_STYLE)).asString())
+				.append('"');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.RARITY)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"rarity\":\"")
+				.append(((ItemRarity) getAttribute(MagicItemAttribute.RARITY)).name().toLowerCase())
+				.append('"');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.ENCHANTABLE)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"enchantable\":")
+				.append((int) getAttribute(MagicItemAttribute.ENCHANTABLE));
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.GLIDER)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"glider\":")
+				.append((boolean) getAttribute(MagicItemAttribute.GLIDER));
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.MAX_DAMAGE)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"max-damage\":")
+				.append((int) getAttribute(MagicItemAttribute.MAX_DAMAGE));
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.FOOD)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			ItemComponentValues.Food food = (ItemComponentValues.Food) getAttribute(MagicItemAttribute.FOOD);
+			output
+				.append("\"food\":{")
+				.append("\"nutrition\":").append(food.nutrition()).append(',')
+				.append("\"saturation\":").append(food.saturation()).append(',')
+				.append("\"can-always-eat\":").append(food.canAlwaysEat())
+				.append('}');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.USE_COOLDOWN)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			ItemComponentValues.UseCooldown cooldown = (ItemComponentValues.UseCooldown) getAttribute(MagicItemAttribute.USE_COOLDOWN);
+			output.append("\"use-cooldown\":{\"seconds\":").append(cooldown.seconds());
+			if (cooldown.cooldownGroup() != null) {
+				output.append(",\"cooldown-group\":\"").append(cooldown.cooldownGroup().asString()).append('"');
+			}
+			output.append('}');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.EQUIPPABLE)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			ItemComponentValues.Equippable equippable = (ItemComponentValues.Equippable) getAttribute(MagicItemAttribute.EQUIPPABLE);
+			output
+				.append("\"equippable\":{")
+				.append("\"slot\":\"").append(equippable.slot().name().toLowerCase()).append('"')
+				.append(",\"dispensable\":").append(equippable.dispensable())
+				.append(",\"swappable\":").append(equippable.swappable())
+				.append(",\"damage-on-hurt\":").append(equippable.damageOnHurt());
+			if (equippable.equipSound() != null) {
+				output.append(",\"equip-sound\":\"").append(equippable.equipSound().name().toLowerCase()).append('"');
+			}
+			if (equippable.model() != null) {
+				output.append(",\"model\":\"").append(equippable.model().asString()).append('"');
+			}
+			if (equippable.cameraOverlay() != null) {
+				output.append(",\"camera-overlay\":\"").append(equippable.cameraOverlay().asString()).append('"');
+			}
+			output.append('}');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.JUKEBOX_PLAYABLE)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			ItemComponentValues.JukeboxPlayable playable = (ItemComponentValues.JukeboxPlayable) getAttribute(MagicItemAttribute.JUKEBOX_PLAYABLE);
+			output
+				.append("\"jukebox-playable\":{")
+				.append("\"song\":\"").append(playable.songKey().asString()).append('"')
+				.append(",\"show-in-tooltip\":").append(playable.showInTooltip())
+				.append('}');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.COMPONENTS)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"components\":\"")
+				.append(TxtUtil.escapeJSON((String) getAttribute(MagicItemAttribute.COMPONENTS)))
+				.append('"');
 
 			previous = true;
 		}

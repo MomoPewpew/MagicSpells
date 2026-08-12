@@ -93,7 +93,7 @@ Complete these steps once per organization / machine:
 
 5. **Sonatype tokens** — Put `mavenCentralUsername` and `mavenCentralPassword` in the same `.gradle/gradle.properties` file. For uploads, also expose them to Gradle (either duplicate them in **`~/.gradle/gradle.properties`**, or use the helper script below).
 
-6. **Version** — Set the version in [`gradle.properties`](gradle.properties) (e.g. `4.0-Beta-15`). It must **not** end with `-SNAPSHOT` for a release on Maven Central. Pre-release labels like `4.0-Beta-15` are allowed; see [Version format](#version-format) and [Incrementing the version](#incrementing-the-version) below.
+6. **Version** — Set the version in [`gradle.properties`](gradle.properties) (e.g. `4.0-Beta-16`). It must **not** end with `-SNAPSHOT` for a release on Maven Central. Pre-release labels like `4.0-Beta-16` are allowed; see [Version format](#version-format) and [Incrementing the version](#incrementing-the-version) below.
 
 Published modules and artifact ids:
 
@@ -111,7 +111,7 @@ Published modules and artifact ids:
 
 **What is published:** plain library JARs, sources, Javadoc, and POMs — not the shaded plugin JAR from `./gradlew :core:shadowJar`. Published POMs only declare dependencies on `io.github.team-sneakymouse` artifacts and Kotlin. `paper-api`, plugin JARs, and other SNAPSHOT or local-only libraries are omitted because Maven Central rejects them; consumers add Paper and other deps themselves (section 3).
 
-**Plugin JARs vs Maven artifacts:** `./gradlew build` writes fixed-name plugin files under each module’s `build/libs/` (e.g. `core/build/libs/MagicSpells.jar`, `shop/build/libs/MagicSpellsShop.jar`) with **no version in the filename**. Maven Central uploads use versioned coordinates instead (`magicspells-core-4.0-Beta-15.jar`, etc.).
+**Plugin JARs vs Maven artifacts:** `./gradlew build` writes fixed-name plugin files under each module’s `build/libs/` (e.g. `core/build/libs/MagicSpells.jar`, `shop/build/libs/MagicSpellsShop.jar`) with **no version in the filename**. Maven Central uploads use versioned coordinates instead (`magicspells-core-4.0-Beta-16.jar`, etc.).
 
 ### 2. Commands to publish
 
@@ -155,15 +155,15 @@ Publish a single module only:
 
 | Version | Maven Central release? | Notes |
 |---------|------------------------|--------|
-| `4.0-Beta-15` | Yes | Example release version; pre-release, not a SNAPSHOT. |
-| `4.0-Beta-15-SNAPSHOT` | No | Snapshot suffix is rejected in release POMs and deployments. |
+| `4.0-Beta-16` | Yes | Example release version; pre-release, not a SNAPSHOT. |
+| `4.0-Beta-16-SNAPSHOT` | No | Snapshot suffix is rejected in release POMs and deployments. |
 | `1.21.4-R0.1-SNAPSHOT` (Paper API) | N/A | Used only on your machine / Paper’s repo; not listed in published POMs. |
 
-For stricter [semantic versioning](https://semver.org/), you could use something like `4.0.0-beta.14` instead of `4.0-Beta-15`; either style is acceptable on Central as long as it is not a SNAPSHOT.
+For stricter [semantic versioning](https://semver.org/), you could use something like `4.0.0-beta.14` instead of `4.0-Beta-16`; either style is acceptable on Central as long as it is not a SNAPSHOT.
 
 ### Incrementing the version
 
-Every successful Maven Central release **locks that version forever**. You cannot re-upload, replace, or fix artifacts under the same coordinate. If publish fails partway through, or you need to ship signing/metadata fixes, **increment `version` in [`gradle.properties`](gradle.properties)** and publish again (e.g. `4.0-Beta-13` → `4.0-Beta-15`).
+Every successful Maven Central release **locks that version forever**. You cannot re-upload, replace, or fix artifacts under the same coordinate. If publish fails partway through, or you need to ship signing/metadata fixes, **increment `version` in [`gradle.properties`](gradle.properties)** and publish again (e.g. `4.0-Beta-13` → `4.0-Beta-16`).
 
 Typical workflow:
 
@@ -175,7 +175,7 @@ If Sonatype rejects the upload with **`Component … already exists`** (for exam
 
 ### 3. Using published artifacts in other projects
 
-Artifacts appear on Maven Central after sync (usually within 10–30 minutes). Use the `version` from [`gradle.properties`](gradle.properties) (e.g. `4.0-Beta-15`).
+Artifacts appear on Maven Central after sync (usually within 10–30 minutes). Use the `version` from [`gradle.properties`](gradle.properties) (e.g. `4.0-Beta-16`).
 
 **Maven** (`pom.xml`):
 
@@ -183,7 +183,7 @@ Artifacts appear on Maven Central after sync (usually within 10–30 minutes). U
 <dependency>
   <groupId>io.github.team-sneakymouse</groupId>
   <artifactId>magicspells-core</artifactId>
-  <version>4.0-Beta-15</version>
+  <version>4.0-Beta-16</version>
   <scope>provided</scope>
 </dependency>
 ```
@@ -196,7 +196,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-15")
+    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-16")
 }
 ```
 
@@ -208,7 +208,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-15")
+    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-16")
 }
 ```
 
@@ -225,7 +225,7 @@ repositories {
 }
 ```
 
-Releases from **`4.0-Beta-15` onward** omit Gradle metadata so `mavenCentral()` alone is enough (see root `build.gradle`).
+Releases from **`4.0-Beta-16` onward** omit Gradle metadata so `mavenCentral()` alone is enough (see root `build.gradle`).
 
 Use `magicspells-shop`, `magicspells-factions`, and the other artifact ids from the table above for extension modules. Extension modules should depend on `magicspells-core` as well as Paper:
 
@@ -237,8 +237,8 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
-    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-15")
-    compileOnly("io.github.team-sneakymouse:magicspells-factions:4.0-Beta-15") // example extension
+    compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-16")
+    compileOnly("io.github.team-sneakymouse:magicspells-factions:4.0-Beta-16") // example extension
 }
 ```
 

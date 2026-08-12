@@ -47,6 +47,7 @@ import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.events.MagicSpellsLoadedEvent;
+import com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute;
 
 import static com.nisovin.magicspells.MagicSpells.setCheckItemPersistentData;
 import static com.nisovin.magicspells.util.magicitems.MagicItems.getMagicItems;
@@ -256,7 +257,7 @@ public class MagicItemUpdater {
 
         if (magicItemData == null || stackData == null)
             return itemStack;
-        if (magicItemData.equals(stackData))
+        if (magicItemData.matches(stackData))
             return itemStack;
 
         return updateItem(itemStack, magicItems.get(magicitemName));
@@ -319,7 +320,10 @@ public class MagicItemUpdater {
         updatedItem.setAmount(amount);
 
         ItemMeta meta = updatedItem.getItemMeta();
-        if (durability != null && durability != 0 && meta instanceof Damageable updatedDamageable) {
+        MagicItemData definition = magicItem.getMagicItemData();
+        boolean durabilityIgnored = definition.getIgnoredAttributes().contains(MagicItemAttribute.DURABILITY);
+
+        if (durability != null && durability != 0 && meta instanceof Damageable updatedDamageable && !durabilityIgnored) {
             updatedDamageable.setDamage(durability);
         }
         if (expiresAt != null) {
@@ -358,6 +362,28 @@ public class MagicItemUpdater {
                 meta.getPersistentDataContainer().set(key, PersistentDataType.STRING,
                         sourceContainer.get(key, PersistentDataType.STRING));
             }
+        }
+
+        MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(itemStack);
+        EnumSet<MagicItemAttribute> ignored = definition.getIgnoredAttributes();
+        EnumSet<MagicItemAttribute> blacklisted = definition.getBlacklistedAttributes();
+
+        for (MagicItemAttribute attr : ignored) {
+            if (blacklisted.contains(attr)) continue;
+            if (attr == MagicItemAttribute.AMOUNT || attr == MagicItemAttribute.TYPE
+                    || attr == MagicItemAttribute.MAGIC_ITEM_NAME || attr == MagicItemAttribute.PERSISTENT_DATA) {
+                continue;
+            }
+            boolean has = stackData != null && stackData.hasAttribute(attr);
+            MagicItems.applyMagicItemAttribute(updatedItem, meta, stackData, attr, !has);
+        }
+
+        for (MagicItemAttribute attr : blacklisted) {
+            if (attr == MagicItemAttribute.AMOUNT || attr == MagicItemAttribute.TYPE
+                    || attr == MagicItemAttribute.MAGIC_ITEM_NAME || attr == MagicItemAttribute.PERSISTENT_DATA) {
+                continue;
+            }
+            MagicItems.applyMagicItemAttribute(updatedItem, meta, null, attr, true);
         }
 
         updatedItem.setItemMeta(meta);

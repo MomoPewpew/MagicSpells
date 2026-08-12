@@ -212,7 +212,8 @@ public class MagicItemData {
 				case NAME -> {
 					Component nameSelf = (Component) itemAttributes.get(attr);
 					Component nameOther = (Component) data.itemAttributes.get(attr);
-					return Util.getLegacyFromComponent(nameSelf).equals(Util.getLegacyFromComponent(nameOther));
+					if (!Util.getLegacyFromComponent(nameSelf).equals(Util.getLegacyFromComponent(nameOther)))
+						return false;
 				}
 				case LORE -> {
 					List<Component> loreSelf = (List<Component>) itemAttributes.get(attr);
@@ -224,7 +225,6 @@ public class MagicItemData {
 						String other = Util.getLegacyFromComponent(loreOther.get(i));
 						if (!self.equals(other)) return false;
 					}
-					return true;
 				}
 				case MAGIC_ITEM_NAME -> {
 					if (checkItemPersistentData()) continue;

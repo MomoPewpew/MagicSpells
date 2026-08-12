@@ -7,7 +7,9 @@ import net.kyori.adventure.text.Component;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.HashMultimap;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.inventory.ItemStack;
@@ -318,6 +320,230 @@ public class MagicItems {
 		}
 
 		return new MagicItem(item, data);
+	}
+
+	/**
+	 * Applies or clears a single {@link MagicItemAttribute} on an item during updater rebuilds.
+	 *
+	 * @param item  the item being updated
+	 * @param meta  current meta of the item (will be modified)
+	 * @param source source data to copy from when not clearing; may be null when clearing
+	 * @param attr  the attribute to apply or clear
+	 * @param clear when true, remove the attribute from the item; otherwise copy from source
+	 */
+	public static void applyMagicItemAttribute(ItemStack item, ItemMeta meta, MagicItemData source, MagicItemAttribute attr, boolean clear) {
+		if (item == null || meta == null || attr == null) return;
+
+		if (clear) {
+			clearMagicItemAttribute(item, meta, attr);
+			return;
+		}
+
+		if (source == null || !source.hasAttribute(attr)) return;
+
+		MagicItemData partial = new MagicItemData();
+		partial.setAttribute(attr, source.getAttribute(attr));
+
+		switch (attr) {
+			case NAME -> NameHandler.processItemMeta(meta, partial);
+			case LORE -> LoreHandler.processItemMeta(meta, partial);
+			case DURABILITY -> {
+				if (ItemUtil.hasDurability(item.getType())) DurabilityHandler.processItemMeta(meta, partial);
+			}
+			case REPAIR_COST -> RepairableHandler.processItemMeta(meta, partial);
+			case CUSTOM_MODEL_DATA -> CustomModelDataHandler.processItemMeta(meta, partial);
+			case MAX_STACK_SIZE -> MaxStackSizeHandler.processItemMeta(meta, partial);
+			case ITEM_MODEL, TOOLTIP_STYLE, RARITY, ENCHANTABLE, GLIDER, MAX_DAMAGE, FOOD, USE_COOLDOWN, EQUIPPABLE, JUKEBOX_PLAYABLE ->
+				DataComponentsHandler.processItemMeta(meta, partial);
+			case COMPONENTS -> DataComponentsHandler.applyComponentsString(item, partial);
+			case POWER, UNBREAKABLE, HIDE_TOOLTIP, INVISIBLE_TOOLTIP -> applySimpleMetaAttribute(meta, partial, attr);
+			case FAKE_GLINT -> {
+				if ((boolean) partial.getAttribute(FAKE_GLINT) && !meta.hasEnchants()) ItemUtil.addFakeEnchantment(meta);
+			}
+			case COLOR -> LeatherArmorHandler.processItemMeta(meta, partial);
+			case POTION_DATA -> PotionHandler.processItemMeta(meta, partial);
+			case POTION_EFFECTS -> {
+				PotionHandler.processItemMeta(meta, partial);
+				SuspiciousStewHandler.processItemMeta(meta, partial);
+			}
+			case FIREWORK_EFFECT, FIREWORK_EFFECTS -> {
+				FireworkEffectHandler.processItemMeta(meta, partial);
+				FireworkHandler.processItemMeta(meta, partial);
+			}
+			case TITLE, AUTHOR, PAGES -> WrittenBookHandler.processItemMeta(meta, partial);
+			case SKULL_OWNER, UUID, TEXTURE, SIGNATURE -> SkullHandler.processItemMeta(meta, partial);
+			case BLOCK_DATA -> BlockDataHandler.processItemMeta(meta, partial);
+			case PATTERNS -> BannerHandler.processItemMeta(meta, partial);
+			case ENCHANTS -> applyEnchants(meta, (Map<Enchantment, Integer>) partial.getAttribute(ENCHANTS));
+			case ATTRIBUTES -> applyBukkitAttributes(item, meta, (Multimap<Attribute, AttributeModifier>) partial.getAttribute(ATTRIBUTES));
+			case PERMANENT_DATA -> PersistentDataHandler.processItemMeta(meta, partial);
+			default -> {}
+		}
+	}
+
+	private static void applySimpleMetaAttribute(ItemMeta meta, MagicItemData data, MagicItemAttribute attr) {
+		switch (attr) {
+			case UNBREAKABLE -> meta.setUnbreakable((boolean) data.getAttribute(UNBREAKABLE));
+			case HIDE_TOOLTIP -> {
+				if ((boolean) data.getAttribute(HIDE_TOOLTIP)) meta.addItemFlags(ItemFlag.values());
+			}
+			case INVISIBLE_TOOLTIP -> meta.setHideTooltip((boolean) data.getAttribute(INVISIBLE_TOOLTIP));
+			case POWER -> {
+				if (meta instanceof org.bukkit.inventory.meta.FireworkMeta fireworkMeta) {
+					fireworkMeta.setPower((int) data.getAttribute(POWER));
+				}
+			}
+			default -> {}
+		}
+	}
+
+	private static void applyEnchants(ItemMeta meta, Map<Enchantment, Integer> enchantments) {
+		if (enchantments == null || enchantments.isEmpty()) return;
+
+		clearEnchants(meta);
+		if (meta instanceof EnchantmentStorageMeta storageMeta) {
+			for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+				storageMeta.addStoredEnchant(entry.getKey(), entry.getValue(), true);
+			}
+		} else {
+			for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+				meta.addEnchant(entry.getKey(), entry.getValue(), true);
+			}
+		}
+	}
+
+	private static void applyBukkitAttributes(ItemStack item, ItemMeta meta, Multimap<Attribute, AttributeModifier> attributes) {
+		clearBukkitAttributes(meta);
+
+		if (attributes == null || attributes.isEmpty()) return;
+
+		AttributeManager attributeManager = MagicSpells.getAttributeManager();
+		for (Attribute attribute : attributes.keySet()) {
+			for (AttributeModifier modifier : attributes.get(attribute)) {
+				attributeManager.addMetaAttribute(meta, attribute, modifier);
+			}
+		}
+		item.setItemMeta(meta);
+	}
+
+	private static void clearBukkitAttributes(ItemMeta meta) {
+		if (!meta.hasAttributeModifiers()) return;
+
+		Multimap<Attribute, AttributeModifier> modifiers = meta.getAttributeModifiers();
+		if (modifiers == null) return;
+
+		for (Attribute attribute : new HashSet<>(modifiers.keySet())) {
+			meta.removeAttributeModifier(attribute);
+		}
+	}
+
+	private static void clearMagicItemAttribute(ItemStack item, ItemMeta meta, MagicItemAttribute attr) {
+		switch (attr) {
+			case NAME -> meta.displayName(null);
+			case LORE -> meta.lore(null);
+			case DURABILITY -> {
+				if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) damageable.setDamage(0);
+			}
+			case REPAIR_COST -> {
+				if (meta instanceof org.bukkit.inventory.meta.Repairable repairable) repairable.setRepairCost(0);
+			}
+			case CUSTOM_MODEL_DATA -> {
+				org.bukkit.inventory.meta.components.CustomModelDataComponent component = meta.getCustomModelDataComponent();
+				component.setFloats(new ArrayList<>());
+				component.setStrings(new ArrayList<>());
+				component.setFlags(new ArrayList<>());
+				component.setColors(new ArrayList<>());
+				meta.setCustomModelDataComponent(component);
+			}
+			case MAX_STACK_SIZE -> meta.setMaxStackSize(0);
+			case ITEM_MODEL -> meta.setItemModel(null);
+			case TOOLTIP_STYLE -> meta.setTooltipStyle(null);
+			case RARITY -> meta.setRarity(null);
+			case ENCHANTABLE -> meta.setEnchantable(null);
+			case GLIDER -> meta.setGlider(false);
+			case MAX_DAMAGE -> {
+				if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) damageable.setMaxDamage(0);
+			}
+			case FOOD -> meta.setFood(null);
+			case USE_COOLDOWN -> meta.setUseCooldown(null);
+			case EQUIPPABLE -> meta.setEquippable(null);
+			case JUKEBOX_PLAYABLE -> meta.setJukeboxPlayable(null);
+			case UNBREAKABLE -> meta.setUnbreakable(false);
+			case HIDE_TOOLTIP -> meta.removeItemFlags(ItemFlag.values());
+			case INVISIBLE_TOOLTIP -> meta.setHideTooltip(false);
+			case FAKE_GLINT -> meta.setEnchantmentGlintOverride(null);
+			case COLOR -> {
+				if (meta instanceof org.bukkit.inventory.meta.LeatherArmorMeta armorMeta) {
+					armorMeta.setColor(org.bukkit.Color.fromRGB(0xA0, 0x65, 0x40));
+				} else if (meta instanceof org.bukkit.inventory.meta.PotionMeta potionMeta) {
+					potionMeta.setColor(null);
+				}
+			}
+			case POTION_DATA -> {
+				if (meta instanceof org.bukkit.inventory.meta.PotionMeta potionMeta) {
+					potionMeta.setBasePotionData(new org.bukkit.potion.PotionData(org.bukkit.potion.PotionType.WATER));
+				}
+			}
+			case POTION_EFFECTS -> {
+				if (meta instanceof org.bukkit.inventory.meta.SuspiciousStewMeta stewMeta) stewMeta.clearCustomEffects();
+				else if (meta instanceof org.bukkit.inventory.meta.PotionMeta potionMeta) potionMeta.clearCustomEffects();
+			}
+			case FIREWORK_EFFECT, FIREWORK_EFFECTS -> {
+				if (meta instanceof org.bukkit.inventory.meta.FireworkEffectMeta effectMeta) {
+					effectMeta.setEffect(null);
+				} else if (meta instanceof org.bukkit.inventory.meta.FireworkMeta fireworkMeta) {
+					fireworkMeta.clearEffects();
+				}
+			}
+			case TITLE, AUTHOR, PAGES -> {
+				if (meta instanceof org.bukkit.inventory.meta.BookMeta bookMeta) {
+					switch (attr) {
+						case TITLE -> bookMeta.setTitle(null);
+						case AUTHOR -> bookMeta.setAuthor(null);
+						case PAGES -> bookMeta.setPages(new ArrayList<>());
+						default -> {}
+					}
+				}
+			}
+			case SKULL_OWNER, UUID, TEXTURE, SIGNATURE -> {
+				if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) skullMeta.setPlayerProfile(null);
+			}
+			case BLOCK_DATA -> {
+				if (meta instanceof org.bukkit.inventory.meta.BlockDataMeta blockDataMeta) {
+					blockDataMeta.setBlockData(Bukkit.createBlockData(item.getType()));
+				}
+			}
+			case PATTERNS -> {
+				if (meta instanceof org.bukkit.inventory.meta.BannerMeta bannerMeta) bannerMeta.setPatterns(new ArrayList<>());
+			}
+			case ENCHANTS -> clearEnchants(meta);
+			case ATTRIBUTES -> clearBukkitAttributes(meta);
+			case PERMANENT_DATA -> clearPermanentData(meta);
+			default -> {}
+		}
+	}
+
+	private static void clearEnchants(ItemMeta meta) {
+		if (meta instanceof EnchantmentStorageMeta storageMeta) {
+			for (Enchantment enchant : new HashSet<>(storageMeta.getStoredEnchants().keySet())) {
+				storageMeta.removeStoredEnchant(enchant);
+			}
+		} else {
+			for (Enchantment enchant : new HashSet<>(meta.getEnchants().keySet())) {
+				meta.removeEnchant(enchant);
+			}
+		}
+		if (ItemUtil.hasFakeEnchantment(meta)) meta.setEnchantmentGlintOverride(null);
+	}
+
+	private static void clearPermanentData(ItemMeta meta) {
+		String namespace = MagicSpells.getInstance().getName().toLowerCase();
+		String permanentPrefix = "magicspellpermanentdata_";
+		for (NamespacedKey key : new HashSet<>(meta.getPersistentDataContainer().getKeys())) {
+			if (key.getNamespace().equals(namespace) && key.getKey().startsWith(permanentPrefix)) {
+				meta.getPersistentDataContainer().remove(key);
+			}
+		}
 	}
 
 	public static MagicItem getMagicItemFromSection(ConfigurationSection section) {

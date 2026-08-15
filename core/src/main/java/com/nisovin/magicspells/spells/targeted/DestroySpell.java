@@ -245,12 +245,15 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 					if (!affectsContainers && BlockUtils.isContainer(b))
 						continue;
 
-					if (((blockTypesToThrow == null
+					boolean isThrowType = (blockTypesToThrow == null
 							&& !(blockTypesToRemove != null && blockTypesToRemove.contains(b.getType())))
-							|| (blockTypesToThrow != null && blockTypesToThrow.contains(b.getType())))
-							&& (throwChance >= 1 || random.nextFloat() <= throwChance)
-							&& b.getType().isSolid()) {
-						blocksToThrow.add(b);
+							|| (blockTypesToThrow != null && blockTypesToThrow.contains(b.getType()));
+
+					if (isThrowType && b.getType().isSolid()) {
+						if (throwChance >= 1 || random.nextFloat() <= throwChance)
+							blocksToThrow.add(b);
+						else
+							blocksToRemove.add(b);
 					} else if (blockTypesToRemove != null && blockTypesToRemove.contains(b.getType())) {
 						blocksToRemove.add(b);
 					}

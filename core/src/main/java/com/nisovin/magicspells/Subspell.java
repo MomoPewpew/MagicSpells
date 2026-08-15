@@ -236,6 +236,10 @@ public class Subspell {
 		return isTargetedEntityFromLocation;
 	}
 
+	private static boolean canCast() {
+		return MagicSpells.isLoaded();
+	}
+
 	public boolean subcast(@Nullable LivingEntity caster, @NotNull Location location, @NotNull LivingEntity target,
 			float power, @Nullable String[] args) {
 		return subcast(caster, location, target, power, args, passTargeting, true);
@@ -370,6 +374,9 @@ public class Subspell {
 	}
 
 	public PostCastAction cast(LivingEntity caster, float power, String[] args) {
+		if (!canCast())
+			return PostCastAction.ALREADY_HANDLED;
+
 		if (!passPower)
 			power = 1f;
 
@@ -388,6 +395,9 @@ public class Subspell {
 	}
 
 	private PostCastAction castReal(LivingEntity caster, float basePower, String[] args) {
+		if (!canCast())
+			return PostCastAction.ALREADY_HANDLED;
+
 		float power = basePower * subPower.get(caster, basePower, null);
 		args = this.args.get(caster, power, args);
 
@@ -420,6 +430,9 @@ public class Subspell {
 
 	public boolean castAtEntity(LivingEntity caster, LivingEntity target, float power, String[] args,
 			boolean passTargeting) {
+		if (!canCast())
+			return false;
+
 		if (!passPower)
 			power = 1f;
 
@@ -439,6 +452,9 @@ public class Subspell {
 
 	private boolean castAtEntityReal(LivingEntity caster, LivingEntity target, float basePower, String[] args,
 			boolean passTargeting) {
+		if (!canCast())
+			return false;
+
 		if (!isTargetedEntity)
 			return isTargetedLocation && castAtLocationReal(caster, target.getLocation(), basePower, args);
 
@@ -551,6 +567,9 @@ public class Subspell {
 	}
 
 	public boolean castAtLocation(LivingEntity caster, Location target, String[] args, float power) {
+		if (!canCast())
+			return false;
+
 		if (!passPower)
 			power = 1f;
 
@@ -569,6 +588,9 @@ public class Subspell {
 	}
 
 	private boolean castAtLocationReal(LivingEntity caster, Location target, float basePower, String[] args) {
+		if (!canCast())
+			return false;
+
 		if (!isTargetedLocation)
 			return false;
 
@@ -655,6 +677,9 @@ public class Subspell {
 
 	public boolean castAtEntityFromLocation(LivingEntity caster, Location from, LivingEntity target, float power,
 			String[] args, boolean passTargeting) {
+		if (!canCast())
+			return false;
+
 		if (!passPower)
 			power = 1f;
 
@@ -675,6 +700,9 @@ public class Subspell {
 
 	private boolean castAtEntityFromLocationReal(LivingEntity caster, Location from, LivingEntity target,
 			float basePower, String[] args, boolean passTargeting) {
+		if (!canCast())
+			return false;
+
 		if (!isTargetedEntityFromLocation)
 			return false;
 

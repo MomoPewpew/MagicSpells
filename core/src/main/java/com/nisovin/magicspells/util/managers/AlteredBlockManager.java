@@ -1,30 +1,50 @@
 package com.nisovin.magicspells.util.managers;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.nisovin.magicspells.MagicSpells;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.Banner;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
+import org.bukkit.block.CreatureSpawner;
+import org.bukkit.block.Lectern;
+import org.bukkit.block.Sign;
+import org.bukkit.block.banner.Pattern;
+import org.bukkit.block.banner.PatternType;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.sign.Side;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Marker;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.UUID;
 
 public class AlteredBlockManager {
 
+    private static final GsonComponentSerializer COMPONENT_JSON = GsonComponentSerializer.gson();
+
     private final Map<Block, AlteredBlock> alteredBlocks = new HashMap<>();
     private final NamespacedKey blockDataKey;
+    private final NamespacedKey blockStateKey;
     private final NamespacedKey worldKey;
     private final NamespacedKey xKey;
     private final NamespacedKey yKey;
@@ -33,6 +53,7 @@ public class AlteredBlockManager {
     public AlteredBlockManager() {
         MagicSpells plugin = MagicSpells.getInstance();
         blockDataKey = new NamespacedKey(plugin, "altered_block_data");
+        blockStateKey = new NamespacedKey(plugin, "altered_block_state");
         worldKey = new NamespacedKey(plugin, "altered_block_world");
         xKey = new NamespacedKey(plugin, "altered_block_x");
         yKey = new NamespacedKey(plugin, "altered_block_y");
@@ -44,7 +65,7 @@ public class AlteredBlockManager {
         AlteredBlock alteredBlock = alteredBlocks.computeIfAbsent(change.block(), b -> new AlteredBlock(change));
         alteredBlock.changes.add(change);
         if (isNew) {
-            alteredBlock.marker = spawnMarker(change.block(), change.fromData());
+            alteredBlock.marker = spawnMarker(change.block(), change.fromData(), change.fromState());
         }
     }
 
@@ -154,18 +175,28 @@ public class AlteredBlockManager {
         if (!entity.getScoreboardTags().contains(MagicSpells.ALTERED_BLOCK_TAG)) return;
 
         Block block = getMarkedBlock(entity);
-        String dataString = entity.getPersistentDataContainer().get(blockDataKey, PersistentDataType.STRING);
+        var pdc = entity.getPersistentDataContainer();
+        String dataString = pdc.get(blockDataKey, PersistentDataType.STRING);
         if (block != null && dataString != null) {
             try {
                 block.setBlockData(Bukkit.createBlockData(dataString), false);
             } catch (IllegalArgumentException e) {
                 MagicSpells.error("Invalid altered-block marker BlockData at " + block.getLocation() + ": " + dataString);
             }
+
+            String stateString = pdc.get(blockStateKey, PersistentDataType.STRING);
+            if (stateString != null) {
+                try {
+                    applySerializedTileData(block, stateString, false);
+                } catch (RuntimeException e) {
+                    MagicSpells.error("Invalid altered-block marker tile data at " + block.getLocation() + ": " + e.getMessage());
+                }
+            }
         }
         entity.remove();
     }
 
-    private Marker spawnMarker(Block block, BlockData originalData) {
+    private Marker spawnMarker(Block block, BlockData originalData, BlockState originalState) {
         Location loc = block.getLocation().add(0.5, 0.5, 0.5);
         Marker marker = (Marker) block.getWorld().spawnEntity(loc, EntityType.MARKER);
         marker.setPersistent(true);
@@ -175,6 +206,9 @@ public class AlteredBlockManager {
         marker.addScoreboardTag(MagicSpells.ALTERED_BLOCK_TAG);
         var pdc = marker.getPersistentDataContainer();
         pdc.set(blockDataKey, PersistentDataType.STRING, originalData.getAsString());
+        String tileData = serializeTileData(originalState);
+        if (tileData != null)
+            pdc.set(blockStateKey, PersistentDataType.STRING, tileData);
         pdc.set(worldKey, PersistentDataType.STRING, block.getWorld().getUID().toString());
         pdc.set(xKey, PersistentDataType.INTEGER, block.getX());
         pdc.set(yKey, PersistentDataType.INTEGER, block.getY());
@@ -187,6 +221,199 @@ public class AlteredBlockManager {
             alteredBlock.marker.remove();
         }
         alteredBlock.marker = null;
+    }
+
+    /**
+     * Serializes tile-entity state for cross-session marker restore (signs, containers, etc.).
+     * Returns null when there is nothing beyond BlockData to store.
+     */
+    static String serializeTileData(BlockState state) {
+        if (state == null) return null;
+
+        JsonObject root = new JsonObject();
+        root.addProperty("v", 1);
+
+        switch (state) {
+            case Sign sign -> {
+                root.addProperty("kind", "sign");
+                root.add("front", serializeSignSide(sign.getSide(Side.FRONT)));
+                root.add("back", serializeSignSide(sign.getSide(Side.BACK)));
+                root.addProperty("waxed", sign.isWaxed());
+            }
+            case Container container -> {
+                root.addProperty("kind", "container");
+                root.addProperty("items", encodeItems(container.getInventory().getContents()));
+            }
+            case Lectern lectern -> {
+                root.addProperty("kind", "lectern");
+                root.addProperty("items", encodeItems(lectern.getInventory().getContents()));
+                root.addProperty("page", lectern.getPage());
+            }
+            case CreatureSpawner spawner -> {
+                root.addProperty("kind", "spawner");
+                EntityType spawned = spawner.getSpawnedType();
+                if (spawned != null)
+                    root.addProperty("spawnedType", spawned.name());
+                root.addProperty("delay", spawner.getDelay());
+                root.addProperty("minSpawnDelay", spawner.getMinSpawnDelay());
+                root.addProperty("maxSpawnDelay", spawner.getMaxSpawnDelay());
+                root.addProperty("spawnCount", spawner.getSpawnCount());
+                root.addProperty("maxNearbyEntities", spawner.getMaxNearbyEntities());
+                root.addProperty("requiredPlayerRange", spawner.getRequiredPlayerRange());
+                root.addProperty("spawnRange", spawner.getSpawnRange());
+            }
+            case Banner banner -> {
+                root.addProperty("kind", "banner");
+                JsonArray patterns = new JsonArray();
+                for (Pattern pattern : banner.getPatterns()) {
+                    JsonObject entry = new JsonObject();
+                    entry.addProperty("color", pattern.getColor().name());
+                    NamespacedKey key = pattern.getPattern().getKey();
+                    entry.addProperty("pattern", key != null ? key.toString() : pattern.getPattern().toString());
+                    patterns.add(entry);
+                }
+                root.add("patterns", patterns);
+            }
+            default -> {
+                return null;
+            }
+        }
+
+        return root.toString();
+    }
+
+    private static JsonObject serializeSignSide(org.bukkit.block.sign.SignSide side) {
+        JsonObject obj = new JsonObject();
+        JsonArray lines = new JsonArray();
+        for (int i = 0; i < 4; i++) {
+            lines.add(COMPONENT_JSON.serialize(side.line(i)));
+        }
+        obj.add("lines", lines);
+        obj.addProperty("glowing", side.isGlowingText());
+        DyeColor color = side.getColor();
+        if (color != null)
+            obj.addProperty("color", color.name());
+        return obj;
+    }
+
+    private static String encodeItems(ItemStack[] contents) {
+        return Base64.getEncoder().encodeToString(ItemStack.serializeItemsAsBytes(contents));
+    }
+
+    private static ItemStack[] decodeItems(String encoded) {
+        return ItemStack.deserializeItemsFromBytes(Base64.getDecoder().decode(encoded));
+    }
+
+    static void applySerializedTileData(Block block, String json, boolean applyPhysics) {
+        JsonObject root;
+        try {
+            root = JsonParser.parseString(json).getAsJsonObject();
+        } catch (JsonSyntaxException | IllegalStateException e) {
+            throw new IllegalArgumentException("malformed tile JSON", e);
+        }
+
+        String kind = root.has("kind") ? root.get("kind").getAsString() : "";
+        BlockState state = block.getState();
+
+        switch (kind) {
+            case "sign" -> {
+                if (!(state instanceof Sign sign)) return;
+                applySignSide(sign.getSide(Side.FRONT), root.getAsJsonObject("front"));
+                applySignSide(sign.getSide(Side.BACK), root.getAsJsonObject("back"));
+                if (root.has("waxed"))
+                    sign.setWaxed(root.get("waxed").getAsBoolean());
+                sign.update(true, applyPhysics);
+            }
+            case "container" -> {
+                if (!(state instanceof Container container)) return;
+                container.getInventory().setContents(decodeItems(root.get("items").getAsString()));
+                container.update(true, applyPhysics);
+            }
+            case "lectern" -> {
+                if (!(state instanceof Lectern lectern)) return;
+                lectern.getInventory().setContents(decodeItems(root.get("items").getAsString()));
+                if (root.has("page"))
+                    lectern.setPage(root.get("page").getAsInt());
+                lectern.update(true, applyPhysics);
+            }
+            case "spawner" -> {
+                if (!(state instanceof CreatureSpawner spawner)) return;
+                if (root.has("spawnedType")) {
+                    try {
+                        spawner.setSpawnedType(EntityType.valueOf(root.get("spawnedType").getAsString()));
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+                if (root.has("delay"))
+                    spawner.setDelay(root.get("delay").getAsInt());
+                if (root.has("minSpawnDelay"))
+                    spawner.setMinSpawnDelay(root.get("minSpawnDelay").getAsInt());
+                if (root.has("maxSpawnDelay"))
+                    spawner.setMaxSpawnDelay(root.get("maxSpawnDelay").getAsInt());
+                if (root.has("spawnCount"))
+                    spawner.setSpawnCount(root.get("spawnCount").getAsInt());
+                if (root.has("maxNearbyEntities"))
+                    spawner.setMaxNearbyEntities(root.get("maxNearbyEntities").getAsInt());
+                if (root.has("requiredPlayerRange"))
+                    spawner.setRequiredPlayerRange(root.get("requiredPlayerRange").getAsInt());
+                if (root.has("spawnRange"))
+                    spawner.setSpawnRange(root.get("spawnRange").getAsInt());
+                spawner.update(true, applyPhysics);
+            }
+            case "banner" -> {
+                if (!(state instanceof Banner banner)) return;
+                List<Pattern> patterns = new ArrayList<>();
+                JsonArray array = root.getAsJsonArray("patterns");
+                if (array != null) {
+                    for (JsonElement element : array) {
+                        JsonObject entry = element.getAsJsonObject();
+                        DyeColor color = DyeColor.valueOf(entry.get("color").getAsString());
+                        String patternId = entry.get("pattern").getAsString();
+                        PatternType type = resolvePatternType(patternId);
+                        if (type != null)
+                            patterns.add(new Pattern(color, type));
+                    }
+                }
+                banner.setPatterns(patterns);
+                banner.update(true, applyPhysics);
+            }
+            default -> {
+            }
+        }
+    }
+
+    private static void applySignSide(org.bukkit.block.sign.SignSide side, JsonObject obj) {
+        if (obj == null) return;
+        JsonArray lines = obj.getAsJsonArray("lines");
+        if (lines != null) {
+            for (int i = 0; i < Math.min(4, lines.size()); i++) {
+                Component line = COMPONENT_JSON.deserialize(lines.get(i).getAsString());
+                side.line(i, line);
+            }
+        }
+        if (obj.has("glowing"))
+            side.setGlowingText(obj.get("glowing").getAsBoolean());
+        if (obj.has("color")) {
+            try {
+                side.setColor(DyeColor.valueOf(obj.get("color").getAsString()));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+    }
+
+    private static PatternType resolvePatternType(String id) {
+        NamespacedKey key = NamespacedKey.fromString(id);
+        if (key != null) {
+            for (PatternType type : PatternType.values()) {
+                if (key.equals(type.getKey()))
+                    return type;
+            }
+        }
+        try {
+            return PatternType.valueOf(id);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public class AlteredBlock {
@@ -220,72 +447,11 @@ public class AlteredBlockManager {
         }
 
         private void restoreBlockState(BlockData blockData, BlockState blockState, boolean applyPhysics) {
-            // First set the block data (material, rotation, etc.)
             block.setBlockData(blockData, applyPhysics);
-            
-            // Then restore the block state data (sign text, chest contents, etc.)
-            if (blockState != null) {
-                BlockState currentState = block.getState();
-                
-                // Copy the state data from the cached state to the current state
-                if (blockState.getClass().equals(currentState.getClass())) {
-                    copyBlockStateData(blockState, currentState);
-                    currentState.update(true, applyPhysics);
-                }
-            }
-        }
 
-        private void copyBlockStateData(BlockState from, BlockState to) {
-            // Handle different block state types
-            switch (from) {
-                case org.bukkit.block.Sign fromSign when to instanceof org.bukkit.block.Sign toSign -> {
-                    // Copy front side text and formatting
-                    var fromSide = fromSign.getSide(Side.FRONT);
-                    var toSide = toSign.getSide(Side.FRONT);
-                    for (int i = 0; i < 4; i++) {
-                        toSide.line(i, fromSide.line(i));
-                    }
-                    toSide.setGlowingText(fromSide.isGlowingText());
-                    toSide.setColor(fromSide.getColor());
-                    // Copy back side text and formatting
-                    var fromBackSide = fromSign.getSide(Side.BACK);
-                    var toBackSide = toSign.getSide(Side.BACK);
-                    for (int i = 0; i < 4; i++) {
-                        toBackSide.line(i, fromBackSide.line(i));
-                    }
-                    toBackSide.setGlowingText(fromBackSide.isGlowingText());
-                    toBackSide.setColor(fromBackSide.getColor());
-                    // Copy waxed state
-                    toSign.setWaxed(fromSign.isWaxed());
-                }
-                case org.bukkit.block.Container fromContainer when to instanceof org.bukkit.block.Container toContainer -> {
-                    // Copy container contents
-                    toContainer.getInventory().setContents(fromContainer.getInventory().getContents());
-                }
-                case org.bukkit.block.Lectern fromLectern when to instanceof org.bukkit.block.Lectern toLectern -> {
-                    // Copy lectern book and page
-                    toLectern.getInventory().setContents(fromLectern.getInventory().getContents());
-                    toLectern.setPage(fromLectern.getPage());
-                }
-                case org.bukkit.block.CreatureSpawner fromSpawner when to instanceof org.bukkit.block.CreatureSpawner toSpawner -> {
-                    // Copy spawner data
-                    toSpawner.setSpawnedType(fromSpawner.getSpawnedType());
-                    toSpawner.setDelay(fromSpawner.getDelay());
-                    toSpawner.setMinSpawnDelay(fromSpawner.getMinSpawnDelay());
-                    toSpawner.setMaxSpawnDelay(fromSpawner.getMaxSpawnDelay());
-                    toSpawner.setSpawnCount(fromSpawner.getSpawnCount());
-                    toSpawner.setMaxNearbyEntities(fromSpawner.getMaxNearbyEntities());
-                    toSpawner.setRequiredPlayerRange(fromSpawner.getRequiredPlayerRange());
-                    toSpawner.setSpawnRange(fromSpawner.getSpawnRange());
-                }
-                case org.bukkit.block.Banner fromBanner when to instanceof org.bukkit.block.Banner toBanner -> {
-                    // Copy banner patterns
-                    toBanner.setPatterns(fromBanner.getPatterns());
-                }
-                default -> {
-
-                }
-            }
+            String tileData = serializeTileData(blockState);
+            if (tileData != null)
+                applySerializedTileData(block, tileData, applyPhysics);
         }
     }
 }

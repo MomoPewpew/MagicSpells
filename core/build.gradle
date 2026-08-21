@@ -35,7 +35,8 @@ dependencies {
     compileOnly(group: "io.github.team-sneakymouse", name: "sneakybagofholding", version: "1.1.1") { transitive = false }
     implementation(group: "com.comphenix.protocol", name: "ProtocolLib", version: "5.1.0") { transitive = false }
     implementation(group: "com.github.libraryaddict", name: "LibsDisguises", version: "v10.0.25") { transitive = false }
-    implementation(group: "com.github.MilkBowl", name: "vault", version: "master-SNAPSHOT") { transitive = false }
+    // VaultAPI only — Vault is provided at runtime. Avoid vault:master-SNAPSHOT (JitPack metadata flaky).
+    compileOnly(group: "com.github.MilkBowl", name: "VaultAPI", version: "1.7.1") { transitive = false }
     implementation(group: "me.clip", name: "placeholderapi", version: "2.11.6") { transitive = false }
     implementation(group: "com.github.TechFortress", name: "GriefPrevention", version: "17.0.0") { transitive = false }
     implementation(group: "net.coreprotect", name: "coreprotect", version: "22.4") { transitive = false }

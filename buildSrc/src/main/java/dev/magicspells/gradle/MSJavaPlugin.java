@@ -26,7 +26,7 @@ public class MSJavaPlugin implements Plugin<Project> {
 
         String[] mavenUrls = new String[] {
                 "https://repo.md-5.net/content/repositories/releases/",
-                "https://papermc.io/repo/repository/maven-public/",
+                "https://repo.papermc.io/repository/maven-public/",
                 "https://repo.aikar.co/content/groups/aikar/",
                 "https://oss.sonatype.org/content/repositories/central",
                 "https://oss.sonatype.org/content/repositories/snapshots",

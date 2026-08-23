@@ -83,7 +83,7 @@ public class TransmogrifyMenuSpell extends InstantSpell {
 		ModelOption revert = new ModelOption();
 		revert.id = REVERT_OPTION_ID;
 		revert.revert = true;
-		revert.displayName = getConfigString("revert.name", "&7Default look");
+		revert.displayName = readOptionName("revert", "&7Default look");
 		revert.lore = getConfigStringList("revert.lore", null);
 		if (configKeyExists("revert.cost")) {
 			revert.hasOwnCost = true;
@@ -113,7 +113,7 @@ public class TransmogrifyMenuSpell extends InstantSpell {
 				ModelOption option = new ModelOption();
 				option.id = key;
 				option.itemModel = modelKey;
-				option.displayName = getConfigString(path + "name", null);
+				option.displayName = readOptionName("models." + key, null);
 				option.lore = getConfigStringList(path + "lore", null);
 				if (configKeyExists(path + "cost")) {
 					option.hasOwnCost = true;
@@ -218,17 +218,18 @@ public class TransmogrifyMenuSpell extends InstantSpell {
 		ItemStack preview = snapshot.clone();
 		preview.setAmount(1);
 		ItemMeta meta = preview.getItemMeta();
-		if (meta != null) {
-			if (option.revert) applyRevertModel(meta, getMagicItemName(snapshot));
-			else if (option.itemModel != null) meta.setItemModel(option.itemModel);
+		if (meta == null) {
+			DataUtil.setString(preview, OPTION_TAG, option.id);
+			return preview;
+		}
 
-			if (option.displayName != null && !option.displayName.isEmpty()) {
-				meta.displayName(translate(opener, option.displayName, args));
-			} else if (option.revert) {
-				meta.displayName(translate(opener, "&7Default look", args));
-			} else if (option.itemModel != null) {
-				meta.displayName(Component.text(option.itemModel.asString()));
-			}
+		if (option.revert) applyRevertModel(meta, getMagicItemName(snapshot));
+		else if (option.itemModel != null) meta.setItemModel(option.itemModel);
+		preview.setItemMeta(meta);
+
+		meta = preview.getItemMeta();
+		if (meta != null) {
+			applyPreviewDisplay(meta, option, opener, args);
 			if (option.lore != null && !option.lore.isEmpty()) {
 				List<Component> lore = new ArrayList<>();
 				for (String line : option.lore) lore.add(translate(opener, line, args));
@@ -236,8 +237,38 @@ public class TransmogrifyMenuSpell extends InstantSpell {
 			}
 			preview.setItemMeta(meta);
 		}
+
 		DataUtil.setString(preview, OPTION_TAG, option.id);
+
+		meta = preview.getItemMeta();
+		if (meta != null) {
+			applyPreviewDisplay(meta, option, opener, args);
+			preview.setItemMeta(meta);
+		}
+
 		return preview;
+	}
+
+	private void applyPreviewDisplay(ItemMeta meta, ModelOption option, Player opener, String[] args) {
+		Component name = null;
+		if (option.displayName != null && !option.displayName.isEmpty()) {
+			name = translate(opener, option.displayName, args);
+		} else if (option.revert) {
+			name = translate(opener, "&7Default look", args);
+		}
+		if (name == null) return;
+
+		meta.customName(name);
+		meta.itemName(name);
+	}
+
+	/**
+	 * Reads a display name from config when the key exists; otherwise returns the default.
+	 * A configured but empty string means no override (keep the held item name).
+	 */
+	private String readOptionName(String path, String defaultValue) {
+		if (!configKeyExists(path + ".name")) return defaultValue;
+		return getConfigString(path + ".name", defaultValue != null ? defaultValue : "");
 	}
 
 	private Component translate(Player player, String text, String[] args) {
@@ -311,6 +342,10 @@ public class TransmogrifyMenuSpell extends InstantSpell {
 		if (option.revert) applyRevertModel(meta, session.magicItemName);
 		else meta.setItemModel(option.itemModel);
 		updatedItem.setItemMeta(meta);
+
+		if (option.revert) DataUtil.remove(updatedItem, "transmogrified");
+		else DataUtil.setString(updatedItem, "transmogrified", option.itemModel.asString());
+
 		player.getInventory().setItem(session.heldSlot, updatedItem);
 
 		playSpellEffects(EffectPosition.CASTER, player, spellData);

@@ -231,6 +231,11 @@ public class MagicItemUpdater {
             return itemStack;
         }
 
+        if (container.has(new NamespacedKey(MagicSpells.getInstance(), "transmogrifyoption"),
+                PersistentDataType.STRING)) {
+            return itemStack;
+        }
+
         String magicitemName = null;
 
         if (container.has(NAME_KEY, PersistentDataType.STRING)) {
@@ -286,6 +291,14 @@ public class MagicItemUpdater {
                 PersistentDataType.STRING)) {
             return itemStack;
         }
+
+        if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "transmogrifyoption"),
+                PersistentDataType.STRING)) {
+            return itemStack;
+        }
+
+        boolean transmogrified = sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "transmogrified"),
+                PersistentDataType.STRING);
 
         if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG)) {
             expiresAt = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"),
@@ -384,6 +397,11 @@ public class MagicItemUpdater {
                 continue;
             }
             MagicItems.applyMagicItemAttribute(updatedItem, meta, null, attr, true);
+        }
+
+        if (transmogrified) {
+            if (sourceMeta.hasItemModel()) meta.setItemModel(sourceMeta.getItemModel());
+            else meta.setItemModel(null);
         }
 
         updatedItem.setItemMeta(meta);

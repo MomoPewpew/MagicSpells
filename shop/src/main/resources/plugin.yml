@@ -1,5 +1,6 @@
 name: MagicSpellsShop
 version: $version
+api-version: "26.2"
 main: com.nisovin.magicspells.shop.MagicSpellsShop
 author: nisovin
 depend: [MagicSpells]

@@ -1,12 +1,12 @@
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.9.23"
+  id("org.jetbrains.kotlin.jvm") version "2.4.10"
   id("dev.magicspells.msjava")
   // 0.34+ uses Central Portal only (OSSRH removed); 0.36+ requires Kotlin 2.2
-  id("com.vanniktech.maven.publish") version "0.34.0" apply false
+  id("com.vanniktech.maven.publish") version "0.37.0" apply false
 }
 
 wrapper {
-  gradleVersion = "8.4"
+  gradleVersion = "9.5.0"
   setDistributionType(Wrapper.DistributionType.ALL)
 }
 
@@ -14,7 +14,7 @@ wrapper {
 // (run-paper is applied on :core).
 tasks.register("runServer") {
   group = "run"
-  description = "Runs a Paper 1.21.4 test server with the MagicSpells plugin."
+  description = "Runs a Paper 26.2 test server with the MagicSpells plugin."
   dependsOn(":core:runServer")
 }
 
@@ -70,7 +70,7 @@ subprojects {
 
   dependencies {
     // compileOnly: provided by the server at runtime; must not appear as a SNAPSHOT in the Maven Central POM
-    compileOnly(group: "io.papermc.paper", name: "paper-api", version: "1.21.4-R0.1-SNAPSHOT")
+    compileOnly(group: "io.papermc.paper", name: "paper-api", version: "26.2.build.116-stable")
   }
 
   processResources {
@@ -78,7 +78,7 @@ subprojects {
   }
 
   // Paperweight NMS modules are build-time only; publish library modules to Maven Central.
-  if (project.path != ":nms" && project.path != ":nms:v1_21_4") {
+  if (project.path != ":nms" && project.path != ":nms:v26_2") {
     apply plugin: "com.vanniktech.maven.publish"
 
     group = findProperty("mavenCentralGroup") ?: "io.github.team-sneakymouse"

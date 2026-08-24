@@ -1,9 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("io.github.goooler.shadow") version "8.1.7"
-    // 3.x requires Gradle 8.14+; wrapper is currently 8.12
-    id("xyz.jpenilla.run-paper") version "2.3.1"
+    id("com.gradleup.shadow") version "9.6.1"
+    id("xyz.jpenilla.run-paper") version "3.0.2"
 }
 
 repositories {
@@ -21,10 +20,11 @@ dependencies {
     shadow(group: "org.apache.commons", name: "commons-math4-core", version: "4.0-beta1")
     shadow(group: "com.github.Chronoken", name: "EffectLib", version: "477d459")
     shadow(group: "co.aikar", name: "acf-paper", version: "0.5.0-SNAPSHOT")
-    shadow(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: "1.9.20")
+    shadow(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: "2.4.10")
+    shadow(group: "com.googlecode.json-simple", name: "json-simple", version: "1.1.1")
 
     shadow(project(path: ":nms:shared", configuration: "apiElements"))
-    shadow(project(path: ":nms:v1_21_4")) { transitive = false }
+    shadow(project(path: ":nms:v26_2")) { transitive = false }
 
     implementation(name:'CMI-9.8.9.8', ext:'jar')
     implementation(name:'CMILib1.5.9.9', ext:'jar')
@@ -87,14 +87,14 @@ components.named("java") {
 
 compileKotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
+        jvmTarget.set(JvmTarget.JVM_25)
         javaParameters.set(true)
     }
 }
 
 compileTestKotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
+        jvmTarget.set(JvmTarget.JVM_25)
     }
 }
 
@@ -103,7 +103,7 @@ tasks.named("build") {
 }
 
 tasks.named("runServer").configure {
-    minecraftVersion("1.21.4")
+    minecraftVersion("26.2")
     // Goooler shadow keeps the shadowJar task name; pin explicitly for the test server.
     pluginJars.from(tasks.named("shadowJar").flatMap { it.archiveFile })
 }

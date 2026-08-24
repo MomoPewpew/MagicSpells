@@ -1479,7 +1479,7 @@ public class ConfigDataUtil {
 			if (s == null)
 				return (caster, target, location, power, args) -> def;
 
-			DustOptions options = new DustOptions(c, s);
+			DustOptions options = new DustOptions(c, clampDustSize(s));
 			return (caster, target, location, power, args) -> options;
 		}
 
@@ -1496,7 +1496,7 @@ public class ConfigDataUtil {
 				if (s == null)
 					return def;
 
-				return new DustOptions(c, s);
+				return new DustOptions(c, clampDustSize(s));
 			}
 
 			@Override
@@ -1530,7 +1530,7 @@ public class ConfigDataUtil {
 			if (s == null)
 				return (caster, target, location, power, args) -> def;
 
-			DustTransition transition = new DustTransition(c, tc, s);
+			DustTransition transition = new DustTransition(c, tc, clampDustSize(s));
 			return (caster, target, location, power, args) -> transition;
 		}
 
@@ -1551,7 +1551,7 @@ public class ConfigDataUtil {
 				if (s == null)
 					return def;
 
-				return new DustTransition(c, tc, s);
+				return new DustTransition(c, tc, clampDustSize(s));
 			}
 
 			@Override
@@ -1560,6 +1560,10 @@ public class ConfigDataUtil {
 			}
 
 		};
+	}
+
+	private static float clampDustSize(float size) {
+		return Math.clamp(size, 0.01F, 4F);
 	}
 
 	@NotNull

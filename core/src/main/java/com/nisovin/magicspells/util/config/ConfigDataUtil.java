@@ -1563,7 +1563,12 @@ public class ConfigDataUtil {
 	}
 
 	private static float clampDustSize(float size) {
-		return Math.clamp(size, 0.01F, 4F);
+		float clampedSize = Math.clamp(size, 0.01F, 4F);
+		if (Float.compare(size, clampedSize) != 0) {
+			MagicSpells.error("Dust particle size " + size + " is outside the supported range [0.01, 4.0]; using "
+					+ clampedSize + " instead.");
+		}
+		return clampedSize;
 	}
 
 	@NotNull

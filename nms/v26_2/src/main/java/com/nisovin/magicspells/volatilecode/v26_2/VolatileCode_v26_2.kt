@@ -91,7 +91,7 @@ class VolatileCode_v26_2(helper: VolatileCodeHelper) : VolatileCodeHandle(helper
             UPDATE_EFFECT_PARTICLES = net.minecraft.world.entity.LivingEntity::class.java.getDeclaredMethod("updateSynchronizedMobEffectParticles")
             UPDATE_EFFECT_PARTICLES!!.isAccessible = true
         } catch (e: Exception) {
-            helper.error("Encountered an error while creating the volatile code handler for 1.20.6.")
+            helper.error("Encountered an error while creating the volatile code handler for 26.2.")
             e.printStackTrace()
         }
     }

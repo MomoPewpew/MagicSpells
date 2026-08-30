@@ -1,6 +1,9 @@
 package com.nisovin.magicspells.util.magicitems;
 
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+
+import com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute;
 
 public class MagicItem {
 
@@ -18,6 +21,22 @@ public class MagicItem {
 
 	public MagicItemData getMagicItemData() {
 		return magicItemData;
+	}
+
+	public ItemStack createFor(Player player) {
+		int amount = 1;
+		if (magicItemData != null && magicItemData.hasAttribute(MagicItemAttribute.AMOUNT))
+			amount = (int) magicItemData.getAttribute(MagicItemAttribute.AMOUNT);
+		return createFor(player, amount);
+	}
+
+	public ItemStack createFor(Player player, int amount) {
+		if (itemStack == null)
+			return null;
+		ItemStack stack = itemStack.clone();
+		stack.setAmount(amount);
+		MagicItemBehaviors.applyFromData(stack, magicItemData, player);
+		return stack;
 	}
 
 	public void setItemStack(ItemStack itemStack) {

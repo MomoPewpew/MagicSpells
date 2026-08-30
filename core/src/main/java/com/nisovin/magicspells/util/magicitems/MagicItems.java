@@ -10,6 +10,7 @@ import com.google.common.collect.HashMultimap;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.inventory.ItemStack;
@@ -60,6 +61,12 @@ public class MagicItems {
 		if (magicItems.get(internalName) == null) return null;
 		if (magicItems.get(internalName).getItemStack() == null) return null;
 		return magicItems.get(internalName).getItemStack().clone();
+	}
+
+	public static ItemStack getItemStackForPlayer(String spec, Player player, int amount) {
+		MagicItem magicItem = getMagicItemFromString(spec);
+		if (magicItem == null) return null;
+		return magicItem.createFor(player, amount);
 	}
 
 	public static MagicItemData getMagicItemDataByInternalName(String internalName) {
@@ -733,6 +740,20 @@ public class MagicItems {
 
 				meta.setUnbreakable(unbreakable);
 				itemData.setAttribute(UNBREAKABLE, unbreakable);
+			}
+
+			if (section.isBoolean("soulbound")) {
+				itemData.setAttribute(SOULBOUND, section.getBoolean("soulbound"));
+			}
+
+			if (section.isDouble("expiration")) {
+				double expiration = section.getDouble("expiration");
+				if (expiration > 0)
+					itemData.setAttribute(EXPIRATION, expiration);
+			} else if (section.isInt("expiration")) {
+				int expiration = section.getInt("expiration");
+				if (expiration > 0)
+					itemData.setAttribute(EXPIRATION, (double) expiration);
 			}
 
 			if (MagicSpells.hideMagicItemTooltips()) {

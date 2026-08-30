@@ -151,6 +151,7 @@ public class MagicItemData {
 		for (MagicItemAttribute attr : keysSelf) {
 			if (ignoredAttributes.contains(attr)) continue;
 			if (attr == MagicItemAttribute.PERSISTENT_DATA) continue;
+			if (attr == MagicItemAttribute.SOULBOUND || attr == MagicItemAttribute.EXPIRATION) continue;
 			if (attr == MagicItemAttribute.MAGIC_ITEM_NAME && !checkItemPersistentData()) continue;
 			if (!keysOther.contains(attr)) return false;
 		}
@@ -161,6 +162,7 @@ public class MagicItemData {
 
 		for (MagicItemAttribute attr : keysSelf) {
 			if (ignoredAttributes.contains(attr)) continue;
+			if (attr == MagicItemAttribute.SOULBOUND || attr == MagicItemAttribute.EXPIRATION) continue;
 
 			switch (attr) {
 				case ATTRIBUTES -> {
@@ -318,7 +320,9 @@ public class MagicItemData {
 		ATTRIBUTES(Multimap.class),
 		PERSISTENT_DATA(Map.class),
 		PERMANENT_DATA(Map.class),
-		MAGIC_ITEM_NAME(String.class);
+		MAGIC_ITEM_NAME(String.class),
+		SOULBOUND(Boolean.class),
+		EXPIRATION(Double.class);
 
 		private final Class<?> dataType;
 		private final String asString;
@@ -984,6 +988,28 @@ public class MagicItemData {
 				previousLine = true;
 			}
 			output.append(']');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.SOULBOUND)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"soulbound\":")
+				.append((boolean) getAttribute(MagicItemAttribute.SOULBOUND));
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.EXPIRATION)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"expiration\":")
+				.append((Double) getAttribute(MagicItemAttribute.EXPIRATION));
 
 			previous = true;
 		}

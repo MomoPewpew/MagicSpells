@@ -22,6 +22,7 @@ import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors;
 import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 
 public class ItemTagSpell extends InstantSpell implements Listener {
@@ -58,7 +59,7 @@ public class ItemTagSpell extends InstantSpell implements Listener {
     @Override
     public PostCastAction castSpell(LivingEntity caster, SpellCastState state, float power, String[] args) {
         if (caster instanceof Player player) {
-            tagInventory(player.getInventory());
+            tagInventory(player.getInventory(), player);
         }
         return PostCastAction.HANDLE_NORMALLY;
     }
@@ -69,7 +70,8 @@ public class ItemTagSpell extends InstantSpell implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryOpen(InventoryOpenEvent event) {
         if (isBagOfHoldingGui(event.getInventory())) return;
-        tagInventory(event.getInventory());
+        Player player = event.getPlayer() instanceof Player p ? p : null;
+        tagInventory(event.getInventory(), player);
     }
 
     /** SneakyBagOfHolding builds look-alike icons without magicitem PDC; do not re-tag them. */
@@ -86,7 +88,7 @@ public class ItemTagSpell extends InstantSpell implements Listener {
      * If a match is found without the correct 'magicitem' tag, it tags and updates
      * the item.
      */
-    private void tagInventory(Inventory inventory) {
+    private void tagInventory(Inventory inventory, Player player) {
         if (isBagOfHoldingGui(inventory))
             return;
         ItemStack[] contents = inventory.getContents();
@@ -135,6 +137,7 @@ public class ItemTagSpell extends InstantSpell implements Listener {
                     }
 
                     contents[i] = updated;
+                    MagicItemBehaviors.applyFromData(updated, updateSource.getMagicItemData(), player);
                     changed = true;
                     break;
                 }

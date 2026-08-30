@@ -245,8 +245,7 @@ public class MagicItemUpdater {
         if (magicitemName == null || !magicItems.containsKey(magicitemName))
             return itemStack;
 
-        // Ignore transient tags (like ConjureSpell soulbound ownership) when determining whether
-        // a magic item needs updating.
+        // Ignore transient soulbound ownership when determining whether a magic item needs updating.
         ItemStack compareStack = itemStack;
         if (container.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
             compareStack = itemStack.clone();
@@ -311,7 +310,7 @@ public class MagicItemUpdater {
                     PersistentDataType.STRING);
         }
 
-        // ConjureSpell soulbound ownership should not be lost during magic item updates.
+        // Magic item soulbound ownership should not be lost during magic item updates.
         if (sourceContainer.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
             soulboundOwner = sourceContainer.get(SOULBOUND_OWNER_KEY, PersistentDataType.STRING);
         }

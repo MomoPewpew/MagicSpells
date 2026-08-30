@@ -569,8 +569,7 @@ public class MagicCommand extends BaseCommand {
 		if (player == null) player = getPlayerFromIssuer(issuer);
 		if (player == null) return;
 
-		ItemStack item = magicItem.getItemStack();
-		item.setAmount(amount);
+		ItemStack item = magicItem.createFor(player, amount);
 		Map<Integer, ItemStack> leftovers = player.getInventory().addItem(item);
 		for (ItemStack leftover : leftovers.values()) {
 			if (leftover == null) continue;

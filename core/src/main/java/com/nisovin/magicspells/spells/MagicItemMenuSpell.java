@@ -25,6 +25,7 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.TargetInfo;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
+import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
@@ -222,7 +223,9 @@ public class MagicItemMenuSpell extends TargetedSpell implements TargetedEntityS
 		int page = data.page();
 
 		if (event.getRawSlot() > subCategoryAmount && event.getRawSlot() < 50) {
-			player.getInventory().addItem(item);
+			ItemStack give = item.clone();
+			MagicItemBehaviors.applyMissingFromRegistry(give, player);
+			player.getInventory().addItem(give);
 		} else {
 			ItemMenuData newItemMenuData = null;
 

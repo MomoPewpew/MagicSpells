@@ -19,6 +19,9 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Files;
 
+import com.nisovin.magicspells.util.magicitems.MagicItemBehaviorReceiveListener;
+import com.nisovin.magicspells.util.magicitems.MagicItemExpirationListener;
+import com.nisovin.magicspells.util.magicitems.MagicItemSoulboundListener;
 import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 import de.slikey.effectlib.EffectManager;
 
@@ -680,6 +683,10 @@ public class MagicSpells extends JavaPlugin {
 
 		registerEvents(new EntityListener());
 		registerEvents(new AlteredBlockListener());
+
+		registerEvents(new MagicItemBehaviorReceiveListener());
+		registerEvents(new MagicItemExpirationListener());
+		registerEvents(new MagicItemSoulboundListener());
 
 		log("...done");
 

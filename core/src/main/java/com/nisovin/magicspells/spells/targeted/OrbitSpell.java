@@ -378,7 +378,7 @@ public class OrbitSpell extends TargetedSpell implements TargetedEntitySpell, Ta
 
 			box.setCenter(loc);
 
-			for (LivingEntity e : caster.getWorld().getLivingEntities()) {
+			for (LivingEntity e : loc.getNearbyLivingEntities(box.getHorizontalRadius(), box.getVerticalRadius())) {
 				if (e.equals(caster)) continue;
 				if (e.isDead()) continue;
 				if (immune.contains(e)) continue;

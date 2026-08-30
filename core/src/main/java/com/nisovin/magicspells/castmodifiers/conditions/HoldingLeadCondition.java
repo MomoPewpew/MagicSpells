@@ -1,30 +1,41 @@
 package com.nisovin.magicspells.castmodifiers.conditions;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.entity.EntityUnleashEvent;
+import org.bukkit.event.entity.PlayerLeashEntityEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitTask;
 
-import com.nisovin.magicspells.castmodifiers.Condition;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.castmodifiers.Condition;
+import com.nisovin.magicspells.events.MagicSpellsLoadedEvent;
+import com.nisovin.magicspells.util.OverridePriority;
 
 public class HoldingLeadCondition extends Condition {
 
-	private static final Set<UUID> leadingEntities = ConcurrentHashMap.newKeySet();
-	private static BukkitTask resetTask;
-	private static volatile boolean scannedThisTick = false;
+	private static final Map<UUID, Integer> HOLDER_COUNTS = new ConcurrentHashMap<>();
+	private static final Set<UUID> TRACKED_LEASHED_MOBS = ConcurrentHashMap.newKeySet();
+	private static boolean listenerRegistered;
 
 	@Override
 	public boolean initialize(String var) {
-		startReset();
+		registerTracker();
 		return true;
 	}
 
@@ -59,30 +70,88 @@ public class HoldingLeadCondition extends Condition {
 	}
 
 	private boolean isLeading(LivingEntity holder) {
-		ensureScanned(holder);
-		return leadingEntities.contains(holder.getUniqueId());
+		return HOLDER_COUNTS.getOrDefault(holder.getUniqueId(), 0) > 0;
 	}
 
-	private void ensureScanned(LivingEntity holder) {
-		if (scannedThisTick) return;
-		leadingEntities.clear();
-		holder.getServer().getWorlds().forEach(world -> {
-			for (Mob mob : world.getEntitiesByClass(Mob.class)) {
-				Entity leashHolder = mob.getLeashHolder();
-				if (leashHolder instanceof LivingEntity livingHolder) {
-					leadingEntities.add(livingHolder.getUniqueId());
+	private static void registerTracker() {
+		if (listenerRegistered) return;
+		listenerRegistered = true;
+		MagicSpells.registerEvents(new LeashHolderTracker());
+		if (MagicSpells.isLoaded()) bootstrapFromLoadedChunks();
+	}
+
+	private static void incrementHolder(LivingEntity holder) {
+		HOLDER_COUNTS.merge(holder.getUniqueId(), 1, Integer::sum);
+	}
+
+	private static void decrementHolder(LivingEntity holder) {
+		HOLDER_COUNTS.compute(holder.getUniqueId(), (uuid, count) -> {
+			if (count == null || count <= 1) return null;
+			return count - 1;
+		});
+	}
+
+	private static void trackMobLeash(Mob mob) {
+		if (!mob.isLeashed()) return;
+		if (!TRACKED_LEASHED_MOBS.add(mob.getUniqueId())) return;
+		Entity holder = mob.getLeashHolder();
+		if (holder instanceof LivingEntity living) incrementHolder(living);
+	}
+
+	private static void untrackMobLeash(Mob mob) {
+		if (!TRACKED_LEASHED_MOBS.remove(mob.getUniqueId())) return;
+		Entity holder = mob.getLeashHolder();
+		if (holder instanceof LivingEntity living) decrementHolder(living);
+	}
+
+	private static void bootstrapFromLoadedChunks() {
+		HOLDER_COUNTS.clear();
+		TRACKED_LEASHED_MOBS.clear();
+		for (World world : MagicSpells.getInstance().getServer().getWorlds()) {
+			for (Chunk chunk : world.getLoadedChunks()) {
+				for (Entity entity : chunk.getEntities()) {
+					if (entity instanceof Mob mob) trackMobLeash(mob);
 				}
 			}
-		});
-		scannedThisTick = true;
+		}
 	}
 
-	private void startReset() {
-		if (resetTask != null) return;
-		resetTask = MagicSpells.getInstance().getServer().getScheduler().runTaskTimer(MagicSpells.getInstance(), () -> {
-			scannedThisTick = false;
-		}, 0L, 1L);
+	private static class LeashHolderTracker implements Listener {
+
+		@OverridePriority
+		@EventHandler
+		public void onLoaded(MagicSpellsLoadedEvent event) {
+			bootstrapFromLoadedChunks();
+		}
+
+		@EventHandler
+		public void onLeash(PlayerLeashEntityEvent event) {
+			if (event.getEntity() instanceof Mob mob) trackMobLeash(mob);
+		}
+
+		@EventHandler
+		public void onUnleash(EntityUnleashEvent event) {
+			if (event.getEntity() instanceof Mob mob) untrackMobLeash(mob);
+		}
+
+		@EventHandler
+		public void onSpawn(EntitySpawnEvent event) {
+			if (event.getEntity() instanceof Mob mob) trackMobLeash(mob);
+		}
+
+		@EventHandler
+		public void onChunkLoad(ChunkLoadEvent event) {
+			for (Entity entity : event.getChunk().getEntities()) {
+				if (entity instanceof Mob mob) trackMobLeash(mob);
+			}
+		}
+
+		@EventHandler
+		public void onDeath(EntityDeathEvent event) {
+			if (event.getEntity() instanceof Mob mob) untrackMobLeash(mob);
+			if (event.getEntity() instanceof LivingEntity living) HOLDER_COUNTS.remove(living.getUniqueId());
+		}
+
 	}
 
 }
-

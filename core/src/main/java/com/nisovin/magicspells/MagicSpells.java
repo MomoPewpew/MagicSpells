@@ -682,6 +682,7 @@ public class MagicSpells extends JavaPlugin {
 		}
 
 		registerEvents(new EntityListener());
+		LivingEntityCounter.register();
 		registerEvents(new AlteredBlockListener());
 
 		registerEvents(new MagicItemBehaviorReceiveListener());

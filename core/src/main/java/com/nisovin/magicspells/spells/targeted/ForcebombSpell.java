@@ -102,8 +102,8 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 
 		location = location.clone().add(0D, yOffset.get(caster, null, basePower, args), 0D);
 
-		double radiusSquared = this.radius.get(caster, null, basePower, args);
-		radiusSquared *= radiusSquared;
+		double radius = this.radius.get(caster, null, basePower, args);
+		double radiusSquared = radius * radius;
 
 		SpellData data = new SpellData(caster, location, basePower, args);
 		if (validTargetList.canTargetOnlyCaster()) {
@@ -121,13 +121,9 @@ public class ForcebombSpell extends TargetedSpell implements TargetedLocationSpe
 			return;
 		}
 
-		Collection<LivingEntity> entities = location.getWorld().getLivingEntities();
+		Collection<LivingEntity> entities = location.getWorld().getNearbyLivingEntities(location, radius, radius, radius);
 		for (LivingEntity entity : entities) {
 			if (!validTargetList.canTarget(caster, entity))
-				continue;
-			if (!entity.getWorld().equals(location.getWorld()))
-				continue;
-			if (entity.getLocation().distanceSquared(location) > radiusSquared)
 				continue;
 
 			bomb(caster, entity, location, basePower, args);

@@ -859,6 +859,20 @@ public class Util {
 		}
 	}
 
+	public static void forEachLivingInLoadedChunks(World world, Consumer<LivingEntity> action) {
+		for (Chunk chunk : world.getLoadedChunks()) {
+			for (Entity entity : chunk.getEntities()) {
+				if (entity instanceof LivingEntity livingEntity) action.accept(livingEntity);
+			}
+		}
+	}
+
+	public static void forEachLivingInLoadedChunks(Consumer<LivingEntity> action) {
+		for (World world : Bukkit.getWorlds()) {
+			forEachLivingInLoadedChunks(world, action);
+		}
+	}
+
 	@Nullable
 	public static Entity getNearestEntity(Entity entity, double range, @Nullable Predicate<Entity> predicate) {
 		Entity nearestEntity = null;

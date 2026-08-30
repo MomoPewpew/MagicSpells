@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.entity.*;
 import org.bukkit.util.Vector;
@@ -560,11 +561,12 @@ public class MinionSpell extends BuffSpell {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onEntityUnload(ChunkUnloadEvent event) {
-		List<Entity> entities = Arrays.asList(event.getChunk().getEntities());
+		Chunk chunk = event.getChunk();
 		Player owner;
 
 		for (LivingEntity minion : minions.values()) {
-			if (!entities.contains(minion)) continue;
+			if (!minion.isValid()) continue;
+			if (minion.getLocation().getChunk() != chunk) continue;
 
 			owner = Bukkit.getPlayer(players.get(minion));
 			if (owner == null) continue;

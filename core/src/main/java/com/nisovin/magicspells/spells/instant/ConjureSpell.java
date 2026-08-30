@@ -38,6 +38,7 @@ import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spells.command.TomeSpell;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItemBehaviorKeys;
+import com.nisovin.magicspells.util.magicitems.MagicItemExpirationScheduler;
 import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
@@ -482,6 +483,8 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			if (itemDataTypes != null && i < itemDataTypes.length)
 				MagicItemBehaviors.applyFromData(item, itemDataTypes[i], owner);
 			MagicItemBehaviors.applyConjureOverlay(item, soulbound, expiration, owner);
+			if (owner instanceof Player player)
+				MagicItemExpirationScheduler.scheduleFromItem(player, item);
 			items.add(item);
 		}
 	}

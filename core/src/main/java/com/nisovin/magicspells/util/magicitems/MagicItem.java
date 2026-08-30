@@ -36,6 +36,7 @@ public class MagicItem {
 		ItemStack stack = itemStack.clone();
 		stack.setAmount(amount);
 		MagicItemBehaviors.applyFromData(stack, magicItemData, player);
+		MagicItemExpirationScheduler.scheduleFromItem(player, stack);
 		return stack;
 	}
 

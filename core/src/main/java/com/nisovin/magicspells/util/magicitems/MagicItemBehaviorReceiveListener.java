@@ -22,6 +22,7 @@ public class MagicItemBehaviorReceiveListener implements Listener {
 		ItemStack copy = result.clone();
 		MagicItemBehaviors.applyMissingFromRegistry(copy, player);
 		event.setCurrentItem(copy);
+		MagicItemExpirationScheduler.scheduleFromItem(player, copy);
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

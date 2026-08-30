@@ -94,8 +94,11 @@ public final class MagicItemBehaviors {
 
 		if (data.hasAttribute(MagicItemAttribute.EXPIRATION)) {
 			double durationMs = (Double) data.getAttribute(MagicItemAttribute.EXPIRATION);
-			if (durationMs > 0)
+			if (durationMs > 0) {
 				applyExpiration(item, durationMs);
+				if (owner instanceof Player player)
+					MagicItemExpirationScheduler.scheduleFromItem(player, item);
+			}
 		}
 	}
 
@@ -106,8 +109,11 @@ public final class MagicItemBehaviors {
 
 		if (soulbound && owner != null)
 			applySoulboundOverlay(item, owner.getUniqueId());
-		if (expirationMs > 0)
+		if (expirationMs > 0) {
 			applyExpirationOverlay(item, expirationMs);
+			if (owner instanceof Player player)
+				MagicItemExpirationScheduler.scheduleFromItem(player, item);
+		}
 	}
 
 	public static void applyMissingFromRegistry(ItemStack item, @Nullable Player owner) {
@@ -124,6 +130,7 @@ public final class MagicItemBehaviors {
 			return;
 
 		applyFromData(item, magicItem.getMagicItemData(), owner);
+		MagicItemExpirationScheduler.scheduleFromItem(owner, item);
 	}
 
 	public static boolean hasSoulbound(ItemStack item) {
@@ -174,6 +181,10 @@ public final class MagicItemBehaviors {
 	}
 
 	public static ExpirationResult updateExpiresLineIfNeeded(ItemStack item) {
+		return updateExpiresLineIfNeeded(item, null);
+	}
+
+	public static ExpirationResult updateExpiresLineIfNeeded(ItemStack item, @Nullable Player owner) {
 		if (item == null || !item.hasItemMeta())
 			return ExpirationResult.NO_UPDATE;
 
@@ -186,18 +197,35 @@ public final class MagicItemBehaviors {
 		if (expiresAt < System.currentTimeMillis())
 			return ExpirationResult.EXPIRED;
 
-		if (!meta.hasLore())
-			return ExpirationResult.NO_UPDATE;
-		List<Component> lore = meta.lore();
+		List<Component> lore = meta.hasLore() ? meta.lore() : new ArrayList<>();
+		if (lore == null)
+			lore = new ArrayList<>();
 
-		if (lore != null && lore.size() > 0
-				&& ((TextComponent) lore.get(lore.size() - 1)).content().contains("Expires in ")) {
-			lore.set(lore.size() - 1, Util.getMiniMessage(getExpiresText(expiresAt)));
+		ExpirationResult result;
+		if (!lore.isEmpty()) {
+			Component lastLine = lore.get(lore.size() - 1);
+			if (lastLine instanceof TextComponent textComponent
+					&& textComponent.content().contains("Expires in ")) {
+				lore.set(lore.size() - 1, Util.getMiniMessage(getExpiresText(expiresAt)));
+				meta.lore(lore);
+				item.setItemMeta(meta);
+				result = ExpirationResult.UPDATE;
+			} else {
+				lore.add(Util.getMiniMessage(getExpiresText(expiresAt)));
+				meta.lore(lore);
+				item.setItemMeta(meta);
+				result = ExpirationResult.UPDATE;
+			}
+		} else {
+			lore.add(Util.getMiniMessage(getExpiresText(expiresAt)));
 			meta.lore(lore);
 			item.setItemMeta(meta);
-			return ExpirationResult.UPDATE;
+			result = ExpirationResult.UPDATE;
 		}
-		return ExpirationResult.NO_UPDATE;
+
+		if (owner != null)
+			MagicItemExpirationScheduler.scheduleFromItem(owner, item);
+		return result;
 	}
 
 	private static void addExpiresLine(ItemStack item, double expireMilis) {

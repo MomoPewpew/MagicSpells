@@ -23,6 +23,7 @@ import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
 import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors;
+import com.nisovin.magicspells.util.magicitems.MagicItemExpirationScheduler;
 import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 
 public class ItemTagSpell extends InstantSpell implements Listener {
@@ -138,6 +139,8 @@ public class ItemTagSpell extends InstantSpell implements Listener {
 
                     contents[i] = updated;
                     MagicItemBehaviors.applyFromData(updated, updateSource.getMagicItemData(), player);
+                    if (player != null)
+                        MagicItemExpirationScheduler.scheduleFromItem(player, updated);
                     changed = true;
                     break;
                 }

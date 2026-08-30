@@ -44,9 +44,12 @@ import net.sneakymouse.sneakyvaults.utlitiy.ChatUtility;
 import net.sneakycharactermanager.paper.SneakyCharacterManager;
 import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.events.MagicSpellsLoadedEvent;
+import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors.ExpirationResult;
 import com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute;
 
 import static com.nisovin.magicspells.MagicSpells.setCheckItemPersistentData;
@@ -87,10 +90,11 @@ public class MagicItemUpdater {
             if (!MagicSpells.enableUpdateItemData())
                 return;
             PlayerInventory inv = player.getInventory();
-            updateInventory(inv);
+            updateInventory(inv, player);
             ItemStack[] armor = inv.getArmorContents();
-            updateInventory(armor);
+            updateInventory(armor, player);
             inv.setArmorContents(armor);
+            updateInventory(player.getEnderChest(), player);
         }
 
         @EventHandler(priority = EventPriority.LOWEST)
@@ -99,7 +103,8 @@ public class MagicItemUpdater {
                 return;
             if (isBagOfHoldingGui(event.getInventory()))
                 return;
-            updateInventory(event.getInventory());
+            Player player = event.getPlayer() instanceof Player p ? p : null;
+            updateInventory(event.getInventory(), player);
         }
 
         private static boolean isBagOfHoldingGui(Inventory inventory) {
@@ -111,15 +116,15 @@ public class MagicItemUpdater {
             return holder.getClass().getName().startsWith("com.sneakybagofholding.gui.BagInventoryHolder");
         }
 
-        private void updateInventory(Inventory inv) {
+        private void updateInventory(Inventory inv, @Nullable Player player) {
             if (isBagOfHoldingGui(inv))
                 return;
             ItemStack[] contents = inv.getContents();
-            updateInventory(contents);
+            updateInventory(contents, player);
             inv.setContents(contents);
         }
 
-        private static void updateInventory(ItemStack[] items) {
+        private static void updateInventory(ItemStack[] items, @Nullable Player player) {
             if (items == null)
                 return;
             for (int i = 0; i < items.length; i++) {
@@ -130,6 +135,13 @@ public class MagicItemUpdater {
                 ItemStack updated = updateMagicItemItemStackIfNeeded(itemStack);
                 if (updated != itemStack)
                     items[i] = updated;
+
+                ItemStack stack = items[i];
+                if (player != null) {
+                    ExpirationResult result = MagicItemBehaviors.updateExpiresLineIfNeeded(stack, player);
+                    if (result == ExpirationResult.EXPIRED)
+                        items[i] = null;
+                }
             }
         }
     }
@@ -361,7 +373,7 @@ public class MagicItemUpdater {
 
         if (meta instanceof BlockStateMeta updatedBlockStateMeta && blockInventory != null) {
             ItemStack[] contents = blockInventory.getContents();
-            PersistentDataUpdater.updateInventory(contents);
+            PersistentDataUpdater.updateInventory(contents, null);
             Container updatedContainer = (Container) updatedBlockStateMeta.getBlockState();
             updatedContainer.getInventory().setContents(contents);
             updatedBlockStateMeta.setBlockState(updatedContainer);

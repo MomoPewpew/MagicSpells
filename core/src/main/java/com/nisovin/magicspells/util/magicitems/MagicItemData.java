@@ -102,6 +102,7 @@ public class MagicItemData {
 	private boolean hasEqualAttributes(MagicItemData other) {
 		Multimap<Attribute, AttributeModifier> attrSelf = (Multimap<Attribute, AttributeModifier>) itemAttributes.get(MagicItemAttribute.ATTRIBUTES);
 		Multimap<Attribute, AttributeModifier> attrOther = (Multimap<Attribute, AttributeModifier>) other.itemAttributes.get(MagicItemAttribute.ATTRIBUTES);
+		if (attrSelf == null || attrOther == null) return attrSelf == attrOther;
 
 		Set<Attribute> keysSelf = attrSelf.keySet();
 		Set<Attribute> keysOther = attrOther.keySet();
@@ -224,6 +225,7 @@ public class MagicItemData {
 				case LORE -> {
 					List<Component> loreSelf = (List<Component>) itemAttributes.get(attr);
 					List<Component> loreOther = (List<Component>) data.itemAttributes.get(attr);
+					if (loreSelf == null || loreOther == null) return loreSelf == loreOther;
 					if (loreSelf.size() != loreOther.size()) return false;
 
 					for (int i = 0; i < loreSelf.size(); i++) {
@@ -237,7 +239,9 @@ public class MagicItemData {
 					if (!itemAttributes.get(attr).equals(data.itemAttributes.get(attr))) return false;
 				}
 				default -> {
-					if (!itemAttributes.get(attr).equals(data.itemAttributes.get(attr))) return false;
+					Object self = itemAttributes.get(attr);
+					Object other = data.itemAttributes.get(attr);
+					if (!Objects.equals(self, other)) return false;
 				}
 			}
 		}

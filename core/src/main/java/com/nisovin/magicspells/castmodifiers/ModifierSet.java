@@ -70,7 +70,14 @@ public class ModifierSet {
 
 	public void apply(SpellCastEvent event) {
 		for (Modifier modifier : modifiers) {
-			boolean cont = modifier.apply(event);
+			boolean cont;
+			try {
+				cont = modifier.apply(event);
+			} catch (Exception e) {
+				MagicSpells.handleException(e);
+				event.setCancelled(true);
+				break;
+			}
 			if (cont) continue;
 
 			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), event.getSpellArgs());
@@ -99,7 +106,14 @@ public class ModifierSet {
 
 	public void apply(SpellTargetEvent event) {
 		for (Modifier modifier : modifiers) {
-			boolean cont = modifier.apply(event);
+			boolean cont;
+			try {
+				cont = modifier.apply(event);
+			} catch (Exception e) {
+				MagicSpells.handleException(e);
+				event.setCancelled(true);
+				break;
+			}
 			if (cont) continue;
 
 			if (modifier.getStrModifierFailed() != null) MagicSpells.sendMessage(modifier.getStrModifierFailed(), event.getCaster(), MagicSpells.NULL_ARGS);

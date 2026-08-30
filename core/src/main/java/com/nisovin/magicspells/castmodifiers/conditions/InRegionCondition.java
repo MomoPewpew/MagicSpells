@@ -47,9 +47,13 @@ public class InRegionCondition extends Condition {
 	}
 
 	private boolean checkRegion(Location location) {
+		if (location == null) return false;
+		World locationWorld = location.getWorld();
+		if (locationWorld == null) return false;
+
 		World world = Bukkit.getWorld(worldName);
 		if (world == null) return false;
-		if (world != location.getWorld()) return false;
+		if (world != locationWorld) return false;
 
 		RegionManager regionManager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
 		if (regionManager == null) return false;

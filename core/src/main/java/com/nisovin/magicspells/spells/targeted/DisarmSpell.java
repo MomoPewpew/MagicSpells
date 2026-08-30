@@ -114,8 +114,7 @@ public class DisarmSpell extends TargetedSpell implements TargetedEntitySpell {
 		if (inHand == null) return false;
 
 		if (disarmable != null) {
-			MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(inHand);
-			if (itemData == null || !contains(itemData)) return false;
+			if (!contains(inHand)) return false;
 		}
 
 		int disarmDuration = this.disarmDuration.get(caster, target, power, args);
@@ -145,9 +144,9 @@ public class DisarmSpell extends TargetedSpell implements TargetedEntitySpell {
 		return true;
 	}
 
-	private boolean contains(MagicItemData itemData) {
+	private boolean contains(ItemStack item) {
 		for (MagicItemData data : disarmable) {
-			if (data.matches(itemData)) return true;
+			if (MagicItems.matches(data, item)) return true;
 		}
 		return false;
 	}

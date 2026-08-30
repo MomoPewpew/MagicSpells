@@ -56,8 +56,7 @@ public class ItemEntityReagent extends Reagent {
 		ItemStack stack = itemEntity.getItemStack();
 		if (stack == null) return false;
 
-		MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(stack);
-		return stackData != null && itemData.matches(stackData);
+		return MagicItems.matches(itemData, stack);
 	}
 
 	private boolean matchesBlock(Item itemEntity) {

@@ -152,7 +152,7 @@ public class AutoPickupSpell extends Spell {
                     }
                     
                     MagicItemData configItemData = MagicItems.getMagicItemDataFromString(itemString);
-                    if (configItemData == null || !configItemData.matches(itemData)) {
+                    if (configItemData == null || !MagicItems.matches(configItemData, item)) {
                         MagicSpells.debug(3, "AutoPickupSpell: Item doesn't match (configItemData=" + configItemData + "), continuing");
                         continue;
                     }

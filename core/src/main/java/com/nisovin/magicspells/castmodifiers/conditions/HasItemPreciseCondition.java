@@ -46,9 +46,7 @@ public class HasItemPreciseCondition extends Condition {
 		if (inventory == null) return false;
 
 		for (ItemStack itemStack : inventory.getContents()) {
-			MagicItemData data = MagicItems.getMagicItemDataFromItemStack(itemStack);
-			if (data == null) continue;
-			if (itemData.matches(data)) return true;
+			if (MagicItems.matches(itemData, itemStack)) return true;
 		}
 
 		return false;
@@ -58,9 +56,7 @@ public class HasItemPreciseCondition extends Condition {
 		if (entityEquipment == null) return false;
 
 		for (ItemStack itemStack : InventoryUtil.getEquipmentItems(entityEquipment)) {
-			MagicItemData data = MagicItems.getMagicItemDataFromItemStack(itemStack);
-			if (data == null) continue;
-			if (itemData.matches(data)) return true;
+			if (MagicItems.matches(itemData, itemStack)) return true;
 		}
 
 		return false;

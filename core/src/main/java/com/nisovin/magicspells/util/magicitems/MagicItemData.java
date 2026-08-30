@@ -143,13 +143,17 @@ public class MagicItemData {
 	}
 
 	public boolean matches(MagicItemData data) {
+		return matches(data, EnumSet.noneOf(MagicItemAttribute.class));
+	}
+
+	public boolean matches(MagicItemData data, EnumSet<MagicItemAttribute> additionalIgnored) {
 		if (this == data) return true;
 
 		Set<MagicItemAttribute> keysSelf = itemAttributes.keySet();
 		Set<MagicItemAttribute> keysOther = data.itemAttributes.keySet();
 
 		for (MagicItemAttribute attr : keysSelf) {
-			if (ignoredAttributes.contains(attr)) continue;
+			if (ignoredAttributes.contains(attr) || additionalIgnored.contains(attr)) continue;
 			if (attr == MagicItemAttribute.PERSISTENT_DATA) continue;
 			if (attr == MagicItemAttribute.SOULBOUND || attr == MagicItemAttribute.EXPIRATION) continue;
 			if (attr == MagicItemAttribute.MAGIC_ITEM_NAME && !checkItemPersistentData()) continue;
@@ -161,7 +165,7 @@ public class MagicItemData {
 		}
 
 		for (MagicItemAttribute attr : keysSelf) {
-			if (ignoredAttributes.contains(attr)) continue;
+			if (ignoredAttributes.contains(attr) || additionalIgnored.contains(attr)) continue;
 			if (attr == MagicItemAttribute.SOULBOUND || attr == MagicItemAttribute.EXPIRATION) continue;
 
 			switch (attr) {

@@ -115,7 +115,7 @@ public class ItemTagSpell extends InstantSpell implements Listener {
                 TagMapping tagMapping = entry.getValue();
                 String internalName = tagMapping.internalName();
                 MagicItem targetMagicItem = tagMapping.magicItem();
-                if (targetData.matches(itemData)) {
+                if (MagicItems.matches(targetData, item)) {
                     if (meta == null)
                         continue;
                     String currentName = meta.getPersistentDataContainer().get(nameKey, PersistentDataType.STRING);

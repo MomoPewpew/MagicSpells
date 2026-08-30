@@ -41,6 +41,7 @@ import com.nisovin.magicspells.util.magicitems.MagicItemBehaviorKeys;
 import com.nisovin.magicspells.util.magicitems.MagicItemExpirationScheduler;
 import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.nisovin.magicspells.util.magicitems.MagicItemIgnoredAttributes;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.spells.TargetedEntitySpell;
 import com.nisovin.magicspells.spells.command.ScrollSpell;
@@ -483,6 +484,7 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 			if (itemDataTypes != null && i < itemDataTypes.length)
 				MagicItemBehaviors.applyFromData(item, itemDataTypes[i], owner);
 			MagicItemBehaviors.applyConjureOverlay(item, soulbound, expiration, owner);
+			applyStackIgnoredAttributes(item, spellData);
 			if (owner instanceof Player player)
 				MagicItemExpirationScheduler.scheduleFromItem(player, item);
 			items.add(item);
@@ -508,6 +510,22 @@ public class ConjureSpell extends InstantSpell implements TargetedEntitySpell, T
 				item.addEnchantment(enchant, level);
 			else
 				item.addUnsafeEnchantment(enchant, level);
+		}
+	}
+
+	private void applyStackIgnoredAttributes(ItemStack item, SpellData spellData) {
+		if (!MagicItemIgnoredAttributes.isTaggedMagicItem(item))
+			return;
+
+		if (enchantments != null) {
+			Map<Enchantment, Integer> resolved = enchantments.get(spellData);
+			if (resolved != null && !resolved.isEmpty())
+				MagicItemIgnoredAttributes.add(item, MagicItemData.MagicItemAttribute.ENCHANTS);
+		}
+		if (attributes != null) {
+			Set<AttributeManager.AttributeInfo> resolved = attributes.get(spellData);
+			if (resolved != null && !resolved.isEmpty())
+				MagicItemIgnoredAttributes.add(item, MagicItemData.MagicItemAttribute.ATTRIBUTES);
 		}
 	}
 

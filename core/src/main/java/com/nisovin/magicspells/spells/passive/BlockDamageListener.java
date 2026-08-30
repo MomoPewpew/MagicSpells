@@ -9,6 +9,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
@@ -72,8 +73,7 @@ public class BlockDamageListener extends PassiveListener {
 			EntityEquipment eq = attacker.getEquipment();
 			if (eq == null) return;
 
-			MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(eq.getItemInMainHand());
-			if (itemData == null || !contains(itemData)) return;
+			if (!contains(eq.getItemInMainHand())) return;
 		}
 
 		boolean casted = passiveSpell.activate(caster, attacker);
@@ -90,9 +90,9 @@ public class BlockDamageListener extends PassiveListener {
 		return null;
 	}
 
-	private boolean contains(MagicItemData itemData) {
+	private boolean contains(ItemStack item) {
 		for (MagicItemData data : items) {
-			if (data.matches(itemData)) return true;
+			if (MagicItems.matches(data, item)) return true;
 		}
 		return false;
 	}

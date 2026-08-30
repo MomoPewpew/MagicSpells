@@ -10,6 +10,7 @@ public final class MagicItemBehaviorKeys {
 	private static final NamespacedKey SOULBOUND_OWNER = new NamespacedKey(MagicSpells.getInstance(), "soulbound_owner");
 	private static final NamespacedKey EXPIRES_AT = new NamespacedKey(MagicSpells.getInstance(), "expires_at");
 	private static final NamespacedKey CREATOR_NAME = new NamespacedKey(MagicSpells.getInstance(), "creator_name");
+	private static final NamespacedKey IGNORED_ATTRIBUTES = new NamespacedKey(MagicSpells.getInstance(), "ignored_attributes");
 
 	private MagicItemBehaviorKeys() {
 	}
@@ -28,6 +29,10 @@ public final class MagicItemBehaviorKeys {
 
 	public static NamespacedKey creatorName() {
 		return CREATOR_NAME;
+	}
+
+	public static NamespacedKey ignoredAttributes() {
+		return IGNORED_ATTRIBUTES;
 	}
 
 }

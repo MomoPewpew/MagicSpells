@@ -13,6 +13,8 @@ import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.config.ConfigDataUtil;
+import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.nisovin.magicspells.util.magicitems.MagicItemIgnoredAttributes;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 
 public class EnchantSpell extends InstantSpell {
@@ -49,19 +51,25 @@ public class EnchantSpell extends InstantSpell {
 		if (enchantments == null) return;
 		Map<Enchantment, Integer> resolved = enchantments.get(spellData);
 		if (resolved == null || resolved.isEmpty()) return;
+		boolean applied = false;
 		for (Map.Entry<Enchantment, Integer> entry : resolved.entrySet()) {
-			enchant(item, entry.getKey(), entry.getValue());
+			if (enchant(item, entry.getKey(), entry.getValue()))
+				applied = true;
 		}
+		if (applied && MagicItemIgnoredAttributes.isTaggedMagicItem(item))
+			MagicItemIgnoredAttributes.add(item, MagicItemData.MagicItemAttribute.ENCHANTS);
 	}
 
-	private void enchant(ItemStack item, Enchantment enchant, int level) {
-		if (!enchant.canEnchantItem(item)) return;
+	private boolean enchant(ItemStack item, Enchantment enchant, int level) {
+		if (!enchant.canEnchantItem(item)) return false;
 		if (safeEnchants && level > enchant.getMaxLevel()) level = enchant.getMaxLevel();
-		if (level <= 0) item.removeEnchantment(enchant);
-		else {
-			if (safeEnchants) item.addEnchantment(enchant, level);
-			else item.addUnsafeEnchantment(enchant, level);
+		if (level <= 0) {
+			item.removeEnchantment(enchant);
+			return true;
 		}
+		if (safeEnchants) item.addEnchantment(enchant, level);
+		else item.addUnsafeEnchantment(enchant, level);
+		return true;
 	}
 
 	public ConfigData<Map<Enchantment, Integer>> getEnchantments() {

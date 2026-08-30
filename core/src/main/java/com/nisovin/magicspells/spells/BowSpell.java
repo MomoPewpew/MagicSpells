@@ -299,9 +299,8 @@ public class BowSpell extends Spell {
 	}
 
 	private boolean check(ItemStack item, List<MagicItemData> filters) {
-		MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(item);
 		for (MagicItemData data : filters)
-			if (data.matches(itemData))
+			if (MagicItems.matches(data, item))
 				return true;
 
 		return false;

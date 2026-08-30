@@ -22,6 +22,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.DataUtil;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.ItemUtil;
 import com.nisovin.magicspells.util.itemreader.*;
@@ -73,6 +74,21 @@ public class MagicItems {
 		if (!magicItems.containsKey(internalName)) return null;
 		if (magicItems.get(internalName) == null) return null;
 		return magicItems.get(internalName).getMagicItemData();
+	}
+
+	public static boolean matches(MagicItemData pattern, ItemStack stack) {
+		if (pattern == null || stack == null)
+			return false;
+
+		MagicItemData stackData = getMagicItemDataFromItemStack(stack);
+		if (stackData == null)
+			return false;
+
+		EnumSet<MagicItemAttribute> stackIgnored = MagicItemIgnoredAttributes.fromItemStack(stack);
+		if (DataUtil.getString(stack, "transmogrified") != null)
+			stackIgnored.add(MagicItemAttribute.ITEM_MODEL);
+
+		return pattern.matches(stackData, stackIgnored);
 	}
 
 	public static MagicItemData getMagicItemDataFromItemStack(ItemStack itemStack) {

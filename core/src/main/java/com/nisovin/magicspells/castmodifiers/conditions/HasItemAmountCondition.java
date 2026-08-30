@@ -111,10 +111,7 @@ public class HasItemAmountCondition extends OperatorCondition {
 		MagicItem magicItem = itemData.get(data);
 		if (magicItem == null) return false;
 
-		MagicItemData magicItemData = MagicItems.getMagicItemDataFromItemStack(item);
-		if (magicItemData == null) return false;
-		
-		return magicItem.getMagicItemData().matches(magicItemData);
+		return MagicItems.matches(magicItem.getMagicItemData(), item);
 	}
 
 }

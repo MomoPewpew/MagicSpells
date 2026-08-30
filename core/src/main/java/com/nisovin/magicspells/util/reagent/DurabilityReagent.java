@@ -84,8 +84,7 @@ public class DurabilityReagent extends Reagent {
                     ItemStack item = inventory.getItem(slot);
                     if (item == null) continue;
                     
-                    MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(item);
-                    if (itemData == null || !magicItem.matches(itemData)) continue;
+                    if (!MagicItems.matches(magicItem, item)) continue;
                     
                     // Found matching MagicItem, apply durability damage
                     ItemMeta meta = item.getItemMeta();
@@ -135,8 +134,7 @@ public class DurabilityReagent extends Reagent {
         for (ItemStack item : inventory.getContents()) {
             if (item == null) continue;
             
-            MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(item);
-            if (itemData != null && magicItem.matches(itemData)) {
+            if (MagicItems.matches(magicItem, item)) {
                 return item;
             }
         }

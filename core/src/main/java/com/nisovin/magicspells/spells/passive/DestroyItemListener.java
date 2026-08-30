@@ -61,9 +61,7 @@ public class DestroyItemListener extends PassiveListener {
 		if (!hasSpell(caster) || !canTrigger(caster)) return;
 
 		if (!items.isEmpty()) {
-			ItemStack itemStack = item.getItemStack();
-			MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(itemStack);
-			if (itemData == null || !contains(itemData)) return;
+			if (!contains(item.getItemStack())) return;
 		}
 
 		boolean casted = passiveSpell.activate(caster, item.getLocation());
@@ -71,9 +69,9 @@ public class DestroyItemListener extends PassiveListener {
 		if (cancelDefaultAction(casted)) event.setCancelled(true);
     }
 
-    private boolean contains(MagicItemData itemData) {
+    private boolean contains(ItemStack item) {
 		for (MagicItemData data : items) {
-			if (data.matches(itemData)) return true;
+			if (MagicItems.matches(data, item)) return true;
 		}
 		return false;
 	}

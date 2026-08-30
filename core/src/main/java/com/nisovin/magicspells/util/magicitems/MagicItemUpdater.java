@@ -273,7 +273,7 @@ public class MagicItemUpdater {
 
         if (magicItemData == null || stackData == null)
             return itemStack;
-        if (magicItemData.matches(stackData))
+        if (MagicItems.matches(magicItemData, compareStack))
             return itemStack;
 
         return updateItem(itemStack, magicItems.get(magicitemName));
@@ -307,9 +307,6 @@ public class MagicItemUpdater {
                 PersistentDataType.STRING)) {
             return itemStack;
         }
-
-        boolean transmogrified = sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "transmogrified"),
-                PersistentDataType.STRING);
 
         if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG)) {
             expiresAt = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"),
@@ -345,7 +342,8 @@ public class MagicItemUpdater {
 
         ItemMeta meta = updatedItem.getItemMeta();
         MagicItemData definition = magicItem.getMagicItemData();
-        boolean durabilityIgnored = definition.getIgnoredAttributes().contains(MagicItemAttribute.DURABILITY);
+        EnumSet<MagicItemAttribute> effectiveIgnored = MagicItemIgnoredAttributes.getEffectiveIgnored(definition, itemStack);
+        boolean durabilityIgnored = effectiveIgnored.contains(MagicItemAttribute.DURABILITY);
 
         if (durability != null && durability != 0 && meta instanceof Damageable updatedDamageable && !durabilityIgnored) {
             updatedDamageable.setDamage(durability);
@@ -388,8 +386,10 @@ public class MagicItemUpdater {
             }
         }
 
+        MagicItemIgnoredAttributes.copyPdc(sourceMeta, meta);
+
         MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(itemStack);
-        EnumSet<MagicItemAttribute> ignored = definition.getIgnoredAttributes();
+        EnumSet<MagicItemAttribute> ignored = effectiveIgnored;
         EnumSet<MagicItemAttribute> blacklisted = definition.getBlacklistedAttributes();
 
         for (MagicItemAttribute attr : ignored) {
@@ -408,11 +408,6 @@ public class MagicItemUpdater {
                 continue;
             }
             MagicItems.applyMagicItemAttribute(updatedItem, meta, null, attr, true);
-        }
-
-        if (transmogrified) {
-            if (sourceMeta.hasItemModel()) meta.setItemModel(sourceMeta.getItemModel());
-            else meta.setItemModel(null);
         }
 
         updatedItem.setItemMeta(meta);
@@ -472,7 +467,7 @@ public class MagicItemUpdater {
                 continue;
 
             for (Map.Entry<String, MagicItemData> entry : magicItemsCache.entrySet()) {
-                if (entry.getValue().matches(item)) {
+                if (MagicItems.matches(entry.getValue(), itemStack)) {
 
                     items[i] = updateItem(itemStack, magicItems.get(entry.getKey()));
                     break;

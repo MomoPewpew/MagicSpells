@@ -45,10 +45,7 @@ public class WearingPreciseCondition extends Condition {
 	}
 
 	private boolean checkItem(ItemStack item) {
-		MagicItemData data = MagicItems.getMagicItemDataFromItemStack(item);
-		if (data == null) return false;
-
-		return itemData.matches(data);
+		return MagicItems.matches(itemData, item);
 	}
 	
 }

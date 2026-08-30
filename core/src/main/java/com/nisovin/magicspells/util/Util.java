@@ -305,14 +305,12 @@ public class Util {
 		if (itemData == null) return false;
 
 		int amt = item.getValue();
-		MagicItemData magicData;
 		ItemStack[] items = inventory.getContents();
 		ItemStack stack = null;
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] == null) continue;
 
-			magicData = MagicItems.getMagicItemDataFromItemStack(items[i]);
-			if (magicData == null || !itemData.matches(magicData)) continue;
+			if (!MagicItems.matches(itemData, items[i])) continue;
 
 			stack = items[i].clone();
 
@@ -349,7 +347,6 @@ public class Util {
 		if (itemData == null) return false;
 
 		int amt = item.getValue();
-		MagicItemData magicData;
 		ItemStack[] armorContents = entityEquipment.getArmorContents();
 		ItemStack[] items = new ItemStack[6];
 		System.arraycopy(armorContents, 0, items, 0, 4);
@@ -359,8 +356,7 @@ public class Util {
 		for (int i = 0; i < items.length; i++) {
 			if (items[i] == null) continue;
 
-			magicData = MagicItems.getMagicItemDataFromItemStack(items[i]);
-			if (magicData == null || !itemData.matches(magicData)) continue;
+			if (!MagicItems.matches(itemData, items[i])) continue;
 
 			if (items[i].getAmount() > amt) {
 				items[i].setAmount(items[i].getAmount() - amt);

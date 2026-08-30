@@ -35,6 +35,7 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.util.config.ConfigData;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItemData;
+import com.nisovin.magicspells.util.magicitems.MagicItemIgnoredAttributes;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
 import com.nisovin.magicspells.util.reagent.SpellReagents;
 
@@ -343,8 +344,13 @@ public class TransmogrifyMenuSpell extends InstantSpell {
 		else meta.setItemModel(option.itemModel);
 		updatedItem.setItemMeta(meta);
 
-		if (option.revert) DataUtil.remove(updatedItem, "transmogrified");
-		else DataUtil.setString(updatedItem, "transmogrified", option.itemModel.asString());
+		if (option.revert) {
+			DataUtil.remove(updatedItem, "transmogrified");
+			MagicItemIgnoredAttributes.remove(updatedItem, ITEM_MODEL);
+		} else {
+			DataUtil.setString(updatedItem, "transmogrified", option.itemModel.asString());
+			MagicItemIgnoredAttributes.add(updatedItem, ITEM_MODEL);
+		}
 
 		player.getInventory().setItem(session.heldSlot, updatedItem);
 

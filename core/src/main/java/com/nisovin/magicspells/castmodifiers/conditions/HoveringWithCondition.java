@@ -42,10 +42,7 @@ public class HoveringWithCondition extends Condition {
 		ItemStack itemCursor = pl.getOpenInventory().getCursor();
 		if (itemCursor == null) return false;
 
-		MagicItemData cursorData = MagicItems.getMagicItemDataFromItemStack(itemCursor);
-		if (cursorData == null) return false;
-
-		return itemData.matches(cursorData);
+		return MagicItems.matches(itemData, itemCursor);
 	}
 
 }

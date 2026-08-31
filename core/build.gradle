@@ -32,7 +32,7 @@ dependencies {
     implementation(name:'PathFinder-5.4.2', ext:'jar')
     implementation(group: "commons-codec", name: "commons-codec", version: "1.16.1")
     compileOnly(group: "io.github.team-sneakymouse", name: "sneakycharactermanager-paper", version: "1.6.0") { transitive = false }
-    compileOnly(group: "io.github.team-sneakymouse", name: "sneakybagofholding", version: "1.1.1") { transitive = false }
+    compileOnly(group: "io.github.team-sneakymouse", name: "sneakybagofholding", version: "1.1.2") { transitive = false }
     implementation(group: "com.comphenix.protocol", name: "ProtocolLib", version: "5.1.0") { transitive = false }
     implementation(group: "com.github.libraryaddict", name: "LibsDisguises", version: "v10.0.25") { transitive = false }
     // VaultAPI only — Vault is provided at runtime. Avoid vault:master-SNAPSHOT (JitPack metadata flaky).

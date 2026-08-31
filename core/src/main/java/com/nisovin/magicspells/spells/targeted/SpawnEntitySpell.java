@@ -1011,24 +1011,18 @@ public class SpawnEntitySpell extends TargetedSpell implements TargetedLocationS
 				return;
 			}
 
-			double targetRangeSq = SpawnEntitySpell.this.targetRange.get(caster, null, power, args);
-			targetRangeSq *= targetRangeSq;
-			double targetPriorityRangeSq = SpawnEntitySpell.this.targetPriorityRange.get(caster, null, power, args);
-			targetPriorityRangeSq *= targetPriorityRangeSq;
+			double targetRange = SpawnEntitySpell.this.targetRange.get(caster, null, power, args);
+			double targetRangeSq = targetRange * targetRange;
+			double targetPriorityRange = SpawnEntitySpell.this.targetPriorityRange.get(caster, null, power, args);
+			double targetPriorityRangeSq = targetPriorityRange * targetPriorityRange;
 			int targetPriorityLimit = SpawnEntitySpell.this.targetPriorityLimit.get(caster, null, power, args);
+			double scanRange = targetPriorityLimit > 0 ? Math.max(targetRange, targetPriorityRange * 2) : targetRange;
 
 			List<LivingEntity> targetable = new ArrayList<>();
 			List<LivingEntity> priorityTargetable = new ArrayList<>();
 			Map<LivingEntity, Integer> targeted = new HashMap<>();
 
-			// Iterate over all living entities in the world to build 2 lists and a map:
-			// the "targetable" list which includes all valid targets within targeting range
-			// the "priorityTargetable" list which is a subset that is also within priority
-			// range. This is a separate list since for this one it's also important that it
-			// gets sorted
-			// the "targeted" map that counts how many mobs are already engaged with each of
-			// the entities
-			for (LivingEntity e : entity.getWorld().getLivingEntities()) {
+			for (LivingEntity e : entity.getWorld().getNearbyLivingEntities(entity.getLocation(), scanRange, scanRange, scanRange)) {
 				double distanceSq = e.getLocation().distanceSquared(entity.getLocation());
 
 				if (distanceSq >= targetRangeSq)

@@ -158,10 +158,7 @@ public class InventoryUtil {
 		for (ItemStack itemStack : items) {
 			if (itemStack == null) continue;
 
-			MagicItemData magicItemData = MagicItems.getMagicItemDataFromItemStack(itemStack);
-			if (magicItemData == null) continue;
-
-			if (itemData.matches(magicItemData)) count += itemStack.getAmount();
+			if (MagicItems.matches(itemData, itemStack)) count += itemStack.getAmount();
 		}
 		return count;
 	}
@@ -185,10 +182,7 @@ public class InventoryUtil {
 		for (ItemStack itemInside : equipment) {
 			if (itemInside == null) continue;
 
-			MagicItemData magicItemData = MagicItems.getMagicItemDataFromItemStack(itemInside);
-			if (magicItemData == null) continue;
-
-			if (itemData.matches(magicItemData)) count += itemInside.getAmount();
+			if (MagicItems.matches(itemData, itemInside)) count += itemInside.getAmount();
 			if (count >= item.getValue()) return true;
 		}
 		return false;

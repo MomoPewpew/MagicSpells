@@ -40,10 +40,7 @@ public class HoldingPreciseCondition extends Condition {
 		if (equipment == null) return false;
 
 		ItemStack item = equipment.getItemInMainHand();
-		MagicItemData data = MagicItems.getMagicItemDataFromItemStack(item);
-		if (data == null) return false;
-
-		return itemData.matches(data);
+		return MagicItems.matches(itemData, item);
 	}
 
 }

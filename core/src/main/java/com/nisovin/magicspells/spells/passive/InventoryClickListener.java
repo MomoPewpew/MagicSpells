@@ -63,10 +63,7 @@ public class InventoryClickListener extends PassiveListener {
 			ItemStack item = event.getCurrentItem();
 			if (item == null) return;
 
-			MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(item);
-			if (itemData == null) return;
-
-			if (!itemCurrent.matches(itemData)) return;
+			if (!MagicItems.matches(itemCurrent, item)) return;
 		}
 
 		// Valid cursor item, but not used.
@@ -74,10 +71,7 @@ public class InventoryClickListener extends PassiveListener {
 			ItemStack item = event.getCursor();
 			if (item == null) return;
 
-			MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(item);
-			if (itemData == null) return;
-
-			if (!itemCursor.matches(itemData)) return;
+			if (!MagicItems.matches(itemCursor, item)) return;
 		}
 
 		boolean casted = passiveSpell.activate(player);

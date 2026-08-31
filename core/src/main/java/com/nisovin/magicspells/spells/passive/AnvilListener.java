@@ -100,11 +100,8 @@ public class AnvilListener extends PassiveListener {
 	private boolean contains(Set<MagicItemData> items, ItemStack item) {
 		if (item == null) item = new ItemStack(Material.AIR);
 
-		MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(item);
-		if (itemData == null) return false;
-
 		for (MagicItemData data : items)
-			if (data.matches(itemData))
+			if (MagicItems.matches(data, item))
 				return true;
 
 		return false;

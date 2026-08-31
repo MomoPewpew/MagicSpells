@@ -10,6 +10,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
@@ -77,16 +78,15 @@ public class MissArrowListener extends PassiveListener {
 			EntityEquipment eq = caster.getEquipment();
 			if (eq == null) return;
 
-			MagicItemData itemData = MagicItems.getMagicItemDataFromItemStack(eq.getItemInMainHand());
-			if (!contains(itemData)) return;
+			if (!contains(eq.getItemInMainHand())) return;
 		}
 
 		passiveSpell.activate(caster, event.getEntity().getLocation());
 	}
 
-	private boolean contains(MagicItemData itemData) {
+	private boolean contains(ItemStack item) {
 		for (MagicItemData data : items) {
-			if (data.matches(itemData)) return true;
+			if (MagicItems.matches(data, item)) return true;
 		}
 		return false;
 	}

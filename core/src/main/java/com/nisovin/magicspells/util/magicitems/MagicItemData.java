@@ -102,6 +102,7 @@ public class MagicItemData {
 	private boolean hasEqualAttributes(MagicItemData other) {
 		Multimap<Attribute, AttributeModifier> attrSelf = (Multimap<Attribute, AttributeModifier>) itemAttributes.get(MagicItemAttribute.ATTRIBUTES);
 		Multimap<Attribute, AttributeModifier> attrOther = (Multimap<Attribute, AttributeModifier>) other.itemAttributes.get(MagicItemAttribute.ATTRIBUTES);
+		if (attrSelf == null || attrOther == null) return attrSelf == attrOther;
 
 		Set<Attribute> keysSelf = attrSelf.keySet();
 		Set<Attribute> keysOther = attrOther.keySet();
@@ -143,14 +144,19 @@ public class MagicItemData {
 	}
 
 	public boolean matches(MagicItemData data) {
+		return matches(data, EnumSet.noneOf(MagicItemAttribute.class));
+	}
+
+	public boolean matches(MagicItemData data, EnumSet<MagicItemAttribute> additionalIgnored) {
 		if (this == data) return true;
 
 		Set<MagicItemAttribute> keysSelf = itemAttributes.keySet();
 		Set<MagicItemAttribute> keysOther = data.itemAttributes.keySet();
 
 		for (MagicItemAttribute attr : keysSelf) {
-			if (ignoredAttributes.contains(attr)) continue;
+			if (ignoredAttributes.contains(attr) || additionalIgnored.contains(attr)) continue;
 			if (attr == MagicItemAttribute.PERSISTENT_DATA) continue;
+			if (attr == MagicItemAttribute.SOULBOUND || attr == MagicItemAttribute.EXPIRATION) continue;
 			if (attr == MagicItemAttribute.MAGIC_ITEM_NAME && !checkItemPersistentData()) continue;
 			if (!keysOther.contains(attr)) return false;
 		}
@@ -160,7 +166,8 @@ public class MagicItemData {
 		}
 
 		for (MagicItemAttribute attr : keysSelf) {
-			if (ignoredAttributes.contains(attr)) continue;
+			if (ignoredAttributes.contains(attr) || additionalIgnored.contains(attr)) continue;
+			if (attr == MagicItemAttribute.SOULBOUND || attr == MagicItemAttribute.EXPIRATION) continue;
 
 			switch (attr) {
 				case ATTRIBUTES -> {
@@ -218,6 +225,7 @@ public class MagicItemData {
 				case LORE -> {
 					List<Component> loreSelf = (List<Component>) itemAttributes.get(attr);
 					List<Component> loreOther = (List<Component>) data.itemAttributes.get(attr);
+					if (loreSelf == null || loreOther == null) return loreSelf == loreOther;
 					if (loreSelf.size() != loreOther.size()) return false;
 
 					for (int i = 0; i < loreSelf.size(); i++) {
@@ -231,7 +239,9 @@ public class MagicItemData {
 					if (!itemAttributes.get(attr).equals(data.itemAttributes.get(attr))) return false;
 				}
 				default -> {
-					if (!itemAttributes.get(attr).equals(data.itemAttributes.get(attr))) return false;
+					Object self = itemAttributes.get(attr);
+					Object other = data.itemAttributes.get(attr);
+					if (!Objects.equals(self, other)) return false;
 				}
 			}
 		}
@@ -318,7 +328,9 @@ public class MagicItemData {
 		ATTRIBUTES(Multimap.class),
 		PERSISTENT_DATA(Map.class),
 		PERMANENT_DATA(Map.class),
-		MAGIC_ITEM_NAME(String.class);
+		MAGIC_ITEM_NAME(String.class),
+		SOULBOUND(Boolean.class),
+		EXPIRATION(Double.class);
 
 		private final Class<?> dataType;
 		private final String asString;
@@ -984,6 +996,28 @@ public class MagicItemData {
 				previousLine = true;
 			}
 			output.append(']');
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.SOULBOUND)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"soulbound\":")
+				.append((boolean) getAttribute(MagicItemAttribute.SOULBOUND));
+
+			previous = true;
+		}
+
+		if (hasAttribute(MagicItemAttribute.EXPIRATION)) {
+			if (previous) output.append(',');
+			else output.append('{');
+
+			output
+				.append("\"expiration\":")
+				.append((Double) getAttribute(MagicItemAttribute.EXPIRATION));
 
 			previous = true;
 		}

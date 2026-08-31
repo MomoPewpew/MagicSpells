@@ -290,107 +290,106 @@ public class PassiveSpell extends Spell {
 			return false;
 
 		disabled = true;
-		SpellCastEvent castEvent = new SpellCastEvent(this, caster, SpellCastState.NORMAL, power, null, cooldown,
-				reagents.clone(), 0);
-		EventUtil.call(castEvent);
+		try {
+			SpellCastEvent castEvent = new SpellCastEvent(this, caster, SpellCastState.NORMAL, power, null, cooldown,
+					reagents.clone(), 0);
+			EventUtil.call(castEvent);
 
-		if (castEvent.isCancelled() || castEvent.getSpellCastState() != SpellCastState.NORMAL) {
-			MagicSpells.debug(3, "   Passive spell cancelled");
-			disabled = false;
-			return false;
-		}
-
-		if (castEvent.haveReagentsChanged() && !hasReagents(caster, castEvent.getReagents())) {
-			disabled = false;
-			return false;
-		}
-
-		power = castEvent.getPower();
-
-		if (target != null) {
-			SpellTargetEvent targetEvent = new SpellTargetEvent(this, caster, target, power);
-			if (!targetEvent.callEvent()) {
-				MagicSpells.debug(3, "    Target cancelled (TE)");
-
-				disabled = false;
+			if (castEvent.isCancelled() || castEvent.getSpellCastState() != SpellCastState.NORMAL) {
+				MagicSpells.debug(3, "   Passive spell cancelled");
 				return false;
 			}
 
-			power = targetEvent.getPower();
-			target = targetEvent.getTarget();
-		}
-
-		if (location != null) {
-			SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(this, caster, location, power);
-			if (!targetEvent.callEvent()) {
-				MagicSpells.debug(3, "    Target cancelled (TL)");
-
-				disabled = false;
+			if (castEvent.haveReagentsChanged() && !hasReagents(caster, castEvent.getReagents())) {
 				return false;
 			}
 
-			power = targetEvent.getPower();
-			location = targetEvent.getTargetLocation();
-		}
+			power = castEvent.getPower();
 
-		SpellData data = new SpellData(caster, target, location, power, null);
-		setCooldown(caster, castEvent.getCooldown());
-		boolean spellEffectsDone = false;
+			if (target != null) {
+				SpellTargetEvent targetEvent = new SpellTargetEvent(this, caster, target, power);
+				if (!targetEvent.callEvent()) {
+					MagicSpells.debug(3, "    Target cancelled (TE)");
 
-		for (Subspell spell : spells) {
-			MagicSpells.debug(3, "    Casting spell effect '" + spell.getSpell().getName() + '\'');
-			if (castWithoutTarget) {
-				MagicSpells.debug(3, "    Casting without target");
-
-				spell.subcast(caster, power, null);
-				if (!spellEffectsDone) {
-					playSpellEffects(EffectPosition.CASTER, caster, power, null);
-					spellEffectsDone = true;
+					return false;
 				}
 
-				continue;
-			}
-
-			if (target != null && !isActuallyNonTargeted(spell.getSpell())) {
-				MagicSpells.debug(3, "    Casting with target entity");
-
-				spell.subcast(caster, target, power, null);
-				if (!spellEffectsDone) {
-					playSpellEffects(caster, target, data);
-					spellEffectsDone = true;
-				}
-
-				continue;
+				power = targetEvent.getPower();
+				target = targetEvent.getTarget();
 			}
 
 			if (location != null) {
-				MagicSpells.debug(3, "    Casting with target location");
+				SpellTargetLocationEvent targetEvent = new SpellTargetLocationEvent(this, caster, location, power);
+				if (!targetEvent.callEvent()) {
+					MagicSpells.debug(3, "    Target cancelled (TL)");
 
-				spell.subcast(caster, location, power, null);
-				if (!spellEffectsDone) {
-					playSpellEffects(caster, location, data);
-					spellEffectsDone = true;
+					return false;
 				}
 
-				continue;
+				power = targetEvent.getPower();
+				location = targetEvent.getTargetLocation();
 			}
 
-			MagicSpells.debug(3, "    Casting normally");
+			SpellData data = new SpellData(caster, target, location, power, null);
+			setCooldown(caster, castEvent.getCooldown());
+			boolean spellEffectsDone = false;
 
-			spell.subcast(caster, power, null);
-			if (!spellEffectsDone) {
-				playSpellEffects(EffectPosition.CASTER, caster, data);
-				spellEffectsDone = true;
+			for (Subspell spell : spells) {
+				MagicSpells.debug(3, "    Casting spell effect '" + spell.getSpell().getName() + '\'');
+				if (castWithoutTarget) {
+					MagicSpells.debug(3, "    Casting without target");
+
+					spell.subcast(caster, power, null);
+					if (!spellEffectsDone) {
+						playSpellEffects(EffectPosition.CASTER, caster, power, null);
+						spellEffectsDone = true;
+					}
+
+					continue;
+				}
+
+				if (target != null && !isActuallyNonTargeted(spell.getSpell())) {
+					MagicSpells.debug(3, "    Casting with target entity");
+
+					spell.subcast(caster, target, power, null);
+					if (!spellEffectsDone) {
+						playSpellEffects(caster, target, data);
+						spellEffectsDone = true;
+					}
+
+					continue;
+				}
+
+				if (location != null) {
+					MagicSpells.debug(3, "    Casting with target location");
+
+					spell.subcast(caster, location, power, null);
+					if (!spellEffectsDone) {
+						playSpellEffects(caster, location, data);
+						spellEffectsDone = true;
+					}
+
+					continue;
+				}
+
+				MagicSpells.debug(3, "    Casting normally");
+
+				spell.subcast(caster, power, null);
+				if (!spellEffectsDone) {
+					playSpellEffects(EffectPosition.CASTER, caster, data);
+					spellEffectsDone = true;
+				}
 			}
+
+			removeReagents(caster, castEvent.getReagents());
+			sendMessage(strCastSelf, caster, MagicSpells.NULL_ARGS);
+			SpellCastedEvent castedEvent = new SpellCastedEvent(this, caster, SpellCastState.NORMAL, power, null,
+					castEvent.getCooldown(), castEvent.getReagents(), PostCastAction.HANDLE_NORMALLY);
+			EventUtil.call(castedEvent);
+			return true;
+		} finally {
+			disabled = false;
 		}
-
-		removeReagents(caster, castEvent.getReagents());
-		sendMessage(strCastSelf, caster, MagicSpells.NULL_ARGS);
-		SpellCastedEvent castedEvent = new SpellCastedEvent(this, caster, SpellCastState.NORMAL, power, null,
-				castEvent.getCooldown(), castEvent.getReagents(), PostCastAction.HANDLE_NORMALLY);
-		EventUtil.call(castedEvent);
-		disabled = false;
-		return true;
 	}
 
 	public void setCooldownPerSubject(LivingEntity caster, LivingEntity target, String subject) {

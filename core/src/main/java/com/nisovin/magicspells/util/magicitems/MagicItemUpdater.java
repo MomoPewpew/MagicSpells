@@ -44,9 +44,12 @@ import net.sneakymouse.sneakyvaults.utlitiy.ChatUtility;
 import net.sneakycharactermanager.paper.SneakyCharacterManager;
 import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.events.MagicSpellsLoadedEvent;
+import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors.ExpirationResult;
 import com.nisovin.magicspells.util.magicitems.MagicItemData.MagicItemAttribute;
 
 import static com.nisovin.magicspells.MagicSpells.setCheckItemPersistentData;
@@ -87,10 +90,11 @@ public class MagicItemUpdater {
             if (!MagicSpells.enableUpdateItemData())
                 return;
             PlayerInventory inv = player.getInventory();
-            updateInventory(inv);
+            updateInventory(inv, player);
             ItemStack[] armor = inv.getArmorContents();
-            updateInventory(armor);
+            updateInventory(armor, player);
             inv.setArmorContents(armor);
+            updateInventory(player.getEnderChest(), player);
         }
 
         @EventHandler(priority = EventPriority.LOWEST)
@@ -99,7 +103,8 @@ public class MagicItemUpdater {
                 return;
             if (isBagOfHoldingGui(event.getInventory()))
                 return;
-            updateInventory(event.getInventory());
+            Player player = event.getPlayer() instanceof Player p ? p : null;
+            updateInventory(event.getInventory(), player);
         }
 
         private static boolean isBagOfHoldingGui(Inventory inventory) {
@@ -111,15 +116,15 @@ public class MagicItemUpdater {
             return holder.getClass().getName().startsWith("com.sneakybagofholding.gui.BagInventoryHolder");
         }
 
-        private void updateInventory(Inventory inv) {
+        private void updateInventory(Inventory inv, @Nullable Player player) {
             if (isBagOfHoldingGui(inv))
                 return;
             ItemStack[] contents = inv.getContents();
-            updateInventory(contents);
+            updateInventory(contents, player);
             inv.setContents(contents);
         }
 
-        private static void updateInventory(ItemStack[] items) {
+        private static void updateInventory(ItemStack[] items, @Nullable Player player) {
             if (items == null)
                 return;
             for (int i = 0; i < items.length; i++) {
@@ -130,6 +135,13 @@ public class MagicItemUpdater {
                 ItemStack updated = updateMagicItemItemStackIfNeeded(itemStack);
                 if (updated != itemStack)
                     items[i] = updated;
+
+                ItemStack stack = items[i];
+                if (player != null) {
+                    ExpirationResult result = MagicItemBehaviors.updateExpiresLineIfNeeded(stack, player);
+                    if (result == ExpirationResult.EXPIRED)
+                        items[i] = null;
+                }
             }
         }
     }
@@ -245,8 +257,7 @@ public class MagicItemUpdater {
         if (magicitemName == null || !magicItems.containsKey(magicitemName))
             return itemStack;
 
-        // Ignore transient tags (like ConjureSpell soulbound ownership) when determining whether
-        // a magic item needs updating.
+        // Ignore transient soulbound ownership when determining whether a magic item needs updating.
         ItemStack compareStack = itemStack;
         if (container.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
             compareStack = itemStack.clone();
@@ -262,7 +273,7 @@ public class MagicItemUpdater {
 
         if (magicItemData == null || stackData == null)
             return itemStack;
-        if (magicItemData.matches(stackData))
+        if (MagicItems.matches(magicItemData, compareStack))
             return itemStack;
 
         return updateItem(itemStack, magicItems.get(magicitemName));
@@ -297,9 +308,6 @@ public class MagicItemUpdater {
             return itemStack;
         }
 
-        boolean transmogrified = sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "transmogrified"),
-                PersistentDataType.STRING);
-
         if (sourceContainer.has(new NamespacedKey(MagicSpells.getInstance(), "expires_at"), PersistentDataType.LONG)) {
             expiresAt = sourceContainer.get(new NamespacedKey(MagicSpells.getInstance(), "expires_at"),
                     PersistentDataType.LONG);
@@ -311,7 +319,7 @@ public class MagicItemUpdater {
                     PersistentDataType.STRING);
         }
 
-        // ConjureSpell soulbound ownership should not be lost during magic item updates.
+        // Magic item soulbound ownership should not be lost during magic item updates.
         if (sourceContainer.has(SOULBOUND_OWNER_KEY, PersistentDataType.STRING)) {
             soulboundOwner = sourceContainer.get(SOULBOUND_OWNER_KEY, PersistentDataType.STRING);
         }
@@ -334,7 +342,8 @@ public class MagicItemUpdater {
 
         ItemMeta meta = updatedItem.getItemMeta();
         MagicItemData definition = magicItem.getMagicItemData();
-        boolean durabilityIgnored = definition.getIgnoredAttributes().contains(MagicItemAttribute.DURABILITY);
+        EnumSet<MagicItemAttribute> effectiveIgnored = MagicItemIgnoredAttributes.getEffectiveIgnored(definition, itemStack);
+        boolean durabilityIgnored = effectiveIgnored.contains(MagicItemAttribute.DURABILITY);
 
         if (durability != null && durability != 0 && meta instanceof Damageable updatedDamageable && !durabilityIgnored) {
             updatedDamageable.setDamage(durability);
@@ -362,7 +371,7 @@ public class MagicItemUpdater {
 
         if (meta instanceof BlockStateMeta updatedBlockStateMeta && blockInventory != null) {
             ItemStack[] contents = blockInventory.getContents();
-            PersistentDataUpdater.updateInventory(contents);
+            PersistentDataUpdater.updateInventory(contents, null);
             Container updatedContainer = (Container) updatedBlockStateMeta.getBlockState();
             updatedContainer.getInventory().setContents(contents);
             updatedBlockStateMeta.setBlockState(updatedContainer);
@@ -377,8 +386,10 @@ public class MagicItemUpdater {
             }
         }
 
+        MagicItemIgnoredAttributes.copyPdc(sourceMeta, meta);
+
         MagicItemData stackData = MagicItems.getMagicItemDataFromItemStack(itemStack);
-        EnumSet<MagicItemAttribute> ignored = definition.getIgnoredAttributes();
+        EnumSet<MagicItemAttribute> ignored = effectiveIgnored;
         EnumSet<MagicItemAttribute> blacklisted = definition.getBlacklistedAttributes();
 
         for (MagicItemAttribute attr : ignored) {
@@ -397,11 +408,6 @@ public class MagicItemUpdater {
                 continue;
             }
             MagicItems.applyMagicItemAttribute(updatedItem, meta, null, attr, true);
-        }
-
-        if (transmogrified) {
-            if (sourceMeta.hasItemModel()) meta.setItemModel(sourceMeta.getItemModel());
-            else meta.setItemModel(null);
         }
 
         updatedItem.setItemMeta(meta);
@@ -461,7 +467,7 @@ public class MagicItemUpdater {
                 continue;
 
             for (Map.Entry<String, MagicItemData> entry : magicItemsCache.entrySet()) {
-                if (entry.getValue().matches(item)) {
+                if (MagicItems.matches(entry.getValue(), itemStack)) {
 
                     items[i] = updateItem(itemStack, magicItems.get(entry.getKey()));
                     break;

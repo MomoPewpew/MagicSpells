@@ -257,6 +257,12 @@ public class MagicItemDataParser {
 						case "unbreakable":
 							data.setAttribute(UNBREAKABLE, value.getAsBoolean());
 							break;
+						case "soulbound":
+							data.setAttribute(SOULBOUND, value.getAsBoolean());
+							break;
+						case "expiration":
+							data.setAttribute(EXPIRATION, value.getAsDouble());
+							break;
 						case "hidetooltip":
 						case "hide-tooltip":
 						case "hide_tooltip":

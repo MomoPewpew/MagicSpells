@@ -10,6 +10,7 @@ import com.google.common.collect.HashMultimap;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.inventory.ItemStack;
@@ -21,6 +22,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
 import com.nisovin.magicspells.util.Util;
+import com.nisovin.magicspells.util.DataUtil;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.ItemUtil;
 import com.nisovin.magicspells.util.itemreader.*;
@@ -62,10 +64,31 @@ public class MagicItems {
 		return magicItems.get(internalName).getItemStack().clone();
 	}
 
+	public static ItemStack getItemStackForPlayer(String spec, Player player, int amount) {
+		MagicItem magicItem = getMagicItemFromString(spec);
+		if (magicItem == null) return null;
+		return magicItem.createFor(player, amount);
+	}
+
 	public static MagicItemData getMagicItemDataByInternalName(String internalName) {
 		if (!magicItems.containsKey(internalName)) return null;
 		if (magicItems.get(internalName) == null) return null;
 		return magicItems.get(internalName).getMagicItemData();
+	}
+
+	public static boolean matches(MagicItemData pattern, ItemStack stack) {
+		if (pattern == null || stack == null)
+			return false;
+
+		MagicItemData stackData = getMagicItemDataFromItemStack(stack);
+		if (stackData == null)
+			return false;
+
+		EnumSet<MagicItemAttribute> stackIgnored = MagicItemIgnoredAttributes.fromItemStack(stack);
+		if (DataUtil.getString(stack, "transmogrified") != null)
+			stackIgnored.add(MagicItemAttribute.ITEM_MODEL);
+
+		return pattern.matches(stackData, stackIgnored);
 	}
 
 	public static MagicItemData getMagicItemDataFromItemStack(ItemStack itemStack) {
@@ -733,6 +756,20 @@ public class MagicItems {
 
 				meta.setUnbreakable(unbreakable);
 				itemData.setAttribute(UNBREAKABLE, unbreakable);
+			}
+
+			if (section.isBoolean("soulbound")) {
+				itemData.setAttribute(SOULBOUND, section.getBoolean("soulbound"));
+			}
+
+			if (section.isDouble("expiration")) {
+				double expiration = section.getDouble("expiration");
+				if (expiration > 0)
+					itemData.setAttribute(EXPIRATION, expiration);
+			} else if (section.isInt("expiration")) {
+				int expiration = section.getInt("expiration");
+				if (expiration > 0)
+					itemData.setAttribute(EXPIRATION, (double) expiration);
 			}
 
 			if (MagicSpells.hideMagicItemTooltips()) {

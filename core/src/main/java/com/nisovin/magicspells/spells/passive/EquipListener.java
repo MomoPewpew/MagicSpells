@@ -47,21 +47,17 @@ public class EquipListener extends PassiveListener {
 			ItemStack newItem = event.getNewItem();
 			if (newItem == null) return;
 
-			MagicItemData newData = MagicItems.getMagicItemDataFromItemStack(newItem);
-			if (newData == null) return;
-
 			ItemStack oldItem = event.getOldItem();
-			MagicItemData oldData = MagicItems.getMagicItemDataFromItemStack(oldItem);
 
-			if (!contains(oldData, newData)) return;
+			if (!contains(oldItem, newItem)) return;
 		}
 
 		passiveSpell.activate(caster);
 	}
 
-	private boolean contains(MagicItemData oldData, MagicItemData newData) {
+	private boolean contains(ItemStack oldItem, ItemStack newItem) {
 		for (MagicItemData data : items)
-			if ((oldData == null || !data.matches(oldData)) && data.matches(newData))
+			if ((oldItem == null || !MagicItems.matches(data, oldItem)) && MagicItems.matches(data, newItem))
 				return true;
 
 		return false;

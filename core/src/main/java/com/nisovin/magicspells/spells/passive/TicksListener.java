@@ -3,8 +3,6 @@ package com.nisovin.magicspells.spells.passive;
 import java.util.Set;
 import java.util.HashSet;
 
-import org.bukkit.World;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,6 +17,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 
 import com.nisovin.magicspells.Spell;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.spells.PassiveSpell;
 import com.nisovin.magicspells.util.OverridePriority;
 import com.nisovin.magicspells.events.SpellLearnEvent;
@@ -44,14 +43,12 @@ public class TicksListener extends PassiveListener {
 			// ignored
 		}
 
-		for (World world : Bukkit.getWorlds()) {
-			for (LivingEntity livingEntity : world.getLivingEntities()) {
-				if (!livingEntity.isValid()) continue;
-				if (livingEntity instanceof Player && !hasSpell(livingEntity)) continue;
-				if (!canTrigger(livingEntity)) continue;
-				ticker.add(livingEntity);
-			}
-		}
+		Util.forEachLivingInLoadedChunks(livingEntity -> {
+			if (!livingEntity.isValid()) return;
+			if (livingEntity instanceof Player && !hasSpell(livingEntity)) return;
+			if (!canTrigger(livingEntity)) return;
+			ticker.add(livingEntity);
+		});
 	}
 
 	@Override

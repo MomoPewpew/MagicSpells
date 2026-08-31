@@ -164,7 +164,7 @@ cleanse:
 combust:
     spell-class: ".targeted.CombustSpell"
     name: combust
-    spell-icon: fire
+    spell-icon: fire_charge
     description: Set a target on fire.
     cast-item: blaze_rod
     cooldown: 10
@@ -548,7 +548,7 @@ earth-nova:
 flamewalk:
     spell-class: ".buff.FlamewalkSpell"
     name: flamewalk
-    spell-icon: fire
+    spell-icon: fire_charge
     description: Burn your enemies around you as you walk.
     cast-item: book
     cooldown: 30
@@ -714,7 +714,7 @@ gate:
 geyser:
     spell-class: ".targeted.GeyserSpell"
     name: geyser
-    spell-icon: water
+    spell-icon: water_bucket
     description: Create a geyser of water at your enemy's feet.
     cast-item: blaze_rod
     range: 20

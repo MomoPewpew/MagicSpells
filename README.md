@@ -107,7 +107,7 @@ Published modules and artifact ids:
 | `:towny` | `magicspells-towny` |
 | `:nms:shared` | `magicspells-nms-shared` |
 
-`:nms:v1_21_4` is excluded (Paperweight dev bundle only).
+`:nms:v26_2` is excluded (Paperweight dev bundle only).
 
 **What is published:** plain library JARs, sources, Javadoc, and POMs — not the shaded plugin JAR from `./gradlew :core:shadowJar`. Published POMs only declare dependencies on `io.github.team-sneakymouse` artifacts and Kotlin. `paper-api`, plugin JARs, and other SNAPSHOT or local-only libraries are omitted because Maven Central rejects them; consumers add Paper and other deps themselves (section 3).
 
@@ -157,7 +157,7 @@ Publish a single module only:
 |---------|------------------------|--------|
 | `4.0-Beta-17` | Yes | Example release version; pre-release, not a SNAPSHOT. |
 | `4.0-Beta-17-SNAPSHOT` | No | Snapshot suffix is rejected in release POMs and deployments. |
-| `1.21.4-R0.1-SNAPSHOT` (Paper API) | N/A | Used only on your machine / Paper’s repo; not listed in published POMs. |
+| `26.2.build.116-stable` (Paper API) | N/A | Used only on your machine / Paper’s repo; not listed in published POMs. |
 
 For stricter [semantic versioning](https://semver.org/), you could use something like `4.0.0-beta.14` instead of `4.0-Beta-17`; either style is acceptable on Central as long as it is not a SNAPSHOT.
 
@@ -236,7 +236,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.116-stable")
     compileOnly("io.github.team-sneakymouse:magicspells-core:4.0-Beta-17")
     compileOnly("io.github.team-sneakymouse:magicspells-factions:4.0-Beta-17") // example extension
 }

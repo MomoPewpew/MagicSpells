@@ -17,11 +17,16 @@ public class DataUtil {
 	}
 
 	private static Object get(ItemStack item, String key, PersistentDataType<?, ?> type) {
-		return item.getItemMeta().getPersistentDataContainer().get(createKey(key), type);
+		if (item == null || !item.hasItemMeta()) return null;
+		ItemMeta meta = item.getItemMeta();
+		if (meta == null) return null;
+		return meta.getPersistentDataContainer().get(createKey(key), type);
 	}
 
 	private static void handle(ItemStack item, Consumer<PersistentDataContainer> consumer) {
+		if (item == null) return;
 		ItemMeta meta = item.getItemMeta();
+		if (meta == null) return;
 		consumer.accept(meta.getPersistentDataContainer());
 		item.setItemMeta(meta);
 	}

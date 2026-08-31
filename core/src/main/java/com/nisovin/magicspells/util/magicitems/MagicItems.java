@@ -77,8 +77,19 @@ public class MagicItems {
 	}
 
 	public static boolean matches(MagicItemData pattern, ItemStack stack) {
+		return matches(pattern, stack, true);
+	}
+
+	public static boolean matches(MagicItemData pattern, ItemStack stack, boolean pdcIdentityMatch) {
 		if (pattern == null || stack == null)
 			return false;
+
+		if (pdcIdentityMatch && pattern.hasAttribute(MAGIC_ITEM_NAME)) {
+			String patternName = (String) pattern.getAttribute(MAGIC_ITEM_NAME);
+			String stackName = MagicItemBehaviorKeys.getMagicItemName(stack);
+			if (patternName != null && patternName.equals(stackName))
+				return true;
+		}
 
 		MagicItemData stackData = getMagicItemDataFromItemStack(stack);
 		if (stackData == null)

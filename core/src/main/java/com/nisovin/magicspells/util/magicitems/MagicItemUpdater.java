@@ -273,7 +273,7 @@ public class MagicItemUpdater {
 
         if (magicItemData == null || stackData == null)
             return itemStack;
-        if (MagicItems.matches(magicItemData, compareStack))
+        if (MagicItems.matches(magicItemData, compareStack, false))
             return itemStack;
 
         return updateItem(itemStack, magicItems.get(magicitemName));
@@ -467,7 +467,7 @@ public class MagicItemUpdater {
                 continue;
 
             for (Map.Entry<String, MagicItemData> entry : magicItemsCache.entrySet()) {
-                if (MagicItems.matches(entry.getValue(), itemStack)) {
+                if (MagicItems.matches(entry.getValue(), itemStack, false)) {
 
                     items[i] = updateItem(itemStack, magicItems.get(entry.getKey()));
                     break;

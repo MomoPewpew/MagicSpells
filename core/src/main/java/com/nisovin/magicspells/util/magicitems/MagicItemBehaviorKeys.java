@@ -1,6 +1,8 @@
 package com.nisovin.magicspells.util.magicitems;
 
 import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 
 import com.nisovin.magicspells.MagicSpells;
 
@@ -33,6 +35,14 @@ public final class MagicItemBehaviorKeys {
 
 	public static NamespacedKey ignoredAttributes() {
 		return IGNORED_ATTRIBUTES;
+	}
+
+	public static String getMagicItemName(ItemStack stack) {
+		if (stack == null || !stack.hasItemMeta())
+			return null;
+
+		return stack.getItemMeta().getPersistentDataContainer()
+				.get(MAGIC_ITEM, PersistentDataType.STRING);
 	}
 
 }

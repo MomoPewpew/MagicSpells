@@ -21,6 +21,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.ModifierResult;
 import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.util.config.ConfigData;
@@ -232,6 +233,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		float throwChance = this.throwChance.get(caster, target, power, null) / 100;
 		int duration = this.duration.get(caster, target, power, args);
 		Shape shape = this.shape.get(caster, target, power, args);
+		SpellData spellData = new SpellData(caster, target, targetLocation, power, args);
 
 		double horizRadiusSq = (double) horizRadius * horizRadius;
 		double vertRadiusSq = (double) vertRadius * vertRadius;
@@ -256,6 +258,12 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 						continue;
 					if (BlockUtils.isAir(b.getType()))
 						continue;
+
+					if (locationModifiers != null) {
+						ModifierResult modifierResult = locationModifiers.apply(caster, b.getLocation(), spellData);
+						if (!modifierResult.check())
+							continue;
+					}
 
 					if (blockTypesToIgnore != null && blockTypesToIgnore.contains(b.getType())) {
 						continue;

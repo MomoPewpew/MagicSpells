@@ -57,6 +57,7 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 	private boolean powerAffectsRadius;
 	private boolean affectsContainers;
 
+	private ConfigData<Shape> shape;
 	private VelocityType velocityType;
 
 	public DestroySpell(MagicConfig config, String spellName) {
@@ -81,6 +82,8 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		resolveMaxHeightPerBlock = getConfigBoolean("resolve-max-height-per-block", false);
 		powerAffectsRadius = getConfigBoolean("power-affects-radius", false);
 		affectsContainers = getConfigBoolean("affects-containers", false);
+
+		shape = getConfigDataEnum("shape", Shape.class, Shape.CUBE);
 
 		String vType = getConfigString("velocity-type", "none");
 
@@ -228,10 +231,26 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 
 		float throwChance = this.throwChance.get(caster, target, power, null) / 100;
 		int duration = this.duration.get(caster, target, power, args);
+		Shape shape = this.shape.get(caster, target, power, args);
+
+		double horizRadiusSq = (double) horizRadius * horizRadius;
+		double vertRadiusSq = (double) vertRadius * vertRadius;
 
 		for (int y = centerY - vertRadius; y <= centerY + vertRadius; y++) {
 			for (int x = centerX - horizRadius; x <= centerX + horizRadius; x++) {
 				for (int z = centerZ - horizRadius; z <= centerZ + horizRadius; z++) {
+					if (shape == Shape.SPHERE) {
+						double dx = x - centerX;
+						double dy = y - centerY;
+						double dz = z - centerZ;
+						double horizComponent = horizRadiusSq == 0
+								? (dx == 0 && dz == 0 ? 0 : 2)
+								: (dx * dx + dz * dz) / horizRadiusSq;
+						double vertComponent = vertRadiusSq == 0 ? (dy == 0 ? 0 : 2) : (dy * dy) / vertRadiusSq;
+						if (horizComponent + vertComponent > 1)
+							continue;
+					}
+
 					Block b = targetLocation.getWorld().getBlockAt(x, y, z);
 					if (b.getType() == Material.BEDROCK)
 						continue;
@@ -394,6 +413,13 @@ public class DestroySpell extends TargetedSpell implements TargetedLocationSpell
 		DOWN,
 		TOWARD,
 		AWAY
+
+	}
+
+	public enum Shape {
+
+		CUBE,
+		SPHERE
 
 	}
 

@@ -45,12 +45,21 @@ dependencies {
         exclude(module: "XGlowExample")
     }
 
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+
     // Pin to last 7.1.0-SNAPSHOT built for JVM 21; newer builds require JVM 25.
     implementation(group: "com.sk89q.worldguard", name: "worldguard-core", version: "7.1.0-20250824.193056-15") { transitive = false }
     implementation(group: "com.sk89q.worldguard", name: "worldguard-bukkit", version: "7.1.0-20250824.193056-15") { transitive = false }
     implementation(group: "com.sk89q.worldedit", name: "worldedit-core", version: "7.4.0-SNAPSHOT") { transitive = false }
     implementation(group: "com.sk89q.worldedit", name: "worldedit-bukkit", version: "7.4.0-SNAPSHOT") { transitive = false }
 
+}
+
+test {
+    useJUnitPlatform()
+    // PathFinder bundles an old, unrelocated JUnit Platform that conflicts with the test engine.
+    classpath = classpath.filter { it.name != "PathFinder-5.4.0.jar" }
 }
 
 base {

@@ -3,9 +3,7 @@ package com.nisovin.magicspells.spells.command;
 import java.io.File;
 import java.util.List;
 import java.util.Scanner;
-import java.io.FileWriter;
 import java.util.ArrayList;
-import java.io.BufferedWriter;
 import java.util.regex.Pattern;
 import java.io.FileNotFoundException;
 
@@ -30,6 +28,7 @@ import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.RegexUtil;
 import com.nisovin.magicspells.util.SpellData;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.util.MagicLocation;
 import com.nisovin.magicspells.spells.CommandSpell;
 import com.nisovin.magicspells.util.compat.EventUtil;
@@ -281,17 +280,19 @@ public class SpellbookSpell extends CommandSpell {
 
 	private void saveSpellbooks() {
 		try {
-			BufferedWriter writer = new BufferedWriter(
-					new FileWriter(new File(MagicSpells.plugin.getDataFolder(), "books.txt"), false));
+			StringBuilder content = new StringBuilder();
 			MagicLocation loc;
 			for (int i = 0; i < bookLocations.size(); i++) {
 				loc = bookLocations.get(i);
-				writer.write(loc.getWorld() + ':' + (int) loc.getX() + ':' + (int) loc.getY() + ':' + (int) loc.getZ()
-						+ ':');
-				writer.write(bookSpells.get(i) + ':' + bookUses.get(i));
-				writer.newLine();
+				content.append(loc.getWorld()).append(':')
+						.append((int) loc.getX()).append(':')
+						.append((int) loc.getY()).append(':')
+						.append((int) loc.getZ()).append(':')
+						.append(bookSpells.get(i)).append(':')
+						.append(bookUses.get(i)).append(System.lineSeparator());
 			}
-			writer.close();
+			File file = new File(MagicSpells.plugin.getDataFolder(), "books.txt");
+			AtomicFiles.writeUtf8(file.toPath(), content.toString());
 		} catch (Exception e) {
 			MagicSpells.plugin.getServer().getLogger().severe("MagicSpells: Error saving spellbooks");
 		}

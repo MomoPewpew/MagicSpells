@@ -23,6 +23,7 @@ import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.spells.CommandSpell;
 import com.nisovin.magicspells.util.magicitems.MagicItem;
 import com.nisovin.magicspells.util.magicitems.MagicItems;
@@ -83,7 +84,7 @@ public class KeybindSpell extends CommandSpell {
 			conf.set(i + "", binds[i].getInternalName());
 		}
 		try {
-			conf.save(file);
+			AtomicFiles.writeUtf8(file.toPath(), conf.saveToString());
 		} catch (IOException e) {
 			MagicSpells.plugin.getLogger().severe("Failed to save keybinds for " + keybinds.player.getName());
 			e.printStackTrace();

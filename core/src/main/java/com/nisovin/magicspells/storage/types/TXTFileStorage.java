@@ -1,9 +1,6 @@
 package com.nisovin.magicspells.storage.types;
 
 import java.io.File;
-import java.io.Writer;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
 
 import java.util.Set;
 import java.util.List;
@@ -19,6 +16,7 @@ import com.nisovin.magicspells.Spellbook;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.CastItem;
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.handlers.DebugHandler;
 import com.nisovin.magicspells.storage.StorageHandler;
 import com.nisovin.magicspells.util.magicitems.MagicItemDataParser;
@@ -105,23 +103,22 @@ public class TXTFileStorage extends StorageHandler {
 		String id = Util.getUniqueId(pl);
 		try {
 			File file;
+			File oldFile;
 			String path = "spellbooks" + File.separator;
 			if (MagicSpells.arePlayerSpellsSeparatedPerWorld()) {
 				File folder = new File(plugin.getDataFolder(), path + worldName);
 				if (!folder.exists()) folder.mkdirs();
-				File oldFile = new File(plugin.getDataFolder(), path + worldName + File.separator + pl.getName() + ".txt");
-				if (oldFile.exists()) oldFile.delete();
+				oldFile = new File(plugin.getDataFolder(), path + worldName + File.separator + pl.getName() + ".txt");
 				file = new File(plugin.getDataFolder(), path + worldName + File.separator + id + ".txt");
 			} else {
-				File oldFile = new File(plugin.getDataFolder(), path + pl.getName() + ".txt");
-				if (oldFile.exists()) oldFile.delete();
+				oldFile = new File(plugin.getDataFolder(), path + pl.getName() + ".txt");
 				file = new File(plugin.getDataFolder(), path + id + ".txt");
 			}
 
-			Writer writer = new OutputStreamWriter(new FileOutputStream(file, false), StandardCharsets.UTF_8);
+			StringBuilder content = new StringBuilder();
 			for (Spell spell : spellbook.getSpells()) {
 				if (spellbook.isTemporary(spell)) continue;
-				writer.append(spell.getInternalName());
+				content.append(spell.getInternalName());
 
 				if (spellbook.getCustomBindings().containsKey(spell)) {
 					Set<CastItem> items = spellbook.getCustomBindings().get(spell);
@@ -133,16 +130,16 @@ public class TXTFileStorage extends StorageHandler {
 					// When you unbind an item with no binds left, restore the original cast item.
 					CastItem castItem = (CastItem) items.toArray()[0];
 					if (items.size() == 1 && castItem.getType() == null) {
-						writer.write("\n");
+						content.append('\n');
 						continue;
 					}
-					writer.append(":").append(s.toString());
+					content.append(':').append(s);
 				}
-				writer.write("\n");
+				content.append('\n');
 			}
 
-			writer.flush();
-			writer.close();
+			AtomicFiles.writeUtf8(file.toPath(), content.toString());
+			if (!oldFile.equals(file) && oldFile.exists()) oldFile.delete();
 			MagicSpells.debug("Saved spellbook for player '" + pl.getName() + "'.");
 		} catch (Exception e) {
 			plugin.getServer().getLogger().severe("Error saving spellbook for player '" + pl.getName() + "'.");

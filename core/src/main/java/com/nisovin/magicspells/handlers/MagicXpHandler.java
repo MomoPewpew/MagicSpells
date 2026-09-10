@@ -25,6 +25,7 @@ import com.nisovin.magicspells.util.IntMap;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.MagicConfig;
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.util.PlayerNameUtils;
 import com.nisovin.magicspells.Spell.PostCastAction;
 import com.nisovin.magicspells.Spell.SpellCastState;
@@ -208,14 +209,13 @@ public class MagicXpHandler implements Listener {
 	}
 	
 	public void saveAll() {
-		for (String playerName : dirty) {
+		for (String playerName : new HashSet<>(dirty)) {
 			Player player = PlayerNameUtils.getPlayerExact(playerName);
-			if (player != null) save(player);
+			if (player != null && save(player)) dirty.remove(playerName);
 		}
-		dirty.clear();
 	}
 	
-	public void save(Player player) {
+	public boolean save(Player player) {
 		String world = currentWorld.get(player.getName());
 		if (world == null) world = player.getWorld().getName();
 		File folder = new File(plugin.getDataFolder(), "xp");
@@ -225,7 +225,6 @@ public class MagicXpHandler implements Listener {
 			if (!folder.exists()) folder.mkdirs();
 		}
 		File file = new File(folder, Util.getUniqueId(player) + ".txt");
-		if (file.exists()) file.delete();
 		
 		YamlConfiguration conf = new YamlConfiguration();
 		IntMap<String> playerXp = xp.get(player.getName());
@@ -236,10 +235,12 @@ public class MagicXpHandler implements Listener {
 		}
 
 		try {
-			conf.save(file);
+			AtomicFiles.writeUtf8(file.toPath(), conf.saveToString());
+			return true;
 		} catch (Exception e) {
 			MagicSpells.error("Error while saving player XP for player " + player);
 			MagicSpells.handleException(e);
+			return false;
 		}
 	}
 	

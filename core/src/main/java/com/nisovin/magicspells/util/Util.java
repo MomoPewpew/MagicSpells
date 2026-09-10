@@ -1,11 +1,9 @@
 package com.nisovin.magicspells.util;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.InputStream;
 
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -20,6 +18,7 @@ import java.util.Set;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import org.bukkit.*;
 import org.bukkit.entity.HumanEntity;
@@ -535,15 +534,8 @@ public class Util {
 	}
 
 	public static boolean downloadFile(String url, File file) {
-		try {
-			URL website = new URL(url);
-			ReadableByteChannel rbc = Channels.newChannel(website.openStream());
-			FileOutputStream fos = new FileOutputStream(file);
-
-			fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-			fos.close();
-			rbc.close();
-
+		try (InputStream input = new URL(url).openStream()) {
+			AtomicFiles.copy(file.toPath(), input);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();

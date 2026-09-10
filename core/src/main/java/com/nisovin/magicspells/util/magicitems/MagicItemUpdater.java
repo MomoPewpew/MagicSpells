@@ -47,6 +47,7 @@ import net.sneakycharactermanager.paper.handlers.character.LoadCharacterEvent;
 import org.jetbrains.annotations.Nullable;
 
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.util.compat.CompatBasics;
 import com.nisovin.magicspells.events.MagicSpellsLoadedEvent;
 import com.nisovin.magicspells.util.magicitems.MagicItemBehaviors.ExpirationResult;
@@ -557,7 +558,7 @@ public class MagicItemUpdater {
                 config.set("inventory", inventoryB64);
 
                 try {
-                    config.save(characterFile);
+                    AtomicFiles.writeUtf8(characterFile.toPath(), config.saveToString());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -619,7 +620,7 @@ public class MagicItemUpdater {
                 vaults.set(vault + ".items", itemEncoded);
 
                 try {
-                    configuration.save(playerDataFile);
+                    AtomicFiles.writeUtf8(playerDataFile.toPath(), configuration.saveToString());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

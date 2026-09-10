@@ -2,10 +2,9 @@ package com.nisovin.magicspells.commands;
 
 import java.util.*;
 import java.io.File;
-import java.io.Writer;
-import java.io.FileWriter;
 import java.util.regex.Pattern;
 
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.util.magicitems.MagicItemUpdater;
 import com.nisovin.magicspells.util.managers.OfflineVariableManager;
 import com.nisovin.magicspells.util.managers.VariableManager;
@@ -617,20 +616,10 @@ public class MagicCommand extends BaseCommand {
 			if (noPermission(issuer.getIssuer(), Perm.COMMAND_UTIL_UPDATE)) return;
 			if (args.length < 2) throw new InvalidCommandArgument();
 			String fileName = args[1];
-			File updateFile = new File(PLUGIN_FOLDER, "update-" + fileName + ".yml");
+			File updateFile = new File(PLUGIN_FOLDER, fileName + ".yml");
 			boolean downloaded = Util.downloadFile(args[0], updateFile);
 			if (!downloaded) throw new ConditionFailedException("Update file failed to download.");
-			// Delete the existing file.
-			File oldFile = new File(PLUGIN_FOLDER, fileName + ".yml");
-			if (oldFile.exists()) {
-				boolean deleted = oldFile.delete();
-				if (!deleted) throw new ConditionFailedException("Old file could not be deleted. Aborting update, please delete the update file: '" + updateFile.getName() + "'");
-				issuer.sendMessage(MagicSpells.getTextColor() + "Old file successfully deleted.");
-			}
-			// Rename the update to the original file's name.
-			boolean renamed = updateFile.renameTo(new File(PLUGIN_FOLDER, fileName + ".yml"));
-			if (!renamed) throw new ConditionFailedException("Failed to rename the update file, update failed");
-			issuer.sendMessage(MagicSpells.getTextColor() + "Successfully renamed the update file to '" + fileName + ".yml'. You will need reload the plugin to load new spells.");
+			issuer.sendMessage(MagicSpells.getTextColor() + "Successfully updated '" + fileName + ".yml'. You will need reload the plugin to load new spells.");
 		}
 
 		@Subcommand("saveskin")
@@ -649,10 +638,7 @@ public class MagicCommand extends BaseCommand {
 			if (!folder.exists()) folder.mkdir();
 			File file = new File(folder, System.currentTimeMillis() + ".yml");
 			try {
-				Writer writer = new FileWriter(file);
-				writer.write(data);
-				writer.flush();
-				writer.close();
+				AtomicFiles.writeUtf8(file.toPath(), data);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

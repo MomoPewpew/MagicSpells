@@ -3,10 +3,8 @@ package com.nisovin.magicspells.util.managers;
 import java.util.*;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.nio.charset.StandardCharsets;
 
 import org.bukkit.Bukkit;
@@ -24,6 +22,7 @@ import com.nisovin.magicspells.util.BlockLocation;
 import com.nisovin.magicspells.util.Region;
 import com.nisovin.magicspells.util.Util;
 import com.nisovin.magicspells.MagicSpells;
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.variables.*;
 import com.nisovin.magicspells.util.TimeUtil;
 import com.nisovin.magicspells.util.VariableMod;
@@ -545,8 +544,6 @@ public class VariableManager {
 
 	public void saveGlobalVariables() {
 		File file = new File(folder, "GLOBAL.txt");
-		if (file.exists())
-			file.delete();
 
 		List<String> lines = new ArrayList<>();
 		for (String variableName : variables.keySet()) {
@@ -559,33 +556,13 @@ public class VariableManager {
 			}
 		}
 
-		if (lines.isEmpty()) {
-			dirtyGlobalVars = false;
-			return;
-		}
-
-		BufferedWriter writer = null;
 		try {
-			writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8, false));
-			for (String line : lines) {
-				writer.write(line);
-				writer.newLine();
-			}
-			writer.flush();
+			AtomicFiles.writeUtf8(file.toPath(), serializeLines(lines));
+			dirtyGlobalVars = false;
 		} catch (Exception e) {
 			MagicSpells.error("ERROR SAVING GLOBAL VARIABLES");
 			MagicSpells.handleException(e);
-		} finally {
-			if (writer != null) {
-				try {
-					writer.close();
-				} catch (Exception e) {
-					// No op
-				}
-			}
 		}
-
-		dirtyGlobalVars = false;
 	}
 
 	public void loadPlayerVariables(String player, String uniqueId) {
@@ -663,6 +640,7 @@ public class VariableManager {
 			} catch (IOException e) {
 				MagicSpells.error("ERROR READING PLAYER VARIABLES FOR " + player);
 				MagicSpells.handleException(e);
+				return;
 			}
 		}
 
@@ -729,23 +707,18 @@ public class VariableManager {
 		}
 
 		// Write the updated variables back to the file
-		if (existingVariables.isEmpty()) {
-			dirtyPlayerVars.remove(player);
-			return;
+		List<String> lines = new ArrayList<>();
+		for (Map.Entry<String, String> entry : existingVariables.entrySet()) {
+			lines.add(entry.getKey() + '=' + entry.getValue());
 		}
 
-		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8, false))) {
-			for (Map.Entry<String, String> entry : existingVariables.entrySet()) {
-				writer.write(entry.getKey() + '=' + entry.getValue());
-				writer.newLine();
-			}
-			writer.flush();
+		try {
+			AtomicFiles.writeUtf8(file.toPath(), serializeLines(lines));
+			dirtyPlayerVars.remove(player);
 		} catch (IOException e) {
 			MagicSpells.error("ERROR SAVING PLAYER VARIABLES FOR " + player);
 			MagicSpells.handleException(e);
 		}
-
-		dirtyPlayerVars.remove(player);
 	}
 
 	public void loadLocationVariables() {
@@ -788,6 +761,7 @@ public class VariableManager {
 	}
 
 	public void saveLocationVariables() {
+		boolean saved = true;
 		for (String varName : variables.keySet()) {
 			Variable variable = variables.get(varName);
 			if (!(variable instanceof LocationVariable || variable instanceof LocationStringVariable))
@@ -808,24 +782,20 @@ public class VariableManager {
 				}
 			}
 
-			if (lines.isEmpty()) {
-				if (file.exists())
-					file.delete();
-				continue;
-			}
-
-			try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8, false))) {
-				for (String line : lines) {
-					writer.write(line);
-					writer.newLine();
-				}
-				writer.flush();
+			try {
+				AtomicFiles.writeUtf8(file.toPath(), serializeLines(lines));
 			} catch (Exception e) {
+				saved = false;
 				MagicSpells.error("ERROR SAVING LOCATION VARIABLE " + varName);
 				MagicSpells.handleException(e);
 			}
 		}
-		dirtyLocationVars = false;
+		if (saved) dirtyLocationVars = false;
+	}
+
+	private static String serializeLines(Collection<String> lines) {
+		if (lines.isEmpty()) return "";
+		return String.join(System.lineSeparator(), lines) + System.lineSeparator();
 	}
 
 	public void saveAllPlayerVariables() {

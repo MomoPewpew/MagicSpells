@@ -61,6 +61,7 @@ import com.nisovin.magicspells.mana.ManaHandler;
 import com.nisovin.magicspells.variables.Variable;
 import com.nisovin.magicspells.spells.PassiveSpell;
 import com.nisovin.magicspells.commands.MagicCommand;
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.util.compat.EventUtil;
 import com.nisovin.magicspells.storage.StorageHandler;
 import com.nisovin.magicspells.util.prompt.PromptType;
@@ -2292,15 +2293,13 @@ public class MagicSpells extends JavaPlugin {
 		// Save cooldowns
 		if (cooldownsPersistThroughReload) {
 			File file = new File(getDataFolder(), "cooldowns.txt");
-			if (file.exists())
-				file.delete();
 			try {
-				Writer writer = new FileWriter(file);
+				StringBuilder content = new StringBuilder();
 				Map<UUID, Long> cooldowns;
 				long cooldown;
 				for (Spell spell : spells.values()) {
 					if (spell.nextCastServer > System.currentTimeMillis()) {
-						writer.append(spell.getInternalName())
+						content.append(spell.getInternalName())
 								.append(String.valueOf(':'))
 								.append("server")
 								.append(String.valueOf(':'))
@@ -2313,24 +2312,23 @@ public class MagicSpells extends JavaPlugin {
 						cooldown = cooldowns.get(id);
 						if (cooldown <= System.currentTimeMillis())
 							continue;
-						writer.append(spell.getInternalName())
+						content.append(spell.getInternalName())
 								.append(String.valueOf(':'))
 								.append(id.toString())
 								.append(String.valueOf(':'))
 								.append(String.valueOf(cooldown));
 
 						if (spell.charges > 0) {
-							writer.append(String.valueOf(':'))
+							content.append(String.valueOf(':'))
 									.append(String.valueOf(spell.getCharges(id)));
 						}
 
-						writer.append(String.valueOf('\n'));
+						content.append(String.valueOf('\n'));
 					}
 				}
-				writer.close();
+				AtomicFiles.writeUtf8(file.toPath(), content.toString());
 			} catch (IOException e) {
 				e.printStackTrace();
-				file.delete();
 			}
 		}
 

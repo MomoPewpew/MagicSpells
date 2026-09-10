@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
 import java.util.Scanner;
-import java.io.FileWriter;
-import java.io.BufferedWriter;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -21,6 +19,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.MagicLocation;
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.spells.InstantSpell;
 import com.nisovin.magicspells.spelleffects.EffectPosition;
 import com.nisovin.magicspells.spells.TargetedLocationSpell;
@@ -170,12 +169,12 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 	
 	private void saveMarks() {
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(new File(MagicSpells.plugin.getDataFolder(), "marks-" + internalName + ".txt"), false));
+			StringBuilder content = new StringBuilder();
 			for (Map.Entry<UUID, MagicLocation> stringMagicLocationEntry : marks.entrySet()) {
 				Entity entity = Bukkit.getEntity(stringMagicLocationEntry.getKey());
 				if (!(entity instanceof Player)) continue;
 				MagicLocation loc = stringMagicLocationEntry.getValue();
-				writer.append(stringMagicLocationEntry.getKey().toString())
+				content.append(stringMagicLocationEntry.getKey().toString())
 					.append(String.valueOf(':'))
 					.append(loc.getWorld())
 					.append(String.valueOf(':'))
@@ -188,9 +187,10 @@ public class MarkSpell extends InstantSpell implements TargetedLocationSpell {
 					.append(String.valueOf(loc.getYaw()))
 					.append(String.valueOf(':'))
 					.append(String.valueOf(loc.getPitch()));
-				writer.newLine();
+				content.append(System.lineSeparator());
 			}
-			writer.close();
+			File file = new File(MagicSpells.plugin.getDataFolder(), "marks-" + internalName + ".txt");
+			AtomicFiles.writeUtf8(file.toPath(), content.toString());
 		} catch (Exception e) {
 			MagicSpells.plugin.getServer().getLogger().severe("MagicSpells: Error saving marks");
 		}		

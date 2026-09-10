@@ -14,6 +14,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import com.nisovin.magicspells.MagicSpells;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.nisovin.magicspells.util.InventoryUtil;
+import com.nisovin.magicspells.util.io.AtomicFiles;
 import com.nisovin.magicspells.spells.CommandSpell;
 import com.nisovin.magicspells.util.itemreader.alternative.AlternativeReaderManager;
 
@@ -74,14 +75,7 @@ public class ItemSerializeSpell extends CommandSpell {
 	}
 	
 	private File makeFile() {
-		File file = new File(dataFolder, System.currentTimeMillis() + ".yml");
-		if (file.exists()) return file;
-		try {
-			file.createNewFile();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return file;
+		return new File(dataFolder, System.currentTimeMillis() + ".yml");
 	}
 	
 	private void processItem(ItemStack itemStack) {
@@ -91,7 +85,7 @@ public class ItemSerializeSpell extends CommandSpell {
 		outputYaml.set("magic-items." + System.currentTimeMillis(), section);
 		outputYaml.options().indent(indentation);
 		try {
-			outputYaml.save(file);
+			AtomicFiles.writeUtf8(file.toPath(), outputYaml.saveToString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

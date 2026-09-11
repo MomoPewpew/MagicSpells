@@ -17,7 +17,7 @@ public class MSJavaPlugin implements Plugin<Project> {
         target.getPlugins().apply(MavenPublishPlugin.class);
         target.getExtensions().configure(JavaPluginExtension.class, (JavaPluginExtension ext) -> {
             ext.toolchain((javaToolchainSpec -> {
-                javaToolchainSpec.getLanguageVersion().set(JavaLanguageVersion.of(21));
+                javaToolchainSpec.getLanguageVersion().set(JavaLanguageVersion.of(25));
             }));
         });
         RepositoryHandler repositories = target.getRepositories();

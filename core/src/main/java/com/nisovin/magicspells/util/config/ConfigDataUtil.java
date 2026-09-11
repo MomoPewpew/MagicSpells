@@ -1469,6 +1469,7 @@ public class ConfigDataUtil {
 			@Nullable DustOptions def) {
 		ConfigData<Color> color = getColor(config, colorPath, def == null ? null : def.getColor());
 		ConfigData<Float> size = def == null ? getFloat(config, sizePath) : getFloat(config, sizePath, def.getSize());
+		String sizeConfigPath = config.getCurrentPath() + '.' + sizePath;
 
 		if (color.isConstant() && size.isConstant()) {
 			Color c = color.get(null);
@@ -1479,7 +1480,7 @@ public class ConfigDataUtil {
 			if (s == null)
 				return (caster, target, location, power, args) -> def;
 
-			DustOptions options = new DustOptions(c, s);
+			DustOptions options = new DustOptions(c, clampDustSize(s, sizeConfigPath));
 			return (caster, target, location, power, args) -> options;
 		}
 
@@ -1496,7 +1497,7 @@ public class ConfigDataUtil {
 				if (s == null)
 					return def;
 
-				return new DustOptions(c, s);
+				return new DustOptions(c, clampDustSize(s, sizeConfigPath));
 			}
 
 			@Override
@@ -1516,6 +1517,7 @@ public class ConfigDataUtil {
 		ConfigData<Color> color = getColor(config, colorPath, def == null ? null : def.getColor());
 		ConfigData<Color> toColor = getColor(config, toColorPath, def == null ? null : def.getToColor());
 		ConfigData<Float> size = def == null ? getFloat(config, sizePath) : getFloat(config, sizePath, def.getSize());
+		String sizeConfigPath = config.getCurrentPath() + '.' + sizePath;
 
 		if (color.isConstant() && toColor.isConstant() && size.isConstant()) {
 			Color c = color.get(null);
@@ -1530,7 +1532,7 @@ public class ConfigDataUtil {
 			if (s == null)
 				return (caster, target, location, power, args) -> def;
 
-			DustTransition transition = new DustTransition(c, tc, s);
+			DustTransition transition = new DustTransition(c, tc, clampDustSize(s, sizeConfigPath));
 			return (caster, target, location, power, args) -> transition;
 		}
 
@@ -1551,7 +1553,7 @@ public class ConfigDataUtil {
 				if (s == null)
 					return def;
 
-				return new DustTransition(c, tc, s);
+				return new DustTransition(c, tc, clampDustSize(s, sizeConfigPath));
 			}
 
 			@Override
@@ -1560,6 +1562,15 @@ public class ConfigDataUtil {
 			}
 
 		};
+	}
+
+	private static float clampDustSize(float size, String configPath) {
+		float clampedSize = Math.clamp(size, 0.01F, 4F);
+		if (Float.compare(size, clampedSize) != 0) {
+			MagicSpells.error("Dust particle size " + size + " at '" + configPath
+					+ "' is outside the supported range [0.01, 4.0]; using " + clampedSize + " instead.");
+		}
+		return clampedSize;
 	}
 
 	@NotNull

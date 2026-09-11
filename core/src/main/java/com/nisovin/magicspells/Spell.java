@@ -3,6 +3,7 @@ package com.nisovin.magicspells;
 import de.slikey.effectlib.Effect;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -333,12 +334,15 @@ public abstract class Spell implements Comparable<Spell>, Listener {
 			if (magicItem != null) {
 				spellIcon = magicItem.getItemStack();
 				if (spellIcon != null && !BlockUtils.isAir(spellIcon.getType())) {
-					spellIcon.setAmount(0);
 					if (!iconStr.contains("|")) {
 						ItemMeta iconMeta = spellIcon.getItemMeta();
-						iconMeta.displayName(Component.text(MagicSpells.getTextColor() + name));
-						spellIcon.setItemMeta(iconMeta);
+						if (iconMeta != null) {
+							iconMeta.displayName(LegacyComponentSerializer.legacySection()
+									.deserialize(MagicSpells.getTextColor() + name));
+							spellIcon.setItemMeta(iconMeta);
+						}
 					}
+					spellIcon.setAmount(0);
 				}
 			}
 		} else

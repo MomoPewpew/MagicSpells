@@ -892,6 +892,12 @@ public class Util {
 
 			@NotNull
 			@Override
+			public MenuType getMenuType() {
+				return MenuType.CRAFTING;
+			}
+
+			@NotNull
+			@Override
 			public Inventory getTopInventory() {
 				return craftingInventory;
 			}

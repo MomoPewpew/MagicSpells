@@ -1,5 +1,6 @@
 name: MagicSpellsTowny
 main: com.nisovin.magicspells.towny.MagicSpellsTowny
 version: $version
+api-version: "26.2"
 author: nisovin
 depend: [MagicSpells,Towny]

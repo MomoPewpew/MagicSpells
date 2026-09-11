@@ -1,6 +1,6 @@
 package com.nisovin.magicspells.events;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;

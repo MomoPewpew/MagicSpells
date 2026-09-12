@@ -29,7 +29,6 @@ dependencies {
     implementation(name:'CMI-9.8.9.8', ext:'jar')
     implementation(name:'CMILib1.5.9.9', ext:'jar')
     implementation(name:'SneakyVaults-1.0-SNAPSHOT', ext:'jar')
-    implementation(name:'PathFinder-5.4.2', ext:'jar')
     implementation(group: "commons-codec", name: "commons-codec", version: "1.16.1")
     compileOnly(group: "io.github.team-sneakymouse", name: "sneakycharactermanager-paper", version: "1.6.0") { transitive = false }
     compileOnly(group: "io.github.team-sneakymouse", name: "sneakybagofholding", version: "1.1.3") { transitive = false }
@@ -47,6 +46,8 @@ dependencies {
 
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    // Gradle 9 no longer provides the launcher transitively.
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Pin to last 7.1.0-SNAPSHOT built for JVM 21; newer builds require JVM 25.
     implementation(group: "com.sk89q.worldguard", name: "worldguard-core", version: "7.1.0-20250824.193056-15") { transitive = false }
@@ -58,8 +59,6 @@ dependencies {
 
 test {
     useJUnitPlatform()
-    // PathFinder bundles an old, unrelocated JUnit Platform that conflicts with the test engine.
-    classpath = classpath.filter { it.name != "PathFinder-5.4.0.jar" }
 }
 
 base {
